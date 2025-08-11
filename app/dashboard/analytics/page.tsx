@@ -635,7 +635,7 @@ export default function AnalyticsPage() {
                                     </div>
                                 </div>
 
-                                {summary.variance !== null && (
+                                {/* {summary.variance !== null && (
                                     <div className="mb-4">
                                         <p className="text-sm text-gray-600">
                                             Variance
@@ -649,6 +649,26 @@ export default function AnalyticsPage() {
                                         >
                                             ${summary.variance >= 0 ? "+" : ""}$
                                             {summary.variance.toFixed(2)}
+                                        </p>
+                                    </div>
+                                )} */}
+
+                                {summary.variance !== null && (
+                                    <div className="mb-4">
+                                        <p className="text-sm text-gray-600">
+                                            Variance
+                                        </p>
+                                        <p
+                                            className={`text-lg font-bold ${
+                                                summary.variance >= 0
+                                                    ? "text-green-600"
+                                                    : "text-red-600"
+                                            }`}
+                                        >
+                                            $
+                                            {`${
+                                                summary.variance >= 0 ? "+" : ""
+                                            }${summary.variance.toFixed(2)}`}
                                         </p>
                                     </div>
                                 )}
