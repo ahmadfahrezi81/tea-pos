@@ -2,15 +2,43 @@
 import { createRouteHandlerClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
+// export async function GET() {
+//     try {
+//         const supabase = await createRouteHandlerClient();
+
+//         const { data, error } = await supabase
+//             .from("products")
+//             .select("*")
+//             // .eq("is_active", true)
+//             .order("name");
+
+//         if (error) {
+//             return NextResponse.json({ error: error.message }, { status: 400 });
+//         }
+
+//         return NextResponse.json({ products: data });
+//     } catch (error) {
+//         console.log(error);
+//         return NextResponse.json(
+//             { error: "Internal server error" },
+//             { status: 500 }
+//         );
+//     }
+// }
+
+export async function GET(req: NextRequest) {
     try {
         const supabase = await createRouteHandlerClient();
+        const { searchParams } = new URL(req.url);
+        const showAll = searchParams.get("all") === "true";
 
-        const { data, error } = await supabase
-            .from("products")
-            .select("*")
-            // .eq("is_active", true)
-            .order("name");
+        let query = supabase.from("products").select("*").order("name");
+
+        if (!showAll) {
+            query = query.eq("is_active", true);
+        }
+
+        const { data, error } = await query;
 
         if (error) {
             return NextResponse.json({ error: error.message }, { status: 400 });
@@ -18,7 +46,7 @@ export async function GET() {
 
         return NextResponse.json({ products: data });
     } catch (error) {
-        console.log(error);
+        console.error(error);
         return NextResponse.json(
             { error: "Internal server error" },
             { status: 500 }

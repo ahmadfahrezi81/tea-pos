@@ -14,7 +14,7 @@ export default function ProductsPageComponents() {
     }, []);
 
     const loadProducts = async () => {
-        const response = await fetch("/api/products");
+        const response = await fetch("/api/products?all=true");
         const data = await response.json();
         setProducts(data.products || []);
         setLoading(false);
