@@ -22,6 +22,46 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 ## Learn More
 
+```
+src/
+├── app/
+│   ├── (auth)/
+│   │   ├── login/
+│   │   │   └── page.tsx
+│   │   └── signup/
+│   │       └── page.tsx
+│   ├── dashboard/
+│   │   ├── page.tsx
+│   │   ├── layout.tsx [NEW]
+│   │   ├── pos/
+│   │   │   └── page.tsx
+│   │   ├── orders/
+│   │   │   └── page.tsx
+│   │   └── products/
+│   │       └── page.tsx
+│   │   └── stores/
+│   │       └── page.tsx
+│   ├── api/
+│   │   ├── orders/
+│   │   │   └── route.ts
+│   │   └── products/
+│   │       └── route.ts
+│   ├── globals.css
+│   ├── layout.tsx
+│   └── page.tsx
+├── components/
+│   ├── auth/
+│   │   └── AuthForm.tsx
+│   ├── pos/
+│   │   └── POSSystem.tsx
+│   └── shared/
+│       └── Navbar.tsx
+├── lib/
+│   ├── supabase.ts
+│   └── types.ts
+└── middleware.ts
+```
+
 To learn more about Next.js, take a look at the following resources:
 
 - [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
