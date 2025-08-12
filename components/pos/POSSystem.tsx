@@ -26,20 +26,9 @@ export default function POSSystem() {
         profile?.id
     );
 
-    // const [products, setProducts] = useState<Product[]>([]);
-    // const [stores, setStores] = useState<Store[]>([]);
     const [selectedStore, setSelectedStore] = useState<string>("");
     const [cart, setCart] = useState<CartItem[]>([]);
-    // const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState(false);
-    // const [profile, setProfile] = useState<any>(null);
-    // const supabase = createClient();
-
-    // useEffect(() => {
-    //     loadData();
-    // }, []);
-
-    // const loadData = async () => {
     //     const {
     //         data: { user },
     //     } = await supabase.auth.getUser();

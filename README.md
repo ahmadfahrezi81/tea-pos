@@ -38,8 +38,11 @@ src/
 │   │   ├── orders/
 │   │   │   └── page.tsx
 │   │   └── products/
-│   │       └── page.tsx
+│   │   │   └── page.tsx
 │   │   └── stores/
+│   │   │   └── page.tsx
+│   │   └── analytics/
+│   │       └── layout.tsx
 │   │       └── page.tsx
 │   ├── api/
 │   │   ├── orders/
@@ -54,10 +57,22 @@ src/
 │   │   └── AuthForm.tsx
 │   ├── pos/
 │   │   └── POSSystem.tsx
+│   ├── products/
+│   │   └──ProductsPageComponent.tsx
+│   ├── stores/
+│   │   └──StoresPageComponent.tsx
 │   └── shared/
 │       └── Navbar.tsx
 ├── lib/
-│   ├── supabase.ts
+│   ├── hooks/
+│   │   └── useAnalyticsData.ts
+│   │   └── useData.ts
+│   │   └── useOrder.ts
+│   │   └── useStores.ts
+│   ├── supabase/
+│   │   └── checkManagerRole.ts
+│   │   └── client.ts
+│   │   └── server.ts
 │   └── types.ts
 └── middleware.ts
 ```
