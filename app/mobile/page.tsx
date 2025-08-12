@@ -118,7 +118,7 @@ export default function MobilePage() {
     return (
         <div className="min-h-screen bg-gray-50 pb-20">
             {/* Header */}
-            <div className="bg-white shadow-sm p-4 flex justify-between items-center">
+            <div className="sticky top-0 z-40 bg-white shadow-sm p-4 flex justify-between items-center">
                 <h1 className="text-xl font-bold text-gray-800">
                     {user ? `Hi, ${profile?.full_name}` : "Welcome"}
                 </h1>

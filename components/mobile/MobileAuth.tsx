@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Profile } from "@/lib/types";
+import { Profile, Store } from "@/lib/types";
+import { useStores } from "@/lib/hooks/useData";
 
 interface MobileAuthProps {
     profile: Profile | null;
@@ -16,6 +17,10 @@ export default function MobileAuth({ profile, mutate }: MobileAuthProps) {
     const supabase = createClient();
     // Pull user profile reactively
     // const { data: profile, mutate } = useProfile();
+    const { data: stores = [], isLoading: storesLoading } = useStores(
+        profile?.role ?? "",
+        profile?.id ?? ""
+    );
 
     useEffect(() => {
         const { data: authListener } = supabase.auth.onAuthStateChange(() => {
@@ -100,6 +105,36 @@ export default function MobileAuth({ profile, mutate }: MobileAuthProps) {
                                         profile.created_at
                                     ).toLocaleDateString()}
                                 </span>
+                            </div>
+                        </div>
+
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                            <div className="flex justify-between items-start">
+                                <span className="text-gray-600">
+                                    Assigned Stores:
+                                </span>
+                                <div className="text-right text-sm">
+                                    {storesLoading ? (
+                                        <span className="text-gray-500">
+                                            Loading...
+                                        </span>
+                                    ) : stores.length > 0 ? (
+                                        <div className="space-y-1">
+                                            {stores.map((store: Store) => (
+                                                <div
+                                                    key={store.id}
+                                                    className="text-gray-800"
+                                                >
+                                                    {store.name}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <span className="text-gray-500">
+                                            No stores assigned
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
