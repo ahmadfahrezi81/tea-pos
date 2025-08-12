@@ -151,11 +151,94 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                     );
 
                     return (
+                        // <div
+                        //     key={product.id}
+                        //     className="bg-white rounded-lg shadow-sm overflow-hidden"
+                        // >
+                        //     <div className="p-4">
+                        //         <h3 className="font-semibold text-gray-800 mb-1 text-sm">
+                        //             {product.name}
+                        //         </h3>
+                        //         <p className="text-lg font-bold text-green-600 mb-3">
+                        //             ${product.price.toFixed(2)}
+                        //         </p>
+
+                        //         {!cartItem ? (
+                        //             <button
+                        //                 onClick={() => addToCart(product)}
+                        //                 className="w-full bg-blue-500 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-600 flex items-center justify-center"
+                        //             >
+                        //                 <Plus size={16} className="mr-1" />
+                        //                 Add
+                        //             </button>
+                        //         ) : (
+                        //             <div className="flex items-center justify-between">
+                        //                 <button
+                        //                     onClick={() =>
+                        //                         updateQuantity(
+                        //                             product.id,
+                        //                             cartItem.quantity - 1
+                        //                         )
+                        //                     }
+                        //                     className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center"
+                        //                 >
+                        //                     <Minus size={14} />
+                        //                 </button>
+                        //                 <span className="font-semibold">
+                        //                     {cartItem.quantity}
+                        //                 </span>
+                        //                 <button
+                        //                     onClick={() =>
+                        //                         updateQuantity(
+                        //                             product.id,
+                        //                             cartItem.quantity + 1
+                        //                         )
+                        //                     }
+                        //                     className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center"
+                        //                 >
+                        //                     <Plus size={14} />
+                        //                 </button>
+                        //             </div>
+                        //         )}
+                        //     </div>
+                        // </div>
+                        // Replace the entire product card div with:
+                        // <div
+                        //     key={product.id}
+                        //     className="bg-white rounded-lg shadow-sm overflow-hidden cursor-pointer"
+                        //     onClick={() => addToCart(product)}
+                        // >
+                        //     <div className="p-4">
+                        //         <h3 className="font-semibold text-gray-800 mb-1 text-sm">
+                        //             {product.name}
+                        //         </h3>
+                        //         <p className="text-lg font-bold text-green-600 mb-3">
+                        //             ${product.price.toFixed(2)}
+                        //         </p>
+
+                        //         {cartItem && (
+                        //             <div className="flex items-center justify-center bg-blue-50 py-2 rounded-lg">
+                        //                 <span className="text-blue-600 font-semibold">
+                        //                     {cartItem.quantity} in cart
+                        //                 </span>
+                        //             </div>
+                        //         )}
+
+                        //         {!cartItem && (
+                        //             <div className="text-center text-blue-600 text-sm font-medium">
+                        //                 Tap to add
+                        //             </div>
+                        //         )}
+                        //     </div>
+                        // </div>
                         <div
                             key={product.id}
                             className="bg-white rounded-lg shadow-sm overflow-hidden"
                         >
-                            <div className="p-4">
+                            <div
+                                className="p-4 cursor-pointer"
+                                onClick={() => !cartItem && addToCart(product)}
+                            >
                                 <h3 className="font-semibold text-gray-800 mb-1 text-sm">
                                     {product.name}
                                 </h3>
@@ -164,15 +247,14 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                                 </p>
 
                                 {!cartItem ? (
-                                    <button
-                                        onClick={() => addToCart(product)}
-                                        className="w-full bg-blue-500 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-600 flex items-center justify-center"
-                                    >
-                                        <Plus size={16} className="mr-1" />
-                                        Add
-                                    </button>
+                                    <div className="text-center text-blue-600 text-sm font-medium py-2">
+                                        Tap to add
+                                    </div>
                                 ) : (
-                                    <div className="flex items-center justify-between">
+                                    <div
+                                        className="flex items-center justify-between"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
                                         <button
                                             onClick={() =>
                                                 updateQuantity(
@@ -180,11 +262,11 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                                                     cartItem.quantity - 1
                                                 )
                                             }
-                                            className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center"
+                                            className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300"
                                         >
-                                            <Minus size={14} />
+                                            <Minus size={16} />
                                         </button>
-                                        <span className="font-semibold">
+                                        <span className="font-semibold text-lg">
                                             {cartItem.quantity}
                                         </span>
                                         <button
@@ -194,9 +276,9 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                                                     cartItem.quantity + 1
                                                 )
                                             }
-                                            className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center"
+                                            className="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600"
                                         >
-                                            <Plus size={14} />
+                                            <Plus size={16} />
                                         </button>
                                     </div>
                                 )}
@@ -223,9 +305,17 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
 
             {/* Cart Modal */}
             {showCart && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end">
-                    <div className="bg-white w-full rounded-t-2xl max-h-[80vh] overflow-y-auto">
-                        <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+                // <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end">
+                //     <div className="bg-white w-full rounded-t-2xl max-h-[80vh] overflow-y-auto">
+                <div
+                    className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end"
+                    onClick={() => setShowCart(false)}
+                >
+                    <div
+                        className="bg-white w-full rounded-t-2xl max-h-[80vh] overflow-y-auto"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* <div className="p-4 border-b border-gray-200 flex justify-between items-center">
                             <h3 className="text-lg font-semibold">
                                 Cart ({getItemCount()} items)
                             </h3>
@@ -235,6 +325,25 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                             >
                                 <X size={20} />
                             </button>
+                        </div> */}
+                        <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+                            <h3 className="text-lg font-semibold">
+                                Cart ({getItemCount()} items)
+                            </h3>
+                            <div className="flex items-center space-x-3">
+                                <button
+                                    onClick={() => setCart([])}
+                                    className="text-sm text-red-600 hover:text-red-800"
+                                >
+                                    Clear All
+                                </button>
+                                <button
+                                    onClick={() => setShowCart(false)}
+                                    className="p-1 hover:bg-gray-100 rounded"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
                         </div>
 
                         <div className="p-4 space-y-4">
