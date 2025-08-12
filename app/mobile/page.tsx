@@ -96,12 +96,6 @@ export default function MobilePage() {
 
     const tabs = [
         {
-            id: "auth" as TabType,
-            label: user ? "Profile" : "Login",
-            icon: User,
-            show: true,
-        },
-        {
             id: "pos" as TabType,
             label: "POS",
             icon: ShoppingCart,
@@ -112,6 +106,12 @@ export default function MobilePage() {
             label: "Orders",
             icon: Clock,
             show: !!user,
+        },
+        {
+            id: "auth" as TabType,
+            label: user ? "Profile" : "Login",
+            icon: User,
+            show: true,
         },
     ].filter((tab) => tab.show);
 
@@ -144,14 +144,12 @@ export default function MobilePage() {
             </div> */}
 
             <div className="p-4">
-                {activeTab === "auth" && (
-                    <MobileAuth profile={profile} mutate={mutate} />
-                )}
-
-                {/* {activeTab === "auth" && <MobileAuth profile={profile} />} */}
                 {activeTab === "pos" && user && <MobilePOS profile={profile} />}
                 {activeTab === "orders" && user && (
                     <MobileOrders profile={profile} />
+                )}
+                {activeTab === "auth" && (
+                    <MobileAuth profile={profile} mutate={mutate} />
                 )}
             </div>
 
