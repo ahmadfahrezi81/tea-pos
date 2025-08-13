@@ -61,9 +61,66 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
         return cart.reduce((count, item) => count + item.quantity, 0);
     };
 
+    // const processOrder = async () => {
+    //     if (!selectedStore || cart.length === 0) {
+    //         alert("Please select a store and add items to cart");
+    //         return;
+    //     }
+
+    //     setProcessing(true);
+
+    //     const items = cart.map((item) => ({
+    //         productId: item.product.id,
+    //         quantity: item.quantity,
+    //         unitPrice: item.product.price,
+    //     }));
+
+    //     try {
+    //         const response = await fetch("/api/orders", {
+    //             method: "POST",
+    //             headers: { "Content-Type": "application/json" },
+    //             body: JSON.stringify({
+    //                 storeId: selectedStore,
+    //                 items,
+    //             }),
+    //         });
+
+    //         const data = await response.json();
+
+    //         if (data.success) {
+    //             alert(
+    //                 `Order processed! Total: $${data.totalAmount.toFixed(2)}`
+    //             );
+    //             setCart([]);
+    //             setShowCart(false);
+    //         } else {
+    //             alert("Failed to process order: " + data.error);
+    //         }
+    //     } catch (error) {
+    //         alert("Error processing order");
+    //         console.log(error);
+    //     } finally {
+    //         setProcessing(false);
+    //     }
+    // };
+
+    // Auto-select store if only one available
+
+    // Add these state variables after existing useState declarations:
+    const [toast, setToast] = useState<{
+        message: string;
+        type: "success" | "error";
+    } | null>(null);
+
+    // Add toast function
+    const showToast = (message: string, type: "success" | "error") => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000); // Auto-hide after 3 seconds
+    };
+
     const processOrder = async () => {
         if (!selectedStore || cart.length === 0) {
-            alert("Please select a store and add items to cart");
+            showToast("Please select a store and add items to cart", "error");
             return;
         }
 
@@ -88,23 +145,23 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
             const data = await response.json();
 
             if (data.success) {
-                alert(
-                    `Order processed! Total: $${data.totalAmount.toFixed(2)}`
+                showToast(
+                    `Order processed! Total: $${data.totalAmount.toFixed(2)}`,
+                    "success"
                 );
                 setCart([]);
                 setShowCart(false);
             } else {
-                alert("Failed to process order: " + data.error);
+                showToast("Failed to process order: " + data.error, "error");
             }
         } catch (error) {
-            alert("Error processing order");
+            showToast("Error processing order", "error");
             console.log(error);
         } finally {
             setProcessing(false);
         }
     };
 
-    // Auto-select store if only one available
     useEffect(() => {
         if (stores && stores.length > 0 && !selectedStore) {
             // Auto-select first store if multiple stores, or the only store if just one
@@ -259,7 +316,7 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                         // </div>
                         <div
                             key={product.id}
-                            className="bg-white rounded-lg shadow-sm overflow-hidden"
+                            className="bg-white rounded-lg shadow-sm overflow-hidden select-none"
                         >
                             <div
                                 className="p-4 cursor-pointer"
@@ -435,6 +492,27 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                                 </button>
                             </div>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Toast Notification - ADD IT HERE */}
+            {toast && (
+                <div
+                    className={`fixed top-20 left-4 right-4 z-50 p-4 rounded-lg shadow-lg ${
+                        toast.type === "success"
+                            ? "bg-green-500 text-white"
+                            : "bg-red-500 text-white"
+                    }`}
+                >
+                    <div className="flex justify-between items-center">
+                        <span className="font-medium">{toast.message}</span>
+                        <button
+                            onClick={() => setToast(null)}
+                            className="ml-4 text-white hover:opacity-75"
+                        >
+                            ×
+                        </button>
                     </div>
                 </div>
             )}
