@@ -20,13 +20,6 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
     const [processing, setProcessing] = useState(false);
     const [showCart, setShowCart] = useState(false);
 
-    // Auto-select store if only one available
-    useEffect(() => {
-        if (stores && stores.length === 1 && !selectedStore) {
-            setSelectedStore(stores[0].id);
-        }
-    }, [stores, selectedStore]);
-
     const addToCart = (product: Product) => {
         setCart((prev) => {
             const existing = prev.find(
@@ -111,6 +104,14 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
         }
     };
 
+    // Auto-select store if only one available
+    useEffect(() => {
+        if (stores && stores.length > 0 && !selectedStore) {
+            // Auto-select first store if multiple stores, or the only store if just one
+            setSelectedStore(stores[0].id);
+        }
+    }, [stores, selectedStore]);
+
     if (productsLoading || storesLoading) {
         return (
             <div className="text-center py-8">
@@ -123,7 +124,7 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
     return (
         <div className="space-y-4">
             {/* Store Selection */}
-            {stores.length > 1 && (
+            {/* {stores.length > 1 && (
                 <div className="bg-white p-4 rounded-lg shadow-sm">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                         Select Store
@@ -134,6 +135,31 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     >
                         <option value="">Choose store...</option>
+                        {stores.map((store: Store) => (
+                            <option key={store.id} value={store.id}>
+                                {store.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            )} */}
+
+            {/* Store Selection - Always show if stores exist */}
+            {stores.length > 0 && (
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {stores.length === 1 ? "Store" : "Select Store"}
+                    </label>
+                    <select
+                        value={selectedStore}
+                        onChange={(e) => setSelectedStore(e.target.value)}
+                        disabled={stores.length === 1}
+                        className={`w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                            stores.length === 1
+                                ? "bg-gray-50 cursor-not-allowed"
+                                : ""
+                        }`}
+                    >
                         {stores.map((store: Store) => (
                             <option key={store.id} value={store.id}>
                                 {store.name}
