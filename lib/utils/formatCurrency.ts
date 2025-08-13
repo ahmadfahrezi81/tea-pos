@@ -6,5 +6,7 @@ export function formatRupiah(amount: number | string) {
         currency: "IDR",
         minimumFractionDigits: 0,
         maximumFractionDigits: 0,
-    }).format(value);
+    })
+        .format(value)
+        .replace(/^Rp\s*/, "Rp ");
 }
