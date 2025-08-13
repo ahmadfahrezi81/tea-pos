@@ -536,7 +536,7 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
             )}
 
             {/* Summary Stats */}
-            {processedOrders.length > 0 && (
+            {/* {processedOrders.length > 0 && (
                 <div className="bg-white p-4 rounded-lg shadow-sm">
                     <h3 className="font-semibold text-gray-800 mb-3">
                         Summary
@@ -563,7 +563,7 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
                         </div>
                     </div>
                 </div>
-            )}
+            )} */}
         </div>
     );
 }
