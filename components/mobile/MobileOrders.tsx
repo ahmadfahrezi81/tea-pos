@@ -3,6 +3,7 @@ import { useState, useMemo } from "react";
 import useOrders from "@/lib/hooks/useOrders";
 import { Profile, OrderItem } from "@/lib/types";
 import { Calendar, Search, ChevronDown, ChevronUp } from "lucide-react";
+import { formatRupiah } from "@/lib/utils/formatCurrency";
 
 interface MobileOrdersProps {
     profile: Profile | null;
@@ -209,11 +210,13 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
                                 </div>
                                 <div className="text-center">
                                     <p className="text-2xl font-bold text-green-600">
-                                        Rp{" "}
-                                        {processedOrders.reduce(
-                                            (sum, order) =>
-                                                sum + order.total_amount,
-                                            0
+                                        {" "}
+                                        {formatRupiah(
+                                            processedOrders.reduce(
+                                                (sum, order) =>
+                                                    sum + order.total_amount,
+                                                0
+                                            )
                                         )}
                                     </p>
                                     <p className="text-sm text-gray-600">
@@ -335,7 +338,9 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
                                             <div className="text-right flex items-center space-x-2">
                                                 <div>
                                                     <p className="text-lg font-bold text-green-600">
-                                                        Rp {order.total_amount}
+                                                        {formatRupiah(
+                                                            order.total_amount
+                                                        )}
                                                     </p>
                                                     <p className="text-xs text-gray-500">
                                                         {order.order_items.reduce(
@@ -480,10 +485,10 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
                                                                             }
                                                                         </p>
                                                                         <p className="text-xs text-gray-500">
-                                                                            Rp{" "}
-                                                                            {
+                                                                            {" "}
+                                                                            {formatRupiah(
                                                                                 item.unit_price
-                                                                            }{" "}
+                                                                            )}{" "}
                                                                             each
                                                                         </p>
                                                                     </div>
@@ -495,10 +500,10 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
                                                                             }
                                                                         </p>
                                                                         <p className="text-xs text-gray-600">
-                                                                            Rp{" "}
-                                                                            {
+                                                                            {" "}
+                                                                            {formatRupiah(
                                                                                 item.total_price
-                                                                            }
+                                                                            )}
                                                                         </p>
                                                                     </div>
                                                                 </div>
@@ -513,8 +518,10 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
                                                             Total
                                                         </span>
                                                         <span className="font-bold text-lg text-green-600">
-                                                            Rp{" "}
-                                                            {order.total_amount}
+                                                            {" "}
+                                                            {formatRupiah(
+                                                                order.total_amount
+                                                            )}
                                                         </span>
                                                     </div>
                                                 </div>
