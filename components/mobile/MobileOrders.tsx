@@ -48,6 +48,8 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
     const [dateFilter, setDateFilter] = useState<"all" | "today" | "week">(
         "all"
     );
+    // Add this state at the top with other useState declarations:
+    const [showSummary, setShowSummary] = useState(false);
 
     // Filter and process orders for mobile
     const processedOrders = useMemo(() => {
@@ -101,11 +103,24 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
         return filtered;
     }, [orders, searchTerm, dateFilter]);
 
-    // Group orders by date for mobile display
-    const groupedOrders = useMemo(() => {
-        const groups: { [key: string]: typeof processedOrders } = {};
+    // Add this before groupedOrders useMemo
+    const ordersWithNumbers = useMemo(() => {
+        return processedOrders.map((order, _, arr) => {
+            const orderDate = formatMobileDate(order.created_at);
+            const sameDayOrders = arr.filter(
+                (o) => formatMobileDate(o.created_at) === orderDate
+            );
+            const numberForDay =
+                sameDayOrders.length - sameDayOrders.indexOf(order);
+            return { ...order, orderNumber: numberForDay };
+        });
+    }, [processedOrders]);
 
-        processedOrders.forEach((order) => {
+    // Update the groupedOrders useMemo to use ordersWithNumbers instead of processedOrders:
+    const groupedOrders = useMemo(() => {
+        const groups: { [key: string]: typeof ordersWithNumbers } = {};
+
+        ordersWithNumbers.forEach((order) => {
             const dateKey = formatMobileDate(order.created_at);
             if (!groups[dateKey]) {
                 groups[dateKey] = [];
@@ -114,14 +129,46 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
         });
 
         return Object.entries(groups).sort(([dateA], [dateB]) => {
-            // Custom sort to ensure Today comes first, then Yesterday, etc.
             if (dateA === "Today") return -1;
             if (dateB === "Today") return 1;
             if (dateA === "Yesterday") return -1;
             if (dateB === "Yesterday") return 1;
             return dateA.localeCompare(dateB);
         });
-    }, [processedOrders]);
+    }, [ordersWithNumbers]);
+
+    // Group orders by date for mobile display
+    // const groupedOrders = useMemo(() => {
+    //     const groups: { [key: string]: typeof processedOrders } = {};
+
+    //     processedOrders.forEach((order) => {
+    //         const dateKey = formatMobileDate(order.created_at);
+    //         if (!groups[dateKey]) {
+    //             groups[dateKey] = [];
+    //         }
+    //         groups[dateKey].push(order);
+    //     });
+
+    //     return Object.entries(groups).sort(([dateA], [dateB]) => {
+    //         // Custom sort to ensure Today comes first, then Yesterday, etc.
+    //         if (dateA === "Today") return -1;
+    //         if (dateB === "Today") return 1;
+    //         if (dateA === "Yesterday") return -1;
+    //         if (dateB === "Yesterday") return 1;
+    //         return dateA.localeCompare(dateB);
+    //     });
+    // }, [processedOrders]);
+
+    // Add this helper function after the existing formatTime function:
+    const formatFullDate = (dateString: string) => {
+        const date = new Date(dateString + "Z");
+        return date.toLocaleDateString("en-US", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+        });
+    };
 
     if (isLoading) {
         return (
@@ -134,6 +181,52 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
 
     return (
         <div className="space-y-4">
+            {/* Toggleable Summary - Move to TOP */}
+            {processedOrders.length > 0 && (
+                <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                    <button
+                        onClick={() => setShowSummary(!showSummary)}
+                        className="w-full p-4 flex justify-between items-center hover:bg-gray-50"
+                    >
+                        <h3 className="font-semibold text-gray-800">Summary</h3>
+                        {showSummary ? (
+                            <ChevronUp size={20} className="text-gray-400" />
+                        ) : (
+                            <ChevronDown size={20} className="text-gray-400" />
+                        )}
+                    </button>
+
+                    {showSummary && (
+                        <div className="border-t border-gray-100 p-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="text-center">
+                                    <p className="text-2xl font-bold text-blue-600">
+                                        {processedOrders.length}
+                                    </p>
+                                    <p className="text-sm text-gray-600">
+                                        Orders
+                                    </p>
+                                </div>
+                                <div className="text-center">
+                                    <p className="text-2xl font-bold text-green-600">
+                                        $
+                                        {processedOrders
+                                            .reduce(
+                                                (sum, order) =>
+                                                    sum + order.total_amount,
+                                                0
+                                            )
+                                            .toFixed(2)}
+                                    </p>
+                                    <p className="text-sm text-gray-600">
+                                        Total Sales
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
             {/* Search and Filters */}
             <div className="bg-white p-4 rounded-lg shadow-sm space-y-3">
                 <div className="flex items-center space-x-2">
@@ -226,6 +319,8 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
                                             <div className="flex-1">
                                                 <div className="flex items-center space-x-2">
                                                     <span className="text-sm font-medium text-gray-600">
+                                                        Order #
+                                                        {order.orderNumber} •{" "}
                                                         {formatTime(
                                                             order.created_at
                                                         )}
@@ -340,6 +435,14 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
                                                                 order.profiles
                                                                     ?.full_name
                                                             }
+                                                        </p>
+                                                        <p>
+                                                            <span className="font-medium">
+                                                                Date:
+                                                            </span>{" "}
+                                                            {formatFullDate(
+                                                                order.created_at
+                                                            )}
                                                         </p>
                                                         <p>
                                                             <span className="font-medium">
