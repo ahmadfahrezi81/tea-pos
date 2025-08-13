@@ -134,9 +134,7 @@ export default function POSSystem() {
             const data = await response.json();
 
             if (data.success) {
-                alert(
-                    `Order processed! Total: $${data.totalAmount.toFixed(2)}`
-                );
+                alert(`Order processed! Total: Rp ${data.totalAmount}`);
                 setCart([]);
             } else {
                 alert("Failed to process order: " + data.error);
@@ -166,7 +164,7 @@ export default function POSSystem() {
                         >
                             <h3 className="font-medium mb-2">{product.name}</h3>
                             <p className="text-xl font-bold text-green-600 mb-3">
-                                ${product.price.toFixed(2)}
+                                Rp {product.price}
                             </p>
                             <button
                                 onClick={() => addToCart(product)}
@@ -217,7 +215,7 @@ export default function POSSystem() {
                                         {item.product.name}
                                     </h4>
                                     <p className="text-sm text-gray-600">
-                                        ${item.product.price.toFixed(2)} each
+                                        Rp {item.product.price} each
                                     </p>
                                 </div>
                                 <div className="flex items-center space-x-2">
@@ -252,7 +250,7 @@ export default function POSSystem() {
 
                         <div className="text-right">
                             <p className="text-2xl font-bold">
-                                Total: ${calculateTotal().toFixed(2)}
+                                Total: Rp {calculateTotal()}
                             </p>
                         </div>
 

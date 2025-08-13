@@ -146,7 +146,7 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
 
             if (data.success) {
                 showToast(
-                    `Order processed! Total: $${data.totalAmount.toFixed(2)}`,
+                    `Order processed! Total: Rp ${data.totalAmount}`,
                     "success"
                 );
                 setCart([]);
@@ -326,7 +326,7 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                                     {product.name}
                                 </h3>
                                 <p className="text-lg font-bold text-green-600 mb-3">
-                                    ${product.price.toFixed(2)}
+                                    Rp {product.price}
                                 </p>
 
                                 {!cartItem ? (
@@ -440,8 +440,7 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                                             {item.product.name}
                                         </h4>
                                         <p className="text-sm text-gray-600">
-                                            ${item.product.price.toFixed(2)}{" "}
-                                            each
+                                            Rp {item.product.price} each
                                         </p>
                                     </div>
                                     <div className="flex items-center space-x-3">
@@ -477,7 +476,7 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                             <div className="pt-4">
                                 <div className="text-right mb-4">
                                     <p className="text-2xl font-bold">
-                                        Total: ${calculateTotal().toFixed(2)}
+                                        Total: Rp {calculateTotal()}
                                     </p>
                                 </div>
 

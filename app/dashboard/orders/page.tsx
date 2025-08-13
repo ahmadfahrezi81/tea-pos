@@ -278,10 +278,7 @@ export default function OrdersPage() {
                                             </div>
                                             <div className="text-right">
                                                 <p className="text-2xl font-bold">
-                                                    $
-                                                    {order.total_amount.toFixed(
-                                                        2
-                                                    )}
+                                                    Rp {order.total_amount}
                                                 </p>
                                             </div>
                                         </div>
@@ -312,10 +309,10 @@ export default function OrdersPage() {
                                                                 {item.quantity}
                                                             </span>
                                                             <span>
-                                                                $
-                                                                {item.total_price.toFixed(
-                                                                    2
-                                                                )}
+                                                                Rp{" "}
+                                                                {
+                                                                    item.total_price
+                                                                }
                                                             </span>
                                                         </div>
                                                     )

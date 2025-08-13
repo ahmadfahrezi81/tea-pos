@@ -467,13 +467,12 @@ export default function AnalyticsPage() {
                         </h2>
                         <div className="mb-4 p-4 bg-gray-50 rounded">
                             <p>
-                                <strong>Expected Cash:</strong> $
-                                {selectedSummary.expected_cash.toFixed(2)}
+                                <strong>Expected Cash:</strong> Rp{" "}
+                                {selectedSummary.expected_cash}
                             </p>
                             <p className="text-sm text-gray-600">
-                                Opening: $
-                                {selectedSummary.opening_balance.toFixed(2)} +
-                                Sales: ${selectedSummary.total_sales.toFixed(2)}
+                                Opening: Rp {selectedSummary.opening_balance} +
+                                Sales: Rp {selectedSummary.total_sales}
                             </p>
                         </div>
                         <form onSubmit={handleCloseDay} className="space-y-4">
@@ -515,11 +514,9 @@ export default function AnalyticsPage() {
                             {closeForm.actual_cash && (
                                 <div className="p-3 bg-yellow-50 rounded">
                                     <p className="font-medium">
-                                        Variance: $
-                                        {(
-                                            parseFloat(closeForm.actual_cash) -
-                                            selectedSummary.expected_cash
-                                        ).toFixed(2)}
+                                        Variance: Rp{" "}
+                                        {parseFloat(closeForm.actual_cash) -
+                                            selectedSummary.expected_cash}
                                     </p>
                                 </div>
                             )}
@@ -598,8 +595,7 @@ export default function AnalyticsPage() {
                                             Opening Balance
                                         </p>
                                         <p className="text-xl font-bold">
-                                            $
-                                            {summary.opening_balance.toFixed(2)}
+                                            Rp {summary.opening_balance}
                                         </p>
                                     </div>
                                     <div>
@@ -607,7 +603,7 @@ export default function AnalyticsPage() {
                                             Total Sales
                                         </p>
                                         <p className="text-xl font-bold text-green-600">
-                                            ${summary.total_sales.toFixed(2)}
+                                            Rp {summary.total_sales}
                                         </p>
                                     </div>
                                     <div>
@@ -615,7 +611,7 @@ export default function AnalyticsPage() {
                                             Expected Cash
                                         </p>
                                         <p className="text-xl font-bold text-blue-600">
-                                            ${summary.expected_cash.toFixed(2)}
+                                            Rp {summary.expected_cash}
                                         </p>
                                     </div>
                                     <div>
@@ -624,8 +620,7 @@ export default function AnalyticsPage() {
                                         </p>
                                         {summary.actual_cash !== null ? (
                                             <p className="text-xl font-bold">
-                                                $
-                                                {summary.actual_cash.toFixed(2)}
+                                                Rp {summary.actual_cash}
                                             </p>
                                         ) : (
                                             <p className="text-xl text-gray-400">
@@ -665,10 +660,10 @@ export default function AnalyticsPage() {
                                                     : "text-red-600"
                                             }`}
                                         >
-                                            $
+                                            Rp{" "}
                                             {`${
                                                 summary.variance >= 0 ? "+" : ""
-                                            }${summary.variance.toFixed(2)}`}
+                                            }${summary.variance}`}
                                         </p>
                                     </div>
                                 )}

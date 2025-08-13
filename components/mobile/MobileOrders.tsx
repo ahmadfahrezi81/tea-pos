@@ -209,14 +209,12 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
                                 </div>
                                 <div className="text-center">
                                     <p className="text-2xl font-bold text-green-600">
-                                        $
-                                        {processedOrders
-                                            .reduce(
-                                                (sum, order) =>
-                                                    sum + order.total_amount,
-                                                0
-                                            )
-                                            .toFixed(2)}
+                                        Rp{" "}
+                                        {processedOrders.reduce(
+                                            (sum, order) =>
+                                                sum + order.total_amount,
+                                            0
+                                        )}
                                     </p>
                                     <p className="text-sm text-gray-600">
                                         Total Sales
@@ -337,10 +335,7 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
                                             <div className="text-right flex items-center space-x-2">
                                                 <div>
                                                     <p className="text-lg font-bold text-green-600">
-                                                        $
-                                                        {order.total_amount.toFixed(
-                                                            2
-                                                        )}
+                                                        Rp {order.total_amount}
                                                     </p>
                                                     <p className="text-xs text-gray-500">
                                                         {order.order_items.reduce(
@@ -485,10 +480,10 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
                                                                             }
                                                                         </p>
                                                                         <p className="text-xs text-gray-500">
-                                                                            $
-                                                                            {item.unit_price.toFixed(
-                                                                                2
-                                                                            )}{" "}
+                                                                            Rp{" "}
+                                                                            {
+                                                                                item.unit_price
+                                                                            }{" "}
                                                                             each
                                                                         </p>
                                                                     </div>
@@ -500,10 +495,10 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
                                                                             }
                                                                         </p>
                                                                         <p className="text-xs text-gray-600">
-                                                                            $
-                                                                            {item.total_price.toFixed(
-                                                                                2
-                                                                            )}
+                                                                            Rp{" "}
+                                                                            {
+                                                                                item.total_price
+                                                                            }
                                                                         </p>
                                                                     </div>
                                                                 </div>
@@ -518,10 +513,8 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
                                                             Total
                                                         </span>
                                                         <span className="font-bold text-lg text-green-600">
-                                                            $
-                                                            {order.total_amount.toFixed(
-                                                                2
-                                                            )}
+                                                            Rp{" "}
+                                                            {order.total_amount}
                                                         </span>
                                                     </div>
                                                 </div>
