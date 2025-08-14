@@ -6,8 +6,10 @@ import MobilePOS from "@/components/mobile/MobilePOS";
 import MobileOrders from "@/components/mobile/MobileOrders";
 import { User, ShoppingCart, Clock } from "lucide-react";
 import { useProfile } from "@/lib/hooks/useData";
+import { BarChart3 } from "lucide-react"; // Add this import
+import MobileAnalytics from "@/components/mobile/MobileAnalytics";
 
-type TabType = "auth" | "pos" | "orders";
+type TabType = "auth" | "pos" | "orders" | "analytics";
 
 export default function MobilePage() {
     const [activeTab, setActiveTab] = useState<TabType>("auth");
@@ -94,6 +96,26 @@ export default function MobilePage() {
         );
     }
 
+    // const tabs = [
+    //     {
+    //         id: "pos" as TabType,
+    //         label: "POS",
+    //         icon: ShoppingCart,
+    //         show: !!user,
+    //     },
+    //     {
+    //         id: "orders" as TabType,
+    //         label: "Orders",
+    //         icon: Clock,
+    //         show: !!user,
+    //     },
+    //     {
+    //         id: "auth" as TabType,
+    //         label: user ? "Profile" : "Login",
+    //         icon: User,
+    //         show: true,
+    //     },
+    // ].filter((tab) => tab.show);
     const tabs = [
         {
             id: "pos" as TabType,
@@ -106,6 +128,12 @@ export default function MobilePage() {
             label: "Orders",
             icon: Clock,
             show: !!user,
+        },
+        {
+            id: "analytics" as TabType,
+            label: "Analytics",
+            icon: BarChart3,
+            show: !!user && profile?.role === "manager",
         },
         {
             id: "auth" as TabType,
@@ -148,6 +176,11 @@ export default function MobilePage() {
                 {activeTab === "orders" && user && (
                     <MobileOrders profile={profile} />
                 )}
+                {activeTab === "analytics" &&
+                    user &&
+                    profile?.role === "manager" && (
+                        <MobileAnalytics profile={profile} />
+                    )}
                 {activeTab === "auth" && (
                     <MobileAuth profile={profile} mutate={mutate} />
                 )}

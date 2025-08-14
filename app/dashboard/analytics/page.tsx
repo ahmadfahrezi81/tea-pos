@@ -22,25 +22,11 @@ interface DailySummary {
     seller?: { full_name: string };
 }
 
-// interface Store {
-//     id: string;
-//     name: string;
-// }
-
-// interface Seller {
-//     id: string;
-//     full_name: string;
-// }
-
 export default function AnalyticsPage() {
-    // const [summaries, setSummaries] = useState<DailySummary[]>([]);
-    // const [stores, setStores] = useState<Store[]>([]);
-    // const [sellers, setSellers] = useState<Seller[]>([]);
     const [selectedStore, setSelectedStore] = useState<string>("");
     const [selectedDate, setSelectedDate] = useState<string>(
         new Date().toISOString().split("T")[0]
     );
-    // const [loading, setLoading] = useState(true);
     const [showOpeningForm, setShowOpeningForm] = useState(false);
     const [showCloseForm, setShowCloseForm] = useState(false);
     const [selectedSummary, setSelectedSummary] = useState<DailySummary | null>(
@@ -65,109 +51,6 @@ export default function AnalyticsPage() {
         isLoading,
         mutate,
     } = useAnalyticsData(selectedStore, selectedDate);
-
-    // useEffect(() => {
-    //     loadInitialData();
-    // }, []);
-
-    // useEffect(() => {
-    //     if (selectedStore) {
-    //         loadSummaries();
-    //         console.log("[TEST] - I'm from useEffect");
-    //     }
-    // }, [selectedStore, selectedDate]);
-
-    // const loadInitialData = async () => {
-    //     try {
-    //         // Load stores
-    //         const { data: storesData } = await supabase
-    //             .from("stores")
-    //             .select("id, name")
-    //             .order("name");
-    //         setStores(storesData || []);
-
-    //         // Load sellers
-    //         const { data: sellersData } = await supabase
-    //             .from("profiles")
-    //             .select("id, full_name")
-    //             .eq("role", "seller")
-    //             .order("full_name");
-    //         setSellers(sellersData || []);
-
-    //         setLoading(false);
-    //     } catch (error) {
-    //         console.error("Error loading initial data:", error);
-    //         setLoading(false);
-    //     }
-    // };
-
-    // const loadSummaries = async () => {
-    //     // console.log("[DEBUG] - loadSummaries called");
-
-    //     // Check selectedStore
-    //     if (!selectedStore) {
-    //         console.warn(
-    //             "[DEBUG] - selectedStore is not defined or is falsy:",
-    //             selectedStore
-    //         );
-    //         return;
-    //     }
-
-    //     // Extract and log date range
-    //     const { start, end } = getDateRange();
-    //     // console.log("[DEBUG] - Date range:", { start, end });
-
-    //     try {
-    //         // console.log("[DEBUG] - Starting Supabase query...");
-
-    //         const { data, error } = await supabase
-    //             .from("daily_summaries")
-    //             .select(
-    //                 `
-    //     *,
-    //     stores(name),
-    //     manager:profiles!daily_summaries_manager_id_fkey(full_name),
-    //     seller:profiles!daily_summaries_seller_id_fkey(full_name)
-    // `
-    //             )
-    //             .eq("store_id", selectedStore)
-    //             .gte("date", start)
-    //             .lte("date", end)
-    //             .order("date", { ascending: false });
-
-    //         // console.log("[DEBUG] - Raw Supabase Response:", { data, error });
-
-    //         if (error) {
-    //             console.error("[ERROR] - Supabase returned an error:", error);
-    //             return;
-    //         }
-
-    //         if (!data || data.length === 0) {
-    //             console.warn(
-    //                 "[DEBUG] - No summaries found for the given criteria."
-    //             );
-    //         }
-
-    //         setSummaries(data || []);
-    //         // console.log("[DEBUG] - Summaries successfully set:", data);
-    //     } catch (err) {
-    //         console.error(
-    //             "[ERROR] - Caught exception while fetching summaries:",
-    //             err
-    //         );
-    //     }
-    // };
-
-    // const getDateRange = () => {
-    //     const selected = new Date(selectedDate);
-    //     const start = new Date(selected);
-    //     start.setDate(selected.getDate() - 7); // Show last 7 days
-
-    //     return {
-    //         start: start.toISOString().split("T")[0],
-    //         end: selectedDate,
-    //     };
-    // };
 
     const calculateTotalSales = async (storeId: string, date: string) => {
         const { data: orders } = await supabase
@@ -629,24 +512,6 @@ export default function AnalyticsPage() {
                                         )}
                                     </div>
                                 </div>
-
-                                {/* {summary.variance !== null && (
-                                    <div className="mb-4">
-                                        <p className="text-sm text-gray-600">
-                                            Variance
-                                        </p>
-                                        <p
-                                            className={`text-lg font-bold ${
-                                                summary.variance >= 0
-                                                    ? "text-green-600"
-                                                    : "text-red-600"
-                                            }`}
-                                        >
-                                            ${summary.variance >= 0 ? "+" : ""}$
-                                            {summary.variance.toFixed(2)}
-                                        </p>
-                                    </div>
-                                )} */}
 
                                 {summary.variance !== null && (
                                     <div className="mb-4">
