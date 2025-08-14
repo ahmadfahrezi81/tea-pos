@@ -5,6 +5,7 @@ import { useProducts, useStores } from "@/lib/hooks/useData";
 import { Profile, Product, CartItem, Store } from "@/lib/types";
 import { Plus, Minus, ShoppingCart, X } from "lucide-react";
 import { formatRupiah } from "@/lib/utils/formatCurrency";
+import Image from "next/image";
 
 interface MobilePOSProps {
     profile: Profile | null;
@@ -166,7 +167,7 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
             )}
 
             {/* Products Grid */}
-            <div className="grid grid-cols-2 gap-3">
+            {/* <div className="grid grid-cols-2 gap-3">
                 {[...products]
                     .sort((a, b) => a.price - b.price) // ascending order
                     // .sort((a, b) => b.price - a.price) // descending order
@@ -233,6 +234,88 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                             </div>
                         );
                     })}
+            </div> */}
+
+            {/* Products Grid */}
+            <div className="grid grid-cols-2 gap-3">
+                {[...products]
+                    .sort((a, b) => a.price - b.price) // ascending order
+                    .map((product: Product) => {
+                        const cartItem = cart.find(
+                            (item) => item.product.id === product.id
+                        );
+
+                        return (
+                            <div
+                                key={product.id}
+                                className="bg-white rounded-xl shadow-sm overflow-hidden select-none"
+                            >
+                                <div
+                                    className="p-[0.8rem] cursor-pointer"
+                                    onClick={() =>
+                                        !cartItem && addToCart(product)
+                                    }
+                                >
+                                    {/* Product Image */}
+                                    {product.image_url && (
+                                        <div className="flex-shrink-0">
+                                            <Image
+                                                src={product.image_url}
+                                                alt={product.name}
+                                                width={70} // smaller size for compact grid
+                                                height={70}
+                                                className="rounded object-cover"
+                                            />
+                                        </div>
+                                    )}
+
+                                    <h3 className="font-semibold text-gray-800 text-xl">
+                                        {product.name}
+                                    </h3>
+                                    <p className="text-xl font-bold text-green-600 mb-2">
+                                        {formatRupiah(product.price)}
+                                    </p>
+
+                                    {!cartItem ? (
+                                        <div className="text-center text-blue-600 text-sm font-medium py-2">
+                                            Tap to add
+                                        </div>
+                                    ) : (
+                                        <div
+                                            className="flex items-center justify-between"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <button
+                                                onClick={() =>
+                                                    updateQuantity(
+                                                        product.id,
+                                                        cartItem.quantity - 1
+                                                    )
+                                                }
+                                                className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300"
+                                            >
+                                                <Minus size={20} />
+                                            </button>
+                                            <span className="font-semibold text-lg">
+                                                {cartItem.quantity}
+                                            </span>
+                                            <button
+                                                onClick={() =>
+                                                    updateQuantity(
+                                                        product.id,
+                                                        cartItem.quantity + 1
+                                                    )
+                                                }
+                                                className="w-12 h-12 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600"
+                                            >
+                                                <Plus size={20} />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
             </div>
 
             {/* Floating Cart Button */}
@@ -242,8 +325,8 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                         onClick={() => setShowCart(true)}
                         className="bg-green-500 text-white rounded-full p-4 shadow-lg hover:bg-green-600 relative"
                     >
-                        <ShoppingCart size={24} />
-                        <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center">
+                        <ShoppingCart size={32} />
+                        <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-6 h-6 text-base flex items-center justify-center">
                             {getItemCount()}
                         </span>
                     </button>
@@ -300,7 +383,7 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                                     className="flex justify-between items-center border-b border-gray-100 pb-4"
                                 >
                                     <div className="flex-1">
-                                        <h4 className="font-medium">
+                                        <h4 className="font-medium text-xl">
                                             {item.product.name}
                                         </h4>
                                         <p className="text-sm text-gray-600">

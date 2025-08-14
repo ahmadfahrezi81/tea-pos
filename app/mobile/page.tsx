@@ -1,3 +1,4 @@
+//app/mobile/page.tsx
 "use client";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -6,15 +7,14 @@ import MobilePOS from "@/components/mobile/MobilePOS";
 import MobileOrders from "@/components/mobile/MobileOrders";
 import { User, ShoppingCart, Clock } from "lucide-react";
 import { useProfile } from "@/lib/hooks/useData";
+import { BarChart3 } from "lucide-react"; // Add this import
+import MobileAnalytics from "@/components/mobile/MobileAnalytics";
 
-type TabType = "auth" | "pos" | "orders";
+type TabType = "auth" | "pos" | "orders" | "analytics";
 
 export default function MobilePage() {
     const [activeTab, setActiveTab] = useState<TabType>("auth");
-    // const [user, setUser] = useState<any>(null);
-    // const [profile, setProfile] = useState<Profile | null>(null);
-    // const [loading, setLoading] = useState(true);
-    // const router = useRouter();
+
     const supabase = createClient();
 
     // Get profile reactively
@@ -108,6 +108,12 @@ export default function MobilePage() {
             show: !!user,
         },
         {
+            id: "analytics" as TabType,
+            label: "Analytics",
+            icon: BarChart3,
+            show: !!user && profile?.role === "manager",
+        },
+        {
             id: "auth" as TabType,
             label: user ? "Profile" : "Login",
             icon: User,
@@ -132,22 +138,16 @@ export default function MobilePage() {
                 )}
             </div>
 
-            {/* Content */}
-            {/* <div className="p-4">
-                {activeTab === "auth" && (
-                    <MobileAuth user={user} profile={profile} />
-                )}
-                {activeTab === "pos" && user && <MobilePOS profile={profile} />}
-                {activeTab === "orders" && user && (
-                    <MobileOrders profile={profile} />
-                )}
-            </div> */}
-
             <div className="p-4">
                 {activeTab === "pos" && user && <MobilePOS profile={profile} />}
                 {activeTab === "orders" && user && (
                     <MobileOrders profile={profile} />
                 )}
+                {activeTab === "analytics" &&
+                    user &&
+                    profile?.role === "manager" && (
+                        <MobileAnalytics profile={profile} />
+                    )}
                 {activeTab === "auth" && (
                     <MobileAuth profile={profile} mutate={mutate} />
                 )}

@@ -44,6 +44,8 @@ src/
 │   │   └── analytics/
 │   │       └── layout.tsx
 │   │       └── page.tsx
+│   ├── mobile/
+│   │   ├── page.tsx
 │   ├── api/
 │   │   ├── orders/
 │   │   │   └── route.ts
@@ -53,6 +55,10 @@ src/
 │   ├── layout.tsx
 │   └── page.tsx
 ├── components/
+│   ├── mobile/
+│   │   └──MobileAnalytics.tsx
+│   │   └──MobileOrders.tsx
+│   │   └── MobilePOS.tsx
 │   ├── auth/
 │   │   └── AuthForm.tsx
 │   ├── pos/

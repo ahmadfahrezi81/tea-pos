@@ -76,6 +76,7 @@ export interface Database {
                     name: string;
                     price: number;
                     is_active: boolean;
+                    image_url?: string; // new
                     created_at: string;
                     updated_at: string;
                 };
