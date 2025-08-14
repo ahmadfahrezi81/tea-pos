@@ -14,7 +14,7 @@ export default function ProductsPageComponents() {
     }, []);
 
     const loadProducts = async () => {
-        const response = await fetch("/api/products");
+        const response = await fetch("/api/products?all=true");
         const data = await response.json();
         setProducts(data.products || []);
         setLoading(false);
@@ -148,7 +148,7 @@ export default function ProductsPageComponents() {
                             {product.name}
                         </h3>
                         <p className="text-2xl font-bold text-green-600 mb-4">
-                            ${product.price.toFixed(2)}
+                            Rp {product.price}
                         </p>
                         <p className="text-sm text-gray-600 mb-4">
                             Status: {product.is_active ? "Active" : "Inactive"}
