@@ -1,3 +1,4 @@
+//app/mobile/page.tsx
 "use client";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -13,10 +14,7 @@ type TabType = "auth" | "pos" | "orders" | "analytics";
 
 export default function MobilePage() {
     const [activeTab, setActiveTab] = useState<TabType>("auth");
-    // const [user, setUser] = useState<any>(null);
-    // const [profile, setProfile] = useState<Profile | null>(null);
-    // const [loading, setLoading] = useState(true);
-    // const router = useRouter();
+
     const supabase = createClient();
 
     // Get profile reactively
@@ -96,26 +94,6 @@ export default function MobilePage() {
         );
     }
 
-    // const tabs = [
-    //     {
-    //         id: "pos" as TabType,
-    //         label: "POS",
-    //         icon: ShoppingCart,
-    //         show: !!user,
-    //     },
-    //     {
-    //         id: "orders" as TabType,
-    //         label: "Orders",
-    //         icon: Clock,
-    //         show: !!user,
-    //     },
-    //     {
-    //         id: "auth" as TabType,
-    //         label: user ? "Profile" : "Login",
-    //         icon: User,
-    //         show: true,
-    //     },
-    // ].filter((tab) => tab.show);
     const tabs = [
         {
             id: "pos" as TabType,
@@ -159,17 +137,6 @@ export default function MobilePage() {
                     </button>
                 )}
             </div>
-
-            {/* Content */}
-            {/* <div className="p-4">
-                {activeTab === "auth" && (
-                    <MobileAuth user={user} profile={profile} />
-                )}
-                {activeTab === "pos" && user && <MobilePOS profile={profile} />}
-                {activeTab === "orders" && user && (
-                    <MobileOrders profile={profile} />
-                )}
-            </div> */}
 
             <div className="p-4">
                 {activeTab === "pos" && user && <MobilePOS profile={profile} />}

@@ -1,3 +1,4 @@
+//components/mobile/MobileOrders.tsx
 "use client";
 import { useState, useMemo } from "react";
 import useOrders from "@/lib/hooks/useOrders";
@@ -137,28 +138,6 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
             return dateA.localeCompare(dateB);
         });
     }, [ordersWithNumbers]);
-
-    // Group orders by date for mobile display
-    // const groupedOrders = useMemo(() => {
-    //     const groups: { [key: string]: typeof processedOrders } = {};
-
-    //     processedOrders.forEach((order) => {
-    //         const dateKey = formatMobileDate(order.created_at);
-    //         if (!groups[dateKey]) {
-    //             groups[dateKey] = [];
-    //         }
-    //         groups[dateKey].push(order);
-    //     });
-
-    //     return Object.entries(groups).sort(([dateA], [dateB]) => {
-    //         // Custom sort to ensure Today comes first, then Yesterday, etc.
-    //         if (dateA === "Today") return -1;
-    //         if (dateB === "Today") return 1;
-    //         if (dateA === "Yesterday") return -1;
-    //         if (dateB === "Yesterday") return 1;
-    //         return dateA.localeCompare(dateB);
-    //     });
-    // }, [processedOrders]);
 
     // Add this helper function after the existing formatTime function:
     const formatFullDate = (dateString: string) => {
@@ -317,24 +296,6 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
                                         }
                                     >
                                         <div className="flex justify-between items-start mb-2">
-                                            {/* <div className="flex-1">
-                                                <div className="flex items-center space-x-2">
-                                                    <span className="text-sm font-medium text-gray-600">
-                                                        Order #
-                                                        {order.orderNumber} •{" "}
-                                                        {formatTime(
-                                                            order.created_at
-                                                        )}
-                                                    </span>
-                                                    <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
-                                                    <span className="text-sm text-gray-600">
-                                                        {order.stores?.name}
-                                                    </span>
-                                                </div>
-                                                <p className="text-sm text-gray-500 mt-1">
-                                                    {order.profiles?.full_name}
-                                                </p>
-                                            </div> */}
                                             <div className="flex-1">
                                                 <div>
                                                     <span className="text-sm font-medium text-gray-600">
@@ -554,36 +515,6 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
                     ))}
                 </div>
             )}
-
-            {/* Summary Stats */}
-            {/* {processedOrders.length > 0 && (
-                <div className="bg-white p-4 rounded-lg shadow-sm">
-                    <h3 className="font-semibold text-gray-800 mb-3">
-                        Summary
-                    </h3>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="text-center">
-                            <p className="text-2xl font-bold text-blue-600">
-                                {processedOrders.length}
-                            </p>
-                            <p className="text-sm text-gray-600">Orders</p>
-                        </div>
-                        <div className="text-center">
-                            <p className="text-2xl font-bold text-green-600">
-                                $
-                                {processedOrders
-                                    .reduce(
-                                        (sum, order) =>
-                                            sum + order.total_amount,
-                                        0
-                                    )
-                                    .toFixed(2)}
-                            </p>
-                            <p className="text-sm text-gray-600">Total Sales</p>
-                        </div>
-                    </div>
-                </div>
-            )} */}
         </div>
     );
 }

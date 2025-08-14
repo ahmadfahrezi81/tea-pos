@@ -15,8 +15,6 @@ export default function MobileAuth({ profile, mutate }: MobileAuthProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const supabase = createClient();
-    // Pull user profile reactively
-    // const { data: profile, mutate } = useProfile();
     const { data: stores = [], isLoading: storesLoading } = useStores(
         profile?.role ?? "",
         profile?.id ?? ""
