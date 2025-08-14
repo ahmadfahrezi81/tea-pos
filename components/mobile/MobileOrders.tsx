@@ -317,7 +317,7 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
                                         }
                                     >
                                         <div className="flex justify-between items-start mb-2">
-                                            <div className="flex-1">
+                                            {/* <div className="flex-1">
                                                 <div className="flex items-center space-x-2">
                                                     <span className="text-sm font-medium text-gray-600">
                                                         Order #
@@ -334,7 +334,27 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
                                                 <p className="text-sm text-gray-500 mt-1">
                                                     {order.profiles?.full_name}
                                                 </p>
+                                            </div> */}
+                                            <div className="flex-1">
+                                                <div>
+                                                    <span className="text-sm font-medium text-gray-600">
+                                                        Order #
+                                                        {order.orderNumber} •{" "}
+                                                        {formatTime(
+                                                            order.created_at
+                                                        )}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-sm text-gray-600">
+                                                        {order.stores?.name}
+                                                    </span>
+                                                </div>
+                                                <p className="text-sm text-gray-500 mt-1">
+                                                    {order.profiles?.full_name}
+                                                </p>
                                             </div>
+
                                             <div className="text-right flex items-center space-x-2">
                                                 <div>
                                                     <p className="text-lg font-bold text-green-600">
