@@ -12,6 +12,7 @@ import {
     TrendingUp,
     AlertCircle,
 } from "lucide-react";
+import { formatRupiah } from "@/lib/utils/formatCurrency";
 
 interface DailySummary {
     id: string;
@@ -337,8 +338,9 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                 Sales
                                             </p>
                                             <p className="text-lg font-bold text-green-600">
-                                                $
-                                                {summary.total_sales.toFixed(2)}
+                                                {formatRupiah(
+                                                    summary.total_sales
+                                                )}
                                             </p>
                                         </div>
                                         <div>
@@ -346,9 +348,8 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                 Expected
                                             </p>
                                             <p className="text-lg font-bold text-blue-600">
-                                                $
-                                                {summary.expected_cash.toFixed(
-                                                    2
+                                                {formatRupiah(
+                                                    summary.expected_cash
                                                 )}
                                             </p>
                                         </div>
@@ -363,11 +364,11 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                         : "text-red-600"
                                                 }`}
                                             >
-                                                Variance: $
+                                                Variance:
                                                 {summary.variance >= 0
                                                     ? "+"
                                                     : ""}
-                                                {summary.variance.toFixed(2)}
+                                                {formatRupiah(summary.variance)}
                                             </p>
                                         </div>
                                     )}
@@ -382,9 +383,8 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                     Opening Balance
                                                 </p>
                                                 <p className="font-semibold">
-                                                    $
-                                                    {summary.opening_balance.toFixed(
-                                                        2
+                                                    {formatRupiah(
+                                                        summary.opening_balance
                                                     )}
                                                 </p>
                                             </div>
@@ -395,8 +395,8 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                 <p className="font-semibold">
                                                     {summary.actual_cash !==
                                                     null
-                                                        ? `$${summary.actual_cash.toFixed(
-                                                              2
+                                                        ? `${formatRupiah(
+                                                              summary.actual_cash
                                                           )}`
                                                         : "Not counted"}
                                                 </p>
@@ -566,7 +566,8 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                 </label>
                                 <input
                                     type="number"
-                                    step="0.01"
+                                    step="100"
+                                    min={0}
                                     value={openingForm.opening_balance}
                                     onChange={(e) =>
                                         setOpeningForm({
@@ -617,13 +618,17 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                     Expected Cash
                                 </p>
                                 <p className="text-2xl font-bold text-blue-600">
-                                    ${selectedSummary.expected_cash.toFixed(2)}
+                                    {formatRupiah(
+                                        selectedSummary.expected_cash
+                                    )}
                                 </p>
                                 <p className="text-sm text-blue-600">
-                                    Opening: $
-                                    {selectedSummary.opening_balance.toFixed(2)}{" "}
-                                    + Sales: $
-                                    {selectedSummary.total_sales.toFixed(2)}
+                                    Opening:
+                                    {formatRupiah(
+                                        selectedSummary.opening_balance
+                                    )}{" "}
+                                    + Sales:
+                                    {formatRupiah(selectedSummary.total_sales)}
                                 </p>
                             </div>
 
@@ -637,7 +642,8 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                     </label>
                                     <input
                                         type="number"
-                                        step="0.01"
+                                        step="100"
+                                        min={0}
                                         value={closeForm.actual_cash}
                                         onChange={(e) =>
                                             setCloseForm({
@@ -679,13 +685,13 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                         }`}
                                     >
                                         <p className="font-medium">
-                                            Variance: $
-                                            {(
-                                                parseFloat(
+                                            Variance:{" "}
+                                            {formatRupiah(
+                                                parseInt(
                                                     closeForm.actual_cash
                                                 ) -
-                                                selectedSummary.expected_cash
-                                            ).toFixed(2)}
+                                                    selectedSummary.expected_cash
+                                            )}
                                         </p>
                                     </div>
                                 )}
