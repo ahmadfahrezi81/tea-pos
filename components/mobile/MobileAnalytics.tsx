@@ -841,6 +841,30 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
         }
     }, [stores, selectedStore]);
 
+    // useEffect(() => {
+    //     if (!selectedStore) return;
+
+    //     const channel = supabase
+    //         .channel("orders_changes")
+    //         .on(
+    //             "postgres_changes",
+    //             {
+    //                 event: "*",
+    //                 schema: "public",
+    //                 table: "orders",
+    //                 filter: `store_id=eq.${selectedStore}`,
+    //             },
+    //             () => {
+    //                 mutate(); // revalidate when orders change too
+    //             }
+    //         )
+    //         .subscribe();
+
+    //     return () => {
+    //         supabase.removeChannel(channel);
+    //     };
+    // }, [selectedStore, supabase, mutate]);
+
     const calculateTotalSales = async (storeId: string, date: string) => {
         const { data: orders } = await supabase
             .from("orders")
@@ -851,105 +875,6 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
 
         return orders?.reduce((sum, order) => sum + order.total_amount, 0) || 0;
     };
-
-    // const createDailySummary = async () => {
-    //     if (!selectedStore || !selectedDate) return;
-
-    //     try {
-    //         const {
-    //             data: { user },
-    //         } = await supabase.auth.getUser();
-    //         if (!user) return;
-
-    //         // Check if summary already exists
-    //         const { data: existing } = await supabase
-    //             .from("daily_summaries")
-    //             .select("id")
-    //             .eq("store_id", selectedStore)
-    //             .eq("date", selectedDate)
-    //             .single();
-
-    //         if (existing) {
-    //             showToast(
-    //                 "Daily summary already exists for this date",
-    //                 "error"
-    //             );
-    //             return;
-    //         }
-
-    //         const totalSales = await calculateTotalSales(
-    //             selectedStore,
-    //             selectedDate
-    //         );
-    //         const defaultSeller = sellers.length > 0 ? sellers[0].id : user.id;
-
-    //         const { error } = await supabase.from("daily_summaries").insert({
-    //             store_id: selectedStore,
-    //             seller_id: defaultSeller,
-    //             manager_id: user.id,
-    //             date: selectedDate,
-    //             opening_balance: 0,
-    //             total_sales: totalSales,
-    //             expected_cash: totalSales,
-    //         });
-
-    //         if (error) throw error;
-
-    //         showToast("Daily summary created successfully", "success");
-    //         mutate();
-    //     } catch (error) {
-    //         showToast("Failed to create daily summary", "error");
-    //         console.error(error);
-    //     }
-    // };
-
-    // Inside MobileAnalytics component:
-
-    // const handleOpenStoreToday = async () => {
-    //     if (!selectedStore) return;
-
-    //     try {
-    //         const {
-    //             data: { user },
-    //         } = await supabase.auth.getUser();
-    //         if (!user) return;
-
-    //         const todayStr = new Date().toISOString().split("T")[0];
-
-    //         // Check if already exists
-    //         const { data: existing } = await supabase
-    //             .from("daily_summaries")
-    //             .select("id")
-    //             .eq("store_id", selectedStore)
-    //             .eq("date", todayStr)
-    //             .single();
-
-    //         if (existing) {
-    //             showToast("Daily summary already exists for today", "error");
-    //             return;
-    //         }
-
-    //         const defaultSeller = sellers.length > 0 ? sellers[0].id : user.id;
-
-    //         const { error } = await supabase.from("daily_summaries").insert({
-    //             store_id: selectedStore,
-    //             seller_id: defaultSeller,
-    //             manager_id: user.id,
-    //             date: todayStr,
-    //             opening_balance: 0,
-    //             total_sales: 0,
-    //             expected_cash: 0,
-    //         });
-
-    //         if (error) throw error;
-
-    //         showToast("Store opened for today", "success");
-    //         mutate();
-    //     } catch (error) {
-    //         showToast("Failed to open store", "error");
-    //         console.error(error);
-    //     }
-    // };
 
     const handleOpenStoreToday = async () => {
         if (!selectedStore) return;
@@ -1156,124 +1081,6 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                 </div>
             </div>
 
-            {/* Daily Summaries */}
-            {/* {selectedStore && (
-                <div className="space-y-3">
-                    <div
-                        onClick={handleOpenStoreToday}
-                        className="bg-white rounded-lg shadow-sm p-4 cursor-pointer hover:bg-gray-50 transition"
-                    >
-                        <h3 className="font-semibold text-gray-800">
-                            Open store for{" "}
-                            {stores.find((s) => s.id === selectedStore)?.name}{" "}
-                            Today (
-                            {new Date().toLocaleDateString("en-US", {
-                                weekday: "long",
-                                day: "numeric",
-                                month: "short",
-                            })}
-                            )
-                        </h3>
-                        <p className="text-sm text-gray-600 mt-1">
-                            Creates a daily summary with zero balances for
-                            today.
-                        </p>
-                    </div>
-                    {summaries.length === 0 ? (
-                        <div className="bg-white p-8 rounded-lg shadow-sm text-center">
-                            <Calendar
-                                size={48}
-                                className="mx-auto text-gray-400 mb-4"
-                            />
-                            <p className="text-gray-600 mb-4">
-                                No daily summary found for selected dates
-                            </p>
-                            <button
-                                onClick={createDailySummary}
-                                className="bg-blue-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-600"
-                            >
-                                Create Today&apos;s Summary
-                            </button>
-                        </div>
-                    ) : (
-                        summaries.map((summary) => (
-                            <div
-                                key={summary.id}
-                                className="bg-white rounded-lg shadow-sm overflow-hidden"
-                            >
-                                <div
-                                    className="p-4 cursor-pointer"
-                                    onClick={() =>
-                                        setExpandedSummary(
-                                            expandedSummary === summary.id
-                                                ? null
-                                                : summary.id
-                                        )
-                                    }
-                                >
-                                    <div className="flex justify-between items-start mb-2">
-                                        <div>
-                                            <h3 className="font-semibold text-gray-800">
-                                                {formatDate(summary.date)}
-                                            </h3>
-                                            <p className="text-sm text-gray-600">
-                                                {summary.seller?.full_name}
-                                            </p>
-                                        </div>
-                                        <div className="text-right">
-                                            {summary.closed_at ? (
-                                                <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
-                                                    Closed
-                                                </span>
-                                            ) : (
-                                                <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
-                                                    Open
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <p className="text-xs text-gray-500">
-                                                Sales
-                                            </p>
-                                            <p className="text-lg font-bold text-green-600">
-                                                {formatRupiah(
-                                                    summary.total_sales
-                                                )}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-gray-500">
-                                                Expected
-                                            </p>
-                                            <p className="text-lg font-bold text-blue-600">
-                                                {formatRupiah(
-                                                    summary.expected_cash
-                                                )}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    {summary.variance !== null && (
-                                        <div className="mt-2">
-                                            <p
-                                                className={`text-sm font-medium ${
-                                                    summary.variance >= 0
-                                                        ? "text-green-600"
-                                                        : "text-red-600"
-                                                }`}
-                                            >
-                                                Variance:
-                                                {summary.variance >= 0
-                                                    ? "+"
-                                                    : ""}
-                                                {formatRupiah(summary.variance)}
-                                            </p>
-                                        </div>
-                                    )}
-                                </div> */}
             {selectedStore && (
                 <div className="space-y-3">
                     {!hasOpenToday && (
@@ -1285,13 +1092,6 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                         ?.name
                                 }
                                 {'" '}
-                                {/* Today on{" "}
-                                {new Date().toLocaleDateString("en-US", {
-                                    weekday: "long",
-                                    day: "numeric",
-                                    month: "short",
-                                })}
-                                {"."} */}
                             </h3>
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4">
                                 <p className="text-sm text-gray-600">
@@ -1324,205 +1124,6 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                             </p>
                         </div>
                     ) : (
-                        // summaries.map((summary) => (
-                        //     <div
-                        //         key={summary.id}
-                        //         className="bg-white rounded-lg shadow-sm overflow-hidden"
-                        //     >
-                        //         <div
-                        //             className="p-4 cursor-pointer"
-                        //             onClick={() =>
-                        //                 setExpandedSummary(
-                        //                     expandedSummary === summary.id
-                        //                         ? null
-                        //                         : summary.id
-                        //                 )
-                        //             }
-                        //         >
-                        //             <div className="flex justify-between items-start mb-2">
-                        //                 <div>
-                        //                     <h3 className="font-semibold text-gray-800">
-                        //                         {formatDate(summary.date)}
-                        //                     </h3>
-                        //                     <p className="text-sm text-gray-600">
-                        //                         {summary.seller?.full_name}
-                        //                     </p>
-                        //                 </div>
-                        //                 <div className="text-right">
-                        //                     {summary.closed_at ? (
-                        //                         <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
-                        //                             Closed
-                        //                         </span>
-                        //                     ) : (
-                        //                         <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
-                        //                             Open
-                        //                         </span>
-                        //                     )}
-                        //                 </div>
-                        //             </div>
-
-                        //             <div className="grid grid-cols-2 gap-4">
-                        //                 <div>
-                        //                     <p className="text-xs text-gray-500">
-                        //                         Sales
-                        //                     </p>
-                        //                     <p className="text-lg font-bold text-green-600">
-                        //                         {formatRupiah(
-                        //                             summary.total_sales
-                        //                         )}
-                        //                     </p>
-                        //                 </div>
-                        //                 <div>
-                        //                     <p className="text-xs text-gray-500">
-                        //                         Expected
-                        //                     </p>
-                        //                     <p className="text-lg font-bold text-blue-600">
-                        //                         {formatRupiah(
-                        //                             summary.expected_cash
-                        //                         )}
-                        //                     </p>
-                        //                 </div>
-                        //                 {expandedSummary === summary.id ? (
-                        //                     <ChevronUp
-                        //                         size={20}
-                        //                         className="text-gray-400"
-                        //                     />
-                        //                 ) : (
-                        //                     <ChevronDown
-                        //                         size={20}
-                        //                         className="text-gray-400"
-                        //                     />
-                        //                 )}
-                        //             </div>
-
-                        //             {summary.variance !== null && (
-                        //                 <div className="mt-2">
-                        //                     <p
-                        //                         className={`text-sm font-medium ${
-                        //                             summary.variance >= 0
-                        //                                 ? "text-green-600"
-                        //                                 : "text-red-600"
-                        //                         }`}
-                        //                     >
-                        //                         Variance:{" "}
-                        //                         {summary.variance >= 0
-                        //                             ? "+"
-                        //                             : ""}
-                        //                         {formatRupiah(summary.variance)}
-                        //                     </p>
-                        //                 </div>
-                        //             )}
-                        //         </div>
-
-                        //         {/* Expanded Details */}
-                        //         {expandedSummary === summary.id && (
-                        //             <div className="border-t border-gray-100 p-4 bg-gray-50 space-y-4">
-                        //                 <div className="grid grid-cols-2 gap-4">
-                        //                     <div>
-                        //                         <p className="text-xs text-gray-500 mb-1">
-                        //                             Opening Balance
-                        //                         </p>
-                        //                         <p className="font-semibold">
-                        //                             {formatRupiah(
-                        //                                 summary.opening_balance
-                        //                             )}
-                        //                         </p>
-                        //                     </div>
-                        //                     <div>
-                        //                         <p className="text-xs text-gray-500 mb-1">
-                        //                             Actual Cash
-                        //                         </p>
-                        //                         <p className="font-semibold">
-                        //                             {summary.actual_cash !==
-                        //                             null
-                        //                                 ? `${formatRupiah(
-                        //                                       summary.actual_cash
-                        //                                   )}`
-                        //                                 : "Not counted"}
-                        //                         </p>
-                        //                     </div>
-                        //                 </div>
-
-                        //                 {summary.notes && (
-                        //                     <div>
-                        //                         <p className="text-xs text-gray-500 mb-1">
-                        //                             Notes
-                        //                         </p>
-                        //                         <p className="text-sm text-gray-700 bg-white p-2 rounded">
-                        //                             {summary.notes}
-                        //                         </p>
-                        //                     </div>
-                        //                 )}
-
-                        //                 {summary.closed_at && (
-                        //                     <div className="text-xs text-gray-500">
-                        //                         Closed:{" "}
-                        //                         {new Date(
-                        //                             summary.closed_at
-                        //                         ).toLocaleString()}
-                        //                     </div>
-                        //                 )}
-
-                        //                 {!summary.closed_at && (
-                        //                     <div className="flex space-x-2">
-                        //                         <button
-                        //                             onClick={(e) => {
-                        //                                 e.stopPropagation();
-                        //                                 setSelectedSummary(
-                        //                                     summary
-                        //                                 );
-                        //                                 setEditForm({
-                        //                                     seller_id:
-                        //                                         summary.seller_id,
-                        //                                     opening_balance:
-                        //                                         summary.opening_balance.toString(),
-                        //                                 });
-                        //                                 setShowEditForm(true);
-                        //                             }}
-                        //                             className="flex-1 bg-gray-500 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-600 flex items-center justify-center"
-                        //                         >
-                        //                             <Edit3
-                        //                                 size={16}
-                        //                                 className="mr-1"
-                        //                             />
-                        //                             Edit
-                        //                         </button>
-                        //                         <button
-                        //                             onClick={(e) => {
-                        //                                 e.stopPropagation();
-                        //                                 refreshSales(summary);
-                        //                             }}
-                        //                             className="flex-1 bg-blue-500 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-600 flex items-center justify-center"
-                        //                         >
-                        //                             <RefreshCw
-                        //                                 size={16}
-                        //                                 className="mr-1"
-                        //                             />
-                        //                             Refresh
-                        //                         </button>
-                        //                         <button
-                        //                             onClick={(e) => {
-                        //                                 e.stopPropagation();
-                        //                                 setSelectedSummary(
-                        //                                     summary
-                        //                                 );
-                        //                                 setCloseForm({
-                        //                                     actual_cash:
-                        //                                         summary.expected_cash.toString(),
-                        //                                     notes: "",
-                        //                                 });
-                        //                                 setShowCloseForm(true);
-                        //                             }}
-                        //                             className="flex-1 bg-red-500 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-600"
-                        //                         >
-                        //                             Close Day
-                        //                         </button>
-                        //                     </div>
-                        //                 )}
-                        //             </div>
-                        //         )}
-                        //     </div>
-                        // ))
                         summaries.map((summary) => (
                             <div
                                 key={summary.id}
