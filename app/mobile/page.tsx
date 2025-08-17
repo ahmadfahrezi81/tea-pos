@@ -10,7 +10,7 @@ import { useProfile } from "@/lib/hooks/useData";
 import { BarChart3 } from "lucide-react"; // Add this import
 import MobileAnalytics from "@/components/mobile/MobileAnalytics";
 
-type TabType = "auth" | "pos" | "orders" | "analytics";
+type TabType = "auth" | "pos" | "orders" | "sales";
 
 export default function MobilePage() {
     const [activeTab, setActiveTab] = useState<TabType>("auth");
@@ -108,8 +108,8 @@ export default function MobilePage() {
             show: !!user,
         },
         {
-            id: "analytics" as TabType,
-            label: "Analytics",
+            id: "sales" as TabType,
+            label: "Sales",
             icon: BarChart3,
             show: !!user && profile?.role === "manager",
         },
@@ -143,7 +143,7 @@ export default function MobilePage() {
                 {activeTab === "orders" && user && (
                     <MobileOrders profile={profile} />
                 )}
-                {activeTab === "analytics" &&
+                {activeTab === "sales" &&
                     user &&
                     profile?.role === "manager" && (
                         <MobileAnalytics profile={profile} />
