@@ -1192,7 +1192,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                             )}
                                         </div>
 
-                                        <div className="text-right flex flex-col items-end space-y-2">
+                                        <div className="text-right flex items-center space-x-2">
                                             <div>
                                                 {summary.closed_at ? (
                                                     <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
@@ -1204,20 +1204,17 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                     </span>
                                                 )}
                                             </div>
-                                            <div>
-                                                {expandedSummary ===
-                                                summary.id ? (
-                                                    <ChevronUp
-                                                        size={20}
-                                                        className="text-gray-400"
-                                                    />
-                                                ) : (
-                                                    <ChevronDown
-                                                        size={20}
-                                                        className="text-gray-400"
-                                                    />
-                                                )}
-                                            </div>
+                                            {expandedSummary === summary.id ? (
+                                                <ChevronUp
+                                                    size={20}
+                                                    className="text-gray-400"
+                                                />
+                                            ) : (
+                                                <ChevronDown
+                                                    size={20}
+                                                    className="text-gray-400"
+                                                />
+                                            )}
                                         </div>
                                     </div>
                                 </div>
