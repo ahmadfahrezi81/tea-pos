@@ -251,33 +251,39 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                                 className="bg-white rounded-xl shadow-sm overflow-hidden select-none"
                             >
                                 <div
-                                    className="p-[0.8rem] cursor-pointer"
+                                    className="p-[0.5rem] cursor-pointer"
                                     onClick={() =>
                                         !cartItem && addToCart(product)
                                     }
                                 >
                                     {/* Product Image */}
                                     {product.image_url && (
-                                        <div className="flex-shrink-0">
-                                            <Image
-                                                src={product.image_url}
-                                                alt={product.name}
-                                                width={70} // smaller size for compact grid
-                                                height={70}
-                                                className="rounded object-cover"
-                                            />
+                                        <div className="flex gap-1 rounded-lg p-1">
+                                            <div className="flex-shrink-0 p-1 rounded-lg">
+                                                <Image
+                                                    src={product.image_url}
+                                                    alt={product.name}
+                                                    width={50} // smaller size for compact grid
+                                                    height={50}
+                                                    className="rounded object-cover"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <h3 className="font-semibold text-gray-800 text-xl">
+                                                    {product.name}
+                                                </h3>
+                                                <p className="text-xl font-bold text-green-600 mb-2">
+                                                    {formatRupiah(
+                                                        product.price
+                                                    )}
+                                                </p>
+                                            </div>
                                         </div>
                                     )}
 
-                                    <h3 className="font-semibold text-gray-800 text-xl">
-                                        {product.name}
-                                    </h3>
-                                    <p className="text-xl font-bold text-green-600 mb-2">
-                                        {formatRupiah(product.price)}
-                                    </p>
-
                                     {!cartItem ? (
-                                        <div className="text-center text-blue-600 text-sm font-medium py-2">
+                                        <div className="text-center text-white text-sm font-medium py-3.5 bg-blue-500 rounded-xl">
                                             Tap to add
                                         </div>
                                     ) : (
