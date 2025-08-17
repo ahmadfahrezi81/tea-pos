@@ -739,7 +739,14 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAnalyticsData } from "@/lib/hooks/useAnalyticsData";
 import { Profile } from "@/lib/types";
-import { RefreshCw, X, Calendar, Edit3 } from "lucide-react";
+import {
+    RefreshCw,
+    X,
+    Calendar,
+    Edit3,
+    ChevronDown,
+    ChevronUp,
+} from "lucide-react";
 import { formatRupiah } from "@/lib/utils/formatCurrency";
 
 interface DailySummary {
@@ -834,6 +841,30 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
         }
     }, [stores, selectedStore]);
 
+    // useEffect(() => {
+    //     if (!selectedStore) return;
+
+    //     const channel = supabase
+    //         .channel("orders_changes")
+    //         .on(
+    //             "postgres_changes",
+    //             {
+    //                 event: "*",
+    //                 schema: "public",
+    //                 table: "orders",
+    //                 filter: `store_id=eq.${selectedStore}`,
+    //             },
+    //             () => {
+    //                 mutate(); // revalidate when orders change too
+    //             }
+    //         )
+    //         .subscribe();
+
+    //     return () => {
+    //         supabase.removeChannel(channel);
+    //     };
+    // }, [selectedStore, supabase, mutate]);
+
     const calculateTotalSales = async (storeId: string, date: string) => {
         const { data: orders } = await supabase
             .from("orders")
@@ -844,105 +875,6 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
 
         return orders?.reduce((sum, order) => sum + order.total_amount, 0) || 0;
     };
-
-    // const createDailySummary = async () => {
-    //     if (!selectedStore || !selectedDate) return;
-
-    //     try {
-    //         const {
-    //             data: { user },
-    //         } = await supabase.auth.getUser();
-    //         if (!user) return;
-
-    //         // Check if summary already exists
-    //         const { data: existing } = await supabase
-    //             .from("daily_summaries")
-    //             .select("id")
-    //             .eq("store_id", selectedStore)
-    //             .eq("date", selectedDate)
-    //             .single();
-
-    //         if (existing) {
-    //             showToast(
-    //                 "Daily summary already exists for this date",
-    //                 "error"
-    //             );
-    //             return;
-    //         }
-
-    //         const totalSales = await calculateTotalSales(
-    //             selectedStore,
-    //             selectedDate
-    //         );
-    //         const defaultSeller = sellers.length > 0 ? sellers[0].id : user.id;
-
-    //         const { error } = await supabase.from("daily_summaries").insert({
-    //             store_id: selectedStore,
-    //             seller_id: defaultSeller,
-    //             manager_id: user.id,
-    //             date: selectedDate,
-    //             opening_balance: 0,
-    //             total_sales: totalSales,
-    //             expected_cash: totalSales,
-    //         });
-
-    //         if (error) throw error;
-
-    //         showToast("Daily summary created successfully", "success");
-    //         mutate();
-    //     } catch (error) {
-    //         showToast("Failed to create daily summary", "error");
-    //         console.error(error);
-    //     }
-    // };
-
-    // Inside MobileAnalytics component:
-
-    // const handleOpenStoreToday = async () => {
-    //     if (!selectedStore) return;
-
-    //     try {
-    //         const {
-    //             data: { user },
-    //         } = await supabase.auth.getUser();
-    //         if (!user) return;
-
-    //         const todayStr = new Date().toISOString().split("T")[0];
-
-    //         // Check if already exists
-    //         const { data: existing } = await supabase
-    //             .from("daily_summaries")
-    //             .select("id")
-    //             .eq("store_id", selectedStore)
-    //             .eq("date", todayStr)
-    //             .single();
-
-    //         if (existing) {
-    //             showToast("Daily summary already exists for today", "error");
-    //             return;
-    //         }
-
-    //         const defaultSeller = sellers.length > 0 ? sellers[0].id : user.id;
-
-    //         const { error } = await supabase.from("daily_summaries").insert({
-    //             store_id: selectedStore,
-    //             seller_id: defaultSeller,
-    //             manager_id: user.id,
-    //             date: todayStr,
-    //             opening_balance: 0,
-    //             total_sales: 0,
-    //             expected_cash: 0,
-    //         });
-
-    //         if (error) throw error;
-
-    //         showToast("Store opened for today", "success");
-    //         mutate();
-    //     } catch (error) {
-    //         showToast("Failed to open store", "error");
-    //         console.error(error);
-    //     }
-    // };
 
     const handleOpenStoreToday = async () => {
         if (!selectedStore) return;
@@ -1149,150 +1081,36 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                 </div>
             </div>
 
-            {/* Daily Summaries */}
-            {/* {selectedStore && (
-                <div className="space-y-3">
-                    <div
-                        onClick={handleOpenStoreToday}
-                        className="bg-white rounded-lg shadow-sm p-4 cursor-pointer hover:bg-gray-50 transition"
-                    >
-                        <h3 className="font-semibold text-gray-800">
-                            Open store for{" "}
-                            {stores.find((s) => s.id === selectedStore)?.name}{" "}
-                            Today (
-                            {new Date().toLocaleDateString("en-US", {
-                                weekday: "long",
-                                day: "numeric",
-                                month: "short",
-                            })}
-                            )
-                        </h3>
-                        <p className="text-sm text-gray-600 mt-1">
-                            Creates a daily summary with zero balances for
-                            today.
-                        </p>
-                    </div>
-                    {summaries.length === 0 ? (
-                        <div className="bg-white p-8 rounded-lg shadow-sm text-center">
-                            <Calendar
-                                size={48}
-                                className="mx-auto text-gray-400 mb-4"
-                            />
-                            <p className="text-gray-600 mb-4">
-                                No daily summary found for selected dates
-                            </p>
-                            <button
-                                onClick={createDailySummary}
-                                className="bg-blue-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-600"
-                            >
-                                Create Today&apos;s Summary
-                            </button>
-                        </div>
-                    ) : (
-                        summaries.map((summary) => (
-                            <div
-                                key={summary.id}
-                                className="bg-white rounded-lg shadow-sm overflow-hidden"
-                            >
-                                <div
-                                    className="p-4 cursor-pointer"
-                                    onClick={() =>
-                                        setExpandedSummary(
-                                            expandedSummary === summary.id
-                                                ? null
-                                                : summary.id
-                                        )
-                                    }
-                                >
-                                    <div className="flex justify-between items-start mb-2">
-                                        <div>
-                                            <h3 className="font-semibold text-gray-800">
-                                                {formatDate(summary.date)}
-                                            </h3>
-                                            <p className="text-sm text-gray-600">
-                                                {summary.seller?.full_name}
-                                            </p>
-                                        </div>
-                                        <div className="text-right">
-                                            {summary.closed_at ? (
-                                                <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
-                                                    Closed
-                                                </span>
-                                            ) : (
-                                                <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
-                                                    Open
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <p className="text-xs text-gray-500">
-                                                Sales
-                                            </p>
-                                            <p className="text-lg font-bold text-green-600">
-                                                {formatRupiah(
-                                                    summary.total_sales
-                                                )}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-gray-500">
-                                                Expected
-                                            </p>
-                                            <p className="text-lg font-bold text-blue-600">
-                                                {formatRupiah(
-                                                    summary.expected_cash
-                                                )}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    {summary.variance !== null && (
-                                        <div className="mt-2">
-                                            <p
-                                                className={`text-sm font-medium ${
-                                                    summary.variance >= 0
-                                                        ? "text-green-600"
-                                                        : "text-red-600"
-                                                }`}
-                                            >
-                                                Variance:
-                                                {summary.variance >= 0
-                                                    ? "+"
-                                                    : ""}
-                                                {formatRupiah(summary.variance)}
-                                            </p>
-                                        </div>
-                                    )}
-                                </div> */}
             {selectedStore && (
                 <div className="space-y-3">
                     {!hasOpenToday && (
-                        <button
-                            onClick={handleOpenStoreToday}
-                            className="w-full text-left bg-white rounded-lg shadow-sm p-4 cursor-pointer hover:bg-gray-50 transition"
-                        >
+                        <div className="w-full bg-white rounded-lg shadow-md p-6 cursor-pointer hover:bg-gray-50 transition">
                             <h3 className="font-semibold text-gray-800">
-                                Open store for{" "}
+                                Open store Today for{' "'}
                                 {
                                     stores.find((s) => s.id === selectedStore)
                                         ?.name
-                                }{" "}
-                                Today (
-                                {new Date().toLocaleDateString("en-US", {
-                                    weekday: "long",
-                                    day: "numeric",
-                                    month: "short",
-                                })}
-                                )
+                                }
+                                {'" '}
                             </h3>
-                            <p className="text-sm text-gray-600 mt-1">
-                                Creates a daily summary with zero balances for
-                                today.
-                            </p>
-                        </button>
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4">
+                                <p className="text-sm text-gray-600">
+                                    Opening the store will initialize a summary
+                                    with zero balances.
+                                </p>
+                                <button
+                                    className="bg-blue-600 text-white text-sm font-medium py-2.5 px-5 rounded-lg hover:bg-blue-700 transition"
+                                    onClick={handleOpenStoreToday}
+                                >
+                                    Open Store on{" "}
+                                    {new Date().toLocaleDateString("en-US", {
+                                        weekday: "long",
+                                        day: "numeric",
+                                        month: "short",
+                                    })}
+                                </button>
+                            </div>
+                        </div>
                     )}
 
                     {summaries.length === 0 ? (
@@ -1322,67 +1140,83 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                     }
                                 >
                                     <div className="flex justify-between items-start mb-2">
-                                        <div>
-                                            <h3 className="font-semibold text-gray-800">
+                                        <div className="flex-1">
+                                            <h3 className="text-sm font-medium text-gray-600">
                                                 {formatDate(summary.date)}
                                             </h3>
-                                            <p className="text-sm text-gray-600">
+                                            <p className="text-sm text-gray-500">
                                                 {summary.seller?.full_name}
                                             </p>
+                                            <div className="flex gap-4 mt-2">
+                                                <div>
+                                                    <p className="text-xs text-gray-500">
+                                                        Sales
+                                                    </p>
+                                                    <p className="text-lg font-bold text-green-600">
+                                                        {formatRupiah(
+                                                            summary.total_sales
+                                                        )}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-gray-500">
+                                                        Expected
+                                                    </p>
+                                                    <p className="text-lg font-bold text-blue-600">
+                                                        {formatRupiah(
+                                                            summary.expected_cash
+                                                        )}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {summary.variance !== null && (
+                                                <div className="mt-2">
+                                                    <p
+                                                        className={`text-sm font-medium ${
+                                                            summary.variance >=
+                                                            0
+                                                                ? "text-green-600"
+                                                                : "text-red-600"
+                                                        }`}
+                                                    >
+                                                        Variance:{" "}
+                                                        {summary.variance >= 0
+                                                            ? "+"
+                                                            : ""}
+                                                        {formatRupiah(
+                                                            summary.variance
+                                                        )}
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
-                                        <div className="text-right">
-                                            {summary.closed_at ? (
-                                                <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
-                                                    Closed
-                                                </span>
+
+                                        <div className="text-right flex items-center space-x-2">
+                                            <div>
+                                                {summary.closed_at ? (
+                                                    <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
+                                                        Closed
+                                                    </span>
+                                                ) : (
+                                                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                                                        Open
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {expandedSummary === summary.id ? (
+                                                <ChevronUp
+                                                    size={20}
+                                                    className="text-gray-400"
+                                                />
                                             ) : (
-                                                <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
-                                                    Open
-                                                </span>
+                                                <ChevronDown
+                                                    size={20}
+                                                    className="text-gray-400"
+                                                />
                                             )}
                                         </div>
                                     </div>
-
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <p className="text-xs text-gray-500">
-                                                Sales
-                                            </p>
-                                            <p className="text-lg font-bold text-green-600">
-                                                {formatRupiah(
-                                                    summary.total_sales
-                                                )}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-gray-500">
-                                                Expected
-                                            </p>
-                                            <p className="text-lg font-bold text-blue-600">
-                                                {formatRupiah(
-                                                    summary.expected_cash
-                                                )}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    {summary.variance !== null && (
-                                        <div className="mt-2">
-                                            <p
-                                                className={`text-sm font-medium ${
-                                                    summary.variance >= 0
-                                                        ? "text-green-600"
-                                                        : "text-red-600"
-                                                }`}
-                                            >
-                                                Variance:{" "}
-                                                {summary.variance >= 0
-                                                    ? "+"
-                                                    : ""}
-                                                {formatRupiah(summary.variance)}
-                                            </p>
-                                        </div>
-                                    )}
                                 </div>
 
                                 {/* Expanded Details */}
@@ -1406,9 +1240,9 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                 <p className="font-semibold">
                                                     {summary.actual_cash !==
                                                     null
-                                                        ? `${formatRupiah(
+                                                        ? formatRupiah(
                                                               summary.actual_cash
-                                                          )}`
+                                                          )
                                                         : "Not counted"}
                                                 </p>
                                             </div>
@@ -1458,6 +1292,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                     />
                                                     Edit
                                                 </button>
+
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
@@ -1471,6 +1306,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                     />
                                                     Refresh
                                                 </button>
+
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
