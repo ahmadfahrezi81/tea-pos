@@ -593,7 +593,7 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                                 key={product.id}
                                 className="bg-white rounded-xl shadow-sm overflow-hidden select-none relative cursor-pointer 
                hover:shadow-md transition-all duration-200 
-               active:scale-95 active:bg-blue-50"
+               active:scale-90 active:bg-blue-50"
                                 onClick={() => addToCart(product)}
                             >
                                 {/* Cart Counter Badge */}
