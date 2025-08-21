@@ -515,7 +515,7 @@ import { useState, useMemo, useEffect } from "react";
 import useOrders from "@/lib/hooks/useOrders";
 import { useStores } from "@/lib/hooks/useData";
 import { Profile, OrderItem } from "@/lib/types";
-import { Calendar, Calculator, CalendarDays } from "lucide-react";
+import { Calendar, Calculator, CalendarDays, StoreIcon } from "lucide-react";
 import { formatRupiah } from "@/lib/utils/formatCurrency";
 
 interface MobileOrdersProps {
@@ -700,6 +700,7 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
                     {stores.length > 1 && (
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <StoreIcon size={16} className="inline mr-1" />
                                 Select Store
                             </label>
                             <select
@@ -756,9 +757,13 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
                             <div className="p-3.5 bg-white">
                                 <div className="flex justify-between items-start">
                                     <div className="flex-1">
-                                        <p className="text-lg font-bold text-gray-800">
-                                            Order #{order.orderNumber}
-                                        </p>
+                                        <div className="flex items-center gap-1">
+                                            {/* <HandPlatter size={16} /> */}
+                                            <p className="text-lg font-bold text-gray-800">
+                                                Order #{order.orderNumber}
+                                            </p>
+                                        </div>
+
                                         {/* <div className="flex items-center gap-2 mb-1">
                                             <span className="text-lg font-bold text-gray-800">
                                                 Order #{order.orderNumber}

@@ -551,11 +551,13 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
             {/* Store Selection - Always show if stores exist */}
             {stores.length > 0 && (
                 <div className="bg-white p-4 rounded-lg shadow-sm">
-                    <div className="flex gap-1">
-                        <Store1 size={20} />
+                    <div className="flex items-center gap-2 mb-3">
+                        <Store1 size={20} className="text-gray-600" />
 
-                        <label className="block text-sm font-bold mb-2">
-                            {stores.length === 1 ? "Store" : "Select Store"}
+                        <label className="block text-base font-semibold">
+                            {stores.length === 1
+                                ? "Your Store"
+                                : "Select Store"}
                         </label>
                     </div>
 
