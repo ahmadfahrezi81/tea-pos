@@ -694,7 +694,7 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                                 {cart.length > 0 && (
                                     <button
                                         onClick={() => setCart([])}
-                                        className="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded-lg text-sm"
+                                        className="text-red-500 hover:text-red-700 p-1 px-2 hover:bg-red-50 text-sm border-1 rounded-full"
                                     >
                                         {/* <Trash2 size={20} /> */}
                                         Clear All
@@ -784,7 +784,7 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                                                                     1
                                                             )
                                                         }
-                                                        className="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600"
+                                                        className="w-8 h-8 bg-green-500 text-white rounded-lg flex items-center justify-center hover:bg-green-600"
                                                     >
                                                         <Plus size={18} />
                                                     </button>
@@ -818,7 +818,7 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                                         !selectedStore ||
                                         cart.length === 0
                                     }
-                                    className="w-full bg-green-500 text-white py-4 rounded-lg text-lg font-semibold hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full bg-green-500 text-white py-4 rounded-xl text-lg font-semibold hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {processing
                                         ? "Processing..."

@@ -9,7 +9,7 @@ import { User, ShoppingCart, Clock } from "lucide-react";
 import { useProfile } from "@/lib/hooks/useData";
 import { BarChart3 } from "lucide-react"; // Add this import
 import MobileAnalytics from "@/components/mobile/MobileAnalytics";
-import Image from "next/image";
+// import Image from "next/image";
 import { format } from "date-fns";
 
 type TabType = "auth" | "pos" | "orders" | "sales";
