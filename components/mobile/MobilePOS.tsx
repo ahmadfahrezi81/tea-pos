@@ -591,7 +591,9 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                         return (
                             <div
                                 key={product.id}
-                                className="bg-white rounded-xl shadow-sm overflow-hidden select-none relative cursor-pointer hover:shadow-md transition-shadow"
+                                className="bg-white rounded-xl shadow-sm overflow-hidden select-none relative cursor-pointer 
+               hover:shadow-md transition-all duration-200 
+               active:scale-95 active:bg-blue-50"
                                 onClick={() => addToCart(product)}
                             >
                                 {/* Cart Counter Badge */}
@@ -660,7 +662,7 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                                 disabled={processing || !selectedStore}
                                 className="px-6 py-2 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {processing ? "Processing..." : "Pay Now"}
+                                {processing ? "Processing..." : "Confirm Order"}
                             </button>
                         </div>
                     </div>
@@ -820,7 +822,7 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                                 >
                                     {processing
                                         ? "Processing..."
-                                        : "Continue to Pay"}
+                                        : "Confirm Order"}
                                 </button>
                             </div>
                         </div>
