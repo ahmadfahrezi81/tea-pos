@@ -598,7 +598,7 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                             >
                                 {/* Cart Counter Badge */}
                                 {quantityInCart > 0 && (
-                                    <div className="absolute top-2 right-2 z-10 bg-red-500 text-white rounded-lg w-6 h-6 text-sm flex items-center justify-center font-medium">
+                                    <div className="absolute top-2 right-2 z-5 bg-red-500 text-white rounded-lg w-6 h-6 text-sm flex items-center justify-center font-medium">
                                         {quantityInCart}
                                     </div>
                                 )}
