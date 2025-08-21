@@ -613,10 +613,10 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                                                 />
                                             </div>
                                             <div className="flex-1">
-                                                <h3 className="font-semibold text-gray-800 text-base leading-tight ">
+                                                <h3 className="font-bold text-gray-800 text-base leading-tight mt-1">
                                                     {product.name}
                                                 </h3>
-                                                <p className="text-lg font-bold text-green-600">
+                                                <p className="text-base font-semibold text-green-600">
                                                     {formatRupiah(
                                                         product.price
                                                     )}
@@ -730,7 +730,7 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                                                                 item.quantity
                                                         )}
                                                     </p>
-                                                    <button
+                                                    {/* <button
                                                         onClick={() =>
                                                             removeFromCart(
                                                                 item.product.id
@@ -739,12 +739,23 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                                                         className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded"
                                                     >
                                                         <Trash2 size={16} />
-                                                    </button>
+                                                    </button> */}
                                                 </div>
                                             </div>
 
                                             {/* Quantity Controls */}
                                             <div className="flex items-center justify-between">
+                                                <button
+                                                    onClick={() =>
+                                                        removeFromCart(
+                                                            item.product.id
+                                                        )
+                                                    }
+                                                    // className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded"
+                                                    className="w-8 h-8 text-red-500 rounded-full flex items-center justify-center border-1"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
                                                 <div className="flex items-center gap-3">
                                                     <button
                                                         onClick={() =>
@@ -756,7 +767,7 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                                                         }
                                                         className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300"
                                                     >
-                                                        <Minus size={16} />
+                                                        <Minus size={18} />
                                                     </button>
                                                     <span className="font-semibold text-lg w-8 text-center">
                                                         {item.quantity}
@@ -771,7 +782,7 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                                                         }
                                                         className="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600"
                                                     >
-                                                        <Plus size={16} />
+                                                        <Plus size={18} />
                                                     </button>
                                                 </div>
                                             </div>
@@ -784,7 +795,7 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                             {/* <div className="fixed bottom-16 left-0 right-0 bg-white border-y border-gray-400 p-4 z-40 "> */}
 
                             {/* <div className="mt-6 pt-4 border-t border-gray-200 "> */}
-                            <div className="sticky bottom-0 left-0 right-0 bg-white p-4 border-t border-gray-200">
+                            <div className="sticky bottom-0 left-0 right-0 bg-white pt-4 pb-4 border-t border-gray-200">
                                 <div className="flex justify-between items-center mb-4">
                                     <span className="text-xl font-bold text-gray-900">
                                         Total Transaction
