@@ -395,7 +395,14 @@
 import { useState, useEffect } from "react";
 import { useProducts, useStores } from "@/lib/hooks/useData";
 import { Profile, Product, CartItem, Store } from "@/lib/types";
-import { Plus, Minus, ShoppingCart, X, Trash2 } from "lucide-react";
+import {
+    Plus,
+    Minus,
+    ShoppingCart,
+    X,
+    Trash2,
+    Store as Store1,
+} from "lucide-react";
 import { formatRupiah } from "@/lib/utils/formatCurrency";
 import Image from "next/image";
 
@@ -544,9 +551,14 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
             {/* Store Selection - Always show if stores exist */}
             {stores.length > 0 && (
                 <div className="bg-white p-4 rounded-lg shadow-sm">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        {stores.length === 1 ? "Store" : "Select Store"}
-                    </label>
+                    <div className="flex gap-1">
+                        <Store1 size={20} />
+
+                        <label className="block text-sm font-bold mb-2">
+                            {stores.length === 1 ? "Store" : "Select Store"}
+                        </label>
+                    </div>
+
                     <select
                         value={selectedStore}
                         onChange={(e) => setSelectedStore(e.target.value)}
@@ -672,8 +684,8 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                             </button>
                         </div>
 
-                        <div className="p-4">
-                            <h4 className="text-lg font-medium text-gray-800 mb-4 flex items-center justify-between">
+                        <div className="px-4 pt-4">
+                            <h4 className="text-lg font-bold text-gray-800 mb-4 flex items-center justify-between">
                                 Current Order
                                 {cart.length > 0 && (
                                     <button
@@ -769,7 +781,10 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                             )}
 
                             {/* Cart Total and Actions */}
-                            <div className="mt-6 pt-4 border-t border-gray-200">
+                            {/* <div className="fixed bottom-16 left-0 right-0 bg-white border-y border-gray-400 p-4 z-40 "> */}
+
+                            {/* <div className="mt-6 pt-4 border-t border-gray-200 "> */}
+                            <div className="sticky bottom-0 left-0 right-0 bg-white p-4 border-t border-gray-200">
                                 <div className="flex justify-between items-center mb-4">
                                     <span className="text-xl font-bold text-gray-900">
                                         Total Transaction
