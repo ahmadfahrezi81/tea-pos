@@ -776,7 +776,6 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
                                             {order.profiles?.full_name}
                                         </div> */}
                                         <span className="text-sm text-gray-500">
-                                            Time:{" "}
                                             {formatFullTimestamp(
                                                 order.created_at
                                             )}
@@ -875,7 +874,7 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
                                                 (item: OrderItem) => (
                                                     <div
                                                         key={item.id}
-                                                        className="flex justify-between items-center bg-white p-2 rounded text-sm"
+                                                        className="flex justify-between items-center bg-white p-2.5 rounded-md text-sm"
                                                     >
                                                         <div className="flex-1">
                                                             <p className="font-medium">

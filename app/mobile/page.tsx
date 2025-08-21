@@ -9,6 +9,8 @@ import { User, ShoppingCart, Clock } from "lucide-react";
 import { useProfile } from "@/lib/hooks/useData";
 import { BarChart3 } from "lucide-react"; // Add this import
 import MobileAnalytics from "@/components/mobile/MobileAnalytics";
+import Image from "next/image";
+import { format } from "date-fns";
 
 type TabType = "auth" | "pos" | "orders" | "sales";
 
@@ -122,16 +124,31 @@ export default function MobilePage() {
     ].filter((tab) => tab.show);
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-20">
+        <div className="min-h-screen bg-gray-50 pb-20 select-none">
             {/* Header */}
             <div className="sticky top-0 z-40 bg-white shadow-sm p-4 flex justify-between items-center">
-                <h1 className="text-xl font-bold text-gray-800">
-                    {user ? `Hi, ${profile?.full_name}` : "Welcome"}
-                </h1>
+                <div className="flex gap-2 items-center">
+                    {/* <Image
+                        src={"/LEMONI-512x512.png"}
+                        alt={"Logo"}
+                        width={35}
+                        height={35}
+                        className="rounded object-cover"
+                    /> */}
+                    <div>
+                        <h1 className="text-base font-bold text-gray-800">
+                            {user ? `Hi, ${profile?.full_name}` : "Welcome"}
+                        </h1>
+                        <p className="text-sm text-gray-500">
+                            {format(new Date(), "MMMM dd, yyyy")}
+                        </p>
+                    </div>
+                </div>
+
                 {user && (
                     <button
                         onClick={handleLogout}
-                        className="text-sm text-red-600 hover:text-red-800"
+                        className="text-sm text-red-600 hover:text-red-800 border-1 p-1 px-4 rounded-2xl"
                     >
                         Logout
                     </button>
