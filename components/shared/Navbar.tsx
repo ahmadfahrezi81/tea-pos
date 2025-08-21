@@ -38,7 +38,7 @@ export default function Navbar() {
     };
 
     return (
-        <nav className="bg-white shadow-sm border-b z-10">
+        <nav className="bg-white shadow-sm border-b">
             <div className="container mx-auto px-4">
                 <div className="flex justify-between items-center h-16">
                     <Link href="/dashboard" className="text-xl font-bold">

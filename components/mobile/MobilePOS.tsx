@@ -598,7 +598,7 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                             >
                                 {/* Cart Counter Badge */}
                                 {quantityInCart > 0 && (
-                                    <div className="absolute top-2 right-2 z-5 bg-red-500 text-white rounded-lg w-6 h-6 text-sm flex items-center justify-center font-medium">
+                                    <div className="absolute top-2 right-2 z-0 bg-red-500 text-white rounded-lg w-6 h-6 text-sm flex items-center justify-center font-medium">
                                         {quantityInCart}
                                     </div>
                                 )}
@@ -653,16 +653,16 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                         <div className="flex gap-3">
                             <button
                                 onClick={() => setShowCart(true)}
-                                className="px-4 py-2 border border-blue-500 text-blue-500 rounded-lg font-medium hover:bg-blue-50"
+                                className="px-3 py-2 border border-blue-500 text-blue-500 rounded-lg font-medium hover:bg-blue-50"
                             >
                                 View Cart
                             </button>
                             <button
                                 onClick={processOrder}
                                 disabled={processing || !selectedStore}
-                                className="px-6 py-2 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-4 py-2 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {processing ? "Processing..." : "Confirm Order"}
+                                {processing ? "Processing..." : "Confirm Now"}
                             </button>
                         </div>
                     </div>
