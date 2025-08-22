@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
 
         if (summariesError) throw summariesError;
 
-        console.log("SUMMARIES", summaries);
+        // console.log("SUMMARIES", summaries);
 
         // Fetch orders for product breakdown
         const { data: orders, error: ordersError } = await supabase

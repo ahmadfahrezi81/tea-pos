@@ -1563,14 +1563,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useSummaries } from "@/lib/hooks/useSummaries";
 import { Profile } from "@/lib/types";
-import {
-    X,
-    Calendar,
-    Edit3,
-    StoreIcon,
-    CalendarDays,
-    Calculator,
-} from "lucide-react";
+import { X, Calendar, StoreIcon, CalendarDays, Calculator } from "lucide-react";
 import { formatRupiah } from "@/lib/utils/formatCurrency";
 
 interface MobileAnalyticsProps {
@@ -1926,214 +1919,233 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                 return (
                                     <div
                                         key={summary.id}
-                                        className="bg-white rounded-lg shadow-sm p-4"
+                                        className="bg-white rounded-lg shadow-sm overflow-hidden"
                                     >
-                                        {/* Date and Cash Info Header */}
-                                        <div className="flex justify-between items-start mb-4">
-                                            <div className="flex-1">
-                                                <h3 className="text-lg font-semibold text-gray-800">
-                                                    {formatDate(summary.date)}
-                                                </h3>
-                                                <p className="text-sm text-gray-500">
-                                                    {summary.seller?.full_name}
-                                                </p>
-                                            </div>
-                                            <div className="text-right">
-                                                {summary.closed_at ? (
-                                                    <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
-                                                        Closed
-                                                    </span>
-                                                ) : (
-                                                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
-                                                        Open
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        {/* Cash Balances */}
-                                        <div className="grid grid-cols-2 gap-4 mb-4">
-                                            <div>
-                                                <p className="text-xs text-gray-500">
-                                                    Opening Balance
-                                                </p>
-                                                <p className="text-lg font-semibold text-blue-600">
-                                                    {formatRupiah(
-                                                        summary.opening_balance
-                                                    )}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-gray-500">
-                                                    Actual Cash
-                                                </p>
-                                                <p className="text-lg font-semibold text-purple-600">
-                                                    {summary.actual_cash !==
-                                                    null
-                                                        ? formatRupiah(
-                                                              summary.actual_cash
-                                                          )
-                                                        : "Not counted"}
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        {/* Daily Totals */}
-                                        <div className="grid grid-cols-4 gap-4 mb-4">
-                                            <div className="col-span-2">
-                                                <p className="text-xs text-gray-500">
-                                                    Sales
-                                                </p>
-                                                <p className="text-lg font-bold text-green-600">
-                                                    {formatRupiah(
-                                                        summary.total_sales
-                                                    )}
-                                                </p>
-                                            </div>
-                                            <div className="">
-                                                <p className="text-xs text-gray-500">
-                                                    Orders
-                                                </p>
-                                                <p className="text-lg font-bold text-blue-600">
-                                                    {
-                                                        Object.keys(
-                                                            productBreakdown
-                                                        ).length
-                                                    }
-                                                </p>
-                                            </div>
-                                            <div className="">
-                                                <p className="text-xs text-gray-500">
-                                                    Cups
-                                                </p>
-                                                <p className="text-lg font-bold text-orange-600">
-                                                    {dailyCups}
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        {/* Variance */}
-                                        {summary.variance !== null && (
-                                            <div className="mb-4">
-                                                <p
-                                                    className={`text-sm font-medium ${
-                                                        summary.variance >= 0
-                                                            ? "text-green-600"
-                                                            : "text-red-600"
-                                                    }`}
-                                                >
-                                                    Variance:{" "}
-                                                    {summary.variance >= 0
-                                                        ? "+"
-                                                        : ""}
-                                                    {formatRupiah(
-                                                        summary.variance
-                                                    )}
-                                                </p>
-                                            </div>
-                                        )}
-
-                                        {/* Product Sales Breakdown */}
-                                        {Object.keys(productBreakdown).length >
-                                            0 && (
-                                            <div className="border-t pt-4">
-                                                <h4 className="text-sm font-medium text-gray-700 mb-2">
-                                                    Product Sales
-                                                </h4>
-                                                <div className="space-y-2">
-                                                    {Object.entries(
-                                                        productBreakdown
-                                                    ).map(
-                                                        ([
-                                                            productName,
-                                                            data,
-                                                        ]) => (
-                                                            <div
-                                                                key={
-                                                                    productName
-                                                                }
-                                                                className="flex justify-between items-center bg-gray-50 p-2 rounded"
-                                                            >
-                                                                <span className="text-sm font-medium">
-                                                                    {
-                                                                        productName
-                                                                    }
-                                                                </span>
-                                                                <div className="text-right">
-                                                                    <p className="text-sm font-semibold">
-                                                                        {
-                                                                            data.quantity
-                                                                        }{" "}
-                                                                        cups
-                                                                    </p>
-                                                                    <p className="text-xs text-gray-500">
-                                                                        {formatRupiah(
-                                                                            data.revenue
-                                                                        )}
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-                                                        )
+                                        {/* Order Header - White Background */}
+                                        <div className="p-3.5 bg-white">
+                                            {/* Date and Cash Info Header */}
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div className="flex-1">
+                                                    <h3 className="text-lg font-semibold text-gray-800">
+                                                        {formatDate(
+                                                            summary.date
+                                                        )}
+                                                    </h3>
+                                                    <p className="text-sm text-gray-500">
+                                                        {
+                                                            summary.seller
+                                                                ?.full_name
+                                                        }
+                                                    </p>
+                                                </div>
+                                                <div className="text-right">
+                                                    {summary.closed_at ? (
+                                                        <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
+                                                            Closed
+                                                        </span>
+                                                    ) : (
+                                                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                                                            Open
+                                                        </span>
                                                     )}
                                                 </div>
                                             </div>
-                                        )}
 
-                                        {/* Notes */}
-                                        {summary.notes && (
-                                            <div className="border-t pt-4 mt-4">
-                                                <p className="text-xs text-gray-500 mb-1">
-                                                    Notes
-                                                </p>
-                                                <p className="text-sm text-gray-700 bg-gray-50 p-2 rounded">
-                                                    {summary.notes}
-                                                </p>
+                                            {/* Cash Balances */}
+                                            <div className="grid grid-cols-2 gap-4 mb-4">
+                                                <div>
+                                                    <p className="text-xs text-gray-500">
+                                                        Opening Balance
+                                                    </p>
+                                                    <p className="text-lg font-semibold text-blue-600">
+                                                        {formatRupiah(
+                                                            summary.opening_balance
+                                                        )}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-gray-500">
+                                                        Actual Cash
+                                                    </p>
+                                                    <p className="text-lg font-semibold text-purple-600">
+                                                        {summary.actual_cash !==
+                                                        null
+                                                            ? formatRupiah(
+                                                                  summary.actual_cash
+                                                              )
+                                                            : "Not counted"}
+                                                    </p>
+                                                </div>
                                             </div>
-                                        )}
 
-                                        {/* Action Buttons for Open Days */}
-                                        {!summary.closed_at && (
-                                            <div className="flex space-x-2 mt-4 pt-4 border-t">
-                                                <button
-                                                    onClick={() => {
-                                                        setSelectedSummary(
-                                                            summary
-                                                        );
-                                                        setEditForm({
-                                                            seller_id:
-                                                                summary.seller_id,
-                                                            opening_balance:
-                                                                summary.opening_balance.toString(),
-                                                        });
-                                                        setShowEditForm(true);
-                                                    }}
-                                                    className="flex-1 bg-gray-500 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-600 flex items-center justify-center"
-                                                >
-                                                    <Edit3
-                                                        size={16}
-                                                        className="mr-1"
-                                                    />
-                                                    Edit
-                                                </button>
-
-                                                <button
-                                                    onClick={() => {
-                                                        setSelectedSummary(
-                                                            summary
-                                                        );
-                                                        setCloseForm({
-                                                            actual_cash:
-                                                                summary.expected_cash.toString(),
-                                                            notes: "",
-                                                        });
-                                                        setShowCloseForm(true);
-                                                    }}
-                                                    className="flex-1 bg-red-500 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-600"
-                                                >
-                                                    Close Day
-                                                </button>
+                                            {/* Daily Totals */}
+                                            <div className="grid grid-cols-4 gap-4 mb-4">
+                                                <div className="col-span-2">
+                                                    <p className="text-xs text-gray-500">
+                                                        Sales
+                                                    </p>
+                                                    <p className="text-lg font-bold text-green-600">
+                                                        {formatRupiah(
+                                                            summary.total_sales
+                                                        )}
+                                                    </p>
+                                                </div>
+                                                <div className="">
+                                                    <p className="text-xs text-gray-500">
+                                                        Orders
+                                                    </p>
+                                                    <p className="text-lg font-bold text-blue-600">
+                                                        {
+                                                            Object.keys(
+                                                                productBreakdown
+                                                            ).length
+                                                        }
+                                                    </p>
+                                                </div>
+                                                <div className="">
+                                                    <p className="text-xs text-gray-500">
+                                                        Cups
+                                                    </p>
+                                                    <p className="text-lg font-bold text-orange-600">
+                                                        {dailyCups}
+                                                    </p>
+                                                </div>
                                             </div>
-                                        )}
+
+                                            {/* Variance */}
+                                            {summary.variance !== null && (
+                                                <div className="mb-4">
+                                                    <p
+                                                        className={`text-sm font-medium ${
+                                                            summary.variance >=
+                                                            0
+                                                                ? "text-green-600"
+                                                                : "text-red-600"
+                                                        }`}
+                                                    >
+                                                        Variance:{" "}
+                                                        {summary.variance >= 0
+                                                            ? "+"
+                                                            : ""}
+                                                        {formatRupiah(
+                                                            summary.variance
+                                                        )}
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                            {/* Notes */}
+                                            {summary.notes && (
+                                                <div className="">
+                                                    <p className="text-xs text-gray-500 mb-1">
+                                                        Notes
+                                                    </p>
+                                                    <p className="text-sm text-gray-700 bg-gray-50 p-2 rounded">
+                                                        {summary.notes}
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Order Details - Gray Background */}
+                                        <div className="border-t border-gray-100 p-3 bg-gray-50">
+                                            {/* Product Sales Breakdown */}
+                                            {Object.keys(productBreakdown)
+                                                .length > 0 && (
+                                                <div className="space-y-3">
+                                                    <h4 className="font-medium text-gray-800 mb-1 text-sm">
+                                                        Product Sales
+                                                    </h4>
+                                                    <div className="space-y-2">
+                                                        {Object.entries(
+                                                            productBreakdown
+                                                        ).map(
+                                                            ([
+                                                                productName,
+                                                                data,
+                                                            ]) => (
+                                                                <div
+                                                                    key={
+                                                                        productName
+                                                                    }
+                                                                    className="flex justify-between items-center bg-white p-2.5 rounded-md text-sm"
+                                                                >
+                                                                    <span className="text-sm font-medium">
+                                                                        {
+                                                                            productName
+                                                                        }
+                                                                    </span>
+                                                                    <div className="text-right">
+                                                                        <p className="text-sm font-medium">
+                                                                            {
+                                                                                data.quantity
+                                                                            }{" "}
+                                                                            cups
+                                                                        </p>
+                                                                        {/* <p className="text-xs text-gray-500">
+                                                                            {formatRupiah(
+                                                                                data.revenue
+                                                                            )}
+                                                                        </p> */}
+                                                                    </div>
+                                                                </div>
+                                                            )
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Action Buttons for Open Days */}
+                                            {!summary.closed_at && (
+                                                <div className="flex space-x-2 mt-4">
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedSummary(
+                                                                summary
+                                                            );
+                                                            setEditForm({
+                                                                seller_id:
+                                                                    summary.seller_id,
+                                                                opening_balance:
+                                                                    summary.opening_balance.toString(),
+                                                            });
+                                                            setShowEditForm(
+                                                                true
+                                                            );
+                                                        }}
+                                                        className="flex-1 bg-white text-blue-500 border border-blue-500 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-100 flex items-center justify-center"
+                                                        // className="flex-1 bg-blue-500 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-600 flex items-center justify-center "
+                                                    >
+                                                        {/* <Edit3
+                                                            size={16}
+                                                            className="mr-1"
+                                                        /> */}
+                                                        Set Balance
+                                                    </button>
+
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedSummary(
+                                                                summary
+                                                            );
+                                                            setCloseForm({
+                                                                actual_cash:
+                                                                    summary.expected_cash.toString(),
+                                                                notes: "",
+                                                            });
+                                                            setShowCloseForm(
+                                                                true
+                                                            );
+                                                        }}
+                                                        className="flex-1 text-red-500 border border-red-500 py-2 px-3 rounded-lg
+                                                         text-sm font-medium hover:bg-red-50"
+                                                        // className="flex-1 bg-red-500 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-600"
+                                                    >
+                                                        Close Day
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 );
                             })
@@ -2154,7 +2166,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                     >
                         <div className="p-4 border-b border-gray-200 flex justify-between items-center">
                             <h2 className="text-lg font-semibold">
-                                Edit Daily Summary
+                                Edit Opening Balance
                             </h2>
                             <button
                                 onClick={() => setShowEditForm(false)}

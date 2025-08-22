@@ -653,17 +653,17 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                         <div className="flex gap-3">
                             <button
                                 onClick={() => setShowCart(true)}
-                                className="px-3 py-2 border border-blue-500 text-blue-500 rounded-lg font-medium hover:bg-blue-50"
+                                className="px-3 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600"
                             >
                                 View Cart
                             </button>
-                            <button
+                            {/* <button
                                 onClick={processOrder}
                                 disabled={processing || !selectedStore}
                                 className="px-4 py-2 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {processing ? "Processing..." : "Confirm Now"}
-                            </button>
+                            </button> */}
                         </div>
                     </div>
                 </div>
