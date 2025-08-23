@@ -2993,7 +2993,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
             )}
 
             {/* Unclosed Days Warning */}
-            {isManager && getUnclosedSummaries().length > 0 && (
+            {isManager && getUnclosedSummaries().length > 1 && (
                 <div className="bg-red-50 border border-red-200 p-3.5 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
                         <AlertTriangle size={20} className="text-red-600" />
@@ -3184,12 +3184,12 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                                 summary.date
                                                             )}
                                                         </h3>
-                                                        <p className="text-sm text-gray-500">
+                                                        {/* <p className="text-sm text-gray-500">
                                                             {
                                                                 summary.seller
                                                                     ?.full_name
                                                             }
-                                                        </p>
+                                                        </p> */}
                                                         <p className="text-xs text-blue-600 mt-1">
                                                             Tap for details
                                                         </p>
