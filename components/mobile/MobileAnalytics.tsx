@@ -3317,7 +3317,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                             summary.variance >=
                                                             0
                                                                 ? "bg-green-600 text-white"
-                                                                : "bg-red-600 text-white"
+                                                                : "bg-red-50 border border-red-200 text-red-700"
                                                         }`}
                                                     >
                                                         {summary.variance >= 0
