@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Profile, Store } from "@/lib/types";
 import { useStores } from "@/lib/hooks/useData";
+import packageJson from "../../package.json";
 
 interface MobileAuthProps {
     profile: Profile | null;
@@ -50,15 +51,24 @@ export default function MobileAuth({ profile, mutate }: MobileAuthProps) {
         }
     };
 
+    const handleLogout = async () => {
+        const shouldLogout = window.confirm(
+            "Are you sure you want to log out?"
+        );
+        if (shouldLogout) {
+            await supabase.auth.signOut();
+        }
+    };
+
     // If user is logged in, show profile
     // if (user && profile) {
     if (profile) {
         return (
             <div className="space-y-6">
                 <div className="bg-white rounded-lg p-6 shadow-sm">
-                    <h2 className="text-2xl font-bold mb-6 text-center">
+                    {/* <h2 className="text-2xl font-bold mb-6 text-center">
                         Your Profile
-                    </h2>
+                    </h2> */}
 
                     <div className="space-y-4">
                         <div className="bg-blue-50 p-4 rounded-lg">
@@ -76,7 +86,6 @@ export default function MobileAuth({ profile, mutate }: MobileAuthProps) {
                                 <p className="text-gray-600">{profile.email}</p>
                             </div>
                         </div>
-
                         <div className="bg-gray-50 p-4 rounded-lg">
                             <div className="flex justify-between items-center">
                                 <span className="text-gray-600">Role:</span>
@@ -92,7 +101,6 @@ export default function MobileAuth({ profile, mutate }: MobileAuthProps) {
                                 </span>
                             </div>
                         </div>
-
                         <div className="bg-gray-50 p-4 rounded-lg">
                             <div className="flex justify-between items-center">
                                 <span className="text-gray-600">
@@ -105,7 +113,6 @@ export default function MobileAuth({ profile, mutate }: MobileAuthProps) {
                                 </span>
                             </div>
                         </div>
-
                         <div className="bg-gray-50 p-4 rounded-lg">
                             <div className="flex justify-between items-start">
                                 <span className="text-gray-600">
@@ -134,6 +141,18 @@ export default function MobileAuth({ profile, mutate }: MobileAuthProps) {
                                     )}
                                 </div>
                             </div>
+                        </div>
+                        {/* Logout Button */}
+                        <div className="text-center">
+                            <button
+                                onClick={handleLogout}
+                                className="text-sm font-bold text-red-600 hover:text-red-800 border-1 p-2 px-6 rounded-full"
+                            >
+                                Log Out
+                            </button>
+                        </div>
+                        <div className="mt-4 text-xs text-gray-500 text-center">
+                            TEA-POS v{packageJson.version}
                         </div>
                     </div>
                 </div>

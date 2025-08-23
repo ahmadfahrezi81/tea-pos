@@ -149,11 +149,12 @@ export interface Database {
                     created_at?: string;
                 };
             };
+
             daily_summaries: {
                 Row: {
                     id: string;
                     store_id: string;
-                    user_id: string;
+                    seller_id: string; // Updated from user_id
                     manager_id: string | null;
                     date: string;
                     opening_balance: number;
@@ -168,7 +169,7 @@ export interface Database {
                 Insert: {
                     id?: string;
                     store_id: string;
-                    user_id: string;
+                    seller_id: string; // Updated from user_id
                     manager_id?: string | null;
                     date: string;
                     opening_balance?: number;
@@ -183,7 +184,7 @@ export interface Database {
                 Update: {
                     id?: string;
                     store_id?: string;
-                    user_id?: string;
+                    seller_id?: string; // Updated from user_id
                     manager_id?: string | null;
                     date?: string;
                     opening_balance?: number;
