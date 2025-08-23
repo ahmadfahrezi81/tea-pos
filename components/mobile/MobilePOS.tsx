@@ -799,7 +799,7 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                             {/* <div className="fixed bottom-16 left-0 right-0 bg-white border-y border-gray-400 p-4 z-40 "> */}
 
                             {/* <div className="mt-6 pt-4 border-t border-gray-200 "> */}
-                            <div className="sticky bottom-0 left-0 right-0 bg-white pt-4 pb-4 border-t border-gray-200">
+                            <div className="sticky bottom-0 left-0 right-0 bg-white pt-4 pb-8 border-t border-gray-200">
                                 <div className="flex justify-between items-center mb-4">
                                     <span className="text-xl font-bold text-gray-900">
                                         Total Transaction

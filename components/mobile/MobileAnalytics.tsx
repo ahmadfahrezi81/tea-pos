@@ -2510,7 +2510,7 @@ const DetailsModal = ({
                         onClick={onClose}
                         className="p-1 hover:bg-gray-100 rounded"
                     >
-                        <X size={20} />
+                        <X size={24} />
                     </button>
                 </div>
 
@@ -3461,16 +3461,22 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                             {/* <h2 className="text-lg font-semibold">
                                 Edit Opening Balance
                             </h2> */}
-                            <h2 className="text-lg font-semibold">
-                                Set Opening Balance -{" "}
-                                {formatDate(selectedSummary.date)} at{" "}
-                                {getStoreName()}
-                            </h2>
+
+                            <div className="flex flex-col space-y-1">
+                                <h2 className="text-xl font-semibold text-gray-900">
+                                    Set Opening Balance
+                                </h2>
+                                <p className="text-sm text-gray-600">
+                                    {formatDate(selectedSummary.date)} ·{" "}
+                                    {getStoreName()}
+                                </p>
+                            </div>
+
                             <button
                                 onClick={() => setShowEditForm(false)}
                                 className="p-1 hover:bg-gray-100 rounded"
                             >
-                                <X size={20} />
+                                <X size={24} />
                             </button>
                         </div>
 
@@ -3506,7 +3512,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
 
                             <button
                                 type="submit"
-                                className="w-full bg-blue-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-600"
+                                className="w-full bg-blue-500 text-white py-4 mb-4 rounded-xl font-semibold hover:bg-blue-600"
                             >
                                 Update Opening Balance
                             </button>
@@ -3527,15 +3533,24 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                     >
                         <div className="p-4 border-b border-gray-200 flex justify-between items-center">
                             {/* <h2 className="text-lg font-semibold">Close Day</h2> */}
-                            <h2 className="text-lg font-semibold">
+                            {/* <h2 className="text-lg font-semibold">
                                 Close Day - {formatDate(selectedSummary.date)}{" "}
                                 at {getStoreName()}
-                            </h2>
+                            </h2> */}
+                            <div className="flex flex-col space-y-1">
+                                <h2 className="text-xl font-semibold text-gray-900">
+                                    Close Day
+                                </h2>
+                                <p className="text-sm text-gray-600">
+                                    {formatDate(selectedSummary.date)} ·{" "}
+                                    {getStoreName()}
+                                </p>
+                            </div>
                             <button
                                 onClick={() => setShowCloseForm(false)}
                                 className="p-1 hover:bg-gray-100 rounded"
                             >
-                                <X size={20} />
+                                <X size={24} />
                             </button>
                         </div>
 
@@ -3625,7 +3640,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
 
                                 <button
                                     type="submit"
-                                    className="w-full bg-red-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-red-600"
+                                    className="w-full bg-red-500 text-white py-4 mb-4 rounded-xl text-lg font-semibold hover:bg-red-600"
                                 >
                                     Close Day
                                 </button>
