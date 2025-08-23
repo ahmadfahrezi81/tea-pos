@@ -2708,6 +2708,11 @@ const DetailsModal = ({
     );
 };
 
+export const isCurrentMonthSelected = (selectedMonth: string): boolean => {
+    const currentMonth = new Date().toISOString().slice(0, 7); // "YYYY-MM"
+    return selectedMonth === currentMonth;
+};
+
 export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
     const [selectedStore, setSelectedStore] = useState<string>("");
     const [selectedMonth, setSelectedMonth] = useState<string>(
@@ -2808,6 +2813,11 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
     useEffect(() => {
         if (!isManager || !selectedStore || !data?.summaries) return;
 
+        if (!isCurrentMonthSelected(selectedMonth)) {
+            setShowOpenStorePopup(false);
+            return;
+        }
+
         const todayStr = new Date().toISOString().split("T")[0];
         const todaysSummary = data.summaries.find((s) => s.date === todayStr);
 
@@ -2818,6 +2828,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
         }
     }, [isManager, selectedStore, data?.summaries]);
 
+    // Closed store reminder useEffect
     useEffect(() => {
         if (!isManager || !data?.summaries || !selectedStore) return;
 
@@ -3036,57 +3047,62 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
             )}
 
             {/* Open Store Today Button - Only show if manager and store not opened */}
-            {isManager && !todaysSummary && (
-                // <div className="w-full bg-white rounded-lg shadow-md p-6">
-                //     <h3 className="font-semibold text-gray-800">
-                //         Open store Today for{" "}
-                //         {stores.find((s) => s.id === selectedStore)?.name}
-                //     </h3>
-                //     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4">
-                //         <p className="text-sm text-gray-600">
-                //             Opening the store will initialize a summary with
-                //             zero balances.
-                //         </p>
-                //         <button
-                //             className="bg-blue-600 text-white text-sm font-medium py-2.5 px-5 rounded-lg hover:bg-blue-700 transition"
-                //             onClick={() => setShowOpenStorePopup(true)}
-                //         >
-                //             Open Store on{" "}
-                //             {new Date().toLocaleDateString("en-US", {
-                //                 weekday: "long",
-                //                 day: "numeric",
-                //                 month: "short",
-                //             })}
-                //         </button>
-                //     </div>
-                // </div>
+            {isManager &&
+                !todaysSummary &&
+                isCurrentMonthSelected(selectedMonth) && (
+                    // <div className="w-full bg-white rounded-lg shadow-md p-6">
+                    //     <h3 className="font-semibold text-gray-800">
+                    //         Open store Today for{" "}
+                    //         {stores.find((s) => s.id === selectedStore)?.name}
+                    //     </h3>
+                    //     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4">
+                    //         <p className="text-sm text-gray-600">
+                    //             Opening the store will initialize a summary with
+                    //             zero balances.
+                    //         </p>
+                    //         <button
+                    //             className="bg-blue-600 text-white text-sm font-medium py-2.5 px-5 rounded-lg hover:bg-blue-700 transition"
+                    //             onClick={() => setShowOpenStorePopup(true)}
+                    //         >
+                    //             Open Store on{" "}
+                    //             {new Date().toLocaleDateString("en-US", {
+                    //                 weekday: "long",
+                    //                 day: "numeric",
+                    //                 month: "short",
+                    //             })}
+                    //         </button>
+                    //     </div>
+                    // </div>
 
-                <div className="bg-green-50 border border-green-200 p-3.5 rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                        {/* Replace 'CheckCircle' with an appropriate icon if you're using a library like react-feather or lucide-react */}
-                        <CheckCircle size={20} className="text-green-600" />
-                        <h3 className="font-semibold text-green-800">
-                            Open store Today for{" "}
-                            {stores.find((s) => s.id === selectedStore)?.name}
-                        </h3>
+                    <div className="bg-green-50 border border-green-200 p-3.5 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                            {/* Replace 'CheckCircle' with an appropriate icon if you're using a library like react-feather or lucide-react */}
+                            <CheckCircle size={20} className="text-green-600" />
+                            <h3 className="font-semibold text-green-800">
+                                Open store Today for{" "}
+                                {
+                                    stores.find((s) => s.id === selectedStore)
+                                        ?.name
+                                }
+                            </h3>
+                        </div>
+                        <p className="text-sm text-green-700 mb-2">
+                            Opening the store will initialize a summary with
+                            zero balances.
+                        </p>
+                        <button
+                            className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700"
+                            onClick={() => setShowOpenStorePopup(true)}
+                        >
+                            Open Store on{" "}
+                            {new Date().toLocaleDateString("en-US", {
+                                weekday: "long",
+                                day: "numeric",
+                                month: "short",
+                            })}
+                        </button>
                     </div>
-                    <p className="text-sm text-green-700 mb-2">
-                        Opening the store will initialize a summary with zero
-                        balances.
-                    </p>
-                    <button
-                        className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700"
-                        onClick={() => setShowOpenStorePopup(true)}
-                    >
-                        Open Store on{" "}
-                        {new Date().toLocaleDateString("en-US", {
-                            weekday: "long",
-                            day: "numeric",
-                            month: "short",
-                        })}
-                    </button>
-                </div>
-            )}
+                )}
 
             {/* Store and Month Selection */}
             <div className="bg-white p-4 rounded-lg shadow-sm space-y-4">
