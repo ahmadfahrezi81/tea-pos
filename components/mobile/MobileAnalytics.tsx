@@ -3210,7 +3210,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                                     ?.full_name
                                                             }
                                                         </p> */}
-                                                        <p className="text-xs text-blue-600 mt-1">
+                                                        <p className="text-xs text-blue-600 underline">
                                                             Tap for details
                                                         </p>
                                                     </button>
@@ -3221,7 +3221,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                             Closed
                                                         </span>
                                                     ) : (
-                                                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                                                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">
                                                             Open
                                                         </span>
                                                     )}
@@ -3363,7 +3363,8 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                                 true
                                                             );
                                                         }}
-                                                        className="flex-1 bg-white text-red-500 border border-red-500 py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-50"
+                                                        // className="flex-1 bg-white text-red-500 border border-red-500 py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-50"
+                                                        className="flex-1 bg-red-500 text-white border border-red-500 py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-600"
                                                     >
                                                         Close Day
                                                     </button>
