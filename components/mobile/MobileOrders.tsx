@@ -515,7 +515,14 @@ import { useState, useMemo, useEffect } from "react";
 import useOrders from "@/lib/hooks/useOrders";
 import { useStores } from "@/lib/hooks/useData";
 import { Profile, OrderItem } from "@/lib/types";
-import { Calendar, Calculator, CalendarDays, StoreIcon } from "lucide-react";
+import {
+    Calendar,
+    Calculator,
+    CalendarDays,
+    StoreIcon,
+    ReceiptText,
+    Receipt,
+} from "lucide-react";
 import { formatRupiah } from "@/lib/utils/formatCurrency";
 
 interface MobileOrdersProps {
@@ -652,8 +659,10 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
             {/* Summary Section */}
             <div className="bg-white p-4 rounded-lg shadow-sm">
                 <div className="flex items-center gap-2 mb-3">
-                    <Calculator size={20} className="text-gray-600" />
-                    <h3 className="font-semibold text-gray-800">Summary</h3>
+                    <Receipt size={20} className="text-gray-600" />
+                    <h3 className="font-semibold text-gray-800">
+                        Daily Summary
+                    </h3>
                 </div>
 
                 <div className="grid grid-cols-4 gap-2">

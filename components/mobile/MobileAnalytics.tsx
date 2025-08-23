@@ -2392,6 +2392,7 @@ import {
     Calculator,
     AlertTriangle,
     CheckCircle,
+    Receipt,
 } from "lucide-react";
 import { formatRupiah } from "@/lib/utils/formatCurrency";
 
@@ -2817,6 +2818,25 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
         }
     }, [isManager, selectedStore, data?.summaries]);
 
+    useEffect(() => {
+        if (!isManager || !data?.summaries || !selectedStore) return;
+
+        const unclosedSummaries = getUnclosedSummaries();
+        const todayStr = new Date().toISOString().split("T")[0];
+        const todaysSummary = data.summaries.find((s) => s.date === todayStr);
+
+        // Only show close reminder if store is opened for today but has unclosed days
+        if (todaysSummary && unclosedSummaries.length > 0) {
+            const now = new Date();
+            const hour = now.getHours();
+
+            // Only show reminder between 10 PM and 6 AM
+            if (hour >= 22 || hour < 6) {
+                setShowCloseReminder(true);
+            }
+        }
+    }, [isManager, data?.summaries, selectedStore]);
+
     const handleOpenStoreToday = async () => {
         if (!selectedStore || !profile) return;
 
@@ -2963,7 +2983,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
             {data?.monthlyTotals && (
                 <div className="bg-white p-4 rounded-lg shadow-sm">
                     <div className="flex items-center gap-2 mb-3">
-                        <Calculator size={20} className="text-gray-600" />
+                        <Receipt size={20} className="text-gray-600" />
                         <h3 className="font-semibold text-gray-800">
                             Monthly Summary
                         </h3>
@@ -3273,15 +3293,17 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                             {/* Variance */}
                                             {summary.variance !== null && (
                                                 <div className="mb-4">
+                                                    <p className="text-xs mb-1">
+                                                        Variance
+                                                    </p>
                                                     <p
-                                                        className={`text-sm font-medium ${
+                                                        className={`text-sm px-3 py-2 rounded font-medium ${
                                                             summary.variance >=
                                                             0
-                                                                ? "text-green-600"
-                                                                : "text-red-600"
+                                                                ? "bg-green-600 text-white"
+                                                                : "bg-red-600 text-white"
                                                         }`}
                                                     >
-                                                        Variance:{" "}
                                                         {summary.variance >= 0
                                                             ? "+"
                                                             : ""}
@@ -3295,7 +3317,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                             {/* Notes */}
                                             {summary.notes && (
                                                 <div>
-                                                    <p className="text-xs text-gray-500 mb-1">
+                                                    <p className="text-xs mb-1">
                                                         Notes
                                                     </p>
                                                     <p className="text-sm text-gray-700 bg-gray-50 p-2 rounded">

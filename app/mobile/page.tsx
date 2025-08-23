@@ -11,6 +11,7 @@ import { BarChart3 } from "lucide-react"; // Add this import
 import MobileAnalytics from "@/components/mobile/MobileAnalytics";
 // import Image from "next/image";
 import { format } from "date-fns";
+import Image from "next/image";
 
 type TabType = "auth" | "pos" | "orders" | "sales";
 
@@ -81,9 +82,9 @@ export default function MobilePage() {
     //     return () => subscription.unsubscribe();
     // }, [supabase]);
 
-    const handleLogout = async () => {
-        await supabase.auth.signOut();
-    };
+    // const handleLogout = async () => {
+    //     await supabase.auth.signOut();
+    // };
 
     if (isLoading) {
         return (
@@ -128,31 +129,39 @@ export default function MobilePage() {
             {/* Header */}
             <div className="sticky top-0 z-40 bg-white shadow-sm p-4 flex justify-between items-center">
                 <div className="flex gap-2 items-center">
-                    {/* <Image
+                    <Image
                         src={"/LEMONI-512x512.png"}
                         alt={"Logo"}
-                        width={35}
-                        height={35}
+                        width={30}
+                        height={30}
                         className="rounded object-cover"
-                    /> */}
-                    <div>
-                        <h1 className="text-base font-bold text-gray-800">
-                            {user ? `Hi, ${profile?.full_name}` : "Welcome"}
-                        </h1>
-                        <p className="text-sm text-gray-500">
-                            {format(new Date(), "MMMM dd, yyyy")}
-                        </p>
-                    </div>
+                    />
+                    <h1 className="text-2xl font-bold text-gray-800 capitalize">
+                        {{
+                            pos: "POS",
+                            orders: "Orders",
+                            sales: "Sales",
+                            auth: "Profile",
+                        }[activeTab] || ""}
+                    </h1>
+                </div>
+                <div className="text-right">
+                    <h1 className="text-base font-bold text-gray-800">
+                        {user ? `Hi, ${profile?.full_name}` : "Welcome"}
+                    </h1>
+                    <p className="text-sm text-gray-500">
+                        {format(new Date(), "MMMM dd, yyyy")}
+                    </p>
                 </div>
 
-                {user && (
+                {/* {user && (
                     <button
                         onClick={handleLogout}
                         className="text-sm text-red-600 hover:text-red-800 border-1 p-1 px-4 rounded-2xl"
                     >
                         Logout
                     </button>
-                )}
+                )} */}
             </div>
 
             <div className="p-4">

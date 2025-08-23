@@ -50,15 +50,24 @@ export default function MobileAuth({ profile, mutate }: MobileAuthProps) {
         }
     };
 
+    const handleLogout = async () => {
+        const shouldLogout = window.confirm(
+            "Are you sure you want to log out?"
+        );
+        if (shouldLogout) {
+            await supabase.auth.signOut();
+        }
+    };
+
     // If user is logged in, show profile
     // if (user && profile) {
     if (profile) {
         return (
             <div className="space-y-6">
                 <div className="bg-white rounded-lg p-6 shadow-sm">
-                    <h2 className="text-2xl font-bold mb-6 text-center">
+                    {/* <h2 className="text-2xl font-bold mb-6 text-center">
                         Your Profile
-                    </h2>
+                    </h2> */}
 
                     <div className="space-y-4">
                         <div className="bg-blue-50 p-4 rounded-lg">
@@ -134,6 +143,16 @@ export default function MobileAuth({ profile, mutate }: MobileAuthProps) {
                                     )}
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Logout Button */}
+                        <div className="text-center">
+                            <button
+                                onClick={handleLogout}
+                                className="text-sm font-bold text-red-600 hover:text-red-800 border-1 p-2 px-6 rounded-full"
+                            >
+                                Log Out
+                            </button>
                         </div>
                     </div>
                 </div>
