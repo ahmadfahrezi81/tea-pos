@@ -37,6 +37,8 @@ export interface MonthlyTotals {
 export interface SummariesData {
     summaries: DailySummary[];
     productBreakdown: ProductBreakdown;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ordersByDate: { [date: string]: any[] }; // Add this line
     monthlyTotals: MonthlyTotals;
 }
 
