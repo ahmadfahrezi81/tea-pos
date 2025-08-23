@@ -160,11 +160,14 @@ export default function MobilePage() {
                 {activeTab === "orders" && user && (
                     <MobileOrders profile={profile} />
                 )}
-                {activeTab === "sales" &&
+                {/* {activeTab === "sales" &&
                     user &&
                     profile?.role === "manager" && (
                         <MobileAnalytics profile={profile} />
-                    )}
+                    )} */}
+                {activeTab === "sales" && user && (
+                    <MobileAnalytics profile={profile} />
+                )}
                 {activeTab === "auth" && (
                     <MobileAuth profile={profile} mutate={mutate} />
                 )}
