@@ -412,11 +412,51 @@ interface MobilePOSProps {
 
 export default function MobilePOS({ profile }: MobilePOSProps) {
     const { data: products = [], isLoading: productsLoading } = useProducts();
-    const { data: stores = [], isLoading: storesLoading } = useStores(
-        profile?.role ?? "",
+    // const { data: stores = [], isLoading: storesLoading } = useStores(
+    //     profile?.role ?? "",
+    //     profile?.id ?? ""
+    // );
+
+    // const { data, isLoading: storesLoading } = useStores(profile?.id ?? "");
+
+    // const stores = data?.stores ?? [];
+    // const assignments = data?.assignments ?? {};
+
+    // const sellerStores = stores.filter((store) =>
+    //     assignments[store.id]?.some(
+    //         (assignment) => assignment.role === "seller"
+    //     )
+    // );
+
+    // const { data: storesData, isLoading: storesLoading } = useStores(
+    //     profile?.id ?? ""
+    // );
+    // const stores = storesData?.stores || [];
+    // const assignments = storesData?.assignments || {};
+    // const sellerStores = stores.filter(({ id }) =>
+    //     assignments[id]?.some(({ role }) => role === "seller")
+    // );
+
+    // console.log(sellerStores);
+
+    const { data: storesData, isLoading: storesLoading } = useStores(
         profile?.id ?? ""
     );
+    const stores = storesData?.stores ?? [];
+    const assignments = storesData?.assignments ?? {};
 
+    const sellerStores = stores.filter((store: Store) =>
+        assignments[store.id]?.some(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (a: any) => a.user_id === profile?.id && a.role === "seller"
+        )
+    );
+    const defaultStore = stores.find((store: Store) =>
+        assignments[store.id]?.some(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (a: any) => a.user_id === profile?.id && a.is_default
+        )
+    );
     const [selectedStore, setSelectedStore] = useState<string>("");
     const [cart, setCart] = useState<CartItem[]>([]);
     const [processing, setProcessing] = useState(false);
@@ -529,11 +569,29 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
     };
 
     // Auto-select store if only one available
+    // useEffect(() => {
+    //     if (stores && stores.length > 0 && !selectedStore) {
+    //         setSelectedStore(stores[0].id);
+    //     }
+    // }, [stores, selectedStore]);
+
+    // useEffect(() => {
+    //     if (storesData?.defaultStore && sellerStores.length > 0) {
+    //         const defaultSellerStore = sellerStores.find(
+    //             (s) => s.id === storesData.defaultStore?.id
+    //         );
+    //         if (defaultSellerStore) {
+    //             setSelectedStore(defaultSellerStore.id);
+    //         }
+    //     } else if (sellerStores.length === 1 && !selectedStore) {
+    //         setSelectedStore(sellerStores[0].id);
+    //     }
+    // }, [storesData, sellerStores, selectedStore]);
     useEffect(() => {
-        if (stores && stores.length > 0 && !selectedStore) {
-            setSelectedStore(stores[0].id);
+        if (defaultStore && !selectedStore) {
+            setSelectedStore(defaultStore.id);
         }
-    }, [stores, selectedStore]);
+    }, [defaultStore, selectedStore, storesData]);
 
     if (productsLoading || storesLoading) {
         return (
@@ -549,7 +607,7 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
             {" "}
             {/* Added bottom padding for sticky bar */}
             {/* Store Selection - Always show if stores exist */}
-            {stores.length > 0 && (
+            {/* {stores.length > 0 && (
                 <div className="bg-white p-4 rounded-lg shadow-sm">
                     <div className="flex items-center gap-2 mb-3">
                         <Store1 size={20} className="text-gray-600" />
@@ -572,6 +630,58 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                         }`}
                     >
                         {stores.map((store: Store) => (
+                            <option key={store.id} value={store.id}>
+                                {store.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            )} */}
+            {/* {sellerStores.length > 0 && (
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                    <div className="flex items-center gap-2 mb-3">
+                        <Store1 size={20} className="text-gray-600" />
+                        <label className="block text-base font-semibold">
+                            {sellerStores.length === 1
+                                ? "Your Store"
+                                : "Select Store"}
+                        </label>
+                    </div>
+
+                    <select
+                        value={selectedStore}
+                        onChange={(e) => setSelectedStore(e.target.value)}
+                        disabled={sellerStores.length === 1}
+                        className={`w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                            sellerStores.length === 1
+                                ? "bg-gray-50 cursor-not-allowed"
+                                : ""
+                        }`}
+                    >
+                        {sellerStores.map((store) => (
+                            <option key={store.id} value={store.id}>
+                                {store.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            )} */}
+            {sellerStores.length > 0 && (
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                    <div className="flex items-center gap-2 mb-3">
+                        <Store1 size={20} className="text-gray-600" />
+                        <label className="block text-base font-semibold">
+                            {sellerStores.length === 1
+                                ? "Your Store"
+                                : "Select Store"}
+                        </label>
+                    </div>
+                    <select
+                        value={selectedStore}
+                        onChange={(e) => setSelectedStore(e.target.value)}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    >
+                        {sellerStores.map((store: Store) => (
                             <option key={store.id} value={store.id}>
                                 {store.name}
                             </option>

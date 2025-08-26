@@ -42,7 +42,6 @@
 //     return useSWR("stores-data", fetchStoresData);
 // }
 
-
 import useSWR from "swr";
 
 interface Store {
@@ -70,6 +69,14 @@ interface StoresData {
     users: User[];
     assignments: Record<string, Assignment[]>;
 }
+
+// interface StoresData {
+//     stores: Store[];
+//     users: User[];
+//     assignments: Record<string, Assignment[]>;
+//     userRoles: Record<string, Assignment>; // Store ID -> User's assignment in that store
+//     defaultStore?: Store;
+// }
 
 async function fetchStoresData(): Promise<StoresData> {
     const response = await fetch("/api/store");

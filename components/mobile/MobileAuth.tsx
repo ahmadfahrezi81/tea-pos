@@ -16,10 +16,17 @@ export default function MobileAuth({ profile, mutate }: MobileAuthProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const supabase = createClient();
-    const { data: stores = [], isLoading: storesLoading } = useStores(
-        profile?.role ?? "",
-        profile?.id ?? ""
-    );
+    // const { data: stores = [], isLoading: storesLoading } = useStores(
+    //     profile?.id ?? ""
+    // );
+
+    const { data, isLoading: storesLoading } = useStores(profile?.id ?? "");
+
+    const stores = data?.stores ?? [];
+    const assignments = data?.assignments ?? {};
+    // const users = data?.users ?? [];
+
+    console.log(stores);
 
     useEffect(() => {
         const { data: authListener } = supabase.auth.onAuthStateChange(() => {
@@ -131,6 +138,18 @@ export default function MobileAuth({ profile, mutate }: MobileAuthProps) {
                                                     className="text-gray-800"
                                                 >
                                                     {store.name}
+                                                    {/* Example: show user role at this store */}
+                                                    {assignments[store.id] && (
+                                                        <span className="ml-2 text-xs text-gray-500">
+                                                            (
+                                                            {
+                                                                assignments[
+                                                                    store.id
+                                                                ][0].role
+                                                            }
+                                                            )
+                                                        </span>
+                                                    )}
                                                 </div>
                                             ))}
                                         </div>
@@ -142,6 +161,7 @@ export default function MobileAuth({ profile, mutate }: MobileAuthProps) {
                                 </div>
                             </div>
                         </div>
+
                         {/* Logout Button */}
                         <div className="text-center">
                             <button

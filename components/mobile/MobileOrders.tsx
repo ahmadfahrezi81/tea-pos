@@ -514,15 +514,8 @@
 import { useState, useMemo, useEffect } from "react";
 import useOrders from "@/lib/hooks/useOrders";
 import { useStores } from "@/lib/hooks/useData";
-import { Profile, OrderItem } from "@/lib/types";
-import {
-    Calendar,
-    Calculator,
-    CalendarDays,
-    StoreIcon,
-    ReceiptText,
-    Receipt,
-} from "lucide-react";
+import { Profile, OrderItem, Store } from "@/lib/types";
+import { Calendar, CalendarDays, StoreIcon, Receipt } from "lucide-react";
 import { formatRupiah } from "@/lib/utils/formatCurrency";
 
 interface MobileOrdersProps {
@@ -568,9 +561,38 @@ const formatDateForInput = (date: Date) => {
 
 export default function MobileOrders({ profile }: MobileOrdersProps) {
     const { data: orders = [], isLoading } = useOrders();
-    const { data: stores = [], isLoading: storesLoading } = useStores(
-        profile?.role ?? "",
+    // const { data: stores = [], isLoading: storesLoading } = useStores(
+    //     profile?.role ?? "",
+    //     profile?.id ?? ""
+    // );
+    // const { data, isLoading: storesLoading } = useStores(profile?.id ?? "");
+
+    // const stores = data?.stores ?? [];
+    // const assignments = data?.assignments ?? {};
+
+    // const sellerStores = stores.filter((store) =>
+    //     assignments[store.id]?.some(
+    //         (assignment) => assignment.role === "seller"
+    //     )
+    // );
+
+    const { data: storesData, isLoading: storesLoading } = useStores(
         profile?.id ?? ""
+    );
+    const stores = storesData?.stores ?? [];
+    const assignments = storesData?.assignments ?? {};
+
+    // const sellerStores = stores.filter((store: Store) =>
+    //     assignments[store.id]?.some(
+    //         // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    //         (a: any) => a.user_id === profile?.id && a.role === "seller"
+    //     )
+    // );
+    const defaultStore = stores.find((store: Store) =>
+        assignments[store.id]?.some(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (a: any) => a.user_id === profile?.id && a.is_default
+        )
     );
 
     // Initialize with current date and first store
@@ -580,11 +602,16 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
     const [selectedStore, setSelectedStore] = useState<string>("");
 
     // Auto-select first store when stores load
+    // useEffect(() => {
+    //     if (stores && stores.length > 0 && !selectedStore) {
+    //         setSelectedStore(stores[0].id);
+    //     }
+    // }, [stores, selectedStore]);
     useEffect(() => {
-        if (stores && stores.length > 0 && !selectedStore) {
-            setSelectedStore(stores[0].id);
+        if (defaultStore && !selectedStore) {
+            setSelectedStore(defaultStore.id);
         }
-    }, [stores, selectedStore]);
+    }, [defaultStore, selectedStore, storesData]);
 
     // Filter orders based on selected date and store
     const filteredOrders = useMemo(() => {
@@ -720,7 +747,7 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
                                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                             >
                                 {/* <option value="">All Stores</option> */}
-                                {stores.map((store) => (
+                                {stores.map((store: Store) => (
                                     <option key={store.id} value={store.id}>
                                         {store.name}
                                     </option>

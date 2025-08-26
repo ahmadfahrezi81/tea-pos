@@ -2380,16 +2380,15 @@
 //     );
 // }
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSummaries } from "@/lib/hooks/useSummaries";
 import { useStores } from "@/lib/hooks/useData";
-import { Profile } from "@/lib/types";
+import { Profile, Store } from "@/lib/types";
 import {
     X,
     Calendar,
     StoreIcon,
     CalendarDays,
-    Calculator,
     AlertTriangle,
     CheckCircle,
     Receipt,
@@ -2739,9 +2738,28 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
     });
 
     // Use hooks instead of direct Supabase calls
-    const { data: stores = [], isLoading: storesLoading } = useStores(
-        profile?.role ?? "",
+    // const { data: stores = [], isLoading: storesLoading } = useStores(
+    //     profile?.role ?? "",
+    //     profile?.id ?? ""
+    // );
+
+    const { data: storesData, isLoading: storesLoading } = useStores(
         profile?.id ?? ""
+    );
+    const stores = storesData?.stores ?? [];
+    const assignments = storesData?.assignments ?? {};
+
+    const managerStores = stores.filter((store: Store) =>
+        assignments[store.id]?.some(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (a: any) => a.user_id === profile?.id && a.role === "manager"
+        )
+    );
+    const defaultStore = stores.find((store: Store) =>
+        assignments[store.id]?.some(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (a: any) => a.user_id === profile?.id && a.is_default
+        )
     );
 
     const { data, isLoading, error, createSummary, updateSummary } =
@@ -2755,11 +2773,16 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
     };
 
     // Auto-select first store when stores are loaded
+    // useEffect(() => {
+    //     if (stores.length > 0 && !selectedStore) {
+    //         setSelectedStore(stores[0].id);
+    //     }
+    // }, [stores, selectedStore]);
     useEffect(() => {
-        if (stores.length > 0 && !selectedStore) {
-            setSelectedStore(stores[0].id);
+        if (defaultStore && !selectedStore) {
+            setSelectedStore(defaultStore.id);
         }
-    }, [stores, selectedStore]);
+    }, [defaultStore, selectedStore, storesData]);
 
     // Close day reminder logic - check every hour after 10 PM
     // useEffect(() => {
@@ -2791,14 +2814,9 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
     //     return () => clearInterval(interval);
     // }, [isManager, data?.summaries]);
 
-    // Add these helper functions after the existing helper functions:
-    const getUnclosedSummaries = () => {
-        if (!data?.summaries) return [];
-        return data.summaries.filter((s) => !s.closed_at);
-    };
-
     const getStoreName = () =>
-        stores.find((s) => s.id === selectedStore)?.name || "Unknown Store";
+        stores.find((store: Store) => store.id === selectedStore)?.name ||
+        "Unknown Store";
 
     // useEffect(() => {
     //     if (!isManager || !data?.summaries) return;
@@ -2826,9 +2844,14 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
         } else {
             setShowOpenStorePopup(false);
         }
-    }, [isManager, selectedStore, data?.summaries]);
+    }, [isManager, selectedStore, data?.summaries, selectedMonth]);
 
     // Closed store reminder useEffect
+    const getUnclosedSummaries = useCallback(() => {
+        if (!data?.summaries) return [];
+        return data.summaries.filter((s) => !s.closed_at);
+    }, [data?.summaries]);
+
     useEffect(() => {
         if (!isManager || !data?.summaries || !selectedStore) return;
 
@@ -2836,17 +2859,14 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
         const todayStr = new Date().toISOString().split("T")[0];
         const todaysSummary = data.summaries.find((s) => s.date === todayStr);
 
-        // Only show close reminder if store is opened for today but has unclosed days
         if (todaysSummary && unclosedSummaries.length > 0) {
             const now = new Date();
             const hour = now.getHours();
-
-            // Only show reminder between 10 PM and 6 AM
             if (hour >= 22 || hour < 6) {
                 setShowCloseReminder(true);
             }
         }
-    }, [isManager, data?.summaries, selectedStore]);
+    }, [isManager, data?.summaries, selectedStore, getUnclosedSummaries]);
 
     const handleOpenStoreToday = async () => {
         if (!selectedStore || !profile) return;
@@ -3081,8 +3101,10 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                             <h3 className="font-semibold text-green-800">
                                 Open store Today for{" "}
                                 {
-                                    stores.find((s) => s.id === selectedStore)
-                                        ?.name
+                                    stores.find(
+                                        (store: Store) =>
+                                            store.id === selectedStore
+                                    )?.name
                                 }
                             </h3>
                         </div>
@@ -3119,7 +3141,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                     />
                 </div>
 
-                {stores.length > 1 && (
+                {managerStores.length > 0 && (
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             <StoreIcon size={16} className="inline mr-1" />
@@ -3130,7 +3152,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                             onChange={(e) => setSelectedStore(e.target.value)}
                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                         >
-                            {stores.map((store) => (
+                            {managerStores.map((store: Store) => (
                                 <option key={store.id} value={store.id}>
                                     {store.name}
                                 </option>
@@ -3459,8 +3481,8 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                         : {}
                 }
                 storeName={
-                    stores.find((s) => s.id === selectedStore)?.name ||
-                    "Unknown Store"
+                    stores.find((store: Store) => store.id === selectedStore)
+                        ?.name || "Unknown Store"
                 }
             />
 
