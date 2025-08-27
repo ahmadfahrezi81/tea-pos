@@ -134,22 +134,34 @@ export default function MobileAuth({ profile, mutate }: MobileAuthProps) {
                                                         ) => (
                                                             <span
                                                                 key={index}
-                                                                className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                                    assignment.role ===
-                                                                    "manager"
-                                                                        ? "bg-blue-100 text-blue-700"
-                                                                        : assignment.role ===
-                                                                          "seller"
-                                                                        ? "bg-green-100 text-green-700"
-                                                                        : "bg-gray-100 text-gray-700"
-                                                                }`}
+                                                                className="flex items-center space-x-2 mb-1"
                                                             >
-                                                                {assignment.role
-                                                                    .charAt(0)
-                                                                    .toUpperCase() +
-                                                                    assignment.role.slice(
-                                                                        1
-                                                                    )}
+                                                                <span
+                                                                    key={index}
+                                                                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                                        assignment.role ===
+                                                                        "manager"
+                                                                            ? "bg-blue-100 text-blue-700"
+                                                                            : assignment.role ===
+                                                                              "seller"
+                                                                            ? "bg-green-100 text-green-700"
+                                                                            : "bg-gray-100 text-gray-700"
+                                                                    }`}
+                                                                >
+                                                                    {assignment.role
+                                                                        .charAt(
+                                                                            0
+                                                                        )
+                                                                        .toUpperCase() +
+                                                                        assignment.role.slice(
+                                                                            1
+                                                                        )}
+                                                                </span>
+                                                                {assignment.is_default && (
+                                                                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                                        Default
+                                                                    </span>
+                                                                )}
                                                             </span>
                                                         )
                                                     )}
