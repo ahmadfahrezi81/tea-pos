@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Profile, Store } from "@/lib/types";
 import { useStores } from "@/lib/hooks/useData";
 import packageJson from "../../package.json";
+import { Assignment } from "@/app/mobile/page";
 
 interface MobileAuthProps {
     profile: Profile | null;
@@ -15,18 +16,14 @@ export default function MobileAuth({ profile, mutate }: MobileAuthProps) {
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+
     const supabase = createClient();
-    // const { data: stores = [], isLoading: storesLoading } = useStores(
-    //     profile?.id ?? ""
-    // );
 
     const { data, isLoading: storesLoading } = useStores(profile?.id ?? "");
-
     const stores = data?.stores ?? [];
     const assignments = data?.assignments ?? {};
-    // const users = data?.users ?? [];
 
-    console.log(stores);
+    // console.log(stores);
 
     useEffect(() => {
         const { data: authListener } = supabase.auth.onAuthStateChange(() => {
@@ -68,15 +65,10 @@ export default function MobileAuth({ profile, mutate }: MobileAuthProps) {
     };
 
     // If user is logged in, show profile
-    // if (user && profile) {
     if (profile) {
         return (
             <div className="space-y-6">
                 <div className="bg-white rounded-lg p-6 shadow-sm">
-                    {/* <h2 className="text-2xl font-bold mb-6 text-center">
-                        Your Profile
-                    </h2> */}
-
                     <div className="space-y-4">
                         <div className="bg-blue-50 p-4 rounded-lg">
                             <div className="text-center">
@@ -142,11 +134,16 @@ export default function MobileAuth({ profile, mutate }: MobileAuthProps) {
                                                     {assignments[store.id] && (
                                                         <span className="ml-2 text-xs text-gray-500">
                                                             (
-                                                            {
-                                                                assignments[
-                                                                    store.id
-                                                                ][0].role
-                                                            }
+                                                            {assignments[
+                                                                store.id
+                                                            ]
+                                                                .map(
+                                                                    (
+                                                                        assignment: Assignment
+                                                                    ) =>
+                                                                        assignment.role
+                                                                )
+                                                                .join(", ")}
                                                             )
                                                         </span>
                                                     )}
@@ -175,12 +172,6 @@ export default function MobileAuth({ profile, mutate }: MobileAuthProps) {
                             TEA-POS v{packageJson.version}
                         </div>
                     </div>
-                </div>
-
-                <div className="text-center">
-                    <p className="text-gray-600 text-sm">
-                        Use the tabs below to access POS and Orders
-                    </p>
                 </div>
             </div>
         );
