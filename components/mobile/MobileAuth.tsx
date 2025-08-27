@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Profile, Store } from "@/lib/types";
 import { useStores } from "@/lib/hooks/useData";
 import packageJson from "../../package.json";
+import { Assignment } from "@/app/mobile/page";
 
 interface MobileAuthProps {
     profile: Profile | null;
@@ -15,11 +16,14 @@ export default function MobileAuth({ profile, mutate }: MobileAuthProps) {
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+
     const supabase = createClient();
-    const { data: stores = [], isLoading: storesLoading } = useStores(
-        profile?.role ?? "",
-        profile?.id ?? ""
-    );
+
+    const { data, isLoading: storesLoading } = useStores(profile?.id ?? "");
+    const stores = data?.stores ?? [];
+    const assignments = data?.assignments ?? {};
+
+    // console.log(stores);
 
     useEffect(() => {
         const { data: authListener } = supabase.auth.onAuthStateChange(() => {
@@ -61,15 +65,10 @@ export default function MobileAuth({ profile, mutate }: MobileAuthProps) {
     };
 
     // If user is logged in, show profile
-    // if (user && profile) {
     if (profile) {
         return (
             <div className="space-y-6">
                 <div className="bg-white rounded-lg p-6 shadow-sm">
-                    {/* <h2 className="text-2xl font-bold mb-6 text-center">
-                        Your Profile
-                    </h2> */}
-
                     <div className="space-y-4">
                         <div className="bg-blue-50 p-4 rounded-lg">
                             <div className="text-center">
@@ -86,7 +85,7 @@ export default function MobileAuth({ profile, mutate }: MobileAuthProps) {
                                 <p className="text-gray-600">{profile.email}</p>
                             </div>
                         </div>
-                        <div className="bg-gray-50 p-4 rounded-lg">
+                        {/* <div className="bg-gray-50 p-4 rounded-lg">
                             <div className="flex justify-between items-center">
                                 <span className="text-gray-600">Role:</span>
                                 <span
@@ -100,10 +99,92 @@ export default function MobileAuth({ profile, mutate }: MobileAuthProps) {
                                         profile.role.slice(1)}
                                 </span>
                             </div>
+                        </div> */}
+
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                            <div className="flex justify-between items-center mb-3">
+                                <span className="text-gray-700 font-semibold">
+                                    Assigned Stores:
+                                </span>
+                                {storesLoading && (
+                                    <span className="text-gray-500 text-sm">
+                                        Loading...
+                                    </span>
+                                )}
+                            </div>
+
+                            {!storesLoading && stores.length > 0 ? (
+                                <div className="space-y-2">
+                                    {stores.map((store: Store) => (
+                                        <div
+                                            key={store.id}
+                                            className="flex justify-between items-center border-b pb-2 last:border-none "
+                                        >
+                                            <span className="text-gray-600 text-sm font-medium">
+                                                {store.name}
+                                            </span>
+
+                                            {/* Roles as styled chips */}
+                                            {assignments[store.id] ? (
+                                                <div className="flex gap-2 flex-wrap justify-end">
+                                                    {assignments[store.id].map(
+                                                        (
+                                                            assignment: Assignment,
+                                                            index: number
+                                                        ) => (
+                                                            <span
+                                                                key={index}
+                                                                className="flex items-center space-x-2"
+                                                            >
+                                                                <span
+                                                                    key={index}
+                                                                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                                        assignment.role ===
+                                                                        "manager"
+                                                                            ? "bg-blue-100 text-blue-700"
+                                                                            : assignment.role ===
+                                                                              "seller"
+                                                                            ? "bg-green-100 text-green-700"
+                                                                            : "bg-gray-100 text-gray-700"
+                                                                    }`}
+                                                                >
+                                                                    {assignment.role
+                                                                        .charAt(
+                                                                            0
+                                                                        )
+                                                                        .toUpperCase() +
+                                                                        assignment.role.slice(
+                                                                            1
+                                                                        )}
+                                                                </span>
+                                                                {assignment.is_default && (
+                                                                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                                        Default
+                                                                    </span>
+                                                                )}
+                                                            </span>
+                                                        )
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <span className="text-xs text-gray-400">
+                                                    No roles assigned
+                                                </span>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                !storesLoading && (
+                                    <span className="text-gray-500 text-sm">
+                                        No stores assigned
+                                    </span>
+                                )
+                            )}
                         </div>
                         <div className="bg-gray-50 p-4 rounded-lg">
                             <div className="flex justify-between items-center">
-                                <span className="text-gray-600">
+                                <span className="text-gray-700 font-semibold">
                                     Member since:
                                 </span>
                                 <span className="text-gray-800">
@@ -113,35 +194,7 @@ export default function MobileAuth({ profile, mutate }: MobileAuthProps) {
                                 </span>
                             </div>
                         </div>
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                            <div className="flex justify-between items-start">
-                                <span className="text-gray-600">
-                                    Assigned Stores:
-                                </span>
-                                <div className="text-right text-sm">
-                                    {storesLoading ? (
-                                        <span className="text-gray-500">
-                                            Loading...
-                                        </span>
-                                    ) : stores.length > 0 ? (
-                                        <div className="space-y-1">
-                                            {stores.map((store: Store) => (
-                                                <div
-                                                    key={store.id}
-                                                    className="text-gray-800"
-                                                >
-                                                    {store.name}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <span className="text-gray-500">
-                                            No stores assigned
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
+
                         {/* Logout Button */}
                         <div className="text-center">
                             <button
@@ -155,12 +208,6 @@ export default function MobileAuth({ profile, mutate }: MobileAuthProps) {
                             TEA-POS v{packageJson.version}
                         </div>
                     </div>
-                </div>
-
-                <div className="text-center">
-                    <p className="text-gray-600 text-sm">
-                        Use the tabs below to access POS and Orders
-                    </p>
                 </div>
             </div>
         );

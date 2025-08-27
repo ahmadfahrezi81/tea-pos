@@ -22,8 +22,8 @@ export default function POSSystem() {
     const { data: profile, isLoading: profileLoading } = useProfile();
     const { data: products, isLoading: productsLoading } = useProducts();
     const { data: stores, isLoading: storesLoading } = useStores(
-        profile?.role,
-        profile?.id
+        profile?.role
+        // profile?.id
     );
 
     const [selectedStore, setSelectedStore] = useState<string>("");
