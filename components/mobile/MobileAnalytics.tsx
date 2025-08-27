@@ -687,7 +687,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                     />
                 </div>
 
-                {managerStores.length > 0 && (
+                {managerStores.length > 1 && (
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             <StoreIcon size={16} className="inline mr-1" />

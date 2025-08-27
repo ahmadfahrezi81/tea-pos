@@ -187,6 +187,7 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                         </label>
                     </div>
                     <select
+                        disabled={sellerStores.length === 1}
                         value={selectedStore}
                         onChange={(e) => setSelectedStore(e.target.value)}
                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
