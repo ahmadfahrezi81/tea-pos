@@ -103,7 +103,7 @@ export default function MobileAuth({ profile, mutate }: MobileAuthProps) {
 
                         <div className="bg-gray-50 p-4 rounded-lg">
                             <div className="flex justify-between items-center mb-3">
-                                <span className="text-gray-600 ">
+                                <span className="text-gray-700 font-semibold">
                                     Assigned Stores:
                                 </span>
                                 {storesLoading && (
@@ -118,9 +118,9 @@ export default function MobileAuth({ profile, mutate }: MobileAuthProps) {
                                     {stores.map((store: Store) => (
                                         <div
                                             key={store.id}
-                                            className="flex justify-between items-center border-b pb-2 last:border-none"
+                                            className="flex justify-between items-center border-b pb-2 last:border-none "
                                         >
-                                            <span className="text-gray-800 text-sm font-medium">
+                                            <span className="text-gray-600 text-sm font-medium">
                                                 {store.name}
                                             </span>
 
@@ -134,7 +134,7 @@ export default function MobileAuth({ profile, mutate }: MobileAuthProps) {
                                                         ) => (
                                                             <span
                                                                 key={index}
-                                                                className="flex items-center space-x-2 mb-1"
+                                                                className="flex items-center space-x-2"
                                                             >
                                                                 <span
                                                                     key={index}
@@ -184,7 +184,7 @@ export default function MobileAuth({ profile, mutate }: MobileAuthProps) {
                         </div>
                         <div className="bg-gray-50 p-4 rounded-lg">
                             <div className="flex justify-between items-center">
-                                <span className="text-gray-600">
+                                <span className="text-gray-700 font-semibold">
                                     Member since:
                                 </span>
                                 <span className="text-gray-800">

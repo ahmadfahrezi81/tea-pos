@@ -76,7 +76,10 @@ export default function MobilePage() {
             id: "orders" as TabType,
             label: "Orders",
             icon: Clock,
-            show: !!user,
+            show:
+                !!user &&
+                hasSellerRole(user.id, assignments) &&
+                hasManagerRole(user.id, assignments),
         },
         {
             id: "sales" as TabType,
@@ -130,9 +133,12 @@ export default function MobilePage() {
                     hasSellerRole(user.id, assignments) && (
                         <MobilePOS profile={profile} />
                     )}
-                {activeTab === "orders" && user && (
-                    <MobileOrders profile={profile} />
-                )}
+                {activeTab === "orders" &&
+                    user &&
+                    hasSellerRole(user.id, assignments) &&
+                    hasManagerRole(user.id, assignments) && (
+                        <MobileOrders profile={profile} />
+                    )}
                 {/* {activeTab === "sales" &&
                     user &&
                     profile?.role === "manager" && (
