@@ -60,10 +60,10 @@ export const SetExpenseModal = ({
                 >
                     <div className="p-4 border-b border-gray-200 flex justify-between items-center">
                         <div className="flex flex-col space-y-1">
-                            <h2 className="text-xl font-semibold text-gray-900">
+                            <h2 className="text-2xl font-semibold text-gray-900">
                                 Add Expenses
                             </h2>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-lg text-gray-600">
                                 {formatDate(summary.date)} · {getStoreName()}
                             </p>
                         </div>
@@ -72,7 +72,7 @@ export const SetExpenseModal = ({
                             onClick={handleClose}
                             className="p-1 hover:bg-gray-100 rounded"
                         >
-                            <X size={24} />
+                            <X size={30} />
                         </button>
                     </div>
 
