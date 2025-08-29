@@ -16,6 +16,9 @@ import {
 import { formatRupiah } from "@/lib/utils/formatCurrency";
 import { Assignment } from "@/app/mobile/page";
 import { hasManagerRoleInStore } from "@/lib/utils/roleUtils";
+import { SetBalanceModal } from "./analytics/SetBalanceModal";
+import { SetExpenseModal } from "./analytics/SetExpenseModal";
+import { CloseDayModal } from "./analytics/CloseDayModal";
 
 interface MobileAnalyticsProps {
     profile: Profile | null;
@@ -341,6 +344,22 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
     );
     const [showOpenStorePopup, setShowOpenStorePopup] = useState(false);
     const [showCloseReminder, setShowCloseReminder] = useState(false);
+
+    //TEST----------------
+    const [showExpenseForm, setShowExpenseForm] = useState(false);
+    // const [expenseForm, setExpenseForm] = useState({
+    //     items: [],
+    // });
+
+    // // For mini pop-up
+    // const [showAddExpensePopup, setShowAddExpensePopup] = useState(false);
+    // const [newExpense, setNewExpense] = useState({
+    //     label: "",
+    //     customLabel: "",
+    // });
+
+    //------------------
+
     const [showEditForm, setShowEditForm] = useState(false);
     const [showCloseForm, setShowCloseForm] = useState(false);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -462,57 +481,64 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
         }
     };
 
-    const handleEditSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!selectedSummary || !isManager) return;
+    // const handleEditSubmit = async (e: React.FormEvent) => {
+    //     e.preventDefault();
+    //     if (!selectedSummary || !isManager) return;
 
-        try {
-            const openingBalance = parseFloat(editForm.opening_balance);
+    //     try {
+    //         const openingBalance = parseFloat(editForm.opening_balance);
 
-            await updateSummary(selectedSummary.id, {
-                opening_balance: openingBalance,
-            });
+    //         await updateSummary(selectedSummary.id, {
+    //             opening_balance: openingBalance,
+    //         });
 
-            showToast("Opening balance updated successfully", "success");
-            setEditForm({ opening_balance: "" });
-            setShowEditForm(false);
-            setSelectedSummary(null);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-            showToast(
-                error.message || "Failed to update opening balance",
-                "error"
-            );
-            console.error(error);
-        }
-    };
+    //         showToast("Opening balance updated successfully", "success");
+    //         setEditForm({ opening_balance: "" });
+    //         setShowEditForm(false);
+    //         setSelectedSummary(null);
+    //         // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    //     } catch (error: any) {
+    //         showToast(
+    //             error.message || "Failed to update opening balance",
+    //             "error"
+    //         );
+    //         console.error(error);
+    //     }
+    // };
 
-    const handleCloseDay = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!selectedSummary || !isManager) return;
+    // const handleAddExpenses = async (e: React.FormEvent) => {
+    //     e.preventDefault();
+    //     console.log(expenseForm.items);
+    //     // send to API or update state
+    //     setShowExpenseForm(false);
+    // };
 
-        try {
-            const actualCash = parseFloat(closeForm.actual_cash);
-            const variance = actualCash - selectedSummary.expected_cash;
+    // const handleCloseDay = async (e: React.FormEvent) => {
+    //     e.preventDefault();
+    //     if (!selectedSummary || !isManager) return;
 
-            await updateSummary(selectedSummary.id, {
-                actual_cash: actualCash,
-                variance: variance,
-                notes: closeForm.notes || null,
-                closed_at: new Date().toISOString(),
-            });
+    //     try {
+    //         const actualCash = parseFloat(closeForm.actual_cash);
+    //         const variance = actualCash - selectedSummary.expected_cash;
 
-            showToast("Day closed successfully", "success");
-            setCloseForm({ actual_cash: "", notes: "" });
-            setShowCloseForm(false);
-            setShowCloseReminder(false);
-            setSelectedSummary(null);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-            showToast(error.message || "Failed to close day", "error");
-            console.error(error);
-        }
-    };
+    //         await updateSummary(selectedSummary.id, {
+    //             actual_cash: actualCash,
+    //             variance: variance,
+    //             notes: closeForm.notes || null,
+    //             closed_at: new Date().toISOString(),
+    //         });
+
+    //         showToast("Day closed successfully", "success");
+    //         setCloseForm({ actual_cash: "", notes: "" });
+    //         setShowCloseForm(false);
+    //         setShowCloseReminder(false);
+    //         setSelectedSummary(null);
+    //         // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    //     } catch (error: any) {
+    //         showToast(error.message || "Failed to close day", "error");
+    //         console.error(error);
+    //     }
+    // };
 
     const formatDate = (dateStr: string) => {
         const date = new Date(dateStr);
@@ -854,7 +880,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                         className={`text-sm px-3 py-2 rounded font-medium ${
                                                             summary.variance >=
                                                             0
-                                                                ? "bg-green-600 text-white"
+                                                                ? "bg-green-50 border border-green-200 text-green-700"
                                                                 : "bg-red-50 border border-red-200 text-red-700"
                                                         }`}
                                                     >
@@ -901,6 +927,22 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                         className="flex-1 bg-white text-blue-500 border border-blue-500 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-100 flex items-center justify-center"
                                                     >
                                                         Set Balance
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedSummary(
+                                                                summary
+                                                            );
+                                                            // setExpenseForm({
+                                                            //     items: [],
+                                                            // });
+                                                            setShowExpenseForm(
+                                                                true
+                                                            );
+                                                        }}
+                                                        className="flex-1 bg-white text-green-500 border border-green-500 py-2 px-3 rounded-lg text-sm font-medium hover:bg-green-100 flex items-center justify-center"
+                                                    >
+                                                        Set Expense
                                                     </button>
 
                                                     <button
@@ -1002,208 +1044,65 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                 }
             />
 
-            {/* Edit Opening Balance Modal */}
-            {showEditForm && selectedSummary && isManager && (
-                <div
-                    className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end"
-                    onClick={() => setShowEditForm(false)}
-                >
-                    <div
-                        className="bg-white w-full rounded-t-2xl max-h-[90vh] overflow-y-auto"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-                            {/* <h2 className="text-lg font-semibold">
-                                Edit Opening Balance
-                            </h2> */}
+            {/* Set Balance Modal */}
+            <SetBalanceModal
+                isOpen={showEditForm}
+                summary={selectedSummary}
+                onClose={() => {
+                    setShowEditForm(false);
+                    setSelectedSummary(null);
+                }}
+                onSubmit={async (openingBalance) => {
+                    await updateSummary(selectedSummary.id, {
+                        opening_balance: openingBalance,
+                    });
+                    showToast(
+                        "Opening balance updated successfully",
+                        "success"
+                    );
+                }}
+                formatDate={formatDate}
+                getStoreName={getStoreName}
+            />
 
-                            <div className="flex flex-col space-y-1">
-                                <h2 className="text-xl font-semibold text-gray-900">
-                                    Set Opening Balance
-                                </h2>
-                                <p className="text-sm text-gray-600">
-                                    {formatDate(selectedSummary.date)} ·{" "}
-                                    {getStoreName()}
-                                </p>
-                            </div>
-
-                            <button
-                                onClick={() => setShowEditForm(false)}
-                                className="p-1 hover:bg-gray-100 rounded"
-                            >
-                                <X size={24} />
-                            </button>
-                        </div>
-
-                        <form
-                            onSubmit={handleEditSubmit}
-                            className="p-4 space-y-4"
-                        >
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Opening Balance
-                                </label>
-                                <input
-                                    type="number"
-                                    step="100"
-                                    inputMode="numeric"
-                                    min={0}
-                                    value={editForm.opening_balance}
-                                    onChange={(e) =>
-                                        setEditForm({
-                                            ...editForm,
-                                            opening_balance: e.target.value,
-                                        })
-                                    }
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                    placeholder="0"
-                                    required
-                                />
-                                <p className="text-xs text-gray-500 mt-1">
-                                    This will update the expected cash
-                                    automatically
-                                </p>
-                            </div>
-
-                            <button
-                                type="submit"
-                                className="w-full bg-blue-500 text-white py-4 mb-4 rounded-xl font-semibold hover:bg-blue-600"
-                            >
-                                Update Opening Balance
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            )}
+            {/* Set Expense Modal */}
+            <SetExpenseModal
+                isOpen={showExpenseForm}
+                summary={selectedSummary}
+                onClose={() => {
+                    setShowExpenseForm(false);
+                    setSelectedSummary(null);
+                }}
+                onSubmit={async (expenses) => {
+                    console.log(expenses);
+                    // send to API or update state
+                    showToast("Expenses saved successfully", "success");
+                }}
+                formatDate={formatDate}
+                getStoreName={getStoreName}
+            />
 
             {/* Close Day Modal */}
-            {showCloseForm && selectedSummary && isManager && (
-                <div
-                    className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end"
-                    onClick={() => setShowCloseForm(false)}
-                >
-                    <div
-                        className="bg-white w-full rounded-t-2xl max-h-[90vh] overflow-y-auto"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-                            {/* <h2 className="text-lg font-semibold">Close Day</h2> */}
-                            {/* <h2 className="text-lg font-semibold">
-                                Close Day - {formatDate(selectedSummary.date)}{" "}
-                                at {getStoreName()}
-                            </h2> */}
-                            <div className="flex flex-col space-y-1">
-                                <h2 className="text-xl font-semibold text-gray-900">
-                                    Close Day
-                                </h2>
-                                <p className="text-sm text-gray-600">
-                                    {formatDate(selectedSummary.date)} ·{" "}
-                                    {getStoreName()}
-                                </p>
-                            </div>
-                            <button
-                                onClick={() => setShowCloseForm(false)}
-                                className="p-1 hover:bg-gray-100 rounded"
-                            >
-                                <X size={24} />
-                            </button>
-                        </div>
-
-                        <div className="p-4 space-y-4">
-                            <div className="bg-blue-50 p-4 rounded-lg">
-                                <p className="font-medium text-blue-800">
-                                    Expected Cash
-                                </p>
-                                <p className="text-2xl font-bold text-blue-600">
-                                    {formatRupiah(
-                                        selectedSummary.expected_cash
-                                    )}
-                                </p>
-                                <p className="text-sm text-blue-600">
-                                    Opening:{" "}
-                                    {formatRupiah(
-                                        selectedSummary.opening_balance
-                                    )}{" "}
-                                    + Sales:{" "}
-                                    {formatRupiah(selectedSummary.total_sales)}
-                                </p>
-                            </div>
-
-                            <form
-                                onSubmit={handleCloseDay}
-                                className="space-y-4"
-                            >
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Actual Cash Count
-                                    </label>
-                                    <input
-                                        type="number"
-                                        step="100"
-                                        min={0}
-                                        value={closeForm.actual_cash}
-                                        onChange={(e) =>
-                                            setCloseForm({
-                                                ...closeForm,
-                                                actual_cash: e.target.value,
-                                            })
-                                        }
-                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        placeholder="0"
-                                        required
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Notes (Optional)
-                                    </label>
-                                    <textarea
-                                        value={closeForm.notes}
-                                        onChange={(e) =>
-                                            setCloseForm({
-                                                ...closeForm,
-                                                notes: e.target.value,
-                                            })
-                                        }
-                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 h-20"
-                                        placeholder="Any notes about the day..."
-                                    />
-                                </div>
-
-                                {closeForm.actual_cash && (
-                                    <div
-                                        className={`p-4 rounded-lg ${
-                                            parseFloat(closeForm.actual_cash) -
-                                                selectedSummary.expected_cash >=
-                                            0
-                                                ? "bg-green-50"
-                                                : "bg-red-50"
-                                        }`}
-                                    >
-                                        <p className="font-medium">
-                                            Variance:{" "}
-                                            {formatRupiah(
-                                                parseFloat(
-                                                    closeForm.actual_cash
-                                                ) -
-                                                    selectedSummary.expected_cash
-                                            )}
-                                        </p>
-                                    </div>
-                                )}
-
-                                <button
-                                    type="submit"
-                                    className="w-full bg-red-500 text-white py-4 mb-4 rounded-xl text-lg font-semibold hover:bg-red-600"
-                                >
-                                    Close Day
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <CloseDayModal
+                isOpen={showCloseForm}
+                summary={selectedSummary}
+                onClose={() => {
+                    setShowCloseForm(false);
+                    setSelectedSummary(null);
+                }}
+                onSubmit={async (actualCash, notes, variance) => {
+                    await updateSummary(selectedSummary.id, {
+                        actual_cash: actualCash,
+                        variance: variance,
+                        notes: notes || null,
+                        closed_at: new Date().toISOString(),
+                    });
+                    showToast("Day closed successfully", "success");
+                    setShowCloseReminder(false);
+                }}
+                formatDate={formatDate}
+                getStoreName={getStoreName}
+            />
 
             {/* Toast Notification */}
             {toast && (
