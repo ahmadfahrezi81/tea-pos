@@ -344,21 +344,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
     );
     const [showOpenStorePopup, setShowOpenStorePopup] = useState(false);
     const [showCloseReminder, setShowCloseReminder] = useState(false);
-
-    //TEST----------------
     const [showExpenseForm, setShowExpenseForm] = useState(false);
-    // const [expenseForm, setExpenseForm] = useState({
-    //     items: [],
-    // });
-
-    // // For mini pop-up
-    // const [showAddExpensePopup, setShowAddExpensePopup] = useState(false);
-    // const [newExpense, setNewExpense] = useState({
-    //     label: "",
-    //     customLabel: "",
-    // });
-
-    //------------------
 
     const [showEditForm, setShowEditForm] = useState(false);
     const [showCloseForm, setShowCloseForm] = useState(false);
@@ -926,7 +912,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                         }}
                                                         className="flex-1 bg-white text-blue-500 border border-blue-500 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-100 flex items-center justify-center"
                                                     >
-                                                        Set Balance
+                                                        Balance
                                                     </button>
                                                     <button
                                                         onClick={() => {
@@ -942,7 +928,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                         }}
                                                         className="flex-1 bg-white text-green-500 border border-green-500 py-2 px-3 rounded-lg text-sm font-medium hover:bg-green-100 flex items-center justify-center"
                                                     >
-                                                        Set Expense
+                                                        Expense
                                                     </button>
 
                                                     <button

@@ -190,7 +190,11 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                         disabled={sellerStores.length === 1}
                         value={selectedStore}
                         onChange={(e) => setSelectedStore(e.target.value)}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        className={`w-full p-3 border rounded-lg focus:ring-2 ${
+                            sellerStores.length === 1
+                                ? "bg-gray-100 text-gray-500 cursor-not-allowed border-gray-200"
+                                : "border-gray-300 focus:ring-blue-500"
+                        }`}
                     >
                         {sellerStores.map((store: Store) => (
                             <option key={store.id} value={store.id}>
