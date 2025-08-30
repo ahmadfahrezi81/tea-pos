@@ -1,3 +1,5 @@
+//lib/hooks/useSummaries.ts
+
 import useSWR from "swr";
 
 export interface DailySummary {
