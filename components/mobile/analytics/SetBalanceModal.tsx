@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { DailySummary } from "@/lib/types";
 
@@ -20,8 +20,16 @@ export const SetBalanceModal = ({
     getStoreName,
 }: SetBalanceModalProps) => {
     const [editForm, setEditForm] = useState({
-        opening_balance: summary?.opening_balance?.toString() || "",
+        opening_balance: "",
     });
+
+    useEffect(() => {
+        if (summary?.opening_balance != null) {
+            setEditForm({
+                opening_balance: summary.opening_balance.toString(),
+            });
+        }
+    }, [summary?.opening_balance]); // this will run each time opening_balance updates
 
     if (!isOpen || !summary) return null;
 

@@ -5,7 +5,6 @@ import { useSummaries } from "@/lib/hooks/useSummaries";
 import { useStores } from "@/lib/hooks/useData";
 import { Profile, Store } from "@/lib/types";
 import {
-    X,
     Calendar,
     StoreIcon,
     CalendarDays,
@@ -19,318 +18,12 @@ import { hasManagerRoleInStore } from "@/lib/utils/roleUtils";
 import { SetBalanceModal } from "./analytics/SetBalanceModal";
 import { SetExpenseModal } from "./analytics/SetExpenseModal";
 import { CloseDayModal } from "./analytics/CloseDayModal";
+import { DetailsModal } from "./ui/DetailsModal";
+import { ConfirmationPopup } from "./ui/ConfirmationPopup";
 
 interface MobileAnalyticsProps {
     profile: Profile | null;
 }
-
-interface ConfirmationPopupProps {
-    isOpen: boolean;
-    title: string;
-    message: string;
-    confirmText: string;
-    cancelText?: string;
-    onConfirm: () => void;
-    onCancel: () => void;
-    type?: "warning" | "info";
-}
-
-interface DetailsModalProps {
-    isOpen: boolean;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    summary: any;
-    onClose: () => void;
-    productBreakdown: Record<string, { quantity: number; revenue: number }>;
-    storeName: string;
-}
-
-// Reusable Confirmation Popup Component
-const ConfirmationPopup = ({
-    isOpen,
-    title,
-    message,
-    confirmText,
-    cancelText = "Cancel",
-    onConfirm,
-    onCancel,
-    type = "info",
-}: ConfirmationPopupProps) => {
-    if (!isOpen) return null;
-
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg max-w-sm w-full p-6">
-                <div className="flex items-center mb-4">
-                    {type === "warning" && (
-                        <AlertTriangle
-                            className="text-orange-500 mr-2"
-                            size={24}
-                        />
-                    )}
-                    <h3 className="text-lg font-semibold">{title}</h3>
-                </div>
-                <p className="text-gray-600 mb-6">{message}</p>
-                <div className="flex space-x-3">
-                    <button
-                        onClick={onCancel}
-                        className="flex-1 py-2 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-                    >
-                        {cancelText}
-                    </button>
-                    <button
-                        onClick={onConfirm}
-                        className={`flex-1 py-2 px-4 rounded-lg text-white font-medium ${
-                            type === "warning"
-                                ? "bg-orange-500 hover:bg-orange-600"
-                                : "bg-blue-500 hover:bg-blue-600"
-                        }`}
-                    >
-                        {confirmText}
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-// Details Modal Component
-const DetailsModal = ({
-    isOpen,
-    summary,
-    onClose,
-    productBreakdown,
-    storeName,
-}: DetailsModalProps) => {
-    if (!isOpen || !summary) return null;
-
-    const formatFullTimestamp = (dateString: string) => {
-        if (!dateString) return "Not set";
-        const date = new Date(dateString);
-        return date.toLocaleString("en-US", {
-            weekday: "short",
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-            hour12: true,
-        });
-    };
-
-    const dailyCups = Object.values(productBreakdown).reduce(
-        (total, product) => total + product.quantity,
-        0
-    );
-
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end">
-            <div className="bg-white w-full rounded-t-2xl max-h-[90vh] overflow-y-auto">
-                <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-                    <h2 className="text-lg font-semibold">
-                        Daily Summary Details
-                    </h2>
-                    <button
-                        onClick={onClose}
-                        className="p-1 hover:bg-gray-100 rounded"
-                    >
-                        <X size={24} />
-                    </button>
-                </div>
-
-                <div className="p-4 space-y-4">
-                    {/* Summary Header */}
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                        <h3 className="font-semibold text-lg mb-2">
-                            {new Date(summary.date).toLocaleDateString(
-                                "en-US",
-                                {
-                                    weekday: "long",
-                                    year: "numeric",
-                                    month: "long",
-                                    day: "numeric",
-                                }
-                            )}
-                        </h3>
-                        <div className="text-sm text-gray-600 space-y-1">
-                            <p>
-                                <strong>Summary ID:</strong> {summary.id}
-                            </p>
-                            <p>
-                                <strong>Store:</strong> {storeName}
-                            </p>
-                            <p>
-                                <strong>Seller:</strong>{" "}
-                                {summary.seller?.full_name}
-                            </p>
-                            {summary.manager?.full_name && (
-                                <p>
-                                    <strong>Manager:</strong>{" "}
-                                    {summary.manager.full_name}
-                                </p>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Financial Summary */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-blue-50 p-4 rounded-lg">
-                            <p className="text-xs text-blue-600 uppercase tracking-wide">
-                                Opening Balance
-                            </p>
-                            <p className="text-lg font-bold text-blue-800">
-                                {formatRupiah(summary.opening_balance)}
-                            </p>
-                        </div>
-                        <div className="bg-green-50 p-4 rounded-lg">
-                            <p className="text-xs text-green-600 uppercase tracking-wide">
-                                Total Sales
-                            </p>
-                            <p className="text-lg font-bold text-green-800">
-                                {formatRupiah(summary.total_sales)}
-                            </p>
-                        </div>
-                        <div className="bg-purple-50 p-4 rounded-lg">
-                            <p className="text-xs text-purple-600 uppercase tracking-wide">
-                                Expected Cash
-                            </p>
-                            <p className="text-lg font-bold text-purple-800">
-                                {formatRupiah(summary.expected_cash)}
-                            </p>
-                        </div>
-                        <div className="bg-orange-50 p-4 rounded-lg">
-                            <p className="text-xs text-orange-600 uppercase tracking-wide">
-                                Actual Cash
-                            </p>
-                            <p className="text-lg font-bold text-orange-800">
-                                {summary.actual_cash !== null
-                                    ? formatRupiah(summary.actual_cash)
-                                    : "Not counted"}
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* Variance */}
-                    {summary.variance !== null && (
-                        <div
-                            className={`p-4 rounded-lg ${
-                                summary.variance >= 0
-                                    ? "bg-green-50"
-                                    : "bg-red-50"
-                            }`}
-                        >
-                            <p
-                                className={`text-xs uppercase tracking-wide ${
-                                    summary.variance >= 0
-                                        ? "text-green-600"
-                                        : "text-red-600"
-                                }`}
-                            >
-                                Cash Variance
-                            </p>
-                            <p
-                                className={`text-lg font-bold ${
-                                    summary.variance >= 0
-                                        ? "text-green-800"
-                                        : "text-red-800"
-                                }`}
-                            >
-                                {summary.variance >= 0 ? "+" : ""}
-                                {formatRupiah(summary.variance)}
-                            </p>
-                        </div>
-                    )}
-
-                    {/* Sales Statistics */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="text-center p-4 bg-gray-50 rounded-lg">
-                            <p className="text-2xl font-bold text-blue-600">
-                                {Object.keys(productBreakdown).length}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                                Total Orders
-                            </p>
-                        </div>
-                        <div className="text-center p-4 bg-gray-50 rounded-lg">
-                            <p className="text-2xl font-bold text-orange-600">
-                                {dailyCups}
-                            </p>
-                            <p className="text-sm text-gray-600">Cups Sold</p>
-                        </div>
-                    </div>
-
-                    {/* Timestamps */}
-                    <div className="space-y-2">
-                        <h4 className="font-medium text-gray-800">
-                            Timestamps
-                        </h4>
-                        <div className="bg-gray-50 p-3 rounded-lg text-sm space-y-2">
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">Created:</span>
-                                <span className="font-medium">
-                                    {formatFullTimestamp(summary.created_at)}
-                                </span>
-                            </div>
-                            {summary.closed_at && (
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">
-                                        Closed:
-                                    </span>
-                                    <span className="font-medium">
-                                        {formatFullTimestamp(summary.closed_at)}
-                                    </span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Product Breakdown */}
-                    {Object.keys(productBreakdown).length > 0 && (
-                        <div className="space-y-3">
-                            <h4 className="font-medium text-gray-800">
-                                Product Sales
-                            </h4>
-                            <div className="space-y-2">
-                                {Object.entries(productBreakdown).map(
-                                    ([productName, data]) => (
-                                        <div
-                                            key={productName}
-                                            className="flex justify-between items-center bg-gray-50 p-3 rounded-lg"
-                                        >
-                                            <span className="font-medium">
-                                                {productName}
-                                            </span>
-                                            <div className="text-right">
-                                                <p className="font-medium">
-                                                    {data.quantity} cups
-                                                </p>
-                                                <p className="text-sm text-gray-600">
-                                                    {formatRupiah(data.revenue)}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Notes */}
-                    {summary.notes && (
-                        <div className="space-y-2">
-                            <h4 className="font-medium text-gray-800">Notes</h4>
-                            <div className="bg-gray-50 p-3 rounded-lg">
-                                <p className="text-sm text-gray-700">
-                                    {summary.notes}
-                                </p>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-};
 
 export const isCurrentMonthSelected = (selectedMonth: string): boolean => {
     const currentMonth = new Date().toISOString().slice(0, 7); // "YYYY-MM"
@@ -355,14 +48,6 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
         message: string;
         type: "success" | "error";
     } | null>(null);
-
-    const [editForm, setEditForm] = useState({
-        opening_balance: "",
-    });
-    const [closeForm, setCloseForm] = useState({
-        actual_cash: "",
-        notes: "",
-    });
 
     const { data: storesData, isLoading: storesLoading } = useStores(
         profile?.id ?? ""
@@ -466,65 +151,6 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
             console.error(error);
         }
     };
-
-    // const handleEditSubmit = async (e: React.FormEvent) => {
-    //     e.preventDefault();
-    //     if (!selectedSummary || !isManager) return;
-
-    //     try {
-    //         const openingBalance = parseFloat(editForm.opening_balance);
-
-    //         await updateSummary(selectedSummary.id, {
-    //             opening_balance: openingBalance,
-    //         });
-
-    //         showToast("Opening balance updated successfully", "success");
-    //         setEditForm({ opening_balance: "" });
-    //         setShowEditForm(false);
-    //         setSelectedSummary(null);
-    //         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    //     } catch (error: any) {
-    //         showToast(
-    //             error.message || "Failed to update opening balance",
-    //             "error"
-    //         );
-    //         console.error(error);
-    //     }
-    // };
-
-    // const handleAddExpenses = async (e: React.FormEvent) => {
-    //     e.preventDefault();
-    //     console.log(expenseForm.items);
-    //     // send to API or update state
-    //     setShowExpenseForm(false);
-    // };
-
-    // const handleCloseDay = async (e: React.FormEvent) => {
-    //     e.preventDefault();
-    //     if (!selectedSummary || !isManager) return;
-
-    //     try {
-    //         const actualCash = parseFloat(closeForm.actual_cash);
-    //         const variance = actualCash - selectedSummary.expected_cash;
-
-    //         await updateSummary(selectedSummary.id, {
-    //             actual_cash: actualCash,
-    //             variance: variance,
-    //             notes: closeForm.notes || null,
-    //             closed_at: new Date().toISOString(),
-    //         });
-
-    //         showToast("Day closed successfully", "success");
-    //         setCloseForm({ actual_cash: "", notes: "" });
-    //         setShowCloseForm(false);
-    //         setShowCloseReminder(false);
-    //         setSelectedSummary(null);
-    //         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    //     } catch (error: any) {
-    //         showToast(error.message || "Failed to close day", "error");
-    //         console.error(error);
-    //     }
-    // };
 
     const formatDate = (dateStr: string) => {
         const date = new Date(dateStr);
@@ -902,10 +528,6 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                             setSelectedSummary(
                                                                 summary
                                                             );
-                                                            setEditForm({
-                                                                opening_balance:
-                                                                    summary.opening_balance.toString(),
-                                                            });
                                                             setShowEditForm(
                                                                 true
                                                             );
@@ -919,9 +541,6 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                             setSelectedSummary(
                                                                 summary
                                                             );
-                                                            // setExpenseForm({
-                                                            //     items: [],
-                                                            // });
                                                             setShowExpenseForm(
                                                                 true
                                                             );
@@ -936,11 +555,6 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                             setSelectedSummary(
                                                                 summary
                                                             );
-                                                            setCloseForm({
-                                                                actual_cash:
-                                                                    summary.expected_cash.toString(),
-                                                                notes: "",
-                                                            });
                                                             setShowCloseForm(
                                                                 true
                                                             );
@@ -999,10 +613,6 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                     const todaysSummary = getTodaysSummary();
                     if (todaysSummary) {
                         setSelectedSummary(todaysSummary);
-                        setCloseForm({
-                            actual_cash: todaysSummary.expected_cash.toString(),
-                            notes: "",
-                        });
                         setShowCloseForm(true);
                         setShowCloseReminder(false);
                     }

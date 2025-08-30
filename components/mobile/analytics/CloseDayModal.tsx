@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { formatRupiah } from "@/lib/utils/formatCurrency";
 import { DailySummary } from "@/lib/types";
@@ -28,6 +28,15 @@ export const CloseDayModal = ({
         actual_cash: summary?.expected_cash?.toString() || "",
         notes: "",
     });
+
+    useEffect(() => {
+        if (summary?.expected_cash != null) {
+            setCloseForm({
+                actual_cash: summary.expected_cash.toString(),
+                notes: "", // Reset notes or keep previous if needed
+            });
+        }
+    }, [summary?.expected_cash]);
 
     if (!isOpen || !summary) return null;
 
@@ -100,6 +109,7 @@ export const CloseDayModal = ({
                             <input
                                 type="number"
                                 step="100"
+                                inputMode="numeric"
                                 min={0}
                                 value={closeForm.actual_cash}
                                 onChange={(e) =>
