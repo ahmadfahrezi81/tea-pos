@@ -118,7 +118,7 @@ export default function MobileAuth({ profile, mutate }: MobileAuthProps) {
                                     {stores.map((store: Store) => (
                                         <div
                                             key={store.id}
-                                            className="flex justify-between items-center border-b pb-2 last:border-none "
+                                            className="flex justify-between items-center border-b pb-2 border-gray-400 last:border-none "
                                         >
                                             <span className="text-gray-600 text-sm font-medium">
                                                 {store.name}
