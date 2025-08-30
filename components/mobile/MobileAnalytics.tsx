@@ -906,21 +906,21 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
     }, [data?.summaries]);
 
     // Close day reminder logic - check every hour after 10 PM
-    useEffect(() => {
-        if (!isManager || !data?.summaries || !selectedStore) return;
+    // useEffect(() => {
+    //     if (!isManager || !data?.summaries || !selectedStore) return;
 
-        const unclosedSummaries = getUnclosedSummaries();
-        const todayStr = new Date().toISOString().split("T")[0];
-        const todaysSummary = data.summaries.find((s) => s.date === todayStr);
+    //     const unclosedSummaries = getUnclosedSummaries();
+    //     const todayStr = new Date().toISOString().split("T")[0];
+    //     const todaysSummary = data.summaries.find((s) => s.date === todayStr);
 
-        if (todaysSummary && unclosedSummaries.length > 0) {
-            const now = new Date();
-            const hour = now.getHours();
-            if (hour >= 22 || hour < 6) {
-                setShowCloseReminder(true);
-            }
-        }
-    }, [isManager, data?.summaries, selectedStore, getUnclosedSummaries]);
+    //     if (todaysSummary && unclosedSummaries.length > 0) {
+    //         const now = new Date();
+    //         const hour = now.getHours();
+    //         if (hour >= 22 || hour < 6) {
+    //             setShowCloseReminder(true);
+    //         }
+    //     }
+    // }, [isManager, data?.summaries, selectedStore, getUnclosedSummaries]);
 
     const handleOpenStoreToday = async () => {
         if (!selectedStore || !profile) return;
