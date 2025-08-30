@@ -1,11 +1,22 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { formatRupiah } from "@/lib/utils/formatCurrency";
-import { DailySummary } from "@/lib/types";
+import { DailySummary as BaseDailySummary } from "@/lib/types";
+
+interface Expense {
+    id: string;
+    expense_type: string;
+    amount: number;
+}
+
+type DailySummaryWithExpenses = BaseDailySummary & {
+    expenses?: Expense[];
+    total_expenses?: number;
+};
 
 interface CloseDayModalProps {
     isOpen: boolean;
-    summary: DailySummary;
+    summary: DailySummaryWithExpenses;
     onClose: () => void;
     onSubmit: (
         actualCash: number,
@@ -97,7 +108,8 @@ export const CloseDayModal = ({
                         </p>
                         <p className="text-sm text-blue-600">
                             Opening: {formatRupiah(summary.opening_balance)} +
-                            Sales: {formatRupiah(summary.total_sales)}
+                            Sales: {formatRupiah(summary.total_sales)} -
+                            Expense: {formatRupiah(summary.total_expenses ?? 0)}
                         </p>
                     </div>
 
