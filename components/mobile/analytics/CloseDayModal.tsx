@@ -10,8 +10,8 @@ interface Expense {
 }
 
 type DailySummaryWithExpenses = BaseDailySummary & {
-    expenses?: Expense[];
-    total_expenses?: number;
+    expenses: Expense[];
+    total_expenses: number;
 };
 
 interface CloseDayModalProps {
@@ -40,6 +40,8 @@ export const CloseDayModal = ({
         notes: "",
     });
 
+    console.log("Summary in CloseDayModal", summary);
+
     useEffect(() => {
         if (summary?.expected_cash != null) {
             setCloseForm({
@@ -47,7 +49,7 @@ export const CloseDayModal = ({
                 notes: "", // Reset notes or keep previous if needed
             });
         }
-    }, [summary?.expected_cash]);
+    }, [summary?.expected_cash, summary?.total_sales]);
 
     if (!isOpen || !summary) return null;
 
@@ -109,7 +111,7 @@ export const CloseDayModal = ({
                         <p className="text-sm text-blue-600">
                             Opening: {formatRupiah(summary.opening_balance)} +
                             Sales: {formatRupiah(summary.total_sales)} -
-                            Expense: {formatRupiah(summary.total_expenses ?? 0)}
+                            Expense: {formatRupiah(summary.total_expenses)}
                         </p>
                     </div>
 

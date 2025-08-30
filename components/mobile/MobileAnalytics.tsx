@@ -849,6 +849,21 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
 
     const isManager = profile?.role === "manager";
 
+    // Add this useEffect in MobileAnalytics to track data changes
+    // useEffect(() => {
+    //     console.log("=== Enhanced Debug ===");
+    //     console.log("Raw SWR Data:", data);
+    //     console.log("Processed Summaries:");
+    //     data?.summaries?.forEach((summary) => {
+    //         console.log(`Summary ${summary.date}:`, {
+    //             id: summary.id,
+    //             total_expenses: summary.total_expenses,
+    //             expenses: summary.expenses?.length,
+    //             expected_cash: summary.expected_cash,
+    //         });
+    //     });
+    // }, [data]);
+
     const showToast = (message: string, type: "success" | "error") => {
         setToast({ message, type });
         setTimeout(() => setToast(null), 3000);
