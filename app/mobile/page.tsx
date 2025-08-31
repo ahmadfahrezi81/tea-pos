@@ -13,7 +13,7 @@ import { format } from "date-fns";
 import Image from "next/image";
 import { hasManagerRole, hasSellerRole } from "@/lib/utils/roleUtils";
 
-type TabType = "auth" | "pos" | "orders" | "sales";
+type TabType = "auth" | "pos" | "orders" | "analytics";
 
 export interface Assignment {
     user_id: string;
@@ -26,7 +26,7 @@ export interface Assignments {
 }
 
 export default function MobilePage() {
-    const [activeTab, setActiveTab] = useState<TabType>("auth");
+    const [activeTab, setActiveTab] = useState<TabType>("pos");
 
     const supabase = createClient();
 
@@ -38,13 +38,19 @@ export default function MobilePage() {
     const { data: storesData } = useStores(profile?.id ?? "");
     const assignments = storesData?.assignments ?? {};
 
+    // useEffect(() => {
+    //     if (!isLoading && user && activeTab === "auth") {
+    //         setActiveTab("pos");
+    //     }
+    // }, [isLoading, user, activeTab]);
+
     // Listen for auth changes & refresh profile
     useEffect(() => {
         const { data: authListener } = supabase.auth.onAuthStateChange(
             (event) => {
                 if (event === "SIGNED_IN") {
                     mutate();
-                    setActiveTab("auth");
+                    setActiveTab("pos");
                 } else if (event === "SIGNED_OUT") {
                     mutate();
                     setActiveTab("auth");
@@ -82,8 +88,8 @@ export default function MobilePage() {
                 hasManagerRole(user.id, assignments),
         },
         {
-            id: "sales" as TabType,
-            label: "Sales",
+            id: "analytics" as TabType,
+            label: "Analytics",
             icon: BarChart3,
             show: !!user && hasManagerRole(user.id, assignments),
         },
@@ -105,13 +111,15 @@ export default function MobilePage() {
                         alt={"Logo"}
                         width={30}
                         height={30}
-                        className="rounded object-cover"
+                        className="rounded object-cover cursor-pointer" // Add cursor-pointer
+                        onClick={() => setActiveTab("pos")} // <- Navigate to POS tab
                     />
+
                     <h1 className="text-2xl font-bold text-gray-800 capitalize">
                         {{
                             pos: "POS",
                             orders: "Orders",
-                            sales: "Sales",
+                            analytics: "Analytics",
                             auth: "Profile",
                         }[activeTab] || ""}
                     </h1>
@@ -144,7 +152,7 @@ export default function MobilePage() {
                     profile?.role === "manager" && (
                         <MobileAnalytics profile={profile} />
                     )} */}
-                {activeTab === "sales" &&
+                {activeTab === "analytics" &&
                     user &&
                     hasManagerRole(user.id, assignments) && (
                         <MobileAnalytics profile={profile} />
