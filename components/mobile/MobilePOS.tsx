@@ -434,7 +434,7 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                         </div>
 
                         {/* Fixed Footer with Total and Actions */}
-                        <div className="flex-shrink-0 bg-white p-4 border-t border-gray-200">
+                        <div className="flex-shrink-0 bg-white p-4 pb-8 border-t border-gray-200">
                             <div className="flex justify-between items-center mb-4">
                                 <span className="text-xl font-bold text-gray-900">
                                     Total Transaction

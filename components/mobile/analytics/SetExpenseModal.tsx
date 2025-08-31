@@ -852,7 +852,7 @@ export const SetExpenseModal = ({
                     </div>
 
                     {/* Fixed Footer with Submit Button */}
-                    <div className="flex-shrink-0 p-4 bg-white border-t border-gray-200">
+                    <div className="flex-shrink-0 p-4 pb-8 bg-white border-t border-gray-200">
                         <button
                             type="submit"
                             onClick={handleSubmit}

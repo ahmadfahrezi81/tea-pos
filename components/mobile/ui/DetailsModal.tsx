@@ -314,7 +314,7 @@ export const DetailsModal = ({
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Fixed Header */}
-                <div className="flex-shrink-0 p-4 border-b border-gray-200 bg-white rounded-t-2xl sticky top-0 z-10">
+                <div className="flex-shrink-0 p-4 pb-8 border-b border-gray-200 bg-white rounded-t-2xl sticky top-0 z-10">
                     <div className="flex justify-between items-center">
                         <h2 className="text-lg font-semibold">
                             Daily Summary Details
