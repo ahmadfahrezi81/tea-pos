@@ -38,11 +38,11 @@ export default function MobilePage() {
     const { data: storesData } = useStores(profile?.id ?? "");
     const assignments = storesData?.assignments ?? {};
 
-    // useEffect(() => {
-    //     if (!isLoading && user && activeTab === "auth") {
-    //         setActiveTab("pos");
-    //     }
-    // }, [isLoading, user, activeTab]);
+    useEffect(() => {
+        if (!isLoading && user && activeTab === "auth") {
+            setActiveTab("pos");
+        }
+    }, [isLoading, user, activeTab]);
 
     // Listen for auth changes & refresh profile
     useEffect(() => {
@@ -50,7 +50,7 @@ export default function MobilePage() {
             (event) => {
                 if (event === "SIGNED_IN") {
                     mutate();
-                    setActiveTab("pos");
+                    setActiveTab("auth");
                 } else if (event === "SIGNED_OUT") {
                     mutate();
                     setActiveTab("auth");
