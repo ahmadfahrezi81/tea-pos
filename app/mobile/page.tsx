@@ -26,7 +26,7 @@ export interface Assignments {
 }
 
 export default function MobilePage() {
-    const [activeTab, setActiveTab] = useState<TabType>("pos");
+    const [activeTab, setActiveTab] = useState<TabType>("auth");
 
     const supabase = createClient();
 
@@ -37,12 +37,6 @@ export default function MobilePage() {
     //Get store assignments data
     const { data: storesData } = useStores(profile?.id ?? "");
     const assignments = storesData?.assignments ?? {};
-
-    useEffect(() => {
-        if (!isLoading && user && activeTab === "auth") {
-            setActiveTab("pos");
-        }
-    }, [isLoading, user, activeTab]);
 
     // Listen for auth changes & refresh profile
     useEffect(() => {
