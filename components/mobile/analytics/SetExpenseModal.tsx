@@ -892,7 +892,6 @@ export const SetExpenseModal = ({
                         >
                             <option value="Ice">Ice</option>
                             <option value="Electricity">Electricity</option>
-                            <option value="Water">Water</option>
                             <option value="Custom">Custom...</option>
                         </select>
 
