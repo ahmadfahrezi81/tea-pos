@@ -881,8 +881,29 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
         "Unknown Store";
 
     // This new useEffect for open store reminder
+    // useEffect(() => {
+    //     if (!isManager || !selectedStore || !data?.summaries) return;
+
+    //     if (!isCurrentMonthSelected(selectedMonth)) {
+    //         setShowOpenStorePopup(false);
+    //         return;
+    //     }
+
+    //     const todayStr = new Date().toISOString().split("T")[0];
+    //     const todaysSummary = data.summaries.find((s) => s.date === todayStr);
+
+    //     if (!todaysSummary) {
+    //         setShowOpenStorePopup(true);
+    //     } else {
+    //         setShowOpenStorePopup(false);
+    //     }
+    // }, [isManager, selectedStore, data?.summaries, selectedMonth]);
+
+    const [hasSeenPopup, setHasSeenPopup] = useState(false);
+
     useEffect(() => {
-        if (!isManager || !selectedStore || !data?.summaries) return;
+        if (!isManager || !selectedStore || !data?.summaries || hasSeenPopup)
+            return;
 
         if (!isCurrentMonthSelected(selectedMonth)) {
             setShowOpenStorePopup(false);
@@ -894,10 +915,17 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
 
         if (!todaysSummary) {
             setShowOpenStorePopup(true);
+            setHasSeenPopup(true); // prevent re-showing it
         } else {
             setShowOpenStorePopup(false);
         }
-    }, [isManager, selectedStore, data?.summaries, selectedMonth]);
+    }, [
+        isManager,
+        selectedStore,
+        data?.summaries,
+        selectedMonth,
+        hasSeenPopup,
+    ]);
 
     // Closed store reminder useEffect
     const getUnclosedSummaries = useCallback(() => {
@@ -906,6 +934,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
     }, [data?.summaries]);
 
     // Close day reminder logic - check every hour after 10 PM
+
     // useEffect(() => {
     //     if (!isManager || !data?.summaries || !selectedStore) return;
 
@@ -921,6 +950,36 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
     //         }
     //     }
     // }, [isManager, data?.summaries, selectedStore, getUnclosedSummaries]);
+
+    const [hasSeenCloseReminder, setHasSeenCloseReminder] = useState(false);
+    useEffect(() => {
+        if (
+            !isManager ||
+            !data?.summaries ||
+            !selectedStore ||
+            hasSeenCloseReminder
+        )
+            return;
+
+        const unclosedSummaries = getUnclosedSummaries();
+        const todayStr = new Date().toISOString().split("T")[0];
+        const todaysSummary = data.summaries.find((s) => s.date === todayStr);
+
+        if (todaysSummary && unclosedSummaries.length > 0) {
+            const now = new Date();
+            const hour = now.getHours();
+            if (hour >= 22 || hour < 6) {
+                setShowCloseReminder(true);
+                setHasSeenCloseReminder(true); // prevent re-showing
+            }
+        }
+    }, [
+        isManager,
+        data?.summaries,
+        selectedStore,
+        getUnclosedSummaries,
+        hasSeenCloseReminder,
+    ]);
 
     const handleOpenStoreToday = async () => {
         if (!selectedStore || !profile) return;
@@ -1502,7 +1561,10 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                 )}? This will create a new daily summary.`}
                 confirmText="Open Store"
                 onConfirm={handleOpenStoreToday}
-                onCancel={() => setShowOpenStorePopup(false)}
+                onCancel={() => {
+                    setShowOpenStorePopup(false);
+                    setHasSeenPopup(true); // avoid reopening due to useEffect
+                }}
             />
 
             {/* Close Day Reminder Popup */}
@@ -1520,8 +1582,11 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                         setShowCloseReminder(false);
                     }
                 }}
-                onCancel={() => setShowCloseReminder(false)}
                 type="warning"
+                onCancel={() => {
+                    setShowCloseReminder(false);
+                    setHasSeenCloseReminder(true);
+                }}
             />
 
             {/* Details Modal */}
