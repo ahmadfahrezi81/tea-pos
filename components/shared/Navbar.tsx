@@ -41,33 +41,54 @@ export default function Navbar() {
         <nav className="bg-white shadow-sm border-b">
             <div className="container mx-auto px-4">
                 <div className="flex justify-between items-center h-16">
-                    <Link href="/dashboard" className="text-xl font-bold">
+                    <Link href="/admin/dashboard" className="text-xl font-bold">
                         POS System
                     </Link>
 
                     <div className="flex items-center space-x-6">
                         <Link
-                            href="/dashboard"
+                            href="/admin/dashboard"
                             className="text-gray-600 hover:text-gray-900"
                         >
                             Dashboard
                         </Link>
                         <Link
-                            href="/dashboard/pos"
+                            href="/admin/dashboard/pos"
                             className="text-gray-600 hover:text-gray-900"
                         >
                             POS
                         </Link>
                         <Link
-                            href="/dashboard/orders"
+                            href="/admin/dashboard/orders"
                             className="text-gray-600 hover:text-gray-900"
                         >
                             Orders
                         </Link>
 
-                        {profile?.role === "manager" && (
+                        <Link
+                            href="/admin/dashboard/products"
+                            className="text-gray-600 hover:text-gray-900"
+                        >
+                            Products
+                        </Link>
+
+                        <Link
+                            href="/admin/dashboard/stores"
+                            className="text-gray-600 hover:text-gray-900"
+                        >
+                            Stores
+                        </Link>
+
+                        <Link
+                            href="/admin/dashboard/analytics"
+                            className="text-gray-600 hover:text-gray-900"
+                        >
+                            Analytics
+                        </Link>
+
+                        {/* {profile?.role === "manager" && (
                             <Link
-                                href="/dashboard/products"
+                                href="/admin/dashboard/products"
                                 className="text-gray-600 hover:text-gray-900"
                             >
                                 Products
@@ -76,7 +97,7 @@ export default function Navbar() {
 
                         {profile?.role === "manager" && (
                             <Link
-                                href="/dashboard/stores"
+                                href="/admin/dashboard/stores"
                                 className="text-gray-600 hover:text-gray-900"
                             >
                                 Stores
@@ -85,12 +106,12 @@ export default function Navbar() {
 
                         {profile?.role === "manager" && (
                             <Link
-                                href="/dashboard/analytics"
+                                href="/admin/dashboard/analytics"
                                 className="text-gray-600 hover:text-gray-900"
                             >
                                 Analytics
                             </Link>
-                        )}
+                        )} */}
 
                         <div className="flex items-center space-x-3">
                             {profile && (
