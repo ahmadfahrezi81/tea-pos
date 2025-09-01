@@ -847,7 +847,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
         createExpenses,
     } = useSummaries(selectedStore, selectedMonth);
 
-    const isManager = profile?.role === "manager";
+    // const isManager = profile?.role === "manager";
 
     // Add this useEffect in MobileAnalytics to track data changes
     // useEffect(() => {
@@ -902,8 +902,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
     const [hasSeenPopup, setHasSeenPopup] = useState(false);
 
     useEffect(() => {
-        if (!isManager || !selectedStore || !data?.summaries || hasSeenPopup)
-            return;
+        if (!selectedStore || !data?.summaries || hasSeenPopup) return;
 
         if (!isCurrentMonthSelected(selectedMonth)) {
             setShowOpenStorePopup(false);
@@ -919,13 +918,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
         } else {
             setShowOpenStorePopup(false);
         }
-    }, [
-        isManager,
-        selectedStore,
-        data?.summaries,
-        selectedMonth,
-        hasSeenPopup,
-    ]);
+    }, [selectedStore, data?.summaries, selectedMonth, hasSeenPopup]);
 
     // Closed store reminder useEffect
     const getUnclosedSummaries = useCallback(() => {
@@ -953,13 +946,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
 
     const [hasSeenCloseReminder, setHasSeenCloseReminder] = useState(false);
     useEffect(() => {
-        if (
-            !isManager ||
-            !data?.summaries ||
-            !selectedStore ||
-            hasSeenCloseReminder
-        )
-            return;
+        if (!data?.summaries || !selectedStore || hasSeenCloseReminder) return;
 
         const unclosedSummaries = getUnclosedSummaries();
         const todayStr = new Date().toISOString().split("T")[0];
@@ -974,7 +961,6 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
             }
         }
     }, [
-        isManager,
         data?.summaries,
         selectedStore,
         getUnclosedSummaries,
@@ -990,7 +976,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
             await createSummary({
                 storeId: selectedStore,
                 sellerId: profile.id, // Current user as seller
-                managerId: isManager ? profile.id : "", // Set manager if current user is manager
+                managerId: profile.id, // Set manager if current user is manager
                 date: todayStr,
                 openingBalance: 0,
             });
@@ -1191,7 +1177,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
             )}
 
             {/* Unclosed Days Warning */}
-            {isManager && getUnclosedSummaries().length > 1 && (
+            {getUnclosedSummaries().length > 1 && (
                 <div className="bg-red-50 border border-red-200 p-3.5 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
                         <AlertTriangle size={20} className="text-red-600" />
@@ -1208,39 +1194,36 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
             )}
 
             {/* Open Store Today Button - Only show if manager and store not opened */}
-            {isManager &&
-                !todaysSummary &&
-                isCurrentMonthSelected(selectedMonth) && (
-                    <div className="bg-green-50 border border-green-200 p-3.5 rounded-lg">
-                        <div className="flex items-center gap-2 mb-2">
-                            <CheckCircle size={20} className="text-green-600" />
-                            <h3 className="font-semibold text-green-800">
-                                Open store Today for{" "}
-                                {
-                                    stores.find(
-                                        (store: Store) =>
-                                            store.id === selectedStore
-                                    )?.name
-                                }
-                            </h3>
-                        </div>
-                        <p className="text-sm text-green-700 mb-2">
-                            Opening the store will initialize a summary with
-                            zero balances.
-                        </p>
-                        <button
-                            className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700"
-                            onClick={() => setShowOpenStorePopup(true)}
-                        >
-                            Open Store on{" "}
-                            {new Date().toLocaleDateString("en-US", {
-                                weekday: "long",
-                                day: "numeric",
-                                month: "short",
-                            })}
-                        </button>
+            {!todaysSummary && isCurrentMonthSelected(selectedMonth) && (
+                <div className="bg-green-50 border border-green-200 p-3.5 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle size={20} className="text-green-600" />
+                        <h3 className="font-semibold text-green-800">
+                            Open store Today for{" "}
+                            {
+                                stores.find(
+                                    (store: Store) => store.id === selectedStore
+                                )?.name
+                            }
+                        </h3>
                     </div>
-                )}
+                    <p className="text-sm text-green-700 mb-2">
+                        Opening the store will initialize a summary with zero
+                        balances.
+                    </p>
+                    <button
+                        className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700"
+                        onClick={() => setShowOpenStorePopup(true)}
+                    >
+                        Open Store on{" "}
+                        {new Date().toLocaleDateString("en-US", {
+                            weekday: "long",
+                            day: "numeric",
+                            month: "short",
+                        })}
+                    </button>
+                </div>
+            )}
 
             {/* Store and Month Selection */}
             <div className="bg-white p-4 rounded-lg shadow-sm space-y-4">
@@ -1492,7 +1475,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                         </div>
 
                                         {/* Manager Actions */}
-                                        {isManager && !summary.closed_at && (
+                                        {!summary.closed_at && (
                                             <div className="border-t border-gray-100 p-3 bg-gray-50">
                                                 <div className="flex space-x-2">
                                                     <button
