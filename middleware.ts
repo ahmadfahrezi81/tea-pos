@@ -205,7 +205,7 @@ export async function middleware(request: NextRequest) {
                 new URL("/admin/dashboard", request.url)
             );
         } else {
-            return NextResponse.redirect(new URL("/dashboard", request.url));
+            return NextResponse.redirect(new URL("/mobile", request.url));
         }
     }
 
