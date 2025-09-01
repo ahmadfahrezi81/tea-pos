@@ -53,7 +53,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                 });
 
                 if (error) throw error;
-                router.push("/dashboard");
+                router.push("/admin/dashboard");
             }
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {

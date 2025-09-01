@@ -48,7 +48,7 @@ export default function Dashboard() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <Link
-                    href="/dashboard/pos"
+                    href="/admin/dashboard/pos"
                     className="bg-white p-6 rounded-lg shadow hover:shadow-md"
                 >
                     <h3 className="text-lg font-semibold mb-2">
@@ -58,16 +58,40 @@ export default function Dashboard() {
                 </Link>
 
                 <Link
-                    href="/dashboard/orders"
+                    href="/admin/dashboard/orders"
                     className="bg-white p-6 rounded-lg shadow hover:shadow-md"
                 >
                     <h3 className="text-lg font-semibold mb-2">Orders</h3>
                     <p className="text-gray-600">View order history</p>
                 </Link>
 
-                {profile?.role === "manager" && (
+                <Link
+                    href="/admin/dashboard/products"
+                    className="bg-white p-6 rounded-lg shadow hover:shadow-md"
+                >
+                    <h3 className="text-lg font-semibold mb-2">Products</h3>
+                    <p className="text-gray-600">Manage products</p>
+                </Link>
+
+                <Link
+                    href="/admin/dashboard/stores"
+                    className="bg-white p-6 rounded-lg shadow hover:shadow-md"
+                >
+                    <h3 className="text-lg font-semibold mb-2">Stores</h3>
+                    <p className="text-gray-600">Manage stores</p>
+                </Link>
+
+                <Link
+                    href="/admin/dashboard/analytics"
+                    className="bg-white p-6 rounded-lg shadow hover:shadow-md"
+                >
+                    <h3 className="text-lg font-semibold mb-2">Analytics</h3>
+                    <p className="text-gray-600">Daily summaries & reports</p>
+                </Link>
+
+                {/* {profile?.role === "manager" && (
                     <Link
-                        href="/dashboard/products"
+                        href="/admin/dashboard/products"
                         className="bg-white p-6 rounded-lg shadow hover:shadow-md"
                     >
                         <h3 className="text-lg font-semibold mb-2">Products</h3>
@@ -77,7 +101,7 @@ export default function Dashboard() {
 
                 {profile?.role === "manager" && (
                     <Link
-                        href="/dashboard/stores"
+                        href="/admin/dashboard/stores"
                         className="bg-white p-6 rounded-lg shadow hover:shadow-md"
                     >
                         <h3 className="text-lg font-semibold mb-2">Stores</h3>
@@ -87,7 +111,7 @@ export default function Dashboard() {
 
                 {profile?.role === "manager" && (
                     <Link
-                        href="/dashboard/analytics"
+                        href="/admin/dashboard/analytics"
                         className="bg-white p-6 rounded-lg shadow hover:shadow-md"
                     >
                         <h3 className="text-lg font-semibold mb-2">
@@ -97,7 +121,7 @@ export default function Dashboard() {
                             Daily summaries & reports
                         </p>
                     </Link>
-                )}
+                )} */}
             </div>
         </div>
     );

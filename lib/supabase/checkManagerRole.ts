@@ -18,6 +18,6 @@ export async function checkManagerAccess() {
         .single();
 
     if (!profile || profile.role !== "manager") {
-        redirect("/dashboard");
+        redirect("/admin/dashboard");
     }
 }
