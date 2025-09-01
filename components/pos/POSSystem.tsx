@@ -1,3 +1,5 @@
+//components/pos/POSSystem.tsx
+
 "use client";
 import { useState } from "react";
 import { useProducts, useProfile, useStores } from "@/lib/hooks/useData";
@@ -21,10 +23,10 @@ interface Store {
 export default function POSSystem() {
     const { data: profile, isLoading: profileLoading } = useProfile();
     const { data: products, isLoading: productsLoading } = useProducts();
-    const { data: stores, isLoading: storesLoading } = useStores(
-        profile?.role
-        // profile?.id
+    const { data: storesData, isLoading: storesLoading } = useStores(
+        profile?.id ?? ""
     );
+    const stores = storesData?.stores ?? [];
 
     const [selectedStore, setSelectedStore] = useState<string>("");
     const [cart, setCart] = useState<CartItem[]>([]);

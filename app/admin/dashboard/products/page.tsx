@@ -6,7 +6,6 @@ export default async function ProductsPage() {
 
     return (
         <div>
-            <h1>Only for Managers</h1>
             <ProductsPageComponents />
         </div>
     );

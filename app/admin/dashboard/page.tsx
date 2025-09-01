@@ -33,7 +33,7 @@ export default function Dashboard() {
     if (isLoading) return <div>Loading...</div>;
 
     return (
-        <div>
+        <div className="py-4">
             <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
 
             {profile && (

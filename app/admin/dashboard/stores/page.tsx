@@ -6,7 +6,6 @@ export default async function StoresPage() {
 
     return (
         <div>
-            <h1>Only for Managers</h1>
             <StoresPageComponents />
         </div>
     );
