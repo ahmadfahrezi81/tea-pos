@@ -51,6 +51,9 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
     const [processing, setProcessing] = useState(false);
     const [showCart, setShowCart] = useState(false);
 
+    // Add state for showing/hiding others section
+    const [showOthers, setShowOthers] = useState(false);
+
     const addToCart = (product: Product) => {
         setCart((prev) => {
             const existing = prev.find(
@@ -157,6 +160,15 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
         }
     };
 
+    // Filter products
+    const mainProducts = [...products]
+        .filter((product) => product.is_main)
+        .sort((a, b) => a.price - b.price);
+
+    const otherProducts = [...products]
+        .filter((product) => !product.is_main)
+        .sort((a, b) => a.price - b.price);
+
     // Auto-select store if only one available
     useEffect(() => {
         if (defaultStore && !selectedStore) {
@@ -217,65 +229,155 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                     </select>
                 </div>
             )}
-            {/* Products Grid */}
-            <div className="grid grid-cols-2 gap-3">
-                {[...products]
-                    .sort((a, b) => a.price - b.price)
-                    .map((product: Product) => {
-                        const quantityInCart = getProductQuantityInCart(
-                            product.id
-                        );
 
-                        return (
-                            <div
-                                key={product.id}
-                                className="bg-white rounded-xl shadow-sm overflow-hidden select-none relative cursor-pointer 
-               hover:shadow-md transition-all duration-200 
-               active:scale-90 active:bg-blue-50"
-                                onClick={() => addToCart(product)}
-                            >
-                                {/* Cart Counter Badge */}
-                                {quantityInCart > 0 && (
-                                    <div className="absolute top-2 right-2 z-0 bg-red-500 text-white rounded-lg w-6 h-6 text-sm flex items-center justify-center font-medium">
-                                        {quantityInCart}
+            {/* Main Products Grid */}
+            <div className="grid grid-cols-2 gap-3">
+                {mainProducts.map((product: Product) => {
+                    const quantityInCart = getProductQuantityInCart(product.id);
+
+                    return (
+                        <div
+                            key={product.id}
+                            className="bg-white rounded-xl shadow-sm overflow-hidden select-none relative cursor-pointer 
+                       hover:shadow-md transition-all duration-200 
+                       active:scale-90 active:bg-blue-50"
+                            onClick={() => addToCart(product)}
+                        >
+                            {/* Cart Counter Badge */}
+                            {quantityInCart > 0 && (
+                                <div className="absolute top-2 right-2 z-0 bg-red-500 text-white rounded-lg w-6 h-6 text-sm flex items-center justify-center font-medium">
+                                    {quantityInCart}
+                                </div>
+                            )}
+
+                            <div className="p-3">
+                                {/* Product Image and Info */}
+                                {product.image_url && (
+                                    <div className="flex gap-2 mb-3">
+                                        <div className="flex-shrink-0">
+                                            <Image
+                                                src={product.image_url}
+                                                alt={product.name}
+                                                width={50}
+                                                height={50}
+                                                className="rounded object-cover"
+                                            />
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="font-bold text-gray-800 text-base leading-tight mt-1">
+                                                {product.name}
+                                            </h3>
+                                            <p className="text-base font-semibold text-green-600">
+                                                {formatRupiah(product.price)}
+                                            </p>
+                                        </div>
                                     </div>
                                 )}
 
-                                <div className="p-3">
-                                    {/* Product Image and Info */}
-                                    {product.image_url && (
-                                        <div className="flex gap-2 mb-3">
-                                            <div className="flex-shrink-0">
-                                                <Image
-                                                    src={product.image_url}
-                                                    alt={product.name}
-                                                    width={50}
-                                                    height={50}
-                                                    className="rounded object-cover"
-                                                />
-                                            </div>
-                                            <div className="flex-1">
-                                                <h3 className="font-bold text-gray-800 text-base leading-tight mt-1">
-                                                    {product.name}
-                                                </h3>
-                                                <p className="text-base font-semibold text-green-600">
-                                                    {formatRupiah(
-                                                        product.price
-                                                    )}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Add to Cart Button */}
-                                    <div className="text-center text-blue-500 text-xs font-medium py-1.5 rounded-lg border-blue-500 border-1">
-                                        Tap to add
-                                    </div>
+                                {/* Add to Cart Button */}
+                                <div className="text-center text-blue-500 text-xs font-medium py-1.5 rounded-lg border-blue-500 border-1">
+                                    Tap to add
                                 </div>
                             </div>
-                        );
-                    })}
+                        </div>
+                    );
+                })}
             </div>
+
+            {/* Others Section */}
+            {otherProducts.length > 0 && (
+                <div className="mt-6">
+                    <button
+                        onClick={() => setShowOthers(!showOthers)}
+                        className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
+                    >
+                        <span className="font-medium text-gray-700">
+                            Others ({otherProducts.length} items)
+                        </span>
+                        <div
+                            className={`transform transition-transform duration-200 ${
+                                showOthers ? "rotate-180" : ""
+                            }`}
+                        >
+                            <svg
+                                className="w-5 h-5 text-gray-500"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 9l-7 7-7-7"
+                                />
+                            </svg>
+                        </div>
+                    </button>
+
+                    {showOthers && (
+                        <div className="grid grid-cols-2 gap-3 mt-3">
+                            {otherProducts.map((product: Product) => {
+                                const quantityInCart = getProductQuantityInCart(
+                                    product.id
+                                );
+
+                                return (
+                                    <div
+                                        key={product.id}
+                                        className="bg-white rounded-xl shadow-sm overflow-hidden select-none relative cursor-pointer 
+                                   hover:shadow-md transition-all duration-200 
+                                   active:scale-90 active:bg-blue-50 opacity-90"
+                                        onClick={() => addToCart(product)}
+                                    >
+                                        {/* Cart Counter Badge */}
+                                        {quantityInCart > 0 && (
+                                            <div className="absolute top-2 right-2 z-0 bg-red-500 text-white rounded-lg w-6 h-6 text-sm flex items-center justify-center font-medium">
+                                                {quantityInCart}
+                                            </div>
+                                        )}
+
+                                        <div className="p-3">
+                                            {/* Product Image and Info */}
+                                            {product.image_url && (
+                                                <div className="flex gap-2 mb-3">
+                                                    <div className="flex-shrink-0">
+                                                        <Image
+                                                            src={
+                                                                product.image_url
+                                                            }
+                                                            alt={product.name}
+                                                            width={50}
+                                                            height={50}
+                                                            className="rounded object-cover"
+                                                        />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <h3 className="font-bold text-gray-800 text-base leading-tight mt-1">
+                                                            {product.name}
+                                                        </h3>
+                                                        <p className="text-base font-semibold text-green-600">
+                                                            {formatRupiah(
+                                                                product.price
+                                                            )}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Add to Cart Button */}
+                                            <div className="text-center text-blue-500 text-xs font-medium py-1.5 rounded-lg border-blue-500 border-1">
+                                                Tap to add
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            )}
+
             {/* Sticky Bottom Cart Summary Bar */}
             {cart.length > 0 && (
                 <div className="fixed bottom-16 left-0 right-0 bg-white border-y border-gray-400 p-4 z-40 ">
