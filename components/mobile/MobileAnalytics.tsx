@@ -782,6 +782,8 @@ import {
     AlertTriangle,
     CheckCircle,
     Receipt,
+    CupSoda,
+    BadgeDollarSign,
 } from "lucide-react";
 import { formatRupiah } from "@/lib/utils/formatCurrency";
 import { Assignment } from "@/app/mobile/page";
@@ -1294,7 +1296,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                     >
                                         {/* Summary Header */}
                                         <div className="p-3.5 bg-white">
-                                            <div className="flex justify-between items-start mb-4">
+                                            <div className="flex justify-between items-start mb-3">
                                                 <div className="flex-1">
                                                     <button
                                                         onClick={() => {
@@ -1331,7 +1333,17 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                             </div>
 
                                             {/* Cash Balances */}
-                                            <div className="grid grid-cols-2 gap-4 mb-4">
+                                            <div className="flex items-center mb-1 ml-0.5">
+                                                {/* <BadgeDollarSign
+                                                    size={16}
+                                                    className="inline mr-0.5"
+                                                /> */}
+                                                <h1 className="text-gray-700 text-sm font-medium">
+                                                    Cash Summary
+                                                </h1>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-2 mb-3 bg-gray-50 p-4 rounded-lg border-1 border-gray-200">
                                                 <div>
                                                     <p className="text-xs text-gray-500">
                                                         Opening Balance
@@ -1344,9 +1356,42 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                 </div>
                                                 <div>
                                                     <p className="text-xs text-gray-500">
+                                                        Sales
+                                                    </p>
+                                                    <p className="text-lg font-bold text-green-600">
+                                                        {formatRupiah(
+                                                            summary.total_sales
+                                                        )}
+                                                    </p>
+                                                </div>
+                                                {/* <div>
+                                                    <p className="text-xs text-gray-500">
                                                         Actual Cash
                                                     </p>
                                                     <p className="text-lg font-semibold text-purple-600">
+                                                        {summary.actual_cash !==
+                                                        null
+                                                            ? formatRupiah(
+                                                                  summary.actual_cash
+                                                              )
+                                                            : "Not counted"}
+                                                    </p>
+                                                </div> */}
+                                                <div>
+                                                    <p className="text-xs text-gray-500">
+                                                        Expected Cash
+                                                    </p>
+                                                    <p className="text-lg font-semibold text-purple-600">
+                                                        {formatRupiah(
+                                                            summary.expected_cash
+                                                        )}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-gray-500">
+                                                        Actual Cash
+                                                    </p>
+                                                    <p className="text-lg font-semibold text-orange-600">
                                                         {summary.actual_cash !==
                                                         null
                                                             ? formatRupiah(
@@ -1358,7 +1403,31 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                             </div>
 
                                             {/* Daily Totals */}
-                                            <div className="grid grid-cols-4 gap-4 mb-4">
+                                            <div className="flex items-center mb-1 ml-0.5">
+                                                {/* <CupSoda
+                                                    size={16}
+                                                    className="inline mb-1 mr-0.5"
+                                                /> */}
+                                                <h1 className="text-gray-700 text-sm font-medium">
+                                                    Cups Summary
+                                                </h1>
+                                            </div>
+
+                                            <div className="grid grid-cols-4 gap-4 bg-gray-50 p-4 rounded-lg border-1 border-gray-200">
+                                                {/* <div>
+                                                    <p className="text-xs text-gray-500">
+                                                        Actual Cash
+                                                    </p>
+                                                    <p className="text-lg font-semibold text-purple-600">
+                                                        {summary.actual_cash !==
+                                                        null
+                                                            ? formatRupiah(
+                                                                  summary.actual_cash
+                                                              )
+                                                            : "Not counted"}
+                                                    </p>
+                                                </div>
+
                                                 <div className="col-span-2">
                                                     <p className="text-xs text-gray-500">
                                                         Sales
@@ -1368,7 +1437,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                             summary.total_sales
                                                         )}
                                                     </p>
-                                                </div>
+                                                </div> */}
                                                 <div>
                                                     <p className="text-xs text-gray-500">
                                                         Orders
