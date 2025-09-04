@@ -1261,6 +1261,13 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                 )}
             </div>
 
+            {/* Date Header */}
+            <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-800">
+                    {selectedMonth}
+                </h3>
+            </div>
+
             {selectedStore && (
                 <div className="space-y-3">
                     {/* Daily Summary Cards */}
@@ -1290,10 +1297,10 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                 return (
                                     <div
                                         key={summary.id}
-                                        className="bg-white rounded-lg shadow-sm overflow-hidden"
+                                        className="bg-white rounded-xl shadow-sm overflow-hidden"
                                     >
                                         {/* Summary Header */}
-                                        <div className="p-3.5 bg-white space-y-3">
+                                        <div className="p-3 bg-white space-y-3">
                                             <div className="flex justify-between items-start mb-3">
                                                 <div className="flex-1">
                                                     <button
@@ -1332,12 +1339,13 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
 
                                             {/* Cash Balances */}
                                             <h4 className="text-gray-800 text-sm font-semibold mb-1">
-                                                Cash Summary
+                                                Summary of the Day
                                             </h4>
 
-                                            <div className="grid grid-cols-2 gap-2 mb-3 bg-gray-50 p-4 rounded-lg border-1 border-gray-200">
+                                            <div className="grid grid-cols-2 gap-2 rounded-lg border-1 p-2 border-gray-200 bg-gray-50 text-gray-800">
+                                                {/* 1. Opening Balance */}
                                                 <div>
-                                                    <p className="text-xs text-gray-500">
+                                                    <p className="text-xs">
                                                         Opening Balance
                                                     </p>
                                                     <p className="text-lg font-semibold text-blue-600">
@@ -1346,9 +1354,11 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                         )}
                                                     </p>
                                                 </div>
+
+                                                {/* 2. Sales */}
                                                 <div>
-                                                    <p className="text-xs text-gray-500">
-                                                        Sales
+                                                    <p className="text-xs ">
+                                                        Total Sales
                                                     </p>
                                                     <p className="text-lg font-bold text-green-600">
                                                         {formatRupiah(
@@ -1356,22 +1366,45 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                         )}
                                                     </p>
                                                 </div>
-                                                {/* <div>
-                                                    <p className="text-xs text-gray-500">
-                                                        Actual Cash
+
+                                                {/* 3. Gross Expected Cash (Opening + Sales) */}
+                                                <div>
+                                                    <p className="text-xs ">
+                                                        Opening + Sales
                                                     </p>
                                                     <p className="text-lg font-semibold text-purple-600">
-                                                        {summary.actual_cash !==
-                                                        null
-                                                            ? formatRupiah(
-                                                                  summary.actual_cash
-                                                              )
-                                                            : "Not counted"}
+                                                        {formatRupiah(
+                                                            summary.opening_balance +
+                                                                summary.total_sales
+                                                        )}
                                                     </p>
-                                                </div> */}
+                                                </div>
+
+                                                <div className="flex gap-4">
+                                                    <div>
+                                                        <p className="text-xs ">
+                                                            Orders
+                                                        </p>
+                                                        <p className="text-lg font-bold text-blue-600">
+                                                            {dailyOrders}
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs">
+                                                            Cups
+                                                        </p>
+                                                        <p className="text-lg font-bold text-orange-600">
+                                                            {dailyCups}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <hr className="col-span-2 border-gray-300" />
+
+                                                {/* 4. Net Expected Cash (after subtracting expenses) */}
                                                 <div>
-                                                    <p className="text-xs text-gray-500">
-                                                        Expected Cash
+                                                    <p className="text-xs">
+                                                        Net Expected Cash
                                                     </p>
                                                     <p className="text-lg font-semibold text-purple-600">
                                                         {formatRupiah(
@@ -1379,9 +1412,11 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                         )}
                                                     </p>
                                                 </div>
+
+                                                {/* 5. Actual Cash (Counted physical cash) */}
                                                 <div>
-                                                    <p className="text-xs text-gray-500">
-                                                        Actual Cash
+                                                    <p className="text-xs">
+                                                        Actual Cash (Counted)
                                                     </p>
                                                     <p className="text-lg font-semibold text-orange-600">
                                                         {summary.actual_cash !==
@@ -1394,61 +1429,13 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                 </div>
                                             </div>
 
-                                            {/* Daily Totals */}
-                                            <h4 className="text-gray-800 text-sm font-semibold mb-1">
-                                                Cups Summary
-                                            </h4>
-
-                                            <div className="grid grid-cols-4 gap-4 bg-gray-50 p-4 rounded-lg border-1 border-gray-200">
-                                                {/* <div>
-                                                    <p className="text-xs text-gray-500">
-                                                        Actual Cash
-                                                    </p>
-                                                    <p className="text-lg font-semibold text-purple-600">
-                                                        {summary.actual_cash !==
-                                                        null
-                                                            ? formatRupiah(
-                                                                  summary.actual_cash
-                                                              )
-                                                            : "Not counted"}
-                                                    </p>
-                                                </div>
-
-                                                <div className="col-span-2">
-                                                    <p className="text-xs text-gray-500">
-                                                        Sales
-                                                    </p>
-                                                    <p className="text-lg font-bold text-green-600">
-                                                        {formatRupiah(
-                                                            summary.total_sales
-                                                        )}
-                                                    </p>
-                                                </div> */}
-                                                <div>
-                                                    <p className="text-xs text-gray-500">
-                                                        Orders
-                                                    </p>
-                                                    <p className="text-lg font-bold text-blue-600">
-                                                        {dailyOrders}
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs text-gray-500">
-                                                        Cups
-                                                    </p>
-                                                    <p className="text-lg font-bold text-orange-600">
-                                                        {dailyCups}
-                                                    </p>
-                                                </div>
-                                            </div>
-
                                             {/* Expenses Display */}
                                             {dailyExpenses.length > 0 && (
                                                 <div>
                                                     <h4 className="text-gray-800 text-sm font-semibold mb-1">
-                                                        Daily Expenses
+                                                        Expenses of the Day
                                                     </h4>
-                                                    <div className="bg-red-50 border border-red-200 p-2 rounded">
+                                                    <div className="bg-red-50 border border-red-200 p-2 rounded-lg">
                                                         {dailyExpenses.map(
                                                             (expense, idx) => (
                                                                 <div
@@ -1499,7 +1486,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                         Variance
                                                     </h4>
                                                     <p
-                                                        className={`text-sm px-3 py-2 rounded font-medium ${
+                                                        className={`text-sm px-3 py-2 rounded-lg font-medium ${
                                                             summary.variance >=
                                                             0
                                                                 ? "bg-green-50 border border-green-200 text-green-700"
@@ -1522,7 +1509,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                     <h4 className="text-gray-800 text-sm font-semibold mb-1">
                                                         Notes
                                                     </h4>
-                                                    <p className="text-sm text-gray-700 bg-gray-50 p-2 rounded border-1 border-gray-200">
+                                                    <p className="text-sm text-gray-700 bg-gray-50 p-2 rounded-lg border-1 border-gray-200">
                                                         {summary.notes}
                                                     </p>
                                                 </div>
