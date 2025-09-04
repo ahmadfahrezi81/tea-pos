@@ -1312,8 +1312,8 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                                 summary.date
                                                             )}
                                                         </h3>
-                                                        <p className="text-xs text-blue-600 underline">
-                                                            Tap for details
+                                                        <p className="text-sm text-blue-600 underline">
+                                                            Tap for details →
                                                         </p>
                                                     </button>
                                                 </div>
@@ -1331,11 +1331,9 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                             </div>
 
                                             {/* Cash Balances */}
-                                            <div className="flex items-center mb-1 ml-0.5">
-                                                <h1 className="text-gray-800 text-sm font-medium">
-                                                    Cash Summary
-                                                </h1>
-                                            </div>
+                                            <h4 className="text-gray-800 text-sm font-semibold mb-1">
+                                                Cash Summary
+                                            </h4>
 
                                             <div className="grid grid-cols-2 gap-2 mb-3 bg-gray-50 p-4 rounded-lg border-1 border-gray-200">
                                                 <div>
@@ -1397,11 +1395,9 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                             </div>
 
                                             {/* Daily Totals */}
-                                            <div className="flex items-center mb-1 ml-0.5">
-                                                <h1 className="text-gray-800 text-sm font-medium">
-                                                    Cups Summary
-                                                </h1>
-                                            </div>
+                                            <h4 className="text-gray-800 text-sm font-semibold mb-1">
+                                                Cups Summary
+                                            </h4>
 
                                             <div className="grid grid-cols-4 gap-4 bg-gray-50 p-4 rounded-lg border-1 border-gray-200">
                                                 {/* <div>
@@ -1448,10 +1444,10 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
 
                                             {/* Expenses Display */}
                                             {dailyExpenses.length > 0 && (
-                                                <div className="mb-4">
-                                                    <p className="text-sm text-gray-800 mb-1">
+                                                <div>
+                                                    <h4 className="text-gray-800 text-sm font-semibold mb-1">
                                                         Daily Expenses
-                                                    </p>
+                                                    </h4>
                                                     <div className="bg-red-50 border border-red-200 p-2 rounded">
                                                         {dailyExpenses.map(
                                                             (expense, idx) => (
@@ -1498,10 +1494,10 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
 
                                             {/* Variance */}
                                             {summary.variance !== null && (
-                                                <div className="mb-4">
-                                                    <p className="text-sm text-gray-800 mb-1">
+                                                <div>
+                                                    <h4 className="text-gray-800 text-sm font-semibold mb-1">
                                                         Variance
-                                                    </p>
+                                                    </h4>
                                                     <p
                                                         className={`text-sm px-3 py-2 rounded font-medium ${
                                                             summary.variance >=
@@ -1523,10 +1519,10 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                             {/* Notes */}
                                             {summary.notes && (
                                                 <div>
-                                                    <p className="text-sm text-gray-800 mb-1">
+                                                    <h4 className="text-gray-800 text-sm font-semibold mb-1">
                                                         Notes
-                                                    </p>
-                                                    <p className="text-sm text-gray-700 bg-gray-50 p-2 rounded">
+                                                    </h4>
+                                                    <p className="text-sm text-gray-700 bg-gray-50 p-2 rounded border-1 border-gray-200">
                                                         {summary.notes}
                                                     </p>
                                                 </div>
