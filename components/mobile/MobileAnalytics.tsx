@@ -782,8 +782,6 @@ import {
     AlertTriangle,
     CheckCircle,
     Receipt,
-    CupSoda,
-    BadgeDollarSign,
 } from "lucide-react";
 import { formatRupiah } from "@/lib/utils/formatCurrency";
 import { Assignment } from "@/app/mobile/page";
@@ -1295,7 +1293,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                         className="bg-white rounded-lg shadow-sm overflow-hidden"
                                     >
                                         {/* Summary Header */}
-                                        <div className="p-3.5 bg-white">
+                                        <div className="p-3.5 bg-white space-y-3">
                                             <div className="flex justify-between items-start mb-3">
                                                 <div className="flex-1">
                                                     <button
@@ -1334,11 +1332,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
 
                                             {/* Cash Balances */}
                                             <div className="flex items-center mb-1 ml-0.5">
-                                                {/* <BadgeDollarSign
-                                                    size={16}
-                                                    className="inline mr-0.5"
-                                                /> */}
-                                                <h1 className="text-gray-700 text-sm font-medium">
+                                                <h1 className="text-gray-800 text-sm font-medium">
                                                     Cash Summary
                                                 </h1>
                                             </div>
@@ -1404,11 +1398,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
 
                                             {/* Daily Totals */}
                                             <div className="flex items-center mb-1 ml-0.5">
-                                                {/* <CupSoda
-                                                    size={16}
-                                                    className="inline mb-1 mr-0.5"
-                                                /> */}
-                                                <h1 className="text-gray-700 text-sm font-medium">
+                                                <h1 className="text-gray-800 text-sm font-medium">
                                                     Cups Summary
                                                 </h1>
                                             </div>
@@ -1459,7 +1449,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                             {/* Expenses Display */}
                                             {dailyExpenses.length > 0 && (
                                                 <div className="mb-4">
-                                                    <p className="text-xs text-gray-500 mb-1">
+                                                    <p className="text-sm text-gray-800 mb-1">
                                                         Daily Expenses
                                                     </p>
                                                     <div className="bg-red-50 border border-red-200 p-2 rounded">
@@ -1509,7 +1499,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                             {/* Variance */}
                                             {summary.variance !== null && (
                                                 <div className="mb-4">
-                                                    <p className="text-xs mb-1">
+                                                    <p className="text-sm text-gray-800 mb-1">
                                                         Variance
                                                     </p>
                                                     <p
@@ -1533,7 +1523,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                             {/* Notes */}
                                             {summary.notes && (
                                                 <div>
-                                                    <p className="text-xs mb-1">
+                                                    <p className="text-sm text-gray-800 mb-1">
                                                         Notes
                                                     </p>
                                                     <p className="text-sm text-gray-700 bg-gray-50 p-2 rounded">
