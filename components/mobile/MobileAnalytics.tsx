@@ -772,7 +772,7 @@
 //components/mobile/MobileAnalytics.tsx
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { useSummaries } from "@/lib/hooks/useSummaries";
+import { SummariesData, useSummaries } from "@/lib/hooks/useSummaries";
 import { useStores } from "@/lib/hooks/useData";
 import { Profile, Store } from "@/lib/types";
 import {
@@ -791,6 +791,7 @@ import { SetExpenseModal } from "./analytics/SetExpenseModal";
 import { CloseDayModal } from "./analytics/CloseDayModal";
 import { DetailsModal } from "./ui/DetailsModal";
 import { ConfirmationPopup } from "./ui/ConfirmationPopup";
+import { toIndonesiaMonthYear } from "@/lib/timezone";
 
 interface MobileAnalyticsProps {
     profile: Profile | null;
@@ -819,8 +820,6 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
         type: "success" | "error";
     } | null>(null);
 
-    console.log(selectedSummary);
-
     const { data: storesData, isLoading: storesLoading } = useStores(
         profile?.id ?? ""
     );
@@ -839,13 +838,15 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
     );
 
     const {
-        data,
+        data: summariesData,
         isLoading,
         error,
         createSummary,
         updateSummary,
         createExpenses,
     } = useSummaries(selectedStore, selectedMonth);
+
+    console.log(summariesData);
 
     // const isManager = profile?.role === "manager";
 
@@ -902,7 +903,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
     const [hasSeenPopup, setHasSeenPopup] = useState(false);
 
     useEffect(() => {
-        if (!selectedStore || !data?.summaries || hasSeenPopup) return;
+        if (!selectedStore || !summariesData?.summaries || hasSeenPopup) return;
 
         if (!isCurrentMonthSelected(selectedMonth)) {
             setShowOpenStorePopup(false);
@@ -910,7 +911,9 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
         }
 
         const todayStr = new Date().toISOString().split("T")[0];
-        const todaysSummary = data.summaries.find((s) => s.date === todayStr);
+        const todaysSummary = summariesData.summaries.find(
+            (s) => s.date === todayStr
+        );
 
         if (!todaysSummary) {
             setShowOpenStorePopup(true);
@@ -918,13 +921,13 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
         } else {
             setShowOpenStorePopup(false);
         }
-    }, [selectedStore, data?.summaries, selectedMonth, hasSeenPopup]);
+    }, [selectedStore, summariesData?.summaries, selectedMonth, hasSeenPopup]);
 
     // Closed store reminder useEffect
     const getUnclosedSummaries = useCallback(() => {
-        if (!data?.summaries) return [];
-        return data.summaries.filter((s) => !s.closed_at);
-    }, [data?.summaries]);
+        if (!summariesData?.summaries) return [];
+        return summariesData.summaries.filter((s) => !s.closed_at);
+    }, [summariesData?.summaries]);
 
     // Close day reminder logic - check every hour after 10 PM
 
@@ -945,12 +948,16 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
     // }, [isManager, data?.summaries, selectedStore, getUnclosedSummaries]);
 
     const [hasSeenCloseReminder, setHasSeenCloseReminder] = useState(false);
+
     useEffect(() => {
-        if (!data?.summaries || !selectedStore || hasSeenCloseReminder) return;
+        if (!summariesData?.summaries || !selectedStore || hasSeenCloseReminder)
+            return;
 
         const unclosedSummaries = getUnclosedSummaries();
         const todayStr = new Date().toISOString().split("T")[0];
-        const todaysSummary = data.summaries.find((s) => s.date === todayStr);
+        const todaysSummary = summariesData.summaries.find(
+            (s) => s.date === todayStr
+        );
 
         if (todaysSummary && unclosedSummaries.length > 0) {
             const now = new Date();
@@ -961,7 +968,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
             }
         }
     }, [
-        data?.summaries,
+        summariesData?.summaries,
         selectedStore,
         getUnclosedSummaries,
         hasSeenCloseReminder,
@@ -1097,11 +1104,13 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
 
     const getTodaysSummary = () => {
         const todayStr = new Date().toISOString().split("T")[0];
-        return data?.summaries.find((summary) => summary.date === todayStr);
+        return summariesData?.summaries.find(
+            (summary) => summary.date === todayStr
+        );
     };
 
     const getProductBreakdownForDate = (date: string) => {
-        return data?.productBreakdown[date] || {};
+        return summariesData?.productBreakdown[date] || {};
     };
 
     const getCupsCountForDate = (date: string) => {
@@ -1112,12 +1121,17 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
         );
     };
 
-    const getOrdersCountForDate = (date: string) => {
-        return data?.ordersByDate?.[date]?.length || 0;
-    };
+    // const getOrdersCountForDate = (date: string) => {
+    //     return data?.ordersByDate?.[date]?.length || 0;
+    // };
+
+    const getOrdersCountForDate = (
+        summariesData: SummariesData,
+        date: string
+    ) => summariesData?.ordersByDate?.[date]?.length || 0;
 
     const getExpensesForDate = (date: string) => {
-        return data?.expensesByDate?.[date] || [];
+        return summariesData?.expensesByDate?.[date] || [];
     };
 
     if (isLoading || storesLoading) {
@@ -1144,7 +1158,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
     return (
         <div className="space-y-4">
             {/* Monthly Summary Section */}
-            {data?.monthlyTotals && (
+            {summariesData?.monthlyTotals && (
                 <div className="bg-white p-4 rounded-lg shadow-sm">
                     <div className="flex items-center gap-2 mb-3">
                         <Receipt size={20} className="text-gray-600" />
@@ -1156,20 +1170,22 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                     <div className="grid grid-cols-4 gap-2">
                         <div className="text-center">
                             <p className="text-xl font-bold text-blue-600">
-                                {data.monthlyTotals.totalOrders}
+                                {summariesData.monthlyTotals.totalOrders}
                             </p>
                             <p className="text-sm text-gray-600">Orders</p>
                         </div>
                         <div className="text-center">
                             <p className="text-xl font-bold text-orange-600">
-                                {data.monthlyTotals.totalCups}
+                                {summariesData.monthlyTotals.totalCups}
                             </p>
                             <p className="text-sm text-gray-600">Cups</p>
                         </div>
                         <div className="text-center col-span-2 border-l-2 border-gray-300">
                             <p className="text-sm text-gray-600">Total Sales</p>
                             <p className="text-xl font-bold text-green-600">
-                                {formatRupiah(data.monthlyTotals.totalSales)}
+                                {formatRupiah(
+                                    summariesData.monthlyTotals.totalSales
+                                )}
                             </p>
                         </div>
                     </div>
@@ -1261,11 +1277,25 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                 )}
             </div>
 
+            {/* Summaries Header */}
+            <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-800">
+                    {toIndonesiaMonthYear(selectedMonth)}
+                </h3>
+                <span className="text-sm text-gray-500">
+                    {summariesData?.summaries?.length ?? 0}{" "}
+                    {(summariesData?.summaries?.length ?? 0) === 1
+                        ? "summary"
+                        : "summaries"}
+                </span>
+            </div>
+
             {selectedStore && (
                 <div className="space-y-3">
                     {/* Daily Summary Cards */}
                     <div className="bg-gray-50 rounded-lg space-y-3">
-                        {!data?.summaries || data.summaries.length === 0 ? (
+                        {!summariesData?.summaries ||
+                        summariesData.summaries.length === 0 ? (
                             <div className="bg-white p-8 rounded-lg shadow-sm text-center">
                                 <Calendar
                                     size={48}
@@ -1276,11 +1306,12 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                 </p>
                             </div>
                         ) : (
-                            data.summaries.map((summary) => {
+                            summariesData.summaries.map((summary) => {
                                 const dailyCups = getCupsCountForDate(
                                     summary.date
                                 );
                                 const dailyOrders = getOrdersCountForDate(
+                                    summariesData,
                                     summary.date
                                 );
                                 const dailyExpenses = getExpensesForDate(
@@ -1290,11 +1321,11 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                 return (
                                     <div
                                         key={summary.id}
-                                        className="bg-white rounded-lg shadow-sm overflow-hidden"
+                                        className="bg-white rounded-xl shadow-sm overflow-hidden"
                                     >
                                         {/* Summary Header */}
-                                        <div className="p-3.5 bg-white">
-                                            <div className="flex justify-between items-start mb-4">
+                                        <div className="p-3 bg-white space-y-3">
+                                            <div className="flex justify-between items-start mb-3">
                                                 <div className="flex-1">
                                                     <button
                                                         onClick={() => {
@@ -1312,8 +1343,8 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                                 summary.date
                                                             )}
                                                         </h3>
-                                                        <p className="text-xs text-blue-600 underline">
-                                                            Tap for details
+                                                        <p className="text-sm text-blue-600 underline">
+                                                            Tap for details →
                                                         </p>
                                                     </button>
                                                 </div>
@@ -1331,9 +1362,14 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                             </div>
 
                                             {/* Cash Balances */}
-                                            <div className="grid grid-cols-2 gap-4 mb-4">
+                                            <h4 className="text-gray-800 text-sm font-semibold mb-1">
+                                                Summary of the Day
+                                            </h4>
+
+                                            <div className="grid grid-cols-2 gap-2 rounded-lg border-1 p-2 border-gray-200 bg-gray-50 text-gray-800">
+                                                {/* 1. Opening Balance */}
                                                 <div>
-                                                    <p className="text-xs text-gray-500">
+                                                    <p className="text-xs">
                                                         Opening Balance
                                                     </p>
                                                     <p className="text-lg font-semibold text-blue-600">
@@ -1342,11 +1378,71 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                         )}
                                                     </p>
                                                 </div>
+
+                                                {/* 2. Sales */}
                                                 <div>
-                                                    <p className="text-xs text-gray-500">
-                                                        Actual Cash
+                                                    <p className="text-xs ">
+                                                        Total Sales
+                                                    </p>
+                                                    <p className="text-lg font-bold text-green-600">
+                                                        {formatRupiah(
+                                                            summary.total_sales
+                                                        )}
+                                                    </p>
+                                                </div>
+
+                                                {/* 3. Gross Expected Cash (Opening + Sales) */}
+                                                <div>
+                                                    <p className="text-xs ">
+                                                        Opening + Sales
                                                     </p>
                                                     <p className="text-lg font-semibold text-purple-600">
+                                                        {formatRupiah(
+                                                            summary.opening_balance +
+                                                                summary.total_sales
+                                                        )}
+                                                    </p>
+                                                </div>
+
+                                                <div className="flex gap-4">
+                                                    <div>
+                                                        <p className="text-xs ">
+                                                            Orders
+                                                        </p>
+                                                        <p className="text-lg font-bold text-blue-600">
+                                                            {dailyOrders}
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs">
+                                                            Cups
+                                                        </p>
+                                                        <p className="text-lg font-bold text-orange-600">
+                                                            {dailyCups}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <hr className="col-span-2 border-gray-300" />
+
+                                                {/* 4. Net Expected Cash (after subtracting expenses) */}
+                                                <div>
+                                                    <p className="text-xs">
+                                                        Net Expected Cash
+                                                    </p>
+                                                    <p className="text-lg font-semibold text-purple-600">
+                                                        {formatRupiah(
+                                                            summary.expected_cash
+                                                        )}
+                                                    </p>
+                                                </div>
+
+                                                {/* 5. Actual Cash (Counted physical cash) */}
+                                                <div>
+                                                    <p className="text-xs">
+                                                        Actual Cash (Counted)
+                                                    </p>
+                                                    <p className="text-lg font-semibold text-orange-600">
                                                         {summary.actual_cash !==
                                                         null
                                                             ? formatRupiah(
@@ -1357,43 +1453,13 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                 </div>
                                             </div>
 
-                                            {/* Daily Totals */}
-                                            <div className="grid grid-cols-4 gap-4 mb-4">
-                                                <div className="col-span-2">
-                                                    <p className="text-xs text-gray-500">
-                                                        Sales
-                                                    </p>
-                                                    <p className="text-lg font-bold text-green-600">
-                                                        {formatRupiah(
-                                                            summary.total_sales
-                                                        )}
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs text-gray-500">
-                                                        Orders
-                                                    </p>
-                                                    <p className="text-lg font-bold text-blue-600">
-                                                        {dailyOrders}
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs text-gray-500">
-                                                        Cups
-                                                    </p>
-                                                    <p className="text-lg font-bold text-orange-600">
-                                                        {dailyCups}
-                                                    </p>
-                                                </div>
-                                            </div>
-
                                             {/* Expenses Display */}
                                             {dailyExpenses.length > 0 && (
-                                                <div className="mb-4">
-                                                    <p className="text-xs text-gray-500 mb-1">
-                                                        Daily Expenses
-                                                    </p>
-                                                    <div className="bg-red-50 border border-red-200 p-2 rounded">
+                                                <div>
+                                                    <h4 className="text-gray-800 text-sm font-semibold mb-1">
+                                                        Expenses of the Day
+                                                    </h4>
+                                                    <div className="bg-red-50 border border-red-200 p-2 rounded-lg">
                                                         {dailyExpenses.map(
                                                             (expense, idx) => (
                                                                 <div
@@ -1439,12 +1505,12 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
 
                                             {/* Variance */}
                                             {summary.variance !== null && (
-                                                <div className="mb-4">
-                                                    <p className="text-xs mb-1">
+                                                <div>
+                                                    <h4 className="text-gray-800 text-sm font-semibold mb-1">
                                                         Variance
-                                                    </p>
+                                                    </h4>
                                                     <p
-                                                        className={`text-sm px-3 py-2 rounded font-medium ${
+                                                        className={`text-sm px-3 py-2 rounded-lg font-medium ${
                                                             summary.variance >=
                                                             0
                                                                 ? "bg-green-50 border border-green-200 text-green-700"
@@ -1464,10 +1530,10 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                             {/* Notes */}
                                             {summary.notes && (
                                                 <div>
-                                                    <p className="text-xs mb-1">
+                                                    <h4 className="text-gray-800 text-sm font-semibold mb-1">
                                                         Notes
-                                                    </p>
-                                                    <p className="text-sm text-gray-700 bg-gray-50 p-2 rounded">
+                                                    </h4>
+                                                    <p className="text-sm text-gray-700 bg-gray-50 p-2 rounded-lg border-1 border-gray-200">
                                                         {summary.notes}
                                                     </p>
                                                 </div>
@@ -1584,6 +1650,14 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                     selectedSummary
                         ? getProductBreakdownForDate(selectedSummary.date)
                         : {}
+                }
+                dailyOrders={
+                    summariesData && selectedSummary
+                        ? getOrdersCountForDate(
+                              summariesData,
+                              selectedSummary.date
+                          )
+                        : 0
                 }
                 storeName={
                     stores.find((store: Store) => store.id === selectedStore)
