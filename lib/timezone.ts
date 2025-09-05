@@ -31,9 +31,25 @@ export const formatFullIndonesiaTimestamp = (dateString: string) => {
     });
 };
 
-export const toIndonesiaMonthYear = (utcDate: string) => {
-    if (!utcDate) return "Date not available"; // English fallback
-    return new Date(utcDate + "Z").toLocaleDateString("en-US", {
+// export const toIndonesiaMonthYear = (utcDate: string) => {
+//     if (!utcDate) return "Date not available"; // English fallback
+//     return new Date(utcDate + "Z").toLocaleDateString("en-US", {
+//         timeZone: "Asia/Jakarta",
+//         year: "numeric",
+//         month: "long",
+//     });
+// };
+
+export const toIndonesiaMonthYear = (yyyyMm: string) => {
+    if (!yyyyMm) return "Date not available";
+
+    const [year, month] = yyyyMm.split("-");
+    if (!year || !month) return "Invalid date format";
+
+    // Build a valid date: always set day to 1
+    const date = new Date(`${year}-${month}-01T00:00:00Z`);
+
+    return date.toLocaleDateString("en-US", {
         timeZone: "Asia/Jakarta",
         year: "numeric",
         month: "long",
