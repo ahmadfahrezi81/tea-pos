@@ -253,6 +253,7 @@ import { X } from "lucide-react";
 import { formatRupiah } from "@/lib/utils/formatCurrency";
 import { DailySummary as BaseDailySummary } from "@/lib/types";
 import { formatFullIndonesiaTimestamp } from "@/lib/timezone";
+import CopyableField from "./CopyableField";
 
 interface Expense {
     id: string;
@@ -312,6 +313,15 @@ export const DetailsModal = ({
     //     return data?.ordersByDate?.[date]?.length || 0;
     // };
 
+    // const [copied, setCopied] = useState(false);
+
+    // const handleCopy = () => {
+    //     navigator.clipboard.writeText(summary.id).then(() => {
+    //         setCopied(true);
+    //         setTimeout(() => setCopied(false), 2000); // Reset after 2 seconds
+    //     });
+    // };
+
     return (
         <div
             className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end"
@@ -352,9 +362,16 @@ export const DetailsModal = ({
                                     }
                                 )}
                             </h3>
-                            <div className="text-sm text-gray-600 space-y-1">
+                            <div className="text-xs text-gray-700 space-y-1">
                                 <p>
-                                    <strong>Summary ID:</strong> {summary.id}
+                                    <strong>Summary ID:</strong>
+
+                                    <span>{summary.id}</span>
+
+                                    <CopyableField
+                                        label="Summary ID"
+                                        value={summary.id}
+                                    />
                                 </p>
                                 <p>
                                     <strong>Store:</strong> {storeName}
