@@ -251,14 +251,29 @@
 import { useEffect } from "react";
 import { X } from "lucide-react";
 import { formatRupiah } from "@/lib/utils/formatCurrency";
+import { DailySummary as BaseDailySummary } from "@/lib/types";
+import { formatFullIndonesiaTimestamp } from "@/lib/timezone";
+
+interface Expense {
+    id: string;
+    expense_type: string;
+    amount: number;
+}
+
+type DailySummaryWithExpenses = BaseDailySummary & {
+    expenses: Expense[];
+    total_expenses: number;
+    seller: { full_name: string } | null;
+    manager: { full_name: string } | null;
+};
 
 interface DetailsModalProps {
     isOpen: boolean;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    summary: any;
+    summary: DailySummaryWithExpenses;
     onClose: () => void;
     productBreakdown: Record<string, { quantity: number; revenue: number }>;
     storeName: string;
+    dailyOrders: number;
 }
 
 export const DetailsModal = ({
@@ -266,8 +281,10 @@ export const DetailsModal = ({
     summary,
     onClose,
     productBreakdown,
+    dailyOrders,
     storeName,
 }: DetailsModalProps) => {
+    console.log(summary);
     // Prevent background scrolling when modal is open
     useEffect(() => {
         if (isOpen) {
@@ -284,25 +301,16 @@ export const DetailsModal = ({
 
     if (!isOpen || !summary) return null;
 
-    const formatFullTimestamp = (dateString: string) => {
-        if (!dateString) return "Not set";
-        const date = new Date(dateString);
-        return date.toLocaleString("en-US", {
-            weekday: "short",
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-            hour12: true,
-        });
-    };
-
     const dailyCups = Object.values(productBreakdown).reduce(
         (total, product) => total + product.quantity,
         0
     );
+
+    console.log("product breakdown", productBreakdown);
+
+    // const getOrdersCountForDate = (date: string) => {
+    //     return data?.ordersByDate?.[date]?.length || 0;
+    // };
 
     return (
         <div
@@ -364,6 +372,37 @@ export const DetailsModal = ({
                             </div>
                         </div>
 
+                        {/* Timestamps */}
+                        <div className="space-y-2">
+                            {/* <h4 className="font-medium text-gray-800">
+                                Timestamps
+                            </h4> */}
+                            <div className="bg-gray-50 p-3 rounded-lg text-sm space-y-2">
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">
+                                        Store Open:
+                                    </span>
+                                    <span className="font-medium">
+                                        {formatFullIndonesiaTimestamp(
+                                            summary.created_at
+                                        )}
+                                    </span>
+                                </div>
+                                {summary.closed_at && (
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-600">
+                                            Store Closed:
+                                        </span>
+                                        <span className="font-medium">
+                                            {formatFullIndonesiaTimestamp(
+                                                summary.closed_at
+                                            )}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
                         {/* Financial Summary */}
                         <div className="grid grid-cols-2 gap-4">
                             <div className="bg-blue-50 p-4 rounded-lg">
@@ -382,6 +421,26 @@ export const DetailsModal = ({
                                     {formatRupiah(summary.total_sales)}
                                 </p>
                             </div>
+                            <div className="bg-purple-50 p-4 rounded-lg">
+                                <p className="text-xs text-purple-600 uppercase tracking-wide">
+                                    Opening + Sales
+                                </p>
+                                <p className="text-lg font-bold text-purple-800">
+                                    {formatRupiah(
+                                        summary.opening_balance +
+                                            summary.total_sales
+                                    )}
+                                </p>
+                            </div>
+                            <div className="bg-red-50 p-4 rounded-lg">
+                                <p className="text-xs text-red-600 uppercase tracking-wide">
+                                    Expenses
+                                </p>
+                                <p className="text-lg font-bold text-red-800">
+                                    {formatRupiah(summary.total_expenses)}
+                                </p>
+                            </div>
+
                             <div className="bg-purple-50 p-4 rounded-lg">
                                 <p className="text-xs text-purple-600 uppercase tracking-wide">
                                     Expected Cash
@@ -437,7 +496,9 @@ export const DetailsModal = ({
                         <div className="grid grid-cols-2 gap-4">
                             <div className="text-center p-4 bg-gray-50 rounded-lg">
                                 <p className="text-2xl font-bold text-blue-600">
-                                    {Object.keys(productBreakdown).length}
+                                    {/* {Object.keys(productBreakdown).length} */}
+                                    {/* {getOrdersCountForDate(summary.date)} */}
+                                    {dailyOrders}
                                 </p>
                                 <p className="text-sm text-gray-600">
                                     Total Orders
@@ -453,46 +514,19 @@ export const DetailsModal = ({
                             </div>
                         </div>
 
-                        {/* Timestamps */}
-                        <div className="space-y-2">
-                            <h4 className="font-medium text-gray-800">
-                                Timestamps
-                            </h4>
-                            <div className="bg-gray-50 p-3 rounded-lg text-sm space-y-2">
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">
-                                        Created:
-                                    </span>
-                                    <span className="font-medium">
-                                        {formatFullTimestamp(
-                                            summary.created_at
-                                        )}
-                                    </span>
-                                </div>
-                                {summary.closed_at && (
-                                    <div className="flex justify-between">
-                                        <span className="text-gray-600">
-                                            Closed:
-                                        </span>
-                                        <span className="font-medium">
-                                            {formatFullTimestamp(
-                                                summary.closed_at
-                                            )}
-                                        </span>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
                         {/* Product Breakdown */}
                         {Object.keys(productBreakdown).length > 0 && (
                             <div className="space-y-3">
                                 <h4 className="font-medium text-gray-800">
-                                    Product Sales
+                                    Product Sales Breakdown
                                 </h4>
                                 <div className="space-y-2">
-                                    {Object.entries(productBreakdown).map(
-                                        ([productName, data]) => (
+                                    {Object.entries(productBreakdown)
+                                        .sort(
+                                            ([, a], [, b]) =>
+                                                b.quantity - a.quantity
+                                        ) // Sort by quantity descending
+                                        .map(([productName, data]) => (
                                             <div
                                                 key={productName}
                                                 className="flex justify-between items-center bg-gray-50 p-3 rounded-lg"
@@ -511,8 +545,7 @@ export const DetailsModal = ({
                                                     </p>
                                                 </div>
                                             </div>
-                                        )
-                                    )}
+                                        ))}
                                 </div>
                             </div>
                         )}
