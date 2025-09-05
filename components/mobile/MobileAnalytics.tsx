@@ -791,6 +791,7 @@ import { SetExpenseModal } from "./analytics/SetExpenseModal";
 import { CloseDayModal } from "./analytics/CloseDayModal";
 import { DetailsModal } from "./ui/DetailsModal";
 import { ConfirmationPopup } from "./ui/ConfirmationPopup";
+import { toIndonesiaMonthYear } from "@/lib/timezone";
 
 interface MobileAnalyticsProps {
     profile: Profile | null;
@@ -1276,11 +1277,17 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                 )}
             </div>
 
-            {/* Date Header */}
+            {/* Summaries Header */}
             <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-800">
-                    {selectedMonth}
+                    {toIndonesiaMonthYear(selectedMonth)}
                 </h3>
+                <span className="text-sm text-gray-500">
+                    {summariesData?.summaries?.length ?? 0}{" "}
+                    {(summariesData?.summaries?.length ?? 0) === 1
+                        ? "summary"
+                        : "summaries"}
+                </span>
             </div>
 
             {selectedStore && (

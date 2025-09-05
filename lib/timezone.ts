@@ -30,3 +30,12 @@ export const formatFullIndonesiaTimestamp = (dateString: string) => {
         hour12: false, // Use 24-hour format
     });
 };
+
+export const toIndonesiaMonthYear = (utcDate: string) => {
+    if (!utcDate) return "Date not available"; // English fallback
+    return new Date(utcDate + "Z").toLocaleDateString("en-US", {
+        timeZone: "Asia/Jakarta",
+        year: "numeric",
+        month: "long",
+    });
+};
