@@ -113,7 +113,7 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
     // Add toast function
     const showToast = (message: string, type: "success" | "error") => {
         setToast({ message, type });
-        setTimeout(() => setToast(null), 3000); // Auto-hide after 3 seconds
+        setTimeout(() => setToast(null), 4000); // Auto-hide after 4 seconds
     };
 
     const processOrder = async () => {
@@ -566,7 +566,7 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
             {/* Toast Notification */}
             {toast && (
                 <div
-                    className={`fixed top-20 left-4 right-4 z-50 p-4 rounded-lg shadow-lg ${
+                    className={`fixed top-20 left-4 right-4 z-50 p-4 rounded-lg shadow-lg text-sm ${
                         toast.type === "success"
                             ? "bg-green-500 text-white"
                             : "bg-red-500 text-white"
@@ -578,7 +578,7 @@ export default function MobilePOS({ profile }: MobilePOSProps) {
                             onClick={() => setToast(null)}
                             className="ml-4 text-white hover:opacity-75"
                         >
-                            ×
+                            <X size={20} />
                         </button>
                     </div>
                 </div>

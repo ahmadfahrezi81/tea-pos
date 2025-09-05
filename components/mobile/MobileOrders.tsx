@@ -6,6 +6,7 @@ import { useStores } from "@/lib/hooks/useData";
 import { Profile, OrderItem, Store } from "@/lib/types";
 import { Calendar, CalendarDays, StoreIcon, Receipt } from "lucide-react";
 import { formatRupiah } from "@/lib/utils/formatCurrency";
+import CopyableField from "./ui/CopyableField";
 
 interface MobileOrdersProps {
     profile: Profile | null;
@@ -334,12 +335,19 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
                                             Order Details
                                         </h4>
                                         <div className="text-xs text-gray-600 space-y-1">
-                                            <p>
+                                            <div>
                                                 <span className="font-medium">
                                                     Order ID:
-                                                </span>{" "}
-                                                {order.id}
-                                            </p>
+                                                </span>
+                                                <br />
+                                                <div className="flex justify-between items-start">
+                                                    {order.id}
+                                                    <CopyableField
+                                                        label="Order ID"
+                                                        value={order.id}
+                                                    />
+                                                </div>
+                                            </div>
                                             <p>
                                                 <span className="font-medium">
                                                     Store:
