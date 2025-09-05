@@ -365,13 +365,14 @@ export const DetailsModal = ({
                             <div className="text-xs text-gray-700 space-y-1">
                                 <p>
                                     <strong>Summary ID:</strong>
-
-                                    <span>{summary.id}</span>
-
-                                    <CopyableField
-                                        label="Summary ID"
-                                        value={summary.id}
-                                    />
+                                    <br />
+                                    <div className="flex justify-between items-start">
+                                        <span>{summary.id}</span>
+                                        <CopyableField
+                                            label="Summary ID"
+                                            value={summary.id}
+                                        />
+                                    </div>
                                 </p>
                                 <p>
                                     <strong>Store:</strong> {storeName}
