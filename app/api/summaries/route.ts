@@ -569,6 +569,54 @@ import { NextRequest, NextResponse } from "next/server";
 import { createRouteHandlerClient } from "@/lib/supabase/server";
 import { Expense } from "@/lib/hooks/useSummaries";
 
+async function fetchAllOrders(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    supabase: any,
+    storeId: string,
+    startDate: string,
+    endDateStr: string
+) {
+    const pageSize = 1000;
+    let from = 0;
+    let to = pageSize - 1;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let allOrders: any[] = [];
+
+    while (true) {
+        const { data, error } = await supabase
+            .from("orders")
+            .select(
+                `
+                id,
+                total_amount,
+                created_at,
+                order_items(
+                    quantity,
+                    unit_price,
+                    total_price,
+                    products(name, price, image_url)
+                )
+            `
+            )
+            .eq("store_id", storeId)
+            .gte("created_at", `${startDate}T00:00:00Z`)
+            .lte("created_at", `${endDateStr}T23:59:59Z`)
+            .order("created_at", { ascending: true })
+            .range(from, to);
+
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+
+        allOrders = allOrders.concat(data);
+
+        // Move to next page
+        from += pageSize;
+        to += pageSize;
+    }
+
+    return allOrders;
+}
+
 // export async function GET(request: NextRequest) {
 //     try {
 //         const supabase = await createRouteHandlerClient();
@@ -914,31 +962,38 @@ export async function GET(request: NextRequest) {
             totalMonthlyExpenses += expense.amount;
         });
 
-        // Fetch orders for product breakdown - FIXED: Also use proper date filtering
-        const { data: orders, error: ordersError } = await supabase
-            .from("orders")
-            .select(
-                `
-                id,
-                total_amount,
-                created_at,
-                order_items(
-                    quantity,
-                    unit_price,
-                    total_price,
-                    products(name, price, image_url)
-                )
-            `
-            )
-            .eq("store_id", storeId)
-            .gte("created_at", `${startDate}T00:00:00Z`) // FIXED: Simpler timezone handling
-            .lte("created_at", `${endDateStr}T23:59:59Z`) // FIXED: Simpler timezone handling
-            .order("created_at", { ascending: true });
+        // // Fetch orders for product breakdown - FIXED: Also use proper date filtering
+        // const { data: orders, error: ordersError } = await supabase
+        //     .from("orders")
+        //     .select(
+        //         `
+        //         id,
+        //         total_amount,
+        //         created_at,
+        //         order_items(
+        //             quantity,
+        //             unit_price,
+        //             total_price,
+        //             products(name, price, image_url)
+        //         )
+        //     `
+        //     )
+        //     .eq("store_id", storeId)
+        //     .gte("created_at", `${startDate}T00:00:00Z`) // FIXED: Simpler timezone handling
+        //     .lte("created_at", `${endDateStr}T23:59:59Z`) // FIXED: Simpler timezone handling
+        //     .order("created_at", { ascending: true });
 
-        if (ordersError) {
-            console.error("Orders error:", ordersError);
-            throw ordersError;
-        }
+        // if (ordersError) {
+        //     console.error("Orders error:", ordersError);
+        //     throw ordersError;
+        // }
+
+        const orders = await fetchAllOrders(
+            supabase,
+            storeId,
+            startDate,
+            endDateStr
+        );
 
         // Group orders by date and calculate accurate totals
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
