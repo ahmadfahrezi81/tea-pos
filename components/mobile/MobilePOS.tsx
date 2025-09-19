@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { formatRupiah } from "@/lib/utils/formatCurrency";
 import Image from "next/image";
-import { Assignment } from "@/app/mobile/page";
+import { Assignment } from "@/app/mobile/layout";
 import { hasSellerRoleInStore } from "@/lib/utils/roleUtils";
 
 interface MobilePOSProps {

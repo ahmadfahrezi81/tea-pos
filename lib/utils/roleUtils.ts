@@ -1,4 +1,4 @@
-import { Assignments } from "@/app/mobile/page";
+import { Assignments } from "@/app/mobile/layout";
 
 export const hasManagerRole = (
     userId: string,

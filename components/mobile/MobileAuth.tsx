@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Profile, Store } from "@/lib/types";
 import { useStores } from "@/lib/hooks/useData";
 import packageJson from "../../package.json";
-import { Assignment } from "@/app/mobile/page";
+import { Assignment } from "@/app/mobile/layout";
 
 interface MobileAuthProps {
     profile: Profile | null;
