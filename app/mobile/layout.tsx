@@ -586,7 +586,7 @@ export default function MobileLayout({ children }: MobileLayoutProps) {
                                     {tab.label}
                                 </span>
                                 {isActive && (
-                                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-7 h-1 bg-blue-600 rounded-b-full"></div>
+                                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-blue-600 rounded-b-full"></div>
                                 )}
                             </button>
                         );
