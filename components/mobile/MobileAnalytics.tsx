@@ -784,7 +784,6 @@ import {
     Receipt,
 } from "lucide-react";
 import { formatRupiah } from "@/lib/utils/formatCurrency";
-import { Assignment } from "@/app/mobile/page";
 import { hasManagerRoleInStore } from "@/lib/utils/roleUtils";
 import { SetBalanceModal } from "./analytics/SetBalanceModal";
 import { SetExpenseModal } from "./analytics/SetExpenseModal";
@@ -792,6 +791,7 @@ import { CloseDayModal } from "./analytics/CloseDayModal";
 import { DetailsModal } from "./ui/DetailsModal";
 import { ConfirmationPopup } from "./ui/ConfirmationPopup";
 import { toIndonesiaMonthYear } from "@/lib/timezone";
+import { Assignment } from "@/app/mobile/layout";
 
 interface MobileAnalyticsProps {
     profile: Profile | null;

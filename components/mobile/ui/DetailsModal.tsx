@@ -363,7 +363,7 @@ export const DetailsModal = ({
                                 )}
                             </h3>
                             <div className="text-xs text-gray-700 space-y-1">
-                                <p>
+                                <div>
                                     <strong>Summary ID:</strong>
                                     <br />
                                     <div className="flex justify-between items-start">
@@ -373,7 +373,7 @@ export const DetailsModal = ({
                                             value={summary.id}
                                         />
                                     </div>
-                                </p>
+                                </div>
                                 <p>
                                     <strong>Store:</strong> {storeName}
                                 </p>
