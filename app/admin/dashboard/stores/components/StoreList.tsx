@@ -283,7 +283,7 @@ export const StoreList: React.FC<StoreListProps> = ({
     handleDeleteStore,
 }) => {
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-4 pb-30">
             {/* <div className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-4 after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-16 after:bg-gradient-to-t after:from-white after:to-transparent after:pointer-events-none after:z-10"> */}
             {stores.map((store: Store) => {
                 const assignedUsers = getAssignedUsers(store.id);
