@@ -211,7 +211,7 @@ export default function StoresPageComponents() {
                     </button>
                 </div>
 
-                <div className="pt-2">
+                <div className="pt-4">
                     <StoresSearchFilter
                         searchQuery={storeFilters.searchQuery}
                         onSearchChange={storeFilters.setSearchQuery}
