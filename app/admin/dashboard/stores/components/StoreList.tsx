@@ -62,7 +62,7 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({ onEdit, onDelete }) => {
                 className="p-1 rounded hover:bg-gray-100 transition-colors"
                 type="button"
             >
-                <MoreVertical size={16} className="text-gray-600" />
+                <MoreVertical size={18} className="text-gray-600" />
             </button>
 
             {isOpen && (
@@ -148,7 +148,7 @@ const AssignedUsersSection: React.FC<AssignedUsersSectionProps> = ({
     assignedUsers,
 }) => {
     return (
-        <div className="mb-4">
+        <div className="mb-2">
             <h4 className="font-medium mb-2 text-sm">Assigned Users:</h4>
             {assignedUsers.length > 0 ? (
                 <div className="space-y-2 bg-gray-50 p-2 border border-gray-200 rounded-lg">
@@ -199,6 +199,40 @@ const StoreHeader: React.FC<StoreHeaderProps> = ({
 };
 
 // Individual Store Card Component
+// const StoreCard: React.FC<StoreCardProps> = ({
+//     store,
+//     assignedUsers,
+//     onManageUsers,
+//     onEditStore,
+//     onDeleteStore,
+// }) => {
+//     return (
+//         <div className="bg-white p-4 rounded-xl border border-gray-200 space-y-2 shadow-sm">
+//             <StoreHeader
+//                 store={store}
+//                 onEdit={() => onEditStore(store)}
+//                 onDelete={() => onDeleteStore(store)}
+//             />
+
+//             <AssignedUsersSection assignedUsers={assignedUsers} />
+
+//             <div className="flex gap-2">
+//                 <button
+//                     onClick={() => onManageUsers(store)}
+//                     className="flex-1 bg-purple-500 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-purple-600 transition-colors"
+//                     type="button"
+//                 >
+//                     Manage Users
+//                 </button>
+//             </div>
+
+//             <div className="mt-3 text-xs text-gray-500">
+//                 Created: {new Date(store.created_at).toLocaleDateString()}
+//             </div>
+//         </div>
+//     );
+// };
+
 const StoreCard: React.FC<StoreCardProps> = ({
     store,
     assignedUsers,
@@ -207,27 +241,34 @@ const StoreCard: React.FC<StoreCardProps> = ({
     onDeleteStore,
 }) => {
     return (
-        <div className="bg-white p-4 rounded-xl border border-gray-200 space-y-2 shadow-sm">
+        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col h-full min-h-[280px]">
             <StoreHeader
                 store={store}
                 onEdit={() => onEditStore(store)}
                 onDelete={() => onDeleteStore(store)}
             />
 
-            <AssignedUsersSection assignedUsers={assignedUsers} />
-
-            <div className="flex gap-2">
-                <button
-                    onClick={() => onManageUsers(store)}
-                    className="flex-1 bg-purple-500 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-purple-600 transition-colors"
-                    type="button"
-                >
-                    Manage Users
-                </button>
+            {/* Flexible content area that grows */}
+            <div className="flex-1 py-2">
+                <AssignedUsersSection assignedUsers={assignedUsers} />
             </div>
 
-            <div className="mt-3 text-xs text-gray-500">
-                Created: {new Date(store.created_at).toLocaleDateString()}
+            {/* Fixed bottom section */}
+            <div className="mt-auto space-y-3">
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => onManageUsers(store)}
+                        className="flex-1 bg-purple-500 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-purple-600 transition-colors"
+                        type="button"
+                    >
+                        Manage Users
+                    </button>
+                </div>
+
+                <div className="text-xs text-gray-500">
+                    Store Created:{" "}
+                    {new Date(store.created_at).toLocaleDateString()}
+                </div>
             </div>
         </div>
     );
@@ -243,6 +284,7 @@ export const StoreList: React.FC<StoreListProps> = ({
 }) => {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-4">
+            {/* <div className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-4 after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-16 after:bg-gradient-to-t after:from-white after:to-transparent after:pointer-events-none after:z-10"> */}
             {stores.map((store: Store) => {
                 const assignedUsers = getAssignedUsers(store.id);
 

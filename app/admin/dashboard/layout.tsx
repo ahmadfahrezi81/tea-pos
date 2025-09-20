@@ -32,13 +32,20 @@ export default async function DashboardLayout({
     }
 
     return (
-        <div className="min-h-screenflex space-x-50 flex gap-20">
+        <div
+            className="min-h-screenflex space-x-50 flex gap-20"
+            style={{
+                overflowY: "auto",
+                scrollbarWidth: "none", // Firefox
+                msOverflowStyle: "none", // IE 10+, Edge
+            }}
+        >
             {/* Sidebar */}
             <FloatingSidebar />
             {/* Wrapper to handle sidebar offset */}
             <div className="ml-70 flex-1">
                 {/* Main content centered with max width */}
-                <main className="px-6 max-w-7xl mx-auto ">{children}</main>
+                <main className="px-6 max-w-6xl mx-auto ">{children}</main>
             </div>
         </div>
     );

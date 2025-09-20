@@ -213,7 +213,7 @@ export default function StoresPageComponents() {
 
             {/* Main Content */}
             <div
-                className="flex flex-col h-[calc(80vh-16px)] overflow-y-auto"
+                className="flex flex-col h-[calc(80vh-16px)] overflow-y-auto after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-30 after:bg-gradient-to-t after:from-white after:to-transparent after:pointer-events-none after:z-10"
                 style={{
                     overflowY: "auto",
                     scrollbarWidth: "none", // Firefox

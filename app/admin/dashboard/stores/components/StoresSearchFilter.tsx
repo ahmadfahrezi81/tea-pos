@@ -83,10 +83,17 @@ export const StoresSearchFilter: React.FC<StoresSearchFilterProps> = ({
                             />
 
                             {/* Dropdown */}
-                            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 max-h-60 overflow-auto">
+                            <div
+                                className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 max-h-60 overflow-auto p-2 space-y-1"
+                                style={{
+                                    overflowY: "auto",
+                                    scrollbarWidth: "none", // Firefox
+                                    msOverflowStyle: "none", // IE 10+, Edge
+                                }}
+                            >
                                 <button
                                     onClick={() => handleUserSelect(null)}
-                                    className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 ${
+                                    className={`w-full text-left px-2 py-1 text-sm hover:bg-gray-50 rounded ${
                                         !selectedUserId
                                             ? "bg-blue-50 text-blue-700 font-medium"
                                             : "text-gray-700"
@@ -103,7 +110,7 @@ export const StoresSearchFilter: React.FC<StoresSearchFilterProps> = ({
                                         onClick={() =>
                                             handleUserSelect(user.id)
                                         }
-                                        className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 ${
+                                        className={`w-full text-left px-2 py-1 text-sm hover:bg-gray-50 rounded ${
                                             selectedUserId === user.id
                                                 ? "bg-blue-50 text-blue-700 font-medium"
                                                 : "text-gray-700"
