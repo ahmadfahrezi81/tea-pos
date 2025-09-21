@@ -587,6 +587,12 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
     const [hasChanges, setHasChanges] = useState(false);
     const [imageError, setImageError] = useState(false);
 
+    // Enhanced validation function for imgbb URLs
+    const isValidImageUrl = (url: string): boolean => {
+        if (!url.trim()) return true; // Empty URLs are allowed
+        return url.startsWith("https://i.ibb.co");
+    };
+
     // Check for changes when form data changes
     useEffect(() => {
         if (editingProduct) {
@@ -620,13 +626,28 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
         }
     };
 
+    // Enhanced form validation including image URL
     const isFormValid =
         productForm.name.trim() !== "" &&
         productForm.price.trim() !== "" &&
         !isNaN(Number(productForm.price)) &&
-        Number(productForm.price) > 0;
+        Number(productForm.price) > 0 &&
+        isValidImageUrl(productForm.imageUrl); // Added image URL validation
+
     const canSubmit =
         isFormValid && (editingProduct ? hasChanges : true) && !isSubmitting;
+
+    // Enhanced submit handler with additional validation
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+
+        // Double-check validation before submitting
+        if (!isValidImageUrl(productForm.imageUrl)) {
+            return; // Prevent submission
+        }
+
+        onSubmit(e);
+    };
 
     if (!isOpen) return null;
 
@@ -662,7 +683,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 </div>
 
                 {/* Form */}
-                <form onSubmit={onSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             Product Name
@@ -722,7 +743,8 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                     {/* Image URL Input */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Image URL
+                            Image URL{" "}
+                            <span className="text-gray-500">(Optional)</span>
                         </label>
                         <input
                             type="url"
@@ -737,9 +759,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                             placeholder="Paste image URL from imgbb.com (must start with https://i.ibb.co)"
                             className={`w-full px-3 py-2 border rounded-lg text-sm transition-colors focus:ring-purple-500 focus:border-purple-500 ${
                                 productForm.imageUrl &&
-                                !productForm.imageUrl.startsWith(
-                                    "https://i.ibb.co"
-                                )
+                                !isValidImageUrl(productForm.imageUrl)
                                     ? "border-red-300 bg-red-50"
                                     : "border-gray-300"
                             }`}
@@ -750,19 +770,17 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                             to imgbb.com and paste the direct link here.
                         </p>
                         {productForm.imageUrl &&
-                            !productForm.imageUrl.startsWith(
-                                "https://i.ibb.co"
-                            ) && (
+                            !isValidImageUrl(productForm.imageUrl) && (
                                 <p className="mt-1 text-xs text-red-600">
-                                    Please use a valid imgbb.com URL that starts
-                                    with https://i.ibb.co
+                                    ⚠️ Invalid URL: Only imgbb.com URLs starting
+                                    with https://i.ibb.co are allowed
                                 </p>
                             )}
                     </div>
 
                     {/* Image Preview - Only show if valid ibb.co URL */}
                     {productForm.imageUrl &&
-                        productForm.imageUrl.startsWith("https://i.ibb.co") &&
+                        isValidImageUrl(productForm.imageUrl) &&
                         !imageError && (
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -783,20 +801,18 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
                     {/* Show message for non-ibb.co URLs */}
                     {productForm.imageUrl &&
-                        !productForm.imageUrl.startsWith(
-                            "https://i.ibb.co"
-                        ) && (
+                        !isValidImageUrl(productForm.imageUrl) && (
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Image Preview
                                 </label>
-                                <div className="w-full h-48 bg-gray-100 rounded-lg border flex items-center justify-center">
+                                <div className="w-full h-48 bg-red-50 rounded-lg border-2 border-red-200 flex items-center justify-center">
                                     <div className="text-center">
-                                        <ImageIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                                        <p className="text-sm text-orange-600">
-                                            Preview not available
+                                        <ImageIcon className="w-8 h-8 text-red-400 mx-auto mb-2" />
+                                        <p className="text-sm text-red-600 font-medium">
+                                            Invalid Image URL
                                         </p>
-                                        <p className="text-xs text-gray-500">
+                                        <p className="text-xs text-red-500">
                                             Only imgbb.com URLs are supported
                                         </p>
                                     </div>
@@ -805,24 +821,26 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                         )}
 
                     {/* Image Error State */}
-                    {productForm.imageUrl && imageError && (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Image Preview
-                            </label>
-                            <div className="w-full h-48 bg-gray-100 rounded-lg border flex items-center justify-center">
-                                <div className="text-center">
-                                    <ImageIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                                    <p className="text-sm text-red-600">
-                                        Failed to load image
-                                    </p>
-                                    <p className="text-xs text-gray-500">
-                                        Please check the URL
-                                    </p>
+                    {productForm.imageUrl &&
+                        imageError &&
+                        isValidImageUrl(productForm.imageUrl) && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Image Preview
+                                </label>
+                                <div className="w-full h-48 bg-gray-100 rounded-lg border flex items-center justify-center">
+                                    <div className="text-center">
+                                        <ImageIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                                        <p className="text-sm text-red-600">
+                                            Failed to load image
+                                        </p>
+                                        <p className="text-xs text-gray-500">
+                                            Please check the URL
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    )}
+                        )}
 
                     {/* Main Product Switch */}
                     <div>
@@ -912,6 +930,21 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                             )}
                         </button>
                     </div>
+
+                    {/* Form Validation Summary - Only show when form is invalid and user tried to submit */}
+                    {!canSubmit &&
+                        productForm.imageUrl &&
+                        !isValidImageUrl(productForm.imageUrl) && (
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                                <p className="text-sm text-red-700 font-medium">
+                                    🚫 Cannot submit: Invalid image URL
+                                </p>
+                                <p className="text-xs text-red-600 mt-1">
+                                    Please use a valid imgbb.com URL or leave
+                                    the image field empty.
+                                </p>
+                            </div>
+                        )}
                 </form>
             </div>
         </div>
