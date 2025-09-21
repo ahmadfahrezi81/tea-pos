@@ -2,8 +2,6 @@ import React, { useState } from "react";
 import { StoreIcon, MoreVertical, Edit2, Trash2 } from "lucide-react";
 import { AssignedUser, Store, User } from "../types/store";
 
-// type RoleType = "seller" | "manager" | "Default";
-
 // Component Props Interfaces
 interface DropdownMenuProps {
     onEdit: () => void;
@@ -199,40 +197,6 @@ const StoreHeader: React.FC<StoreHeaderProps> = ({
 };
 
 // Individual Store Card Component
-// const StoreCard: React.FC<StoreCardProps> = ({
-//     store,
-//     assignedUsers,
-//     onManageUsers,
-//     onEditStore,
-//     onDeleteStore,
-// }) => {
-//     return (
-//         <div className="bg-white p-4 rounded-xl border border-gray-200 space-y-2 shadow-sm">
-//             <StoreHeader
-//                 store={store}
-//                 onEdit={() => onEditStore(store)}
-//                 onDelete={() => onDeleteStore(store)}
-//             />
-
-//             <AssignedUsersSection assignedUsers={assignedUsers} />
-
-//             <div className="flex gap-2">
-//                 <button
-//                     onClick={() => onManageUsers(store)}
-//                     className="flex-1 bg-purple-500 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-purple-600 transition-colors"
-//                     type="button"
-//                 >
-//                     Manage Users
-//                 </button>
-//             </div>
-
-//             <div className="mt-3 text-xs text-gray-500">
-//                 Created: {new Date(store.created_at).toLocaleDateString()}
-//             </div>
-//         </div>
-//     );
-// };
-
 const StoreCard: React.FC<StoreCardProps> = ({
     store,
     assignedUsers,
@@ -284,7 +248,6 @@ export const StoreList: React.FC<StoreListProps> = ({
 }) => {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-4 pb-30">
-            {/* <div className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-4 after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-16 after:bg-gradient-to-t after:from-white after:to-transparent after:pointer-events-none after:z-10"> */}
             {stores.map((store: Store) => {
                 const assignedUsers = getAssignedUsers(store.id);
 
