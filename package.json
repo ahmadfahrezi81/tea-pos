@@ -1,6 +1,6 @@
 {
     "name": "tea-pos",
-    "version": "1.1.7",
+    "version": "1.1.8",
     "private": true,
     "scripts": {
         "dev": "next dev --turbopack",
@@ -9,6 +9,7 @@
         "lint": "next lint"
     },
     "dependencies": {
+        "@headlessui/react": "^2.2.8",
         "@hookform/resolvers": "^5.2.1",
         "@supabase/ssr": "^0.6.1",
         "@supabase/supabase-js": "^2.54.0",

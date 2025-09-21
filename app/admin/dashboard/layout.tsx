@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createServerComponentClient } from "@/lib/supabase/server";
-import Navbar from "@/components/shared/Navbar";
+// import Navbar from "@/components/shared/Navbar";
+import FloatingSidebar from "./components/FloatingSidebar";
 
 export default async function DashboardLayout({
     children,
@@ -31,9 +32,21 @@ export default async function DashboardLayout({
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <Navbar />
-            <main className="container">{children}</main>
+        <div
+            className="min-h-screenflex space-x-50 flex gap-20"
+            style={{
+                overflowY: "auto",
+                scrollbarWidth: "none", // Firefox
+                msOverflowStyle: "none", // IE 10+, Edge
+            }}
+        >
+            {/* Sidebar */}
+            <FloatingSidebar />
+            {/* Wrapper to handle sidebar offset */}
+            <div className="ml-70 flex-1">
+                {/* Main content centered with max width */}
+                <main className="px-6 max-w-6xl mx-auto ">{children}</main>
+            </div>
         </div>
     );
 }

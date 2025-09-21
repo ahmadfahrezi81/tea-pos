@@ -5,6 +5,11 @@ import useStoresData, {
     useStoreActions,
     useAssignmentActions,
 } from "@/lib/hooks/useStores";
+import { Store } from "lucide-react";
+import { DeleteConfirmationModal } from "./DeleteConfimationModal";
+import { StoreList } from "./StoreList";
+// import { StoreList } from "@/app/admin/dashboard/stores/components/StoreCard";
+// import { DeleteConfirmationModal } from "./DeleteConfimationModal";
 
 interface Store {
     id: string;
@@ -34,6 +39,12 @@ export default function StoresPageComponents() {
     const [selectedStoreForAssignment, setSelectedStoreForAssignment] =
         useState<Store | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
+
+    const [deleteModal, setDeleteModal] = useState<{
+        isOpen: boolean;
+        store: Store | null;
+    }>({ isOpen: false, store: null });
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const { data, isLoading, mutate } = useStoresData();
     const { createStore, updateStore, deleteStore } = useStoreActions();
@@ -100,15 +111,36 @@ export default function StoresPageComponents() {
         setShowStoreForm(true);
     };
 
-    const handleDeleteStore = async (storeId: string) => {
-        if (!confirm("Are you sure you want to delete this store?")) return;
+    // const handleDeleteStore = async (storeId: string) => {
+    //     if (!confirm("Are you sure you want to delete this store?")) return;
+
+    //     try {
+    //         await deleteStore(storeId);
+    //         mutate();
+    //     } catch (error) {
+    //         console.error("Error deleting store:", error);
+    //         alert("Failed to delete store");
+    //     }
+    // };
+
+    const handleDeleteStore = (store: Store) => {
+        setDeleteModal({ isOpen: true, store });
+    };
+
+    // New confirmation handler with your existing logic
+    const handleConfirmDelete = async (storeId: string) => {
+        setIsDeleting(true);
 
         try {
-            await deleteStore(storeId);
-            mutate();
+            await deleteStore(storeId); // Your existing deleteStore function
+            mutate(); // Your existing mutate function
+            setDeleteModal({ isOpen: false, store: null });
+            // Optional: Add success toast/notification
         } catch (error) {
             console.error("Error deleting store:", error);
             alert("Failed to delete store");
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -209,14 +241,38 @@ export default function StoresPageComponents() {
 
     return (
         <div>
-            <div className="flex justify-between items-center mb-8">
-                <h1 className="text-3xl font-bold">Stores Management</h1>
+            {/* <div className="flex justify-between items-center mb-8">
+                <div>
+                    <h1 className="text-2xl font-bold">Stores Management</h1>
+                    <p className="text-gray-700">
+                        To manage user assingment to store, to create stores, to
+                        edit stores.
+                    </p>
+                </div>
+
                 <button
                     onClick={() => setShowStoreForm(true)}
                     className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
                 >
                     Add Store
                 </button>
+            </div> */}
+            <div className="sticky top-0 z-30 bg-gray-50 py-4 border-b border-gray-200">
+                <div className="flex justify-between items-center ">
+                    <div>
+                        <h1 className="text-2xl font-bold">
+                            Stores Management
+                        </h1>
+                        <p className="text-gray-700">Placeholder text</p>
+                    </div>
+
+                    <button
+                        onClick={() => setShowStoreForm(true)}
+                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                    >
+                        Add Store
+                    </button>
+                </div>
             </div>
 
             {/* Store Form Modal */}
@@ -466,103 +522,132 @@ export default function StoresPageComponents() {
             )}
 
             {/* Stores Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {stores.map((store) => {
-                    const assignedUsers = getAssignedUsers(store.id);
+            <div className="flex flex-col h-[calc(90vh-16px)] overflow-y-auto scrollbar-hide">
+                {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-4">
+                    {stores.map((store) => {
+                        const assignedUsers = getAssignedUsers(store.id);
 
-                    return (
-                        <div
-                            key={store.id}
-                            className="bg-white p-6 rounded-lg shadow-md"
-                        >
-                            <h3 className="text-lg font-semibold mb-2">
-                                {store.name}
-                            </h3>
-                            {store.address && (
-                                <p className="text-gray-600 mb-4 text-sm">
-                                    {store.address}
-                                </p>
-                            )}
-
-                            <div className="mb-4">
-                                <h4 className="font-medium mb-2 text-sm">
-                                    Assigned Users:
-                                </h4>
-                                {assignedUsers.length > 0 ? (
-                                    <div className="space-y-2">
-                                        {assignedUsers.map(
-                                            ({ user, roles, hasDefault }) => (
-                                                <div
-                                                    key={user.id}
-                                                    className="flex items-center justify-between"
-                                                >
-                                                    <span className="text-sm text-gray-700">
-                                                        {user.full_name}
-                                                    </span>
-                                                    <div className="flex items-center gap-1">
-                                                        {roles.map((role) => (
-                                                            <span
-                                                                key={role}
-                                                                className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                                    role ===
-                                                                    "seller"
-                                                                        ? "bg-blue-100 text-blue-700"
-                                                                        : "bg-green-100 text-green-700"
-                                                                }`}
-                                                            >
-                                                                {role}
-                                                            </span>
-                                                        ))}
-
-                                                        {hasDefault && (
-                                                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
-                                                                Default
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            )
+                        return (
+                            <div
+                                key={store.id}
+                                className="bg-white p-4 rounded-xl border-1 border-gray-200 space-y-2 shadow-sm"
+                            >
+                                <div className="flex gap-2">
+                                    <div className="h-10 w-10 bg-gray-50 rounded-lg flex items-center justify-center">
+                                        <Store
+                                            size={20}
+                                            className="text-gray-800"
+                                        />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-semibold">
+                                            {store.name}
+                                        </h3>
+                                        {store.address && (
+                                            <p className="text-gray-600 text-sm">
+                                                Address: {store.address}
+                                            </p>
                                         )}
                                     </div>
-                                ) : (
-                                    <p className="text-sm text-gray-500 italic">
-                                        No users assigned
-                                    </p>
-                                )}
-                            </div>
+                                </div>
 
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() =>
-                                        openStoreAssignmentModal(store)
-                                    }
-                                    className="flex-1 bg-purple-500 text-white px-3 py-2 rounded text-sm font-medium hover:bg-purple-600"
-                                >
-                                    Manage Users
-                                </button>
-                                <button
-                                    onClick={() => handleEditStore(store)}
-                                    className="px-3 py-2 border border-gray-300 text-gray-700 rounded text-sm hover:bg-gray-50"
-                                >
-                                    Edit
-                                </button>
-                                <button
-                                    onClick={() => handleDeleteStore(store.id)}
-                                    className="px-3 py-2 border border-red-300 text-red-600 rounded text-sm hover:bg-red-50"
-                                >
-                                    Delete
-                                </button>
-                            </div>
+                                <div className="mb-4">
+                                    <h4 className="font-medium mb-2 text-sm">
+                                        Assigned Users:
+                                    </h4>
+                                    {assignedUsers.length > 0 ? (
+                                        <div className="space-y-2 bg-gray-50 p-2 border-1 border-gray-200 rounded-lg">
+                                            {assignedUsers.map(
+                                                ({
+                                                    user,
+                                                    roles,
+                                                    hasDefault,
+                                                }) => (
+                                                    <div
+                                                        key={user.id}
+                                                        className="flex items-center justify-between"
+                                                    >
+                                                        <span className="text-sm text-gray-700">
+                                                            {user.full_name}
+                                                        </span>
+                                                        <div className="flex items-center gap-1">
+                                                            {roles.map(
+                                                                (role) => (
+                                                                    <span
+                                                                        key={
+                                                                            role
+                                                                        }
+                                                                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                                            role ===
+                                                                            "seller"
+                                                                                ? "bg-blue-100 text-blue-700"
+                                                                                : "bg-green-100 text-green-700"
+                                                                        }`}
+                                                                    >
+                                                                        {role}
+                                                                    </span>
+                                                                )
+                                                            )}
 
-                            <div className="mt-3 text-xs text-gray-500">
-                                Created:{" "}
-                                {new Date(
-                                    store.created_at
-                                ).toLocaleDateString()}
+                                                            {hasDefault && (
+                                                                <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
+                                                                    Default
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-gray-500 italic">
+                                            No users assigned
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() =>
+                                            openStoreAssignmentModal(store)
+                                        }
+                                        className="flex-1 bg-purple-500 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-purple-600"
+                                    >
+                                        Manage Users
+                                    </button>
+                                    <button
+                                        onClick={() => handleEditStore(store)}
+                                        className="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50"
+                                    >
+                                        Edit Store
+                                    </button>
+                                    <button
+                                        onClick={() =>
+                                            handleDeleteStore(store.id)
+                                        }
+                                        className="px-3 py-2 border border-red-300 text-red-600 rounded-lg text-sm hover:bg-red-50"
+                                    >
+                                        Delete Store
+                                    </button>
+                                </div>
+
+                                <div className="mt-3 text-xs text-gray-500">
+                                    Created:{" "}
+                                    {new Date(
+                                        store.created_at
+                                    ).toLocaleDateString()}
+                                </div>
                             </div>
-                        </div>
-                    );
-                })}
+                        );
+                    })}
+                </div> */}
+                <StoreList
+                    stores={stores}
+                    getAssignedUsers={getAssignedUsers}
+                    openStoreAssignmentModal={openStoreAssignmentModal}
+                    handleEditStore={handleEditStore}
+                    handleDeleteStore={handleDeleteStore}
+                />
             </div>
 
             {stores.length === 0 && (
@@ -576,6 +661,14 @@ export default function StoresPageComponents() {
                     </button>
                 </div>
             )}
+
+            <DeleteConfirmationModal
+                isOpen={deleteModal.isOpen}
+                store={deleteModal.store}
+                onClose={() => setDeleteModal({ isOpen: false, store: null })}
+                onConfirm={handleConfirmDelete}
+                isDeleting={isDeleting}
+            />
         </div>
     );
 }
