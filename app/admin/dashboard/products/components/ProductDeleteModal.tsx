@@ -1,19 +1,23 @@
-// components/DeleteConfimationModal.tsx
+// components/ProductDeleteModal.tsx
 import React, { useState, useEffect } from "react";
 import { X, AlertTriangle, Trash2 } from "lucide-react";
-import { Store } from "../types/store";
+import { Product } from "../types/product";
 
-interface DeleteConfirmationModalProps {
+interface ProductDeleteModalProps {
     isOpen: boolean;
-    store: Store | null;
+    product: Product | null;
     onClose: () => void;
-    onConfirm: (storeId: string) => void;
+    onConfirm: (productId: string) => void;
     isDeleting?: boolean;
 }
 
-export const DeleteConfirmationModal: React.FC<
-    DeleteConfirmationModalProps
-> = ({ isOpen, store, onClose, onConfirm, isDeleting = false }) => {
+export const ProductDeleteModal: React.FC<ProductDeleteModalProps> = ({
+    isOpen,
+    product,
+    onClose,
+    onConfirm,
+    isDeleting = false,
+}) => {
     const [confirmationText, setConfirmationText] = useState("");
     const [isValid, setIsValid] = useState(false);
 
@@ -25,16 +29,16 @@ export const DeleteConfirmationModal: React.FC<
         }
     }, [isOpen]);
 
-    // Check if confirmation text matches store name
+    // Check if confirmation text matches product name
     useEffect(() => {
-        if (store) {
-            setIsValid(confirmationText.trim() === store.name);
+        if (product) {
+            setIsValid(confirmationText.trim() === product.name);
         }
-    }, [confirmationText, store]);
+    }, [confirmationText, product]);
 
     const handleConfirm = () => {
-        if (isValid && store) {
-            onConfirm(store.id);
+        if (isValid && product) {
+            onConfirm(product.id);
         }
     };
 
@@ -47,7 +51,7 @@ export const DeleteConfirmationModal: React.FC<
         }
     };
 
-    if (!isOpen || !store) return null;
+    if (!isOpen || !product) return null;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -66,7 +70,7 @@ export const DeleteConfirmationModal: React.FC<
                             <AlertTriangle className="w-5 h-5 text-red-600" />
                         </div>
                         <h2 className="text-xl font-semibold text-gray-900">
-                            Delete Store
+                            Delete Product
                         </h2>
                     </div>
                     <button
@@ -85,24 +89,35 @@ export const DeleteConfirmationModal: React.FC<
                             ⚠️ This action cannot be undone
                         </p>
                         <p className="text-sm text-red-700">
-                            This will permanently delete the store{" "}
-                            <strong>&quot;{store.name}&quot;</strong> and all
-                            associated data.
+                            This will permanently delete the product{" "}
+                            <strong>&quot;{product.name}&quot;</strong> and all
+                            associated data including order history.
                         </p>
                     </div>
 
-                    {store.address && (
-                        <div className="text-sm text-gray-600 mb-4">
-                            <strong>Address:</strong> {store.address}
-                        </div>
-                    )}
+                    <div className="text-sm text-gray-600 mb-4">
+                        <strong>Price:</strong> Rp{" "}
+                        {product.price.toLocaleString()}
+                        <br />
+                        <strong>Status:</strong>{" "}
+                        {product.is_active ? "Active" : "Inactive"}
+                        {product.is_main && (
+                            <>
+                                <br />
+                                <strong className="text-yellow-600">
+                                    Main Product:
+                                </strong>{" "}
+                                Yes
+                            </>
+                        )}
+                    </div>
                 </div>
 
                 {/* Confirmation Input */}
                 <div className="mb-6">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                         To confirm deletion, type{" "}
-                        <strong>&quot;{store.name}&quot;</strong> in the box
+                        <strong>&quot;{product.name}&quot;</strong> in the box
                         below:
                     </label>
                     <input
@@ -110,7 +125,7 @@ export const DeleteConfirmationModal: React.FC<
                         value={confirmationText}
                         onChange={(e) => setConfirmationText(e.target.value)}
                         onKeyDown={handleKeyPress}
-                        placeholder={store.name}
+                        placeholder={product.name}
                         className={`w-full px-3 py-2 border rounded-lg text-sm transition-colors ${
                             confirmationText && !isValid
                                 ? "border-red-300 bg-red-50 focus:ring-red-500 focus:border-red-500"
@@ -121,8 +136,8 @@ export const DeleteConfirmationModal: React.FC<
                     />
                     {confirmationText && !isValid && (
                         <p className="mt-1 text-xs text-red-600">
-                            Store name doesn&apos;t match. Please type &quot;
-                            {store.name}&quot; exactly.
+                            Product name doesn&apos;t match. Please type &quot;
+                            {product.name}&quot; exactly.
                         </p>
                     )}
                 </div>
@@ -153,7 +168,7 @@ export const DeleteConfirmationModal: React.FC<
                         ) : (
                             <>
                                 <Trash2 className="w-4 h-4" />
-                                Delete Store
+                                Delete Product
                             </>
                         )}
                     </button>

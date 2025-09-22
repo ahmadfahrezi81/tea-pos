@@ -1,4 +1,4 @@
-import POSSystem from "@/components/pos/POSSystem";
+import POSSystem from "./components/POSSystem";
 
 export default function POSPage() {
     return (
