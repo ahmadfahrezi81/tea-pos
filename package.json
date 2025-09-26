@@ -6,7 +6,8 @@
         "dev": "next dev --turbopack",
         "build": "next build",
         "start": "next start",
-        "lint": "next lint"
+        "lint": "next lint",
+        "types:db": "dotenv -e .env -- npx supabase gen types typescript --project-id urzoiliisayupuvmaris --schema public > lib/db.types.ts"
     },
     "dependencies": {
         "@headlessui/react": "^2.2.8",
@@ -32,8 +33,10 @@
         "@types/node": "^20",
         "@types/react": "^19.1.13",
         "@types/react-dom": "^19",
+        "dotenv-cli": "^10.0.0",
         "eslint": "^9",
         "eslint-config-next": "15.4.6",
+        "supabase": "^2.45.5",
         "tailwindcss": "^4",
         "typescript": "^5"
     }
