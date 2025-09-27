@@ -1,4 +1,12 @@
-import { Assignments } from "@/app/mobile/layout";
+export interface Assignment {
+    user_id: string;
+    role: string;
+    is_default: boolean;
+}
+
+export interface Assignments {
+    [storeId: string]: Assignment[];
+}
 
 export const hasManagerRole = (
     userId: string,

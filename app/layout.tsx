@@ -1,6 +1,8 @@
 import "./globals.css";
 import { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
+import { SWRConfig } from "swr";
+import { AuthProvider } from "@/lib/context/AuthContext";
 
 export const metadata: Metadata = {
     title: "POS System",
@@ -13,10 +15,25 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
+        // <html lang="en">
+        //     <body>
+        //         {children}
+        //         <Analytics />
+        //     </body>
+        // </html>
         <html lang="en">
             <body>
-                {children}
-                <Analytics />
+                <SWRConfig
+                    value={{
+                        dedupingInterval: 5000,
+                        revalidateOnFocus: false,
+                    }}
+                >
+                    <AuthProvider>
+                        {children}
+                        <Analytics />
+                    </AuthProvider>
+                </SWRConfig>
             </body>
         </html>
     );

@@ -1,8 +1,9 @@
 //components/mobile/MobilePOS.tsx
 "use client";
 import { useState, useEffect } from "react";
+import { useAuth } from "@/lib/context/AuthContext";
 import { useProducts, useStores } from "@/lib/hooks/useData";
-import { Profile, Product, CartItem, Store } from "@/lib/types";
+import { Product, CartItem, Store } from "@/lib/types";
 import {
     Plus,
     Minus,
@@ -13,18 +14,16 @@ import {
 } from "lucide-react";
 import { formatRupiah } from "@/lib/utils/formatCurrency";
 import Image from "next/image";
-import { Assignment } from "@/app/mobile/layout";
+// import { Assignment } from "@/app/mobile/layout";
 import { hasSellerRoleInStore } from "@/lib/utils/roleUtils";
+import { Tables } from "@/lib/db.types";
 
-interface MobilePOSProps {
-    profile: Profile | null;
-}
+export type Assignment = Tables<"user_store_assignments">;
 
-export default function MobilePOS({ profile }: MobilePOSProps) {
+export default function MobilePOS() {
+    const { profile } = useAuth();
     const { data: products = [], isLoading: productsLoading } = useProducts();
-    const { data: storesData, isLoading: storesLoading } = useStores(
-        profile?.id ?? ""
-    );
+    const { data: storesData, isLoading: storesLoading } = useStores();
     const stores = storesData?.stores ?? [];
     const assignments = storesData?.assignments ?? {};
 

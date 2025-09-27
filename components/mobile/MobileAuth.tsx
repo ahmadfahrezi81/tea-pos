@@ -1,38 +1,37 @@
+//components/mobile/MobileAuth.tsx
+
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Profile, Store } from "@/lib/types";
+import { Store } from "@/lib/types";
 import { useStores } from "@/lib/hooks/useData";
 import packageJson from "../../package.json";
-import { Assignment } from "@/app/mobile/layout";
+import { useAuth } from "@/lib/context/AuthContext";
+import { Tables } from "@/lib/db.types";
 
-interface MobileAuthProps {
-    profile: Profile | null;
-    mutate: () => void;
-}
+export type Assignment = Tables<"user_store_assignments">;
 
-export default function MobileAuth({ profile, mutate }: MobileAuthProps) {
+export default function MobileAuth() {
+    const supabase = createClient();
+
+    const { profile, mutate } = useAuth();
+    const { data: storeData, isLoading: storesLoading } = useStores();
+    const stores = storeData?.stores ?? [];
+    const assignments = storeData?.assignments ?? {};
+
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
-    const supabase = createClient();
-
-    const { data, isLoading: storesLoading } = useStores(profile?.id ?? "");
-    const stores = data?.stores ?? [];
-    const assignments = data?.assignments ?? {};
-
-    // console.log(stores);
-
-    useEffect(() => {
-        const { data: authListener } = supabase.auth.onAuthStateChange(() => {
-            mutate(); // re-fetch profile on login/logout
-        });
-        return () => {
-            authListener.subscription.unsubscribe();
-        };
-    }, [mutate, supabase]);
+    // useEffect(() => {
+    //     const { data: authListener } = supabase.auth.onAuthStateChange(() => {
+    //         mutate(); // re-fetch profile on login/logout
+    //     });
+    //     return () => {
+    //         authListener.subscription.unsubscribe();
+    //     };
+    // }, [mutate, supabase]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();

@@ -3,14 +3,12 @@
 import { useState, useMemo, useEffect } from "react";
 import useOrders from "@/lib/hooks/useOrders";
 import { useStores } from "@/lib/hooks/useData";
-import { Profile, OrderItem, Store } from "@/lib/types";
+import { Store } from "@/lib/types";
 import { Calendar, CalendarDays, StoreIcon, Receipt } from "lucide-react";
 import { formatRupiah } from "@/lib/utils/formatCurrency";
 import CopyableField from "./ui/CopyableField";
-
-interface MobileOrdersProps {
-    profile: Profile | null;
-}
+import { useAuth } from "@/lib/context/AuthContext";
+import { Tables } from "@/lib/db.types";
 
 // Mobile-optimized date formatting
 const formatMobileDate = (dateString: string) => {
@@ -49,18 +47,19 @@ const formatDateForInput = (date: Date) => {
     return date.toISOString().split("T")[0];
 };
 
-export default function MobileOrders({ profile }: MobileOrdersProps) {
+export type Assignment = Tables<"user_store_assignments">;
+
+export default function MobileOrders() {
+    const { profile } = useAuth();
     const { data: orders = [], isLoading } = useOrders();
-    const { data: storesData, isLoading: storesLoading } = useStores(
-        profile?.id ?? ""
-    );
+    const { data: storesData, isLoading: storesLoading } = useStores();
     const stores = storesData?.stores ?? [];
     const assignments = storesData?.assignments ?? {};
 
     const defaultStore = stores.find((store: Store) =>
         assignments[store.id]?.some(
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (a: any) => a.user_id === profile?.id && a.is_default
+            (assignment: Assignment) =>
+                assignment.user_id === profile?.id && assignment.is_default
         )
     );
 
@@ -277,11 +276,8 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
                                         </div> */}
                                         <span className="text-sm text-gray-500">
                                             {formatFullTimestamp(
-                                                order.created_at
+                                                order.created_at ?? ""
                                             )}
-                                            {/* {new Date(
-                                                order.created_at + "Z"
-                                            ).toLocaleString()} */}
                                         </span>
                                     </div>
 
@@ -377,45 +373,37 @@ export default function MobileOrders({ profile }: MobileOrdersProps) {
                                             Items
                                         </h4>
                                         <div className="space-y-2">
-                                            {order.order_items.map(
-                                                (item: OrderItem) => (
-                                                    <div
-                                                        key={item.id}
-                                                        className="flex justify-between items-center bg-white p-2.5 rounded-md text-sm"
-                                                    >
-                                                        <div className="flex-1">
-                                                            <p className="font-medium">
-                                                                {
-                                                                    (
-                                                                        item as OrderItem & {
-                                                                            products?: {
-                                                                                name: string;
-                                                                            };
-                                                                        }
-                                                                    ).products
-                                                                        ?.name
-                                                                }
-                                                            </p>
-                                                            <p className="text-xs text-gray-500">
-                                                                {formatRupiah(
-                                                                    item.unit_price
-                                                                )}{" "}
-                                                                each
-                                                            </p>
-                                                        </div>
-                                                        <div className="text-right">
-                                                            <p className="font-medium">
-                                                                x{item.quantity}
-                                                            </p>
-                                                            <p className="text-xs text-gray-600">
-                                                                {formatRupiah(
-                                                                    item.total_price
-                                                                )}
-                                                            </p>
-                                                        </div>
+                                            {order.order_items.map((item) => (
+                                                <div
+                                                    key={item.id}
+                                                    className="flex justify-between items-center bg-white p-2.5 rounded-md text-sm"
+                                                >
+                                                    <div className="flex-1">
+                                                        <p className="font-medium">
+                                                            {
+                                                                item.products
+                                                                    ?.name
+                                                            }
+                                                        </p>
+                                                        <p className="text-xs text-gray-500">
+                                                            {formatRupiah(
+                                                                item.unit_price
+                                                            )}{" "}
+                                                            each
+                                                        </p>
                                                     </div>
-                                                )
-                                            )}
+                                                    <div className="text-right">
+                                                        <p className="font-medium">
+                                                            x{item.quantity}
+                                                        </p>
+                                                        <p className="text-xs text-gray-600">
+                                                            {formatRupiah(
+                                                                item.total_price
+                                                            )}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
                                 </div>

@@ -12,7 +12,7 @@
 // components/pos/POSPageComponent.tsx
 "use client";
 import React, { useState } from "react";
-import { useProducts, useProfile, useStores } from "@/lib/hooks/useData";
+import { useProducts, useStores } from "@/lib/hooks/useData";
 import { useCart } from "./hooks/useCart";
 import { useOrderActions } from "./hooks/useOrderActions";
 import { ProductGrid } from "./components/ProductGrid";
@@ -20,11 +20,8 @@ import { CartSidebar } from "./components/CartSidebar";
 import { ShoppingCart } from "lucide-react";
 
 export default function POSPageComponent() {
-    const { data: profile, isLoading: profileLoading } = useProfile();
     const { data: products, isLoading: productsLoading } = useProducts();
-    const { data: storesData, isLoading: storesLoading } = useStores(
-        profile?.id ?? ""
-    );
+    const { data: storesData, isLoading: storesLoading } = useStores();
     const stores = storesData?.stores ?? [];
 
     const [selectedStore, setSelectedStore] = useState<string>("");
@@ -39,7 +36,7 @@ export default function POSPageComponent() {
         });
     };
 
-    if (profileLoading || productsLoading || storesLoading) {
+    if (productsLoading || storesLoading) {
         return (
             <div className="flex items-center justify-center h-screen bg-white">
                 <div className="flex flex-col items-center">

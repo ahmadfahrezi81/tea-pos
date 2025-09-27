@@ -86,6 +86,7 @@ export const useAnalyticsActions = () => {
             daily_summary_id: expensesData.dailySummaryId,
             expense_type: expense.customLabel || expense.label,
             amount: parseFloat(expense.amount),
+            store_id: expensesData.storeId,
         }));
 
         const { error } = await supabase

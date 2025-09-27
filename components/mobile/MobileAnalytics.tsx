@@ -774,7 +774,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { SummariesData, useSummaries } from "@/lib/hooks/useSummaries";
 import { useStores } from "@/lib/hooks/useData";
-import { Profile, Store } from "@/lib/types";
+import { Store } from "@/lib/types";
 import {
     Calendar,
     StoreIcon,
@@ -791,18 +791,17 @@ import { CloseDayModal } from "./analytics/CloseDayModal";
 import { DetailsModal } from "./ui/DetailsModal";
 import { ConfirmationPopup } from "./ui/ConfirmationPopup";
 import { toIndonesiaMonthYear } from "@/lib/timezone";
-import { Assignment } from "@/app/mobile/layout";
-
-interface MobileAnalyticsProps {
-    profile: Profile | null;
-}
+import { Tables } from "@/lib/db.types";
+import { useAuth } from "@/lib/context/AuthContext";
 
 export const isCurrentMonthSelected = (selectedMonth: string): boolean => {
     const currentMonth = new Date().toISOString().slice(0, 7); // "YYYY-MM"
     return selectedMonth === currentMonth;
 };
 
-export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
+export type Assignment = Tables<"user_store_assignments">;
+
+export default function MobileAnalytics() {
     const [selectedStore, setSelectedStore] = useState<string>("");
     const [selectedMonth, setSelectedMonth] = useState<string>(
         new Date().toISOString().slice(0, 7)
@@ -820,9 +819,8 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
         type: "success" | "error";
     } | null>(null);
 
-    const { data: storesData, isLoading: storesLoading } = useStores(
-        profile?.id ?? ""
-    );
+    const { profile } = useAuth();
+    const { data: storesData, isLoading: storesLoading } = useStores();
     const stores = storesData?.stores ?? [];
     const assignments = storesData?.assignments ?? {};
 
