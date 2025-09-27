@@ -2,11 +2,11 @@
 import { z } from "zod";
 
 export const CreateOrderSchema = z.object({
-    storeId: z.string().uuid(),
+    storeId: z.uuid(),
     items: z
         .array(
             z.object({
-                productId: z.string().uuid(),
+                productId: z.uuid(),
                 quantity: z.number().int().positive(),
                 unitPrice: z.number().positive(),
             })
@@ -16,7 +16,7 @@ export const CreateOrderSchema = z.object({
 
 export const CreateOrderResponseSchema = z.object({
     success: z.boolean(),
-    orderId: z.string().uuid(),
+    orderId: z.uuid(),
     totalAmount: z.number(),
 });
 
