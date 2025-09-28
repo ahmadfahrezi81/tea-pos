@@ -10,8 +10,8 @@
         "types:db": "dotenv -e .env -- npx supabase gen types typescript --project-id urzoiliisayupuvmaris --schema public > lib/db.types.ts"
     },
     "dependencies": {
+        "@asteasolutions/zod-to-openapi": "^8.1.0",
         "@headlessui/react": "^2.2.8",
-        "@hono/zod-openapi": "^1.1.3",
         "@hono/zod-validator": "^0.7.3",
         "@hookform/resolvers": "^5.2.1",
         "@supabase/ssr": "^0.6.1",

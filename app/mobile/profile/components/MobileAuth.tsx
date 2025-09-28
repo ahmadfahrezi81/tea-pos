@@ -1,11 +1,11 @@
-//components/mobile/MobileAuth.tsx
+//components/MobileAuth.tsx
 
 "use client";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Store } from "@/lib/types";
 import { useStores } from "@/lib/hooks/useData";
-import packageJson from "../../package.json";
+import packageJson from "@/package.json";
 import { useAuth } from "@/lib/context/AuthContext";
 import { Tables } from "@/lib/db.types";
 
@@ -23,15 +23,6 @@ export default function MobileAuth() {
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-
-    // useEffect(() => {
-    //     const { data: authListener } = supabase.auth.onAuthStateChange(() => {
-    //         mutate(); // re-fetch profile on login/logout
-    //     });
-    //     return () => {
-    //         authListener.subscription.unsubscribe();
-    //     };
-    // }, [mutate, supabase]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -67,7 +58,7 @@ export default function MobileAuth() {
     if (profile) {
         return (
             <div className="space-y-6">
-                <div className="bg-white rounded-lg p-6 shadow-sm">
+                <div className="bg-white rounded-xl p-5 shadow-sm">
                     <div className="space-y-4">
                         <div className="bg-blue-50 p-4 rounded-lg">
                             <div className="text-center">
@@ -84,27 +75,13 @@ export default function MobileAuth() {
                                 <p className="text-gray-600">{profile.email}</p>
                             </div>
                         </div>
-                        {/* <div className="bg-gray-50 p-4 rounded-lg">
-                            <div className="flex justify-between items-center">
-                                <span className="text-gray-600">Role:</span>
-                                <span
-                                    className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                        profile.role === "manager"
-                                            ? "bg-purple-100 text-purple-800"
-                                            : "bg-green-100 text-green-800"
-                                    }`}
-                                >
-                                    {profile.role.charAt(0).toUpperCase() +
-                                        profile.role.slice(1)}
-                                </span>
-                            </div>
-                        </div> */}
 
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                            <div className="flex justify-between items-center mb-3">
-                                <span className="text-gray-700 font-semibold">
-                                    Assigned Stores:
-                                </span>
+                        <h4 className="text-gray-800 text-sm font-semibold mb-1">
+                            Assigned Stores:
+                        </h4>
+
+                        <div className="bg-gray-50 py-1 px-2 rounded-lg border-1 border-gray-200 text-gray-800">
+                            <div className="flex justify-between items-center">
                                 {storesLoading && (
                                     <span className="text-gray-500 text-sm">
                                         Loading...
@@ -113,13 +90,13 @@ export default function MobileAuth() {
                             </div>
 
                             {!storesLoading && stores.length > 0 ? (
-                                <div className="space-y-2">
+                                <div className="">
                                     {stores.map((store: Store) => (
                                         <div
                                             key={store.id}
-                                            className="flex justify-between items-center border-b pb-2 border-gray-400 last:border-none "
+                                            className="flex justify-between items-center border-b border-gray-300 last:border-none py-2"
                                         >
-                                            <span className="text-gray-600 text-sm font-medium">
+                                            <span className="text-gray-800 text-sm font-medium">
                                                 {store.name}
                                             </span>
 

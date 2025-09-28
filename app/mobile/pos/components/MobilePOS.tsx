@@ -1,4 +1,4 @@
-//components/mobile/MobilePOS.tsx
+// components/MobilePOS.tsx
 "use client";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/context/AuthContext";
@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { formatRupiah } from "@/lib/utils/formatCurrency";
 import Image from "next/image";
-// import { Assignment } from "@/app/mobile/layout";
 import { hasSellerRoleInStore } from "@/lib/utils/roleUtils";
 import { Tables } from "@/lib/db.types";
 
@@ -27,13 +26,12 @@ export default function MobilePOS() {
     const stores = storesData?.stores ?? [];
     const assignments = storesData?.assignments ?? {};
 
-    // const sellerStores = stores.filter((store: Store) =>
-    //     assignments[store.id]?.some(
-    //         (assignment: Assignment) =>
-    //             assignment.user_id === profile?.id &&
-    //             assignment.role === "seller"
-    //     )
-    // );
+    const [selectedStore, setSelectedStore] = useState<string>("");
+    const [cart, setCart] = useState<CartItem[]>([]);
+    const [processing, setProcessing] = useState(false);
+    const [showCart, setShowCart] = useState(false);
+    // Add state for showing/hiding others menu section
+    const [showOthers, setShowOthers] = useState(false);
 
     const sellerStores = stores.filter((store: Store) =>
         hasSellerRoleInStore(profile?.id ?? "", store.id, assignments)
@@ -45,13 +43,6 @@ export default function MobilePOS() {
                 assignment.user_id === profile?.id && assignment.is_default
         )
     );
-    const [selectedStore, setSelectedStore] = useState<string>("");
-    const [cart, setCart] = useState<CartItem[]>([]);
-    const [processing, setProcessing] = useState(false);
-    const [showCart, setShowCart] = useState(false);
-
-    // Add state for showing/hiding others section
-    const [showOthers, setShowOthers] = useState(false);
 
     const addToCart = (product: Product) => {
         setCart((prev) => {
@@ -190,9 +181,12 @@ export default function MobilePOS() {
 
     if (productsLoading || storesLoading) {
         return (
-            <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading POS...</p>
+            <div
+                className="flex flex-col items-center justify-center"
+                style={{ minHeight: "calc(100vh - 200px)" }}
+            >
+                <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                <p className="mt-4 text-gray-600 text-sm">Loading POS...</p>
             </div>
         );
     }
@@ -447,7 +441,7 @@ export default function MobilePOS() {
                                 </h4>
 
                                 {cart.length === 0 ? (
-                                    <div className="text-center text-gray-500 my-30">
+                                    <div className="text-center text-gray-500 my-20">
                                         <ShoppingCart className="w-16 h-16 mx-auto mb-4 opacity-50" />
                                         <p>No items in cart</p>
                                     </div>
