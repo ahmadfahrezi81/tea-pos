@@ -1347,7 +1347,7 @@ export default function MobileAnalytics() {
                                                             )}
                                                         </h3>
                                                         <p className="text-sm text-blue-600 underline">
-                                                            Tap for details →
+                                                            Tap for details
                                                         </p>
                                                     </button>
                                                 </div>

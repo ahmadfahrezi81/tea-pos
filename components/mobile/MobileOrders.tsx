@@ -536,7 +536,18 @@ export default function MobileOrders() {
                         <input
                             type="date"
                             value={selectedDate}
-                            onChange={(e) => setSelectedDate(e.target.value)}
+                            // onChange={(e) => setSelectedDate(e.target.value)}
+                            onChange={(e) => {
+                                const newValue = e.target.value;
+                                if (newValue === "") {
+                                    const today = new Date()
+                                        .toISOString()
+                                        .split("T")[0];
+                                    setSelectedDate(today);
+                                } else {
+                                    setSelectedDate(newValue);
+                                }
+                            }}
                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                         />
                     </div>

@@ -645,9 +645,9 @@ export default function MobileLayoutClient({
         }
     }, [user, isLoading, pathname, canSell, canManage, router]);
 
-    if (isLoading) {
+    if (true) {
         return (
-            <div className="min-h-screen bg-white flex flex-col items-center justify-center">
+            <div className="h-screen overflow-hidden bg-white flex flex-col items-center justify-center">
                 <div className="text-center" role="status" aria-live="polite">
                     <div className="mb-8">
                         <Image
