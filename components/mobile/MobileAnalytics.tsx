@@ -1602,12 +1602,12 @@ export default function MobileAnalytics() {
             <ConfirmationPopup
                 isOpen={showOpenStorePopup}
                 title="Open Store Today"
-                message={`Open '${getStoreName()}' for ${new Date().toLocaleDateString(
+                message={`Open '${getStoreName()}' Store for ${new Date().toLocaleDateString(
                     "en-US",
                     {
                         weekday: "long",
                         year: "numeric",
-                        month: "long",
+                        month: "short",
                         day: "numeric",
                     }
                 )}? This will create a new daily summary.`}
