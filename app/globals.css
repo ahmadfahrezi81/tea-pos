@@ -9,3 +9,40 @@ body {
     margin: 0 auto;
     padding: 0 1rem;
 }
+
+@keyframes indeterminate {
+    0% {
+        left: -100%;
+        width: 100%;
+    }
+
+    50% {
+        left: 0%;
+        width: 100%;
+    }
+
+    100% {
+        left: 100%;
+        width: 100%;
+    }
+}
+
+.loading-track {
+    background-color: #e5e7eb;
+    /* gray-300 */
+    border-radius: 9999px;
+    position: relative;
+    overflow: hidden;
+}
+
+.loading-bar {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -100%;
+    width: 100%;
+    background-color: #2563eb;
+    /* blue-600 */
+    border-radius: 9999px;
+    animation: indeterminate 1.5s ease-in-out infinite;
+}
