@@ -647,7 +647,8 @@ export default function MobileLayoutClient({
 
     if (true) {
         return (
-            <div className="h-screen overflow-hidden bg-white flex flex-col items-center justify-center">
+            <div className="h-[100dvh] overflow-hidden bg-white flex flex-col items-center justify-center">
+                {" "}
                 <div className="text-center" role="status" aria-live="polite">
                     <div className="mb-8">
                         <Image
