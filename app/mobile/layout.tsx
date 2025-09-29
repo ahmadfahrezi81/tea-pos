@@ -868,7 +868,7 @@
 
 // app/mobile/layout.tsx
 import { ReactNode } from "react";
-import MobileLayoutClient from "./MobileLayoutClient";
+import MobileLayoutClient from "./components/MobileLayoutClient";
 
 interface MobileLayoutProps {
     children: ReactNode;

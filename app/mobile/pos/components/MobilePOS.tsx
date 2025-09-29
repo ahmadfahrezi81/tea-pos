@@ -3,7 +3,9 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useProducts, useStores } from "@/lib/hooks/useData";
-import { Product, CartItem, Store } from "@/lib/types";
+
+import Image from "next/image";
+
 import {
     Plus,
     Minus,
@@ -13,8 +15,9 @@ import {
     Store as Store1,
 } from "lucide-react";
 import { formatRupiah } from "@/lib/utils/formatCurrency";
-import Image from "next/image";
 import { hasSellerRoleInStore } from "@/lib/utils/roleUtils";
+
+import { Product, CartItem, Store } from "@/lib/types";
 import { Tables } from "@/lib/db.types";
 
 export type Assignment = Tables<"user_store_assignments">;
@@ -185,7 +188,7 @@ export default function MobilePOS() {
                 className="flex flex-col items-center justify-center"
                 style={{ minHeight: "calc(100vh - 200px)" }}
             >
-                <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-10 h-10 border-3 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                 <p className="mt-4 text-gray-600 text-sm">Loading POS...</p>
             </div>
         );

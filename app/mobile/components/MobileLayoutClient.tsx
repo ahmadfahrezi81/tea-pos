@@ -645,68 +645,6 @@ export default function MobileLayoutClient({
         }
     }, [user, isLoading, pathname, canSell, canManage, router]);
 
-    // if (isLoading) {
-    //     return (
-    //         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-    //             <div className="text-center">
-    //                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-    //                 <p className="text-gray-600">Loading...</p>
-    //             </div>
-    //         </div>
-    //     );
-    // }
-    // if (true) {
-    //     return (
-    //         <div className="min-h-screen bg-white flex flex-col items-center justify-center">
-    //             <div className="text-center">
-    //                 {/* Logo with pulse animation */}
-    //                 <div className="mb-8">
-    //                     <Image
-    //                         src="/LEMONI-512x512.png"
-    //                         alt="Logo"
-    //                         width={80}
-    //                         height={80}
-    //                         className="rounded-xl shadow-2xl mx-auto"
-    //                     />
-    //                 </div>
-
-    //                 {/* Loading bar */}
-    //                 <div className="w-64 h-1.5 bg-gray-300 rounded-full overflow-hidden">
-    //                     <div className="h-full bg-blue-600 rounded-full animate-[loading_1.5s_ease-in-out_infinite]"></div>
-    //                 </div>
-
-    //                 <div className="my-4"></div>
-
-    //                 <div className="w-64 h-1.5 bg-gray-300 rounded-full overflow-hidden">
-    //                     <div className="h-full bg-blue-600 rounded-full animate-loading-bar"></div>
-    //                 </div>
-
-    //                 <div className="mt-4 text-xs text-gray-600 text-center">
-    //                     TEA-POS v{packageJson.version}
-    //                 </div>
-    //             </div>
-
-    //             {/* Add custom loading animation */}
-    //             <style jsx>{`
-    //                 @keyframes loading {
-    //                     0% {
-    //                         width: 0%;
-    //                         margin-left: 0%;
-    //                     }
-    //                     50% {
-    //                         width: 75%;
-    //                         margin-left: 0%;
-    //                     }
-    //                     100% {
-    //                         width: 0%;
-    //                         margin-left: 100%;
-    //                     }
-    //                 }
-    //             `}</style>
-    //         </div>
-    //     );
-    // }
-
     if (isLoading) {
         return (
             <div className="min-h-screen bg-white flex flex-col items-center justify-center">

@@ -137,9 +137,12 @@ export default function MobileOrders() {
 
     if (isLoading || storesLoading) {
         return (
-            <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading orders...</p>
+            <div
+                className="flex flex-col items-center justify-center"
+                style={{ minHeight: "calc(100vh - 200px)" }}
+            >
+                <div className="w-10 h-10 border-3 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                <p className="mt-4 text-gray-600 text-sm">Loading Orders...</p>
             </div>
         );
     }
