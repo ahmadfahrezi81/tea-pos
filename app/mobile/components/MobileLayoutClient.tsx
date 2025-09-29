@@ -645,10 +645,9 @@ export default function MobileLayoutClient({
         }
     }, [user, isLoading, pathname, canSell, canManage, router]);
 
-    if (true) {
+    if (isLoading) {
         return (
             <div className="h-[100dvh] overflow-hidden bg-white flex flex-col items-center justify-center">
-                {" "}
                 <div className="text-center" role="status" aria-live="polite">
                     <div className="mb-8">
                         <Image
@@ -706,37 +705,42 @@ export default function MobileLayoutClient({
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-20 select-none">
+        <div className="h-[100dvh] flex flex-col bg-gray-50 select-none">
             {/* Header */}
-            <div className="sticky top-0 z-40 bg-white shadow-sm p-4 flex justify-between items-center">
-                <div className="flex gap-2 items-center">
-                    <Image
-                        src="/LEMONI-512x512.png"
-                        alt="Logo"
-                        width={30}
-                        height={30}
-                        className="rounded object-cover cursor-pointer transition-transform duration-75 active:scale-95"
-                        onClick={handleLogoClick}
-                    />
-                    <h1 className="text-2xl font-bold text-gray-800">
-                        {getCurrentPageTitle(currentPath)}
-                    </h1>
+            <header className="sticky top-0 z-40 bg-white shadow-sm p-4">
+                <div className="flex items-center justify-between">
+                    {/* Left side: Logo + Page Title */}
+                    <div className="flex items-center gap-2">
+                        <Image
+                            src="/LEMONI-512x512.png"
+                            alt="Logo"
+                            width={30}
+                            height={30}
+                            className="rounded object-cover cursor-pointer transition-transform duration-75 active:scale-95"
+                            onClick={handleLogoClick}
+                        />
+                        <h1 className="text-2xl font-bold text-gray-800">
+                            {getCurrentPageTitle(currentPath)}
+                        </h1>
+                    </div>
+
+                    {/* Right side: Greeting and Date */}
+                    <div className="text-right">
+                        <h1 className="text-base font-bold text-gray-800">
+                            {user ? `Hi, ${profile?.full_name}` : "Welcome"}
+                        </h1>
+                        <p className="text-sm text-gray-500">
+                            {format(new Date(), "MMMM dd, yyyy")}
+                        </p>
+                    </div>
                 </div>
-                <div className="text-right">
-                    <h1 className="text-base font-bold text-gray-800">
-                        {user ? `Hi, ${profile?.full_name}` : "Welcome"}
-                    </h1>
-                    <p className="text-sm text-gray-500">
-                        {format(new Date(), "MMMM dd, yyyy")}
-                    </p>
-                </div>
-            </div>
+            </header>
 
             {/* Main Content */}
-            <div className="p-4">{children}</div>
+            <div className="p-4 pb-28">{children}</div>
 
             {/* Bottom Navigation */}
-            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
+            <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
                 <div className="flex">
                     {tabs.map((tab) => {
                         const Icon = tab.icon;
@@ -766,7 +770,7 @@ export default function MobileLayoutClient({
                         );
                     })}
                 </div>
-            </div>
+            </footer>
         </div>
     );
 }
