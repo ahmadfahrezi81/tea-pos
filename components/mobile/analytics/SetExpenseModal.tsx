@@ -809,7 +809,7 @@ export const SetExpenseModal = ({
                                                 e.target.value
                                             )
                                         }
-                                        className="w-32 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        className="w-48 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                         placeholder="0"
                                         required
                                     />

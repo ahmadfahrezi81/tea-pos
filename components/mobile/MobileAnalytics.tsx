@@ -1601,8 +1601,8 @@ export default function MobileAnalytics() {
             {/* Open Store Confirmation Popup */}
             <ConfirmationPopup
                 isOpen={showOpenStorePopup}
-                title="Open Store for Today"
-                message={`Open ${getStoreName()} for ${new Date().toLocaleDateString(
+                title="Open Store Today"
+                message={`Open '${getStoreName()}' for ${new Date().toLocaleDateString(
                     "en-US",
                     {
                         weekday: "long",
