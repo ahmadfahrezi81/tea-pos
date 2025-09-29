@@ -190,13 +190,16 @@
 "use client";
 import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useProfile, useStores } from "@/lib/hooks/useData";
+import { useStores } from "@/lib/hooks/useData";
 import { hasSellerRole } from "@/lib/utils/roleUtils";
+import { useAuth } from "@/lib/context/AuthContext";
 
 export default function MobilePage() {
     const router = useRouter();
-    const { data: profile } = useProfile();
-    const { data: storesData } = useStores(profile?.id ?? "");
+    const { profile } = useAuth();
+
+    // const { data: profile } = useProfile();
+    const { data: storesData } = useStores();
     // const assignments = storesData?.assignments ?? {};
     // const user = profile ? { id: profile.id } : null;
 

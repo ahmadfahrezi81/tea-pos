@@ -8,7 +8,6 @@ import {
     ShoppingCart,
     Package,
     Store,
-    BarChart3,
     LogOut,
     User,
     LayoutDashboard,
@@ -54,12 +53,12 @@ const FloatingSidebar = () => {
             icon: Store,
             href: "/admin/dashboard/stores",
         },
-        {
-            id: "analytics",
-            label: "Analytics",
-            icon: BarChart3,
-            href: "/admin/dashboard/analytics",
-        },
+        // {
+        //     id: "analytics",
+        //     label: "Analytics",
+        //     icon: BarChart3,
+        //     href: "/admin/dashboard/analytics",
+        // },
     ];
 
     const isActiveRoute = (href: string): boolean => {

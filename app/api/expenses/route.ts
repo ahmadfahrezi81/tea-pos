@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createRouteHandlerClient } from "@/lib/supabase/server";
-import { Expense } from "@/lib/hooks/useSummaries";
+// import { Expense } from "@/lib/hooks/useSummaries";
+
+import { Tables } from "@/lib/db.types";
+type Expense = Tables<"expenses">;
 
 export async function GET(request: NextRequest) {
     try {

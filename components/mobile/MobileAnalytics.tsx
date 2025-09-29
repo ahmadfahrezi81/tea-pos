@@ -774,7 +774,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { SummariesData, useSummaries } from "@/lib/hooks/useSummaries";
 import { useStores } from "@/lib/hooks/useData";
-import { Profile, Store } from "@/lib/types";
+import { Store } from "@/lib/types";
 import {
     Calendar,
     StoreIcon,
@@ -791,18 +791,17 @@ import { CloseDayModal } from "./analytics/CloseDayModal";
 import { DetailsModal } from "./ui/DetailsModal";
 import { ConfirmationPopup } from "./ui/ConfirmationPopup";
 import { toIndonesiaMonthYear } from "@/lib/timezone";
-import { Assignment } from "@/app/mobile/layout";
-
-interface MobileAnalyticsProps {
-    profile: Profile | null;
-}
+import { Tables } from "@/lib/db.types";
+import { useAuth } from "@/lib/context/AuthContext";
 
 export const isCurrentMonthSelected = (selectedMonth: string): boolean => {
     const currentMonth = new Date().toISOString().slice(0, 7); // "YYYY-MM"
     return selectedMonth === currentMonth;
 };
 
-export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
+export type Assignment = Tables<"user_store_assignments">;
+
+export default function MobileAnalytics() {
     const [selectedStore, setSelectedStore] = useState<string>("");
     const [selectedMonth, setSelectedMonth] = useState<string>(
         new Date().toISOString().slice(0, 7)
@@ -820,9 +819,8 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
         type: "success" | "error";
     } | null>(null);
 
-    const { data: storesData, isLoading: storesLoading } = useStores(
-        profile?.id ?? ""
-    );
+    const { profile } = useAuth();
+    const { data: storesData, isLoading: storesLoading } = useStores();
     const stores = storesData?.stores ?? [];
     const assignments = storesData?.assignments ?? {};
 
@@ -1136,9 +1134,14 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
 
     if (isLoading || storesLoading) {
         return (
-            <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading analytics...</p>
+            <div
+                className="flex flex-col items-center justify-center"
+                style={{ minHeight: "calc(100vh - 200px)" }}
+            >
+                <div className="w-10 h-10 border-3 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                <p className="mt-4 text-gray-600 text-sm">
+                    Loading Analytics...
+                </p>
             </div>
         );
     }
@@ -1344,7 +1347,7 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
                                                             )}
                                                         </h3>
                                                         <p className="text-sm text-blue-600 underline">
-                                                            Tap for details →
+                                                            Tap for details
                                                         </p>
                                                     </button>
                                                 </div>
@@ -1598,13 +1601,13 @@ export default function MobileAnalytics({ profile }: MobileAnalyticsProps) {
             {/* Open Store Confirmation Popup */}
             <ConfirmationPopup
                 isOpen={showOpenStorePopup}
-                title="Open Store for Today"
-                message={`Open ${getStoreName()} for ${new Date().toLocaleDateString(
+                title="Open Store Today"
+                message={`Open '${getStoreName()}' Store for ${new Date().toLocaleDateString(
                     "en-US",
                     {
                         weekday: "long",
                         year: "numeric",
-                        month: "long",
+                        month: "short",
                         day: "numeric",
                     }
                 )}? This will create a new daily summary.`}

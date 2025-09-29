@@ -333,25 +333,24 @@
 "use client";
 import React from "react";
 import useOrders from "@/lib/hooks/useOrders";
-import { useProfile, useStores } from "@/lib/hooks/useData";
+import { useStores } from "@/lib/hooks/useData";
 import { useOrderFilters } from "./hooks/useOrderFilters";
 import { OrdersFilter } from "./components/OrdersFilter";
 import { OrdersSummaryComponent } from "./components/OrdersSummary";
 import { OrdersList } from "./components/OrdersList";
 import { FileText } from "lucide-react";
+import { Order } from "./types/orders";
 
 export default function OrdersPage() {
-    const { data: profile, isLoading: profileLoading } = useProfile();
+    // const { data: profile, isLoading: profileLoading } = useProfile();
     const { data: orders = [], isLoading: ordersLoading } = useOrders();
-    const { data: storesData, isLoading: storesLoading } = useStores(
-        profile?.id ?? ""
-    );
+    const { data: storesData, isLoading: storesLoading } = useStores();
     const stores = storesData?.stores ?? [];
 
     // Custom hooks
-    const orderFilters = useOrderFilters(orders);
+    const orderFilters = useOrderFilters(orders as Order[]);
 
-    if (profileLoading || ordersLoading || storesLoading) {
+    if (ordersLoading || storesLoading) {
         return (
             <div className="flex items-center justify-center h-screen bg-white">
                 <div className="flex flex-col items-center">

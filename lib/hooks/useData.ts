@@ -35,85 +35,37 @@ export const useProducts = () => {
     return useSWR("products", fetchProducts);
 };
 
-// // --- Stores ---
-// const fetchStores = async (role: string, userId: string) => {
-//     if (role === "manager") {
-//         const { data } = await supabase
-//             .from("stores")
-//             .select("*")
-//             .order("name");
-//         return data || [];
-//     } else {
-//         const { data: assignments } = await supabase
-//             .from("user_store_assignments")
-//             .select("store_id, stores(id, name)")
-//             .eq("user_id", userId);
-//         return assignments?.map((a) => a.stores).filter(Boolean) || [];
-//     }
-// };
+// async function fetchStores(userId?: string) {
+//     const url = userId ? `/api/store?user_id=${userId}` : "/api/store";
+//     const response = await fetch(url);
 
-// export const useStores = (role: string, userId: string) => {
-//     const shouldFetch = !!role && !!userId;
-//     return useSWR(shouldFetch ? ["stores", role, userId] : null, () =>
-//         fetchStores(role, userId)
-//     );
-// };
-
-async function fetchStores(userId?: string) {
-    const url = userId ? `/api/store?user_id=${userId}` : "/api/store";
-    const response = await fetch(url);
-
-    if (!response.ok) {
-        throw new Error("Failed to fetch stores data");
-    }
-
-    return response.json(); // { stores, users, assignments }
-}
-
-export function useStores(userId?: string) {
-    return useSWR(userId ? ["stores", userId] : "stores", () =>
-        fetchStores(userId)
-    );
-}
-
-// interface Store {
-//     id: string;
-//     name: string;
-//     address: string | null;
-//     created_at: string;
-//     updated_at?: string;
-// }
-
-// interface User {
-//     id: string;
-//     full_name: string;
-//     email: string;
-// }
-
-// interface Assignment {
-//     user_id: string;
-//     role: "seller" | "manager";
-//     is_default: boolean;
-// }
-
-// interface StoresData {
-//     stores: Store[];
-//     users: User[];
-//     assignments: Record<string, Assignment[]>;
-//     userRoles: Record<string, Assignment>; // Store ID -> User's assignment in that store
-//     defaultStore?: Store;
-// }
-
-// async function fetchStoresData(userId: string): Promise<StoresData> {
-//     const response = await fetch(`/api/store?userId=${userId}`);
 //     if (!response.ok) {
 //         throw new Error("Failed to fetch stores data");
 //     }
-//     return response.json();
+
+//     return response.json(); // { stores, users, assignments }
 // }
 
-// export function useStores(userId: string) {
-//     return useSWR<StoresData>(userId ? `stores-data-${userId}` : null, () =>
-//         fetchStoresData(userId)
+// export function useStores(userId?: string) {
+//     return useSWR(userId ? ["stores", userId] : "stores", () =>
+//         fetchStores(userId)
 //     );
 // }
+
+// hooks/useStores.ts
+// import useSWR from "swr";
+import { useAuth } from "@/lib/context/AuthContext";
+
+async function fetchStores(userId: string) {
+    const res = await fetch(`/api/store?user_id=${userId}`);
+    if (!res.ok) throw new Error("Failed to fetch stores data");
+    return res.json();
+}
+
+export function useStores() {
+    const { profile } = useAuth();
+    return useSWR(
+        profile ? ["stores", profile.id] : null, // null disables fetch
+        () => fetchStores(profile.id)
+    );
+}

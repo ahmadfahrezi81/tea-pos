@@ -1,19 +1,23 @@
 {
     "name": "tea-pos",
-    "version": "1.1.11",
+    "version": "1.2.0",
     "private": true,
     "scripts": {
         "dev": "next dev --turbopack",
         "build": "next build",
         "start": "next start",
-        "lint": "next lint"
+        "lint": "next lint",
+        "types:db": "dotenv -e .env -- npx supabase gen types typescript --project-id urzoiliisayupuvmaris --schema public > lib/db.types.ts"
     },
     "dependencies": {
+        "@asteasolutions/zod-to-openapi": "^8.1.0",
         "@headlessui/react": "^2.2.8",
+        "@hono/zod-validator": "^0.7.3",
         "@hookform/resolvers": "^5.2.1",
         "@supabase/ssr": "^0.6.1",
         "@supabase/supabase-js": "^2.54.0",
         "@tanstack/react-query": "^5.84.2",
+        "@vercel/analytics": "^1.5.0",
         "date-fns": "^4.1.0",
         "date-fns-tz": "^3.2.0",
         "lucide-react": "^0.539.0",
@@ -21,18 +25,22 @@
         "react": "19.1.0",
         "react-dom": "19.1.0",
         "react-hook-form": "^7.62.0",
+        "redoc": "^2.5.0",
         "swr": "^2.3.5",
-        "zod": "^4.0.16",
+        "zod": "^4.1.11",
         "zustand": "^5.0.7"
     },
     "devDependencies": {
         "@eslint/eslintrc": "^3",
         "@tailwindcss/postcss": "^4",
+        "@types/css-modules": "^1.0.5",
         "@types/node": "^20",
-        "@types/react": "^19",
+        "@types/react": "^19.1.13",
         "@types/react-dom": "^19",
+        "dotenv-cli": "^10.0.0",
         "eslint": "^9",
         "eslint-config-next": "15.4.6",
+        "supabase": "^2.45.5",
         "tailwindcss": "^4",
         "typescript": "^5"
     }

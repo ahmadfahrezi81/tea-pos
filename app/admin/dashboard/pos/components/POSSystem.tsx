@@ -2,7 +2,7 @@
 
 "use client";
 import { useState } from "react";
-import { useProducts, useProfile, useStores } from "@/lib/hooks/useData";
+import { useProducts, useStores } from "@/lib/hooks/useData";
 
 interface Product {
     id: string;
@@ -21,11 +21,8 @@ interface Store {
 }
 
 export default function POSSystem() {
-    const { data: profile, isLoading: profileLoading } = useProfile();
     const { data: products, isLoading: productsLoading } = useProducts();
-    const { data: storesData, isLoading: storesLoading } = useStores(
-        profile?.id ?? ""
-    );
+    const { data: storesData, isLoading: storesLoading } = useStores();
     const stores = storesData?.stores ?? [];
 
     const [selectedStore, setSelectedStore] = useState<string>("");
@@ -150,8 +147,7 @@ export default function POSSystem() {
     };
 
     // if (loading) return <div>Loading...</div>;
-    if (profileLoading || productsLoading || storesLoading)
-        return <div>Loading...</div>;
+    if (productsLoading || storesLoading) return <div>Loading...</div>;
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

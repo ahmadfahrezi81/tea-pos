@@ -198,7 +198,7 @@ export const SetBalanceModal = ({
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Opening Balance
                             </label>
-                            <input
+                            {/* <input
                                 type="number"
                                 step="100"
                                 inputMode="numeric"
@@ -210,6 +210,33 @@ export const SetBalanceModal = ({
                                         opening_balance: e.target.value,
                                     })
                                 }
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="0"
+                                required
+                            /> */}
+                            <input
+                                type="number"
+                                step="100"
+                                inputMode="numeric"
+                                min={0}
+                                value={editForm.opening_balance}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    // Clean and validate input
+                                    if (val === "") {
+                                        setEditForm({
+                                            ...editForm,
+                                            opening_balance: "",
+                                        });
+                                    } else if (/^\d+$/.test(val)) {
+                                        setEditForm({
+                                            ...editForm,
+                                            opening_balance: String(
+                                                Number(val)
+                                            ),
+                                        });
+                                    }
+                                }}
                                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 placeholder="0"
                                 required
