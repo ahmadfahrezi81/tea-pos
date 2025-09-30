@@ -261,7 +261,7 @@ interface Expense {
     amount: number;
 }
 
-type DailySummaryWithExpenses = BaseDailySummary & {
+export type DailySummaryWithExpenses = BaseDailySummary & {
     expenses: Expense[];
     total_expenses: number;
     seller: { full_name: string } | null;
