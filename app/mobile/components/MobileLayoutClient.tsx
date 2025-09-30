@@ -705,7 +705,7 @@ export default function MobileLayoutClient({
     };
 
     return (
-        <div className="h-[100dvh] flex flex-col bg-gray-50 select-none">
+        <div className="h-[100dvh] flex flex-col bg-gray-100/80 select-none">
             {/* Header */}
             <header className="sticky top-0 z-40 bg-white shadow-sm p-4">
                 <div className="flex items-center justify-between">
