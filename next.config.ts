@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
+import { version } from "./package.json"; // Make sure tsconfig allows JSON imports
 
 const nextConfig: NextConfig = {
+    env: {
+        NEXT_PUBLIC_APP_VERSION: version, // Expose version to frontend
+    },
     /* config options here */
     images: {
         remotePatterns: [

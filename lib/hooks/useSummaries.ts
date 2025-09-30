@@ -392,14 +392,9 @@ export const useSummaries = (storeId?: string, month?: string) => {
             : null,
         fetcher,
         {
-            refreshInterval: 30000,
             revalidateOnFocus: true,
-            // Add these to prevent cache issues
-            dedupingInterval: 2000,
-            focusThrottleInterval: 5000,
-            keepPreviousData: true,
-            // Force revalidation to ensure fresh data
             revalidateOnMount: true,
+            dedupingInterval: 5000,
         }
     );
 

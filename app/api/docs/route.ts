@@ -5,6 +5,7 @@ import {
     OpenAPIRegistry,
 } from "@asteasolutions/zod-to-openapi";
 import { registerOrderRoutes } from "@/lib/openapi/orders";
+import { getBackendVersion } from "@/lib/version";
 
 const registry = new OpenAPIRegistry();
 
@@ -19,10 +20,9 @@ export async function GET() {
     const docs = generator.generateDocument({
         openapi: "3.0.0",
         info: {
-            version: "1.0.0",
+            version: "1.0.0", // API contract version
             title: "POS System API",
-            description:
-                "API for managing orders, products, and daily summaries",
+            description: `API for managing orders, products, and daily summaries\n\nBackend build: ${getBackendVersion()}`,
         },
         servers: [{ url: "http://localhost:3000" }],
         tags: [{ name: "Orders", description: "Order management" }],

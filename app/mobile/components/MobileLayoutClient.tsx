@@ -528,7 +528,7 @@ import Image from "next/image";
 import { hasManagerRole, hasSellerRole } from "@/lib/utils/roleUtils";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/context/AuthContext";
-import packageJson from "@/package.json";
+import VersionInfo from "@/components/shared/VersionInfo";
 
 export interface Assignment {
     user_id: string;
@@ -665,7 +665,7 @@ export default function MobileLayoutClient({
                     </div>
 
                     <div className="mt-4 text-xs text-gray-600 text-center">
-                        TEA-POS v{packageJson.version}
+                        <VersionInfo />
                     </div>
                 </div>
             </div>
@@ -737,7 +737,7 @@ export default function MobileLayoutClient({
             </header>
 
             {/* Main Content */}
-            <div className="p-4 pb-28">{children}</div>
+            <div className="p-4 pb-28 bg-gray-50">{children}</div>
 
             {/* Bottom Navigation */}
             <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
