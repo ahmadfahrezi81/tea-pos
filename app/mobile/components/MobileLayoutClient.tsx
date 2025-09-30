@@ -737,7 +737,7 @@ export default function MobileLayoutClient({
             </header>
 
             {/* Main Content */}
-            <div className="p-4 pb-28">{children}</div>
+            <div className="p-4 pb-28 bg-gray-100/80">{children}</div>
 
             {/* Bottom Navigation */}
             <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
