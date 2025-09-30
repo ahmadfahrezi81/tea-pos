@@ -2,7 +2,7 @@
 "use client";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/lib/context/AuthContext";
-import useUserStores from "@/lib/hooks/orders/useUserStores";
+import useUserStores from "@/lib/hooks/shared/useUserStores";
 import { SummariesData, useSummaries } from "@/lib/hooks/useSummaries";
 
 import { formatRupiah } from "@/lib/utils/formatCurrency";
@@ -18,11 +18,15 @@ import {
     Receipt,
 } from "lucide-react";
 
-import { SetBalanceModal } from "./analytics/SetBalanceModal";
-import { SetExpenseModal } from "./analytics/SetExpenseModal";
-import { CloseDayModal } from "./analytics/CloseDayModal";
-import { DailySummaryWithExpenses, DetailsModal } from "./ui/DetailsModal";
-import { ConfirmationPopup } from "./ui/ConfirmationPopup";
+import { SetBalanceModal } from "./components/SetBalanceModal";
+import { SetExpenseModal } from "./components/SetExpenseModal";
+import { CloseDayModal } from "./components/CloseDayModal";
+import {
+    DailySummaryWithExpenses,
+    DetailsModal,
+} from "./components/DetailsModal";
+
+import { ConfirmationPopup } from "@/components/mobile/shared/ConfirmationPopup";
 import { DailySummary } from "@/lib/types";
 import { Expense } from "@/lib/db.aliases";
 
