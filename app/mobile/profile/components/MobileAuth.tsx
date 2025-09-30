@@ -5,9 +5,9 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Store } from "@/lib/types";
 import { useStores } from "@/lib/hooks/useData";
-import packageJson from "@/package.json";
 import { useAuth } from "@/lib/context/AuthContext";
 import { Tables } from "@/lib/db.types";
+import VersionInfo from "@/components/shared/VersionInfo";
 
 export type Assignment = Tables<"user_store_assignments">;
 
@@ -181,7 +181,8 @@ export default function MobileAuth() {
                             </button>
                         </div>
                         <div className="mt-4 text-xs text-gray-500 text-center">
-                            TEA-POS v{packageJson.version}
+                            {/* TEA-POS v{packageJson.version} */}
+                            <VersionInfo />
                         </div>
                     </div>
                 </div>
