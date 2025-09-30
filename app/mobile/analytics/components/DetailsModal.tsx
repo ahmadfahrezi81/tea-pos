@@ -253,7 +253,7 @@ import { X } from "lucide-react";
 import { formatRupiah } from "@/lib/utils/formatCurrency";
 import { DailySummary as BaseDailySummary } from "@/lib/types";
 import { formatFullIndonesiaTimestamp } from "@/lib/timezone";
-import CopyableField from "./CopyableField";
+import CopyableField from "@/components/mobile/shared/CopyableField";
 
 interface Expense {
     id: string;
