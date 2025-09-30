@@ -705,7 +705,7 @@ export default function MobileLayoutClient({
     };
 
     return (
-        <div className="h-[100dvh] flex flex-col bg-gray-100/80 select-none">
+        <div className="h-[100dvh] flex flex-col bg-gray-100/70 select-none">
             {/* Header */}
             <header className="sticky top-0 z-40 bg-white shadow-sm p-4">
                 <div className="flex items-center justify-between">
@@ -737,7 +737,7 @@ export default function MobileLayoutClient({
             </header>
 
             {/* Main Content */}
-            <div className="p-4 pb-28 bg-gray-100/80">{children}</div>
+            <div className="p-4 pb-28 bg-gray-100/70">{children}</div>
 
             {/* Bottom Navigation */}
             <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
