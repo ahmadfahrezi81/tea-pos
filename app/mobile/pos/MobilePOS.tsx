@@ -19,16 +19,9 @@ import { hasSellerRoleInStore } from "@/lib/utils/roleUtils";
 
 import { Product, CartItem, Store } from "@/lib/types";
 import { Tables } from "@/lib/db.types";
-import {
-    CreateOrderResponseSchema,
-    CreateOrderSchema,
-} from "@/lib/schemas/orders";
-import z from "zod";
+import { CreateOrderInput, CreateOrderResponse } from "@/lib/schemas/orders";
 
 export type Assignment = Tables<"user_store_assignments">;
-// Infer types from schemas
-type CreateOrderInput = z.infer<typeof CreateOrderSchema>;
-type CreateOrderResponse = z.infer<typeof CreateOrderResponseSchema>;
 
 export default function MobilePOS() {
     const { profile } = useAuth();

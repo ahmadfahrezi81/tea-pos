@@ -62,14 +62,9 @@
 //         dedupingInterval: 30000, // Cache for 30 seconds
 //     });
 // }
-
 // lib/hooks/orders/useStoreOrders.ts
 import useSWR from "swr";
-import { OrdersResponseSchema } from "@/lib/schemas/orders";
-import { z } from "zod";
-
-// Infer Order type from schema
-export type Order = z.infer<typeof OrdersResponseSchema>["orders"][number];
+import { Order, OrderListResponse } from "@/lib/schemas/orders";
 
 interface UseStoreOrdersParams {
     storeId: string | null;
@@ -88,7 +83,6 @@ const fetchStoreOrders = async ({
 
     const res = await fetch(`/api/orders?${params.toString()}`);
     if (!res.ok) {
-        // Try to surface helpful server error
         let errMsg = `Failed to fetch orders: ${res.status}`;
         try {
             const body = await res.json();
@@ -101,16 +95,17 @@ const fetchStoreOrders = async ({
 
     const json = await res.json();
 
-    // trust backend validation (already validated in the route),
-    // but to be extra safe you can uncomment the next lines:
-    // const parsed = OrdersResponseSchema.safeParse(json);
-    // if (!parsed.success) {
-    //   console.error("Invalid orders response on client:", parsed.error.format());
-    //   return [];
-    // }
-    // return parsed.data.orders;
+    // ✅ validate client-side (optional, since backend already validates)
+    const parsed = OrderListResponse.safeParse(json);
+    if (!parsed.success) {
+        console.error(
+            "Invalid orders response on client:",
+            parsed.error.format()
+        );
+        return [];
+    }
 
-    return json.orders ?? [];
+    return parsed.data.orders;
 };
 
 export default function useStoreOrders(storeId: string | null, date: string) {

@@ -1,10 +1,10 @@
 // lib/openapi/orders.ts - Route registrations (separate from docs route)
 import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 import {
-    CreateOrderSchema,
-    CreateOrderResponseSchema,
-    GetOrdersQuerySchema,
-    OrdersResponseSchema,
+    CreateOrderInput,
+    CreateOrderResponse,
+    ListOrdersQuery,
+    OrderListResponse,
     ErrorResponseSchema,
 } from "../schemas/index";
 
@@ -17,13 +17,13 @@ export function registerOrderRoutes(registry: OpenAPIRegistry) {
         summary: "Retrieve orders with optional filtering",
         tags: ["Orders"],
         request: {
-            query: GetOrdersQuerySchema,
+            query: ListOrdersQuery,
         },
         responses: {
             200: {
                 description: "Success",
                 content: {
-                    "application/json": { schema: OrdersResponseSchema },
+                    "application/json": { schema: OrderListResponse },
                 },
             },
             400: {
@@ -44,14 +44,14 @@ export function registerOrderRoutes(registry: OpenAPIRegistry) {
         tags: ["Orders"],
         request: {
             body: {
-                content: { "application/json": { schema: CreateOrderSchema } },
+                content: { "application/json": { schema: CreateOrderInput } },
             },
         },
         responses: {
             201: {
                 description: "Created",
                 content: {
-                    "application/json": { schema: CreateOrderResponseSchema },
+                    "application/json": { schema: CreateOrderResponse },
                 },
             },
             400: {

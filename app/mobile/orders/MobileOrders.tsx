@@ -1,9 +1,7 @@
 // components/MobileOrders.tsx
 "use client";
 import { useState, useMemo, useEffect } from "react";
-// import useStoreOrders from "@/lib/hooks/orders/useStoreOrders";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import useStoreOrders, { Order } from "@/lib/hooks/orders/useStoreOrders";
+import useStoreOrders from "@/lib/hooks/orders/useStoreOrders";
 
 import useUserStores from "@/lib/hooks/shared/useUserStores";
 import { Calendar, CalendarDays, StoreIcon, Receipt } from "lucide-react";
@@ -78,13 +76,13 @@ export default function MobileOrders() {
     const summaryStats = useMemo(() => {
         const totalOrders = orders.length;
         const totalSales = orders.reduce(
-            (sum, order) => sum + order.total_amount,
+            (sum, order) => sum + order.totalAmount,
             0
         );
         const totalCups = orders.reduce(
             (sum, order) =>
                 sum +
-                order.order_items.reduce(
+                order.orderItems.reduce(
                     (itemSum, item) => itemSum + item.quantity,
                     0
                 ),
@@ -234,17 +232,17 @@ export default function MobileOrders() {
                                         </p>
                                         <span className="text-sm text-gray-500">
                                             {formatFullTimestamp(
-                                                order.created_at ?? ""
+                                                order.createdAt ?? ""
                                             )}
                                         </span>
                                     </div>
 
                                     <div className="text-right">
                                         <p className="text-lg font-bold text-green-600">
-                                            {formatRupiah(order.total_amount)}
+                                            {formatRupiah(order.totalAmount)}
                                         </p>
                                         <p className="text-sm text-gray-500">
-                                            {order.order_items.reduce(
+                                            {order.orderItems.reduce(
                                                 (sum, item) =>
                                                     sum + item.quantity,
                                                 0
@@ -287,14 +285,14 @@ export default function MobileOrders() {
                                                 <span className="font-medium">
                                                     Seller:
                                                 </span>{" "}
-                                                {order.profiles?.full_name}
+                                                {order.profiles?.fullName}
                                             </p>
                                             <p>
                                                 <span className="font-medium">
                                                     Full Timestamp:
                                                 </span>{" "}
                                                 {new Date(
-                                                    order.created_at + "Z"
+                                                    order.createdAt + "Z"
                                                 ).toLocaleString()}
                                             </p>
                                         </div>
@@ -306,7 +304,7 @@ export default function MobileOrders() {
                                             Items
                                         </h4>
                                         <div className="space-y-2">
-                                            {order.order_items.map((item) => (
+                                            {order.orderItems.map((item) => (
                                                 <div
                                                     key={item.id}
                                                     className="flex justify-between items-center bg-white p-2.5 rounded-md text-sm"
@@ -320,7 +318,7 @@ export default function MobileOrders() {
                                                         </p>
                                                         <p className="text-xs text-gray-500">
                                                             {formatRupiah(
-                                                                item.unit_price
+                                                                item.unitPrice
                                                             )}{" "}
                                                             each
                                                         </p>
@@ -331,7 +329,7 @@ export default function MobileOrders() {
                                                         </p>
                                                         <p className="text-xs text-gray-600">
                                                             {formatRupiah(
-                                                                item.total_price
+                                                                item.totalPrice
                                                             )}
                                                         </p>
                                                     </div>
