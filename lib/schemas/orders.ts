@@ -35,11 +35,27 @@ export const OrderResponseSchema = z
     .openapi({ title: "OrderResponse" });
 
 // Query schemas
+// export const GetOrdersQuerySchema = z
+//     .object({
+//         storeId: UUIDSchema.optional().openapi({
+//             description: "Filter by store ID",
+//         }),
+//         page: z.coerce.number().int().min(1).default(1).optional(),
+//         limit: z.coerce.number().int().min(1).max(100).default(20).optional(),
+//     })
+//     .openapi({ title: "GetOrdersQuery" });
+
 export const GetOrdersQuerySchema = z
     .object({
         storeId: UUIDSchema.optional().openapi({
             description: "Filter by store ID",
         }),
+        // new: optional date in YYYY-MM-DD
+        date: z
+            .string()
+            .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)")
+            .optional()
+            .openapi({ description: "Filter by date (YYYY-MM-DD)" }),
         page: z.coerce.number().int().min(1).default(1).optional(),
         limit: z.coerce.number().int().min(1).max(100).default(20).optional(),
     })

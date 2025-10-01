@@ -1,7 +1,10 @@
 // components/MobileOrders.tsx
 "use client";
 import { useState, useMemo, useEffect } from "react";
-import useStoreOrders from "@/lib/hooks/orders/useStoreOrders";
+// import useStoreOrders from "@/lib/hooks/orders/useStoreOrders";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import useStoreOrders, { Order } from "@/lib/hooks/orders/useStoreOrders";
+
 import useUserStores from "@/lib/hooks/shared/useUserStores";
 import { Calendar, CalendarDays, StoreIcon, Receipt } from "lucide-react";
 import { formatRupiah } from "@/lib/utils/formatCurrency";

@@ -19,8 +19,16 @@ import { hasSellerRoleInStore } from "@/lib/utils/roleUtils";
 
 import { Product, CartItem, Store } from "@/lib/types";
 import { Tables } from "@/lib/db.types";
+import {
+    CreateOrderResponseSchema,
+    CreateOrderSchema,
+} from "@/lib/schemas/orders";
+import z from "zod";
 
 export type Assignment = Tables<"user_store_assignments">;
+// Infer types from schemas
+type CreateOrderInput = z.infer<typeof CreateOrderSchema>;
+type CreateOrderResponse = z.infer<typeof CreateOrderResponseSchema>;
 
 export default function MobilePOS() {
     const { profile } = useAuth();
@@ -109,6 +117,50 @@ export default function MobilePOS() {
         setTimeout(() => setToast(null), 4000); // Auto-hide after 4 seconds
     };
 
+    // const processOrder = async () => {
+    //     if (!selectedStore || cart.length === 0) {
+    //         showToast("Please select a store and add items to cart", "error");
+    //         return;
+    //     }
+
+    //     setProcessing(true);
+
+    //     const items = cart.map((item) => ({
+    //         productId: item.product.id,
+    //         quantity: item.quantity,
+    //         unitPrice: item.product.price,
+    //     }));
+
+    //     try {
+    //         const response = await fetch("/api/orders", {
+    //             method: "POST",
+    //             headers: { "Content-Type": "application/json" },
+    //             body: JSON.stringify({
+    //                 storeId: selectedStore,
+    //                 items,
+    //             }),
+    //         });
+
+    //         const data = await response.json();
+
+    //         if (data.success) {
+    //             showToast(
+    //                 `Order processed! Total: ${formatRupiah(data.totalAmount)}`,
+    //                 "success"
+    //             );
+    //             setCart([]);
+    //             setShowCart(false);
+    //         } else {
+    //             showToast("Failed to process order: " + data.error, "error");
+    //         }
+    //     } catch (error) {
+    //         showToast("Error processing order", "error");
+    //         console.log(error);
+    //     } finally {
+    //         setProcessing(false);
+    //     }
+    // };
+
     const processOrder = async () => {
         if (!selectedStore || cart.length === 0) {
             showToast("Please select a store and add items to cart", "error");
@@ -117,23 +169,25 @@ export default function MobilePOS() {
 
         setProcessing(true);
 
-        const items = cart.map((item) => ({
-            productId: item.product.id,
-            quantity: item.quantity,
-            unitPrice: item.product.price,
-        }));
+        // ✅ Typesafe payload
+        const payload: CreateOrderInput = {
+            storeId: selectedStore,
+            items: cart.map((item) => ({
+                productId: item.product.id,
+                quantity: item.quantity,
+                unitPrice: item.product.price,
+            })),
+        };
 
         try {
             const response = await fetch("/api/orders", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    storeId: selectedStore,
-                    items,
-                }),
+                body: JSON.stringify(payload),
             });
 
-            const data = await response.json();
+            // ✅ Typesafe response
+            const data: CreateOrderResponse = await response.json();
 
             if (data.success) {
                 showToast(
@@ -143,17 +197,16 @@ export default function MobilePOS() {
                 setCart([]);
                 setShowCart(false);
             } else {
-                showToast("Failed to process order: " + data.error, "error");
+                showToast("Failed to process order", "error");
             }
         } catch (error) {
             showToast("Error processing order", "error");
-            console.log(error);
+            console.error(error);
         } finally {
             setProcessing(false);
         }
     };
 
-    // Filter products
     const mainProducts = [...products]
         .filter((product) => product.is_main)
         .sort((a, b) => a.price - b.price);
@@ -393,18 +446,10 @@ export default function MobilePOS() {
                             >
                                 View Cart
                             </button>
-                            {/* <button
-                                onClick={processOrder}
-                                disabled={processing || !selectedStore}
-                                className="px-4 py-2 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {processing ? "Processing..." : "Confirm Now"}
-                            </button> */}
                         </div>
                     </div>
                 </div>
             )}
-            {/* Cart Modal */}
             {/* Cart Modal */}
             {showCart && (
                 <div

@@ -6,12 +6,12 @@ import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 extendZodWithOpenApi(z);
 
 // Common reusable schemas
-export const UUIDSchema = z.string().uuid().openapi({
+export const UUIDSchema = z.uuid().openapi({
     description: "UUID identifier",
     example: "123e4567-e89b-12d3-a456-426614174000",
 });
 
-export const TimestampSchema = z.string().datetime().openapi({
+export const TimestampSchema = z.iso.datetime().openapi({
     description: "ISO datetime string",
     example: "2024-01-01T00:00:00.000Z",
 });
