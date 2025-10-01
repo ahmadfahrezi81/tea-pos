@@ -20,6 +20,7 @@ import { hasSellerRoleInStore } from "@/lib/utils/roleUtils";
 import { Product, CartItem, Store } from "@/lib/types";
 import { Tables } from "@/lib/db.types";
 import { CreateOrderInput, CreateOrderResponse } from "@/lib/schemas/orders";
+import { mutate } from "swr";
 
 export type Assignment = Tables<"user_store_assignments">;
 
@@ -189,6 +190,13 @@ export default function MobilePOS() {
                 );
                 setCart([]);
                 setShowCart(false);
+
+                // Force Mutate for useStoreOrders.ts
+                mutate(
+                    `orders-${selectedStore}-${new Date()
+                        .toISOString()
+                        .slice(0, 10)}`
+                );
             } else {
                 showToast("Failed to process order", "error");
             }
