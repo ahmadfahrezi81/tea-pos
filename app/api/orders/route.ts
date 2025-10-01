@@ -201,7 +201,7 @@ import {
     OrdersResponseSchema,
     CreateOrderResponseSchema,
 } from "@/lib/schemas/orders";
-import { toZonedTime } from "date-fns-tz";
+// import { toZonedTime } from "date-fns-tz";
 
 export async function GET(request: NextRequest) {
     try {
@@ -254,21 +254,28 @@ export async function GET(request: NextRequest) {
         // }
 
         if (date) {
-            const timeZone = "Asia/Jakarta";
+            const start = new Date(`${date}T00:00:00+07:00`).toISOString(); // 2025-10-01T00:00:00+07:00
+            const end = new Date(`${date}T23:59:59+07:00`).toISOString(); // 2025-10-01T23:59:59+07:00
 
-            const startOfDay = toZonedTime(
-                `${date}T00:00:00`,
-                timeZone
-            ).toISOString();
-            const endOfDay = toZonedTime(
-                `${date}T23:59:59.999`,
-                timeZone
-            ).toISOString();
-
-            query = query
-                .gte("created_at", startOfDay)
-                .lte("created_at", endOfDay);
+            query = query.gte("created_at", start).lte("created_at", end);
         }
+
+        // if (date) {
+        //     const timeZone = "Asia/Jakarta";
+
+        //     const startOfDay = toZonedTime(
+        //         `${date}T00:00:00`,
+        //         timeZone
+        //     ).toISOString();
+        //     const endOfDay = toZonedTime(
+        //         `${date}T23:59:59.999`,
+        //         timeZone
+        //     ).toISOString();
+
+        //     query = query
+        //         .gte("created_at", startOfDay)
+        //         .lte("created_at", endOfDay);
+        // }
 
         const { data, error } = await query;
 
