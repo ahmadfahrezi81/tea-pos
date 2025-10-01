@@ -112,7 +112,7 @@ export default function useStoreOrders(storeId: string | null, date: string) {
     const key = storeId && date ? `orders-${storeId}-${date}` : null;
 
     return useSWR<Order[]>(key, () => fetchStoreOrders({ storeId, date }), {
-        revalidateOnFocus: false,
-        dedupingInterval: 30000,
+        revalidateOnFocus: true,
+        dedupingInterval: 5000,
     });
 }

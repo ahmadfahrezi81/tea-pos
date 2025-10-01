@@ -20,7 +20,7 @@ export default function RootLayout({
                 <SWRConfig
                     value={{
                         dedupingInterval: 5000,
-                        revalidateOnFocus: false,
+                        revalidateOnFocus: true,
                     }}
                 >
                     <AuthProvider>
