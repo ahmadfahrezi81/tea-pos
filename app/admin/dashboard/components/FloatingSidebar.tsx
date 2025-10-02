@@ -14,7 +14,7 @@ import {
     Clock,
 } from "lucide-react";
 import Image from "next/image";
-import packageJson from "../../../../package.json";
+import VersionInfo from "@/components/shared/VersionInfo";
 
 const FloatingSidebar = () => {
     const router = useRouter();
@@ -89,13 +89,11 @@ const FloatingSidebar = () => {
                             height={30}
                             className="rounded"
                         />
-                        <div className="flex flex-col">
+                        <div className="flex flex-col gap-1">
                             <h2 className="font-bold text-gray-800 transition-colors mb-[-5px]">
                                 TEA-POS
                             </h2>
-                            <p className="text-gray-500 text-sm">
-                                {packageJson.version}
-                            </p>
+                            <VersionInfo />
                         </div>
                     </div>
                 </Link>
