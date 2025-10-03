@@ -6,6 +6,9 @@ import {
 } from "@asteasolutions/zod-to-openapi";
 import { registerOrderRoutes } from "@/lib/openapi/orders";
 import { getBackendVersion } from "@/lib/version";
+import { registerTenantRoutes } from "@/lib/openapi/tenants";
+import { registerUserTenantAssignmentRoutes } from "@/lib/openapi/userTenantAssignments";
+import { registerTenantInviteRoutes } from "@/lib/openapi/tenantInvites";
 
 const registry = new OpenAPIRegistry();
 
@@ -13,6 +16,10 @@ const registry = new OpenAPIRegistry();
 registerOrderRoutes(registry);
 // Future: registerProductRoutes(registry);
 // Future: registerDailySummaryRoutes(registry);
+
+registerTenantRoutes(registry);
+registerUserTenantAssignmentRoutes(registry);
+registerTenantInviteRoutes(registry);
 
 export async function GET() {
     const generator = new OpenApiGeneratorV31(registry.definitions);
