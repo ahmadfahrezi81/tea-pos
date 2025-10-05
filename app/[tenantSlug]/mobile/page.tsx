@@ -2,7 +2,7 @@
 "use client";
 import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useStores } from "@/lib/hooks/useData";
+import { useStores } from "@/lib/hooks/stores/useStores";
 import { hasSellerRole } from "@/lib/utils/roleUtils";
 import { useAuth } from "@/lib/context/AuthContext";
 

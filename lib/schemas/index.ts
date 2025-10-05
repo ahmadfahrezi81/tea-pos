@@ -11,6 +11,9 @@ export * from "./products";
 // Stores
 export * from "./stores";
 
+// User Store Assignments
+export * from "./userStoreAssignments";
+
 // Expenses
 export * from "./expenses";
 

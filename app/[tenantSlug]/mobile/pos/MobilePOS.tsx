@@ -2,7 +2,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/context/AuthContext";
-import { useProducts, useStores } from "@/lib/hooks/useData";
+// import { useProducts, useStores } from "@/lib/hooks/useData";
 
 import Image from "next/image";
 
@@ -17,12 +17,31 @@ import {
 import { formatRupiah } from "@/lib/utils/formatCurrency";
 import { hasSellerRoleInStore } from "@/lib/utils/roleUtils";
 
-import { Product, CartItem, Store } from "@/lib/types";
-import { Tables } from "@/lib/db.types";
+// import { Product, CartItem, Store } from "@/lib/types";
+// import { CartItem } from "@/lib/types";
+// import { Tables } from "@/lib/db.types";
 import { CreateOrderInput, CreateOrderResponse } from "@/lib/schemas/orders";
 import { mutate } from "swr";
+import { useProducts } from "@/lib/hooks/products/useProducts";
+import { useStores } from "@/lib/hooks/stores/useStores";
 
-export type Assignment = Tables<"user_store_assignments">;
+import type {
+    StoreAssignmentResponse,
+    StoreListResponse,
+} from "@/lib/schemas/stores";
+
+export type Assignment = StoreAssignmentResponse;
+export type Assignments = StoreListResponse["assignments"];
+import type { Product } from "@/lib/schemas/products";
+
+import type { ProductResponse } from "@/lib/schemas/products";
+
+export interface CartItem {
+    product: ProductResponse;
+    quantity: number;
+}
+
+// export type Assignment = Tables<"user_store_assignments">;
 
 export default function MobilePOS() {
     const { profile } = useAuth();
@@ -38,14 +57,14 @@ export default function MobilePOS() {
     // Add state for showing/hiding others menu section
     const [showOthers, setShowOthers] = useState(false);
 
-    const sellerStores = stores.filter((store: Store) =>
+    const sellerStores = stores.filter((store) =>
         hasSellerRoleInStore(profile?.id ?? "", store.id, assignments)
     );
 
-    const defaultStore = stores.find((store: Store) =>
+    const defaultStore = stores.find((store) =>
         assignments[store.id]?.some(
-            (assignment: Assignment) =>
-                assignment.user_id === profile?.id && assignment.is_default
+            (assignment) =>
+                assignment.userId === profile?.id && assignment.isDefault
         )
     );
 
@@ -209,11 +228,11 @@ export default function MobilePOS() {
     };
 
     const mainProducts = [...products]
-        .filter((product) => product.is_main)
+        .filter((product) => product.isMain)
         .sort((a, b) => a.price - b.price);
 
     const otherProducts = [...products]
-        .filter((product) => !product.is_main)
+        .filter((product) => !product.isMain)
         .sort((a, b) => a.price - b.price);
 
     // Auto-select store if only one available
@@ -271,7 +290,7 @@ export default function MobilePOS() {
                                 : "border-gray-300 focus:ring-blue-500"
                         }`}
                     >
-                        {sellerStores.map((store: Store) => (
+                        {sellerStores.map((store) => (
                             <option key={store.id} value={store.id}>
                                 {store.name}
                             </option>
@@ -282,7 +301,7 @@ export default function MobilePOS() {
 
             {/* Main Products Grid */}
             <div className="grid grid-cols-2 gap-3">
-                {mainProducts.map((product: Product) => {
+                {mainProducts.map((product) => {
                     const quantityInCart = getProductQuantityInCart(product.id);
 
                     return (
@@ -302,11 +321,11 @@ export default function MobilePOS() {
 
                             <div className="p-3">
                                 {/* Product Image and Info */}
-                                {product.image_url && (
+                                {product.imageUrl && (
                                     <div className="flex gap-2 mb-3">
                                         <div className="flex-shrink-0">
                                             <Image
-                                                src={product.image_url}
+                                                src={product.imageUrl}
                                                 alt={product.name}
                                                 width={50}
                                                 height={50}
@@ -367,7 +386,7 @@ export default function MobilePOS() {
 
                     {showOthers && (
                         <div className="grid grid-cols-2 gap-3 mt-3">
-                            {otherProducts.map((product: Product) => {
+                            {otherProducts.map((product) => {
                                 const quantityInCart = getProductQuantityInCart(
                                     product.id
                                 );
@@ -389,12 +408,12 @@ export default function MobilePOS() {
 
                                         <div className="p-3">
                                             {/* Product Image and Info */}
-                                            {product.image_url && (
+                                            {product.imageUrl && (
                                                 <div className="flex gap-2 mb-3">
                                                     <div className="flex-shrink-0">
                                                         <Image
                                                             src={
-                                                                product.image_url
+                                                                product.imageUrl
                                                             }
                                                             alt={product.name}
                                                             width={50}

@@ -7,6 +7,7 @@ import useUserStores from "@/lib/hooks/shared/useUserStores";
 import { Calendar, CalendarDays, StoreIcon, Receipt } from "lucide-react";
 import { formatRupiah } from "@/lib/utils/formatCurrency";
 import CopyableField from "@/components/mobile/shared/CopyableField";
+import { useAuth } from "@/lib/context/AuthContext";
 
 // Utility functions
 const formatMobileDate = (dateString: string) => {
@@ -39,13 +40,17 @@ const formatFullTimestamp = (dateString: string) => {
 const formatDateForInput = (date: Date) => date.toISOString().split("T")[0];
 
 export default function MobileOrders() {
+    const { profile } = useAuth();
+
     const [selectedDate, setSelectedDate] = useState(
         formatDateForInput(new Date())
     );
     const [selectedStore, setSelectedStore] = useState<string>("");
 
     // Fetch user stores
-    const { data: storesData, isLoading: storesLoading } = useUserStores();
+    const { data: storesData, isLoading: storesLoading } = useUserStores(
+        profile.id
+    );
     const stores = storesData?.stores ?? [];
     const defaultStore = storesData?.defaultStore;
 

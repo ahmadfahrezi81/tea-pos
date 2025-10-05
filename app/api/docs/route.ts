@@ -13,6 +13,7 @@ import { registerProductRoutes } from "@/lib/openapi/products";
 import { registerStoreRoutes } from "@/lib/openapi/stores";
 import { registerExpenseRoutes } from "@/lib/openapi/expenses";
 import { registerDailySummaryRoutes } from "@/lib/openapi/summaries";
+import { registerAssignmentRoutes } from "@/lib/openapi/userStoreAssignments";
 
 const registry = new OpenAPIRegistry();
 
@@ -20,6 +21,7 @@ const registry = new OpenAPIRegistry();
 registerOrderRoutes(registry);
 registerProductRoutes(registry);
 registerStoreRoutes(registry);
+registerAssignmentRoutes(registry);
 registerExpenseRoutes(registry);
 registerDailySummaryRoutes(registry);
 

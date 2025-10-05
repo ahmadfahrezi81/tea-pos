@@ -1,11 +1,13 @@
-// //app/api/store/route.ts
+// // app/api/store/route.ts
 // import { createRouteHandlerClient } from "@/lib/supabase/server";
+// import { getCurrentTenantId } from "@/lib/tenant";
 // import { NextRequest, NextResponse } from "next/server";
 
 // // GET - Fetch all stores with assignments or filter by specific user_id
 // export async function GET(req: Request) {
 //     try {
 //         const supabase = await createRouteHandlerClient();
+//         const currentTenantId = await getCurrentTenantId();
 
 //         const { searchParams } = new URL(req.url);
 //         const userId = searchParams.get("user_id");
@@ -28,10 +30,11 @@
 
 //             const storeIds = userAssignments.map((a) => a.store_id);
 
-//             // Fetch only relevant stores
+//             // Fetch only relevant stores for current tenant
 //             const storesResponse = await supabase
 //                 .from("stores")
 //                 .select("*")
+//                 .eq("tenant_id", currentTenantId)
 //                 .in("id", storeIds)
 //                 .order("name");
 
@@ -42,10 +45,11 @@
 
 //             assignmentsData = userAssignments;
 //         } else {
-//             // Load all stores
+//             // Load all stores for current tenant
 //             const storesResponse = await supabase
 //                 .from("stores")
 //                 .select("*")
+//                 .eq("tenant_id", currentTenantId)
 //                 .order("name");
 
 //             storesData = storesResponse.data;
@@ -125,6 +129,7 @@
 // export async function POST(request: NextRequest) {
 //     try {
 //         const supabase = await createRouteHandlerClient();
+//         const currentTenantId = await getCurrentTenantId();
 //         const body = await request.json();
 //         const { name, address } = body;
 
@@ -140,6 +145,7 @@
 //             .insert({
 //                 name: name.trim(),
 //                 address: address?.trim() || null,
+//                 tenant_id: currentTenantId,
 //             })
 //             .select()
 //             .single();
@@ -160,6 +166,7 @@
 // export async function PUT(request: NextRequest) {
 //     try {
 //         const supabase = await createRouteHandlerClient();
+//         const currentTenantId = await getCurrentTenantId();
 //         const body = await request.json();
 //         const { id, name, address } = body;
 
@@ -178,10 +185,18 @@
 //                 updated_at: new Date().toISOString(),
 //             })
 //             .eq("id", id)
+//             .eq("tenant_id", currentTenantId)
 //             .select()
 //             .single();
 
 //         if (error) throw error;
+
+//         if (!data) {
+//             return NextResponse.json(
+//                 { error: "Store not found" },
+//                 { status: 404 }
+//             );
+//         }
 
 //         return NextResponse.json(data);
 //     } catch (error) {
@@ -197,6 +212,7 @@
 // export async function DELETE(request: NextRequest) {
 //     try {
 //         const supabase = await createRouteHandlerClient();
+//         const currentTenantId = await getCurrentTenantId();
 //         const { searchParams } = new URL(request.url);
 //         const id = searchParams.get("id");
 
@@ -213,8 +229,12 @@
 //             .delete()
 //             .eq("store_id", id);
 
-//         // Delete the store
-//         const { error } = await supabase.from("stores").delete().eq("id", id);
+//         // Delete the store (tenant isolation via eq filter)
+//         const { error } = await supabase
+//             .from("stores")
+//             .delete()
+//             .eq("id", id)
+//             .eq("tenant_id", currentTenantId);
 
 //         if (error) throw error;
 
@@ -228,25 +248,47 @@
 //     }
 // }
 
-// app/api/store/route.ts
+// app/api/stores/route.ts
 import { createRouteHandlerClient } from "@/lib/supabase/server";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { NextRequest, NextResponse } from "next/server";
+import {
+    CreateStoreInput,
+    UpdateStoreInput,
+    ListStoresQuery,
+    StoreListResponse,
+    CreateStoreResponse,
+    UpdateStoreResponse,
+    DeleteStoreResponse,
+} from "@/lib/schemas/stores";
+import { toCamelKeys, toSnakeKeys } from "@/lib/utils/schemas";
 
-// GET - Fetch all stores with assignments or filter by specific user_id
-export async function GET(req: Request) {
+// ============================================================================
+// GET /api/stores
+// ============================================================================
+export async function GET(request: NextRequest) {
     try {
         const supabase = await createRouteHandlerClient();
         const currentTenantId = await getCurrentTenantId();
+        const { searchParams } = new URL(request.url);
 
-        const { searchParams } = new URL(req.url);
-        const userId = searchParams.get("user_id");
+        const queryResult = ListStoresQuery.safeParse(
+            Object.fromEntries(searchParams)
+        );
+        if (!queryResult.success) {
+            return NextResponse.json(
+                {
+                    error: "Invalid query parameters",
+                    details: queryResult.error.format(),
+                },
+                { status: 400 }
+            );
+        }
+
+        const { userId } = queryResult.data;
 
         let storesData;
-        let storesError;
-
         let assignmentsData;
-        let assignmentsError;
 
         if (userId) {
             // Fetch only the user's store assignments
@@ -256,69 +298,94 @@ export async function GET(req: Request) {
                     .select("user_id, store_id, role, is_default")
                     .eq("user_id", userId);
 
-            if (userAssignmentsError) throw userAssignmentsError;
+            if (userAssignmentsError) {
+                return NextResponse.json(
+                    { error: userAssignmentsError.message },
+                    { status: 400 }
+                );
+            }
 
-            const storeIds = userAssignments.map((a) => a.store_id);
+            const storeIds = userAssignments?.map((a) => a.store_id) || [];
 
             // Fetch only relevant stores for current tenant
-            const storesResponse = await supabase
+            const { data: stores, error: storesError } = await supabase
                 .from("stores")
                 .select("*")
                 .eq("tenant_id", currentTenantId)
                 .in("id", storeIds)
                 .order("name");
 
-            storesData = storesResponse.data;
-            storesError = storesResponse.error;
+            if (storesError) {
+                return NextResponse.json(
+                    { error: storesError.message },
+                    { status: 400 }
+                );
+            }
 
-            if (storesError) throw storesError;
-
+            storesData = stores;
             assignmentsData = userAssignments;
         } else {
             // Load all stores for current tenant
-            const storesResponse = await supabase
+            const { data: stores, error: storesError } = await supabase
                 .from("stores")
                 .select("*")
                 .eq("tenant_id", currentTenantId)
                 .order("name");
 
-            storesData = storesResponse.data;
-            storesError = storesResponse.error;
+            if (storesError) {
+                return NextResponse.json(
+                    { error: storesError.message },
+                    { status: 400 }
+                );
+            }
 
-            if (storesError) throw storesError;
+            storesData = stores;
 
             // Load all assignments
-            const assignmentsResponse = await supabase
-                .from("user_store_assignments")
-                .select("user_id, store_id, role, is_default");
+            const { data: assignments, error: assignmentsError } =
+                await supabase
+                    .from("user_store_assignments")
+                    .select("user_id, store_id, role, is_default");
 
-            assignmentsData = assignmentsResponse.data;
-            assignmentsError = assignmentsResponse.error;
+            if (assignmentsError) {
+                return NextResponse.json(
+                    { error: assignmentsError.message },
+                    { status: 400 }
+                );
+            }
 
-            if (assignmentsError) throw assignmentsError;
+            assignmentsData = assignments;
         }
 
-        // Load all users (or only the specific user if filtering)
+        // Load users
         let usersData;
-        let usersError;
-
         if (userId) {
-            const { data, error } = await supabase
+            const { data: users, error: usersError } = await supabase
                 .from("profiles")
                 .select("id, full_name, email")
                 .eq("id", userId);
-            usersData = data;
-            usersError = error;
+
+            if (usersError) {
+                return NextResponse.json(
+                    { error: usersError.message },
+                    { status: 400 }
+                );
+            }
+            usersData = users;
         } else {
-            const { data, error } = await supabase
+            const { data: users, error: usersError } = await supabase
                 .from("profiles")
                 .select("id, full_name, email")
                 .order("full_name");
-            usersData = data;
-            usersError = error;
-        }
 
-        if (usersError) throw usersError;
+            if (usersError) {
+                return NextResponse.json(
+                    { error: usersError.message },
+                    { status: 400 }
+                );
+            }
+            usersData = users;
+        }
 
         // Group assignments by store with role information
         const assignmentsByStore: Record<
@@ -341,104 +408,169 @@ export async function GET(req: Request) {
             });
         });
 
-        return NextResponse.json({
-            stores: storesData || [],
-            users: usersData || [],
-            assignments: assignmentsByStore,
-        });
+        // Convert to camelCase
+        const camelStores = toCamelKeys(storesData || []);
+        const camelUsers = toCamelKeys(usersData || []);
+        const camelAssignments = toCamelKeys(assignmentsByStore);
+
+        // Validate response
+        const response = {
+            stores: camelStores,
+            users: camelUsers,
+            assignments: camelAssignments,
+        };
+
+        const parsed = StoreListResponse.safeParse(response);
+        if (!parsed.success) {
+            console.error("Stores response validation failed:", parsed.error);
+            return NextResponse.json(
+                {
+                    error: "Invalid response shape",
+                    details: parsed.error.format(),
+                },
+                { status: 500 }
+            );
+        }
+
+        return NextResponse.json(parsed.data);
     } catch (error) {
-        console.error("Error fetching stores data:", error);
+        console.error(error);
         return NextResponse.json(
-            { error: "Failed to fetch stores data" },
+            { error: "Internal server error" },
             { status: 500 }
         );
     }
 }
 
-// POST - Create new store
+// ============================================================================
+// POST /api/stores
+// ============================================================================
 export async function POST(request: NextRequest) {
     try {
         const supabase = await createRouteHandlerClient();
         const currentTenantId = await getCurrentTenantId();
         const body = await request.json();
-        const { name, address } = body;
 
-        if (!name) {
+        const result = CreateStoreInput.safeParse(body);
+        if (!result.success) {
             return NextResponse.json(
-                { error: "Store name is required" },
+                { error: "Validation failed", details: result.error.format() },
                 { status: 400 }
             );
         }
 
-        const { data, error } = await supabase
+        const { name, address } = result.data;
+
+        // Insert store with tenant_id
+        const storePayload = toSnakeKeys({
+            name: name.trim(),
+            address: address?.trim() || null,
+            tenantId: currentTenantId,
+        });
+
+        const { data: storeData, error: storeError } = await supabase
             .from("stores")
-            .insert({
-                name: name.trim(),
-                address: address?.trim() || null,
-                tenant_id: currentTenantId,
-            })
+            .insert(storePayload)
             .select()
             .single();
 
-        if (error) throw error;
+        if (storeError || !storeData) {
+            return NextResponse.json(
+                { error: storeError?.message || "Store insert failed" },
+                { status: 400 }
+            );
+        }
 
-        return NextResponse.json(data, { status: 201 });
+        // Validate response
+        const camelStore = toCamelKeys(storeData);
+        const parsed = CreateStoreResponse.safeParse(camelStore);
+        if (!parsed.success) {
+            return NextResponse.json(
+                {
+                    error: "Invalid response shape",
+                    details: parsed.error.format(),
+                },
+                { status: 500 }
+            );
+        }
+
+        return NextResponse.json(parsed.data, { status: 201 });
     } catch (error) {
-        console.error("Error creating store:", error);
+        console.error(error);
         return NextResponse.json(
-            { error: "Failed to create store" },
+            { error: "Internal server error" },
             { status: 500 }
         );
     }
 }
 
-// PUT - Update existing store
+// ============================================================================
+// PUT /api/stores
+// ============================================================================
 export async function PUT(request: NextRequest) {
     try {
         const supabase = await createRouteHandlerClient();
         const currentTenantId = await getCurrentTenantId();
         const body = await request.json();
-        const { id, name, address } = body;
 
-        if (!id || !name) {
+        const result = UpdateStoreInput.safeParse(body);
+        if (!result.success) {
             return NextResponse.json(
-                { error: "Store ID and name are required" },
+                { error: "Validation failed", details: result.error.format() },
                 { status: 400 }
             );
         }
 
-        const { data, error } = await supabase
+        const { id, name, address } = result.data;
+
+        // Build update payload
+        const updates = {
+            name: name.trim(),
+            address: address?.trim() || null,
+            updated_at: new Date().toISOString(),
+        };
+
+        const { data: storeData, error: storeError } = await supabase
             .from("stores")
-            .update({
-                name: name.trim(),
-                address: address?.trim() || null,
-                updated_at: new Date().toISOString(),
-            })
+            .update(updates)
             .eq("id", id)
             .eq("tenant_id", currentTenantId)
             .select()
             .single();
 
-        if (error) throw error;
-
-        if (!data) {
+        if (storeError || !storeData) {
             return NextResponse.json(
-                { error: "Store not found" },
+                { error: storeError?.message || "Store not found" },
                 { status: 404 }
             );
         }
 
-        return NextResponse.json(data);
+        // Validate response
+        const camelStore = toCamelKeys(storeData);
+        const parsed = UpdateStoreResponse.safeParse(camelStore);
+        if (!parsed.success) {
+            return NextResponse.json(
+                {
+                    error: "Invalid response shape",
+                    details: parsed.error.format(),
+                },
+                { status: 500 }
+            );
+        }
+
+        return NextResponse.json(parsed.data);
     } catch (error) {
-        console.error("Error updating store:", error);
+        console.error(error);
         return NextResponse.json(
-            { error: "Failed to update store" },
+            { error: "Internal server error" },
             { status: 500 }
         );
     }
 }
 
-// DELETE - Delete store
+// ============================================================================
+// DELETE /api/stores
+// ============================================================================
 export async function DELETE(request: NextRequest) {
     try {
         const supabase = await createRouteHandlerClient();
@@ -453,26 +585,44 @@ export async function DELETE(request: NextRequest) {
             );
         }
 
-        // Delete all assignments first (cascade should handle this, but being explicit)
+        // Delete all assignments first (explicit cleanup)
         await supabase
             .from("user_store_assignments")
             .delete()
             .eq("store_id", id);
 
         // Delete the store (tenant isolation via eq filter)
-        const { error } = await supabase
+        const { error: storeError } = await supabase
             .from("stores")
             .delete()
             .eq("id", id)
             .eq("tenant_id", currentTenantId);
 
-        if (error) throw error;
+        if (storeError) {
+            return NextResponse.json(
+                { error: storeError.message },
+                { status: 400 }
+            );
+        }
 
-        return NextResponse.json({ success: true });
+        // Validate response
+        const response = { success: true };
+        const parsed = DeleteStoreResponse.safeParse(response);
+        if (!parsed.success) {
+            return NextResponse.json(
+                {
+                    error: "Invalid response shape",
+                    details: parsed.error.format(),
+                },
+                { status: 500 }
+            );
+        }
+
+        return NextResponse.json(parsed.data);
     } catch (error) {
-        console.error("Error deleting store:", error);
+        console.error(error);
         return NextResponse.json(
-            { error: "Failed to delete store" },
+            { error: "Internal server error" },
             { status: 500 }
         );
     }

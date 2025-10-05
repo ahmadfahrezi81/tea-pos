@@ -3,8 +3,9 @@
 "use client";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Store } from "@/lib/types";
-import { useStores } from "@/lib/hooks/useData";
+// import { Store } from "@/lib/types";
+// import { useStores } from "@/lib/hooks/useData";
+import { useStores } from "@/lib/hooks/stores/useStores";
 import { useAuth } from "@/lib/context/AuthContext";
 import { Tables } from "@/lib/db.types";
 import VersionInfo from "@/components/shared/VersionInfo";
@@ -91,7 +92,7 @@ export default function MobileAuth() {
 
                             {!storesLoading && stores.length > 0 ? (
                                 <div className="">
-                                    {stores.map((store: Store) => (
+                                    {stores.map((store) => (
                                         <div
                                             key={store.id}
                                             className="flex justify-between items-center border-b border-gray-300 last:border-none py-2"
@@ -105,7 +106,7 @@ export default function MobileAuth() {
                                                 <div className="flex gap-2 flex-wrap justify-end">
                                                     {assignments[store.id].map(
                                                         (
-                                                            assignment: Assignment,
+                                                            assignment,
                                                             index: number
                                                         ) => (
                                                             <span
@@ -133,7 +134,7 @@ export default function MobileAuth() {
                                                                             1
                                                                         )}
                                                                 </span>
-                                                                {assignment.is_default && (
+                                                                {assignment.isDefault && (
                                                                     <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                                                                         Default
                                                                     </span>

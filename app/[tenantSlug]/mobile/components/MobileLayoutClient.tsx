@@ -2,7 +2,7 @@
 "use client";
 import { useEffect, ReactNode, useMemo, useState } from "react";
 import { User, ShoppingCart, Clock, BarChart3 } from "lucide-react";
-import { useStores } from "@/lib/hooks/useData";
+import { useStores } from "@/lib/hooks/stores/useStores";
 import { format } from "date-fns";
 import Image from "next/image";
 import { hasManagerRole, hasSellerRole } from "@/lib/utils/roleUtils";
