@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createRouteHandlerClient } from "@/lib/supabase/server";
 import { Expense } from "@/lib/hooks/useSummaries";
-import { getCurrentTenantId, validateTenantId } from "@/lib/tenant";
+import { getCurrentTenantId } from "@/lib/tenant";
 
 async function fetchAllOrders(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -297,6 +297,99 @@ export async function GET(request: NextRequest) {
     }
 }
 
+// export async function POST(request: NextRequest) {
+//     try {
+//         const supabase = await createRouteHandlerClient();
+//         const body = await request.json();
+//         const { storeId, sellerId, managerId, date, openingBalance } = body;
+
+//         if (!storeId || !sellerId || !date) {
+//             return NextResponse.json(
+//                 { error: "Missing required fields" },
+//                 { status: 400 }
+//             );
+//         }
+
+//         // 🔹 Get tenant_id from parent store
+//         const { data: store, error: storeError } = await supabase
+//             .from("stores")
+//             .select("tenant_id")
+//             .eq("id", storeId)
+//             .single();
+
+//         if (storeError || !store) {
+//             return NextResponse.json(
+//                 { error: "Invalid storeId" },
+//                 { status: 400 }
+//             );
+//         }
+
+//         const tenantId = validateTenantId(store.tenant_id, "daily_summaries");
+
+//         // 🔹 Check if summary already exists for this store & date
+//         const { count, error: existsError } = await supabase
+//             .from("daily_summaries")
+//             .select("id", { count: "exact", head: true })
+//             .eq("store_id", storeId)
+//             .eq("date", date)
+//             .eq("tenant_id", tenantId);
+
+//         if (existsError) throw existsError;
+//         if ((count ?? 0) > 0) {
+//             return NextResponse.json(
+//                 { error: "Daily summary already exists for this date" },
+//                 { status: 409 }
+//             );
+//         }
+
+//         // 🔹 Get existing orders for this date (scoped to tenant)
+//         const { data: existingOrders, error: ordersError } = await supabase
+//             .from("orders")
+//             .select("total_amount")
+//             .eq("store_id", storeId)
+//             .eq("tenant_id", tenantId)
+//             .gte("created_at", `${date}T17:00:00Z`)
+//             .lte("created_at", `${date}T16:59:59Z`);
+
+//         if (ordersError) throw ordersError;
+
+//         const totalSales =
+//             existingOrders?.reduce(
+//                 (sum, order) => sum + order.total_amount,
+//                 0
+//             ) || 0;
+
+//         const opening = openingBalance || 0;
+//         const expectedCash = opening + totalSales;
+
+//         // 🔹 Insert summary with inherited tenant_id
+//         const { data, error } = await supabase
+//             .from("daily_summaries")
+//             .insert({
+//                 store_id: storeId,
+//                 seller_id: sellerId,
+//                 manager_id: managerId || null,
+//                 date,
+//                 opening_balance: opening,
+//                 total_sales: totalSales,
+//                 expected_cash: expectedCash,
+//                 tenant_id: tenantId, // 👈 from parent store
+//             })
+//             .select()
+//             .single();
+
+//         if (error) throw error;
+
+//         return NextResponse.json(data);
+//     } catch (error) {
+//         console.error("Error creating summary:", error);
+//         return NextResponse.json(
+//             { error: "Internal server error" },
+//             { status: 500 }
+//         );
+//     }
+// }
+
 export async function POST(request: NextRequest) {
     try {
         const supabase = await createRouteHandlerClient();
@@ -310,29 +403,27 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 🔹 Get tenant_id from parent store
+        // Get tenant_id from parent store
         const { data: store, error: storeError } = await supabase
             .from("stores")
             .select("tenant_id")
             .eq("id", storeId)
             .single();
 
-        if (storeError || !store) {
+        if (storeError || !store || !store.tenant_id) {
             return NextResponse.json(
-                { error: "Invalid storeId" },
+                { error: "Invalid storeId or store missing tenant_id" },
                 { status: 400 }
             );
         }
 
-        const tenantId = validateTenantId(store.tenant_id, "daily_summaries");
-
-        // 🔹 Check if summary already exists for this store & date
+        // Check if summary already exists for this store & date
         const { count, error: existsError } = await supabase
             .from("daily_summaries")
             .select("id", { count: "exact", head: true })
             .eq("store_id", storeId)
             .eq("date", date)
-            .eq("tenant_id", tenantId);
+            .eq("tenant_id", store.tenant_id);
 
         if (existsError) throw existsError;
         if ((count ?? 0) > 0) {
@@ -342,12 +433,12 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 🔹 Get existing orders for this date (scoped to tenant)
+        // Get existing orders for this date (scoped to tenant)
         const { data: existingOrders, error: ordersError } = await supabase
             .from("orders")
             .select("total_amount")
             .eq("store_id", storeId)
-            .eq("tenant_id", tenantId)
+            .eq("tenant_id", store.tenant_id)
             .gte("created_at", `${date}T17:00:00Z`)
             .lte("created_at", `${date}T16:59:59Z`);
 
@@ -362,7 +453,7 @@ export async function POST(request: NextRequest) {
         const opening = openingBalance || 0;
         const expectedCash = opening + totalSales;
 
-        // 🔹 Insert summary with inherited tenant_id
+        // Insert summary with inherited tenant_id
         const { data, error } = await supabase
             .from("daily_summaries")
             .insert({
@@ -373,7 +464,7 @@ export async function POST(request: NextRequest) {
                 opening_balance: opening,
                 total_sales: totalSales,
                 expected_cash: expectedCash,
-                tenant_id: tenantId, // 👈 from parent store
+                tenant_id: store.tenant_id, // from parent store
             })
             .select()
             .single();

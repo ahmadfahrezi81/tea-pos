@@ -4,6 +4,7 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/lib/hooks/useData";
+import { useTenantSlug } from "@/lib/tenant-url";
 import {
     ShoppingCart,
     Package,
@@ -21,48 +22,43 @@ const FloatingSidebar = () => {
     const pathname = usePathname();
     const supabase = createClient();
     const { data: profile } = useProfile();
+    const { url } = useTenantSlug();
 
     const menuItems = [
         {
             id: "dashboard",
             label: "Dashboard",
             icon: LayoutDashboard,
-            href: "/admin/dashboard",
+            href: url("/admin/dashboard"),
         },
         {
             id: "pos",
             label: "POS",
             icon: ShoppingCart,
-            href: "/admin/dashboard/pos",
+            href: url("/admin/dashboard/pos"),
         },
         {
             id: "orders",
             label: "Orders",
             icon: Clock,
-            href: "/admin/dashboard/orders",
+            href: url("/admin/dashboard/orders"),
         },
         {
             id: "products",
             label: "Products",
             icon: Package,
-            href: "/admin/dashboard/products",
+            href: url("/admin/dashboard/products"),
         },
         {
             id: "stores",
             label: "Stores",
             icon: Store,
-            href: "/admin/dashboard/stores",
+            href: url("/admin/dashboard/stores"),
         },
-        // {
-        //     id: "analytics",
-        //     label: "Analytics",
-        //     icon: BarChart3,
-        //     href: "/admin/dashboard/analytics",
-        // },
     ];
 
     const isActiveRoute = (href: string): boolean => {
-        if (href === "/admin/dashboard") {
+        if (href.endsWith("/admin/dashboard")) {
             return pathname === href;
         }
         return pathname.startsWith(href);
@@ -80,7 +76,7 @@ const FloatingSidebar = () => {
         <div className="fixed left-6 top-6 bottom-6 w-64 bg-white rounded-xl shadow-sm z-40 flex flex-col gap-4 border-1 border-gray-200">
             {/* Header */}
             <div className="p-2">
-                <Link href="/admin/dashboard" className="block">
+                <Link href={url("/admin/dashboard")} className="block">
                     <div className="flex items-center hover:bg-blue-50 p-2 rounded-lg gap-2">
                         <Image
                             src="/LEMONI-512x512.png"

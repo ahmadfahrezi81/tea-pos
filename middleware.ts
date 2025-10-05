@@ -218,6 +218,152 @@
 //     ],
 // };
 
+// import { createServerClient, type CookieOptions } from "@supabase/ssr";
+// import { NextResponse, type NextRequest } from "next/server";
+
+// export async function middleware(request: NextRequest) {
+//     let response = NextResponse.next({
+//         request: {
+//             headers: request.headers,
+//         },
+//     });
+
+//     const supabase = createServerClient(
+//         process.env.NEXT_PUBLIC_SUPABASE_URL!,
+//         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+//         {
+//             cookies: {
+//                 get(name: string) {
+//                     return request.cookies.get(name)?.value;
+//                 },
+//                 set(name: string, value: string, options: CookieOptions) {
+//                     request.cookies.set({
+//                         name,
+//                         value,
+//                         ...options,
+//                     });
+//                     response = NextResponse.next({
+//                         request: {
+//                             headers: request.headers,
+//                         },
+//                     });
+//                     response.cookies.set({
+//                         name,
+//                         value,
+//                         ...options,
+//                     });
+//                 },
+//                 remove(name: string, options: CookieOptions) {
+//                     request.cookies.set({
+//                         name,
+//                         value: "",
+//                         ...options,
+//                     });
+//                     response = NextResponse.next({
+//                         request: {
+//                             headers: request.headers,
+//                         },
+//                     });
+//                     response.cookies.set({
+//                         name,
+//                         value: "",
+//                         ...options,
+//                     });
+//                 },
+//             },
+//         }
+//     );
+
+//     const pathname = request.nextUrl.pathname;
+
+//     // Early return for non-protected routes - no auth check needed
+//     if (
+//         !pathname.startsWith("/admin") &&
+//         !pathname.startsWith("/dashboard") &&
+//         pathname !== "/login" &&
+//         pathname !== "/signup"
+//     ) {
+//         return response;
+//     }
+
+//     // Only check user auth for protected routes
+//     const {
+//         data: { user },
+//     } = await supabase.auth.getUser();
+
+//     // Handle login/signup redirects
+//     if (pathname === "/login" || pathname === "/signup") {
+//         if (!user) {
+//             return response;
+//         }
+
+//         // Only fetch role if user is logged in and we need to redirect
+//         const { data: profile } = await supabase
+//             .from("profiles")
+//             .select("role")
+//             .eq("id", user.id)
+//             .single();
+
+//         const isAdmin = profile?.role === "ADMIN";
+
+//         return NextResponse.redirect(
+//             new URL(isAdmin ? "/admin/dashboard" : "/mobile", request.url)
+//         );
+//     }
+
+//     // Handle /admin (login page)
+//     if (pathname === "/admin") {
+//         if (!user) {
+//             return response;
+//         }
+
+//         // Only fetch role to check if we should redirect to dashboard
+//         const { data: profile } = await supabase
+//             .from("profiles")
+//             .select("role")
+//             .eq("id", user.id)
+//             .single();
+
+//         if (profile?.role === "ADMIN") {
+//             return NextResponse.redirect(
+//                 new URL("/admin/dashboard", request.url)
+//             );
+//         }
+//         return response;
+//     }
+
+//     // Protect /admin/* routes
+//     if (pathname.startsWith("/admin/")) {
+//         if (!user) {
+//             return NextResponse.redirect(new URL("/admin", request.url));
+//         }
+
+//         // Only now do we check the role for admin routes
+//         const { data: profile } = await supabase
+//             .from("profiles")
+//             .select("role")
+//             .eq("id", user.id)
+//             .single();
+
+//         if (profile?.role !== "ADMIN") {
+//             return NextResponse.redirect(new URL("/mobile", request.url));
+//         }
+//     }
+
+//     // Protect dashboard routes
+//     if (pathname.startsWith("/dashboard")) {
+//         if (!user) {
+//             return NextResponse.redirect(new URL("/login", request.url));
+//         }
+//     }
+
+//     return response;
+// }
+
+// export const config = {
+//     matcher: ["/admin/:path*", "/mobile/:path*", "/login", "/signup"],
+// };
+
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -276,13 +422,51 @@ export async function middleware(request: NextRequest) {
 
     const pathname = request.nextUrl.pathname;
 
-    // Early return for non-protected routes - no auth check needed
+    // ============================================================================
+    // TENANT HANDLING - Extract tenant slug and set tenant_id cookie
+    // ============================================================================
+    const pathSegments = pathname.split("/").filter(Boolean);
+    const tenantSlug = pathSegments[0];
+
+    // If we have a tenant slug in the URL (not api, login, signup, docs, etc.)
     if (
-        !pathname.startsWith("/admin") &&
-        !pathname.startsWith("/dashboard") &&
-        pathname !== "/login" &&
-        pathname !== "/signup"
+        tenantSlug &&
+        !["api", "login", "signup", "docs", "_next"].includes(tenantSlug)
     ) {
+        // Look up tenant ID from slug
+        const { data: tenant } = await supabase
+            .from("tenants")
+            .select("id")
+            .eq("slug", tenantSlug)
+            .single();
+
+        if (tenant?.id) {
+            // Set tenant_id cookie for API routes to use
+            response.cookies.set("x-tenant-id", tenant.id, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "lax",
+                maxAge: 60 * 60 * 24, // 24 hours
+            });
+        }
+    } else {
+        // Clear tenant cookie if no valid tenant in URL
+        response.cookies.delete("x-tenant-id");
+    }
+
+    // ============================================================================
+    // AUTH HANDLING - Your existing logic, updated for new paths
+    // ============================================================================
+
+    // Early return for non-protected routes - no auth check needed
+    // Updated to check for tenant-prefixed paths
+    const isProtectedRoute =
+        pathname.startsWith(`/${tenantSlug}/admin`) ||
+        pathname.startsWith(`/${tenantSlug}/mobile`) ||
+        pathname === "/login" ||
+        pathname === "/signup";
+
+    if (!isProtectedRoute) {
         return response;
     }
 
@@ -306,39 +490,22 @@ export async function middleware(request: NextRequest) {
 
         const isAdmin = profile?.role === "ADMIN";
 
+        // Redirect to tenant-prefixed path
         return NextResponse.redirect(
-            new URL(isAdmin ? "/admin/dashboard" : "/mobile", request.url)
+            new URL(
+                isAdmin ? "/tealicious/admin/dashboard" : "/tealicious/mobile",
+                request.url
+            )
         );
     }
 
-    // Handle /admin (login page)
-    if (pathname === "/admin") {
+    // Protect /{tenant}/admin/* routes
+    if (pathname.startsWith(`/${tenantSlug}/admin`)) {
         if (!user) {
-            return response;
+            return NextResponse.redirect(new URL("/login", request.url));
         }
 
-        // Only fetch role to check if we should redirect to dashboard
-        const { data: profile } = await supabase
-            .from("profiles")
-            .select("role")
-            .eq("id", user.id)
-            .single();
-
-        if (profile?.role === "ADMIN") {
-            return NextResponse.redirect(
-                new URL("/admin/dashboard", request.url)
-            );
-        }
-        return response;
-    }
-
-    // Protect /admin/* routes
-    if (pathname.startsWith("/admin/")) {
-        if (!user) {
-            return NextResponse.redirect(new URL("/admin", request.url));
-        }
-
-        // Only now do we check the role for admin routes
+        // Check if user has admin role
         const { data: profile } = await supabase
             .from("profiles")
             .select("role")
@@ -346,12 +513,14 @@ export async function middleware(request: NextRequest) {
             .single();
 
         if (profile?.role !== "ADMIN") {
-            return NextResponse.redirect(new URL("/mobile", request.url));
+            return NextResponse.redirect(
+                new URL(`/${tenantSlug}/mobile`, request.url)
+            );
         }
     }
 
-    // Protect dashboard routes
-    if (pathname.startsWith("/dashboard")) {
+    // Protect /{tenant}/mobile routes
+    if (pathname.startsWith(`/${tenantSlug}/mobile`)) {
         if (!user) {
             return NextResponse.redirect(new URL("/login", request.url));
         }
@@ -361,5 +530,10 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ["/admin/:path*", "/mobile/:path*", "/login", "/signup"],
+    matcher: [
+        "/:tenantSlug/admin/:path*",
+        "/:tenantSlug/mobile/:path*",
+        "/login",
+        "/signup",
+    ],
 };
