@@ -9,13 +9,19 @@ import { getBackendVersion } from "@/lib/version";
 import { registerTenantRoutes } from "@/lib/openapi/tenants";
 import { registerUserTenantAssignmentRoutes } from "@/lib/openapi/userTenantAssignments";
 import { registerTenantInviteRoutes } from "@/lib/openapi/tenantInvites";
+import { registerProductRoutes } from "@/lib/openapi/products";
+import { registerStoreRoutes } from "@/lib/openapi/stores";
+import { registerExpenseRoutes } from "@/lib/openapi/expenses";
+import { registerDailySummaryRoutes } from "@/lib/openapi/summaries";
 
 const registry = new OpenAPIRegistry();
 
 // Register all route groups
 registerOrderRoutes(registry);
-// Future: registerProductRoutes(registry);
-// Future: registerDailySummaryRoutes(registry);
+registerProductRoutes(registry);
+registerStoreRoutes(registry);
+registerExpenseRoutes(registry);
+registerDailySummaryRoutes(registry);
 
 registerTenantRoutes(registry);
 registerUserTenantAssignmentRoutes(registry);

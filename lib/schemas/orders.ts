@@ -110,7 +110,6 @@
 //         totalAmount: z.number().openapi({ example: 31.98 }),
 //     })
 //     .openapi({ title: "CreateOrderResponse" });
-
 // lib/schemas/orders.ts
 import { z } from "zod";
 import { UUIDSchema } from "./common";
@@ -161,6 +160,7 @@ export const CreateOrderInput = z
         items: z.array(CreateOrderItemInput).min(1).openapi({
             description: "Array of order items (minimum 1 item required)",
         }),
+        // tenantId is NOT included in input - it's derived from the store
     })
     .openapi({ title: "CreateOrderInput" });
 
@@ -181,6 +181,7 @@ export const ListOrdersQuery = z
                 description: "Filter orders by date (YYYY-MM-DD format)",
                 example: "2025-10-01",
             }),
+        // tenantId is NOT a query param - it's from the session
     })
     .openapi({ title: "ListOrdersQuery" });
 
@@ -197,6 +198,7 @@ export const OrderItemResponse = z
         unitPrice: z.number(),
         totalPrice: z.number(),
         createdAt: z.string().nullable(),
+        tenantId: UUIDSchema.nullable(), // ← Added for response
         products: z
             .object({
                 name: z.string(),
@@ -212,6 +214,7 @@ export const OrderResponse = z
         userId: UUIDSchema,
         totalAmount: z.number(),
         createdAt: z.string().nullable(),
+        tenantId: UUIDSchema.nullable(), // ← Added for response
         stores: z
             .object({
                 name: z.string(),
@@ -240,6 +243,7 @@ export const CreateOrderResponse = z
             description: "Total amount for the order",
             example: 31.98,
         }),
+        // tenantId not needed in create response - client doesn't care
     })
     .openapi({ title: "CreateOrderResponse" });
 

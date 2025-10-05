@@ -29,3 +29,7 @@ export const SuccessResponseSchema = z
         message: z.string().optional(),
     })
     .openapi({ title: "SuccessResponse" });
+
+export const DeleteByIdQuery = z.object({
+    id: UUIDSchema,
+});
