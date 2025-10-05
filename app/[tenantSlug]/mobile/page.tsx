@@ -1,16 +1,16 @@
-// app/mobile/page.tsx
 "use client";
 import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useStores } from "@/lib/hooks/stores/useStores";
 import { hasSellerRole } from "@/lib/utils/roleUtils";
 import { useAuth } from "@/lib/context/AuthContext";
+import { useTenantSlug } from "@/lib/tenant-url";
 
 export default function MobilePage() {
     const router = useRouter();
     const { profile } = useAuth();
-
     const { data: storesData } = useStores();
+    const { tenantSlug, url } = useTenantSlug();
 
     const user = useMemo(
         () => (profile ? { id: profile.id } : null),
@@ -23,13 +23,15 @@ export default function MobilePage() {
     );
 
     useEffect(() => {
-        // Redirect to appropriate default page
+        if (!tenantSlug) return; // Wait for tenant to be available
+
+        // Redirect to appropriate tenant-aware page
         if (user && hasSellerRole(user.id, assignments)) {
-            router.replace("/mobile/pos");
+            router.replace(url("/mobile/pos"));
         } else {
-            router.replace("/mobile/profile");
+            router.replace(url("/mobile/profile"));
         }
-    }, [user, assignments, router]);
+    }, [user, assignments, router, tenantSlug, url]);
 
     return (
         <div className="flex items-center justify-center min-h-[50vh]">

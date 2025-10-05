@@ -952,6 +952,20 @@ export async function PUT(request: NextRequest) {
         if (notes !== undefined) updates.notes = notes;
         if (closedAt !== undefined) updates.closed_at = closedAt;
 
+        // If actualCash is provided (and not null), calculate variance = actualCash - expectedCash
+        if (actualCash !== undefined && actualCash !== null) {
+            const { data: currentSummary, error: fetchError } = await supabase
+                .from("daily_summaries")
+                .select("expected_cash")
+                .eq("id", id)
+                .eq("tenant_id", currentTenantId)
+                .single();
+
+            if (!fetchError && currentSummary?.expected_cash != null) {
+                updates.variance = actualCash - currentSummary.expected_cash;
+            }
+        }
+
         // If updating opening_balance, recalculate expected_cash
         if (openingBalance !== undefined) {
             const { data: currentSummary, error: summaryError } = await supabase
