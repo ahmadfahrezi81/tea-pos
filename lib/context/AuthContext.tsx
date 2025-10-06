@@ -222,7 +222,7 @@
 // }
 
 "use client";
-import { createContext, useContext } from "react";
+import { createContext, useContext, useEffect } from "react";
 import useSWR from "swr";
 import { createClient } from "@/lib/supabase/client";
 import { Profile, ProfileResponse } from "@/lib/schemas/profiles";
@@ -245,23 +245,115 @@ const supabase = createClient();
 //     }
 // }
 
+// const fetchProfile = async (): Promise<Profile | null> => {
+//     const {
+//         data: { user },
+//     } = await supabase.auth.getUser();
+//     if (!user) return null;
+
+//     const { data } = await supabase
+//         .from("profiles")
+//         .select("*")
+//         .eq("id", user.id)
+//         .single();
+
+//     if (!data) return null;
+
+//     // Convert snake_case from DB to camelCase and validate with Zod
+//     const camelCaseData = toCamelKeys(data);
+//     return ProfileResponse.parse(camelCaseData);
+// };
+
+// const fetchProfile = async (): Promise<Profile | null> => {
+//     try {
+//         const {
+//             data: { user },
+//             error: userError,
+//         } = await supabase.auth.getUser();
+
+//         if (userError) {
+//             console.error("Auth error:", userError);
+//             return null;
+//         }
+
+//         if (!user) return null;
+
+//         const { data, error: profileError } = await supabase
+//             .from("profiles")
+//             .select("*")
+//             .eq("id", user.id)
+//             .single();
+
+//         if (profileError) {
+//             console.error("Profile fetch error:", profileError);
+//             return null;
+//         }
+
+//         if (!data) return null;
+
+//         // Convert snake_case from DB to camelCase and validate with Zod
+//         const camelCaseData = toCamelKeys(data);
+//         return ProfileResponse.parse(camelCaseData);
+//     } catch (error) {
+//         console.error("Unexpected error in fetchProfile:", error);
+//         return null;
+//     }
+// };
+
 const fetchProfile = async (): Promise<Profile | null> => {
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return null;
+    try {
+        // First, check if we have an active session
+        const {
+            data: { session },
+            error: sessionError,
+        } = await supabase.auth.getSession();
 
-    const { data } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
+        if (sessionError) {
+            console.warn("Session error:", sessionError);
+            return null;
+        }
 
-    if (!data) return null;
+        if (!session) {
+            console.warn("No active session found");
+            return null;
+        }
 
-    // Convert snake_case from DB to camelCase and validate with Zod
-    const camelCaseData = toCamelKeys(data);
-    return ProfileResponse.parse(camelCaseData);
+        // Now get the user with the valid session
+        const {
+            data: { user },
+            error: userError,
+        } = await supabase.auth.getUser();
+
+        if (userError) {
+            console.error("Auth error:", userError);
+            return null;
+        }
+
+        if (!user) {
+            console.warn("No user found despite having session");
+            return null;
+        }
+
+        const { data, error: profileError } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", user.id)
+            .single();
+
+        if (profileError) {
+            console.error("Profile fetch error:", profileError);
+            return null;
+        }
+
+        if (!data) return null;
+
+        // Convert snake_case from DB to camelCase and validate with Zod
+        const camelCaseData = toCamelKeys(data);
+        return ProfileResponse.parse(camelCaseData);
+    } catch (error) {
+        console.error("Unexpected error in fetchProfile:", error);
+        return null;
+    }
 };
 
 interface AuthContextType {
@@ -314,6 +406,42 @@ const AuthContext = createContext<AuthContextType | null>(null);
 //     );
 // }
 
+// export function AuthProvider({
+//     children,
+//     initialUser,
+// }: {
+//     children: React.ReactNode;
+//     initialUser?: { id: string; role: string } | null;
+// }) {
+//     const initialProfile = initialUser
+//         ? {
+//               id: initialUser.id,
+//               role: initialUser.role,
+//               email: "",
+//               fullName: "",
+//               createdAt: null,
+//               updatedAt: null,
+//           }
+//         : null;
+
+//     const {
+//         data: profile,
+//         isLoading,
+//         mutate,
+//     } = useSWR(initialUser ? "profile" : null, fetchProfile, {
+//         fallbackData: initialProfile,
+//         revalidateOnMount: true,
+//     });
+
+//     if (isLoading && !profile) return <div>Loading...</div>;
+
+//     return (
+//         <AuthContext.Provider value={{ profile, isLoading, mutate }}>
+//             {children}
+//         </AuthContext.Provider>
+//     );
+// }
+
 export function AuthProvider({
     children,
     initialUser,
@@ -321,27 +449,42 @@ export function AuthProvider({
     children: React.ReactNode;
     initialUser?: { id: string; role: string } | null;
 }) {
-    const initialProfile = initialUser
-        ? {
-              id: initialUser.id,
-              role: initialUser.role,
-              email: "",
-              fullName: "",
-              createdAt: null,
-              updatedAt: null,
-          }
-        : null;
-
     const {
         data: profile,
         isLoading,
+        error,
         mutate,
-    } = useSWR(initialUser ? "profile" : null, fetchProfile, {
-        fallbackData: initialProfile,
-        revalidateOnMount: true,
-    });
+    } = useSWR(
+        // Always use the same key, but conditionally fetch
+        "profile",
+        async () => {
+            // If no initialUser, don't try to fetch
+            if (!initialUser) return null;
+            return fetchProfile();
+        },
+        {
+            fallbackData: initialUser
+                ? {
+                      id: initialUser.id,
+                      role: initialUser.role,
+                      email: "",
+                      fullName: "",
+                      createdAt: null,
+                      updatedAt: null,
+                  }
+                : null,
+            revalidateOnMount: true,
+            shouldRetryOnError: true,
+            errorRetryCount: 3,
+        }
+    );
 
-    if (isLoading && !profile) return <div>Loading...</div>;
+    // Add error logging
+    useEffect(() => {
+        if (error) {
+            console.error("AuthProvider error:", error);
+        }
+    }, [error]);
 
     return (
         <AuthContext.Provider value={{ profile, isLoading, mutate }}>
