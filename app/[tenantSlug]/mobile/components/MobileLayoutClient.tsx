@@ -331,7 +331,8 @@ export default function MobileLayoutClient({
         [storesData?.assignments]
     );
 
-    const isLoading = profileLoading || storesLoading || !profile;
+    // const isLoading = profileLoading || storesLoading || !profile;
+    const isLoading = profileLoading || !profile;
 
     const canSell = useMemo(
         () => !!user && hasSellerRole(user.id, assignments),
@@ -381,6 +382,17 @@ export default function MobileLayoutClient({
     //         return () => clearTimeout(timer);
     //     }
     // }, [isLoading, showLoader]);
+
+    // Add this debug effect to see what's happening
+    useEffect(() => {
+        console.log("Auth state:", {
+            profileLoading,
+            storesLoading,
+            profile: !!profile,
+            isLoading,
+            assignments: !!assignments,
+        });
+    }, [profileLoading, storesLoading, profile, isLoading, assignments]);
 
     useEffect(() => {
         tabs.forEach((tab) => {
