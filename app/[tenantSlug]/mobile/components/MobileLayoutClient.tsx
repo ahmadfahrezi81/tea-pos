@@ -314,7 +314,7 @@ export default function MobileLayoutClient({
     const router = useRouter();
     const pathname = usePathname();
     const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
-    const [showLoader, setShowLoader] = useState(true);
+    // const [showLoader, setShowLoader] = useState(true);
 
     const { url } = useTenantSlug();
 
@@ -375,12 +375,12 @@ export default function MobileLayoutClient({
     );
 
     // --- place this ABOVE your "if (showLoader)" return ---
-    useEffect(() => {
-        if (!isLoading && showLoader) {
-            const timer = setTimeout(() => setShowLoader(false), 200);
-            return () => clearTimeout(timer);
-        }
-    }, [isLoading, showLoader]);
+    // useEffect(() => {
+    //     if (!isLoading && showLoader) {
+    //         const timer = setTimeout(() => setShowLoader(false), 200);
+    //         return () => clearTimeout(timer);
+    //     }
+    // }, [isLoading, showLoader]);
 
     useEffect(() => {
         tabs.forEach((tab) => {
@@ -394,8 +394,8 @@ export default function MobileLayoutClient({
         }
     }, [pathname, optimisticPath]);
 
-    // if (isLoading) {
-    if (showLoader) {
+    if (isLoading) {
+        // if (showLoader) {
         return (
             <div className="h-[100dvh] overflow-hidden bg-white flex flex-col items-center justify-center">
                 <div className="text-center" role="status" aria-live="polite">

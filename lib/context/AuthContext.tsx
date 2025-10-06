@@ -231,19 +231,19 @@ import { toCamelKeys } from "@/lib/utils/schemas";
 const supabase = createClient();
 
 // Helper to read user cookie
-function getUserFromCookie(): { id: string; role: string } | null {
-    if (typeof window === "undefined") return null;
-    const cookieValue = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("x-user-info="))
-        ?.split("=")[1];
-    if (!cookieValue) return null;
-    try {
-        return JSON.parse(decodeURIComponent(cookieValue));
-    } catch {
-        return null;
-    }
-}
+// function getUserFromCookie(): { id: string; role: string } | null {
+//     if (typeof window === "undefined") return null;
+//     const cookieValue = document.cookie
+//         .split("; ")
+//         .find((row) => row.startsWith("x-user-info="))
+//         ?.split("=")[1];
+//     if (!cookieValue) return null;
+//     try {
+//         return JSON.parse(decodeURIComponent(cookieValue));
+//     } catch {
+//         return null;
+//     }
+// }
 
 const fetchProfile = async (): Promise<Profile | null> => {
     const {
