@@ -49,7 +49,7 @@ export default function MobileOrders() {
 
     // Fetch user stores
     const { data: storesData, isLoading: storesLoading } = useUserStores(
-        profile.id
+        profile!.id
     );
     const stores = storesData?.stores ?? [];
     const defaultStore = storesData?.defaultStore;

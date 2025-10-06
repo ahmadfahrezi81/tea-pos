@@ -42,8 +42,15 @@ export function useStores() {
     const { profile } = useAuth();
     const key = profile ? `stores-${profile.id}` : null;
 
-    return useSWR(key, () => fetchStores({ userId: profile.id }), {
-        revalidateOnFocus: false,
-        dedupingInterval: 60000,
-    });
+    return useSWR(
+        key,
+        async () => {
+            if (!profile) return null;
+            return fetchStores({ userId: profile.id });
+        },
+        {
+            revalidateOnFocus: false,
+            dedupingInterval: 60000,
+        }
+    );
 }

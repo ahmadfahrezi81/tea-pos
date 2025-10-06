@@ -2,6 +2,9 @@
 // Common schemas
 export * from "./common";
 
+// Profiles
+export * from "./profiles";
+
 // Orders
 export * from "./orders";
 

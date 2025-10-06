@@ -103,26 +103,63 @@ export default function MobileLayoutClient({
     }, [pathname, optimisticPath]);
 
     // Update role-based redirects with tenant URLs
+    // useEffect(() => {
+    //     if (isLoading) return;
+
+    //     if (!user && pathname !== url("/mobile/profile")) {
+    //         router.push(url("/mobile/profile")); // ← Changed
+    //         return;
+    //     }
+
+    //     if (pathname === url("/mobile/pos") && !canSell) {
+    //         router.push(url("/mobile/profile")); // ← Changed
+    //     }
+
+    //     if (pathname === url("/mobile/orders") && !(canSell || canManage)) {
+    //         router.push(url("/mobile/profile")); // ← Changed
+    //     }
+
+    //     if (pathname === url("/mobile/analytics") && !canManage) {
+    //         router.push(url("/mobile/profile")); // ← Changed
+    //     }
+    // }, [user, isLoading, pathname, canSell, canManage, router, url]); // ← Add url
+
+    // Only redirect if actively trying to access a restricted page
+    // useEffect(() => {
+    //     if (isLoading) return;
+
+    //     // Let middleware handle routing - only show error if needed
+    //     if (!user && pathname !== url("/mobile/profile")) {
+    //         // User not logged in accessing protected page
+    //         router.replace(url("/mobile/profile"));
+    //     }
+    // }, [user, isLoading, pathname, router, url]);
+
+    // useEffect(() => {
+    //     if (isLoading) return;
+
+    //     if (!user && pathname !== url("/mobile/profile")) {
+    //         router.replace(url("/mobile/profile"));
+    //     }
+    // }, [user, isLoading, pathname, router, url]);
+
     useEffect(() => {
+        console.log("🔍 Layout Check:", {
+            isLoading,
+            user: !!user,
+            pathname,
+            canSell,
+            canManage,
+            assignments: Object.keys(assignments).length,
+        });
+
         if (isLoading) return;
 
         if (!user && pathname !== url("/mobile/profile")) {
-            router.push(url("/mobile/profile")); // ← Changed
-            return;
+            console.log("❌ Redirecting: No user");
+            router.replace(url("/mobile/profile"));
         }
-
-        if (pathname === url("/mobile/pos") && !canSell) {
-            router.push(url("/mobile/profile")); // ← Changed
-        }
-
-        if (pathname === url("/mobile/orders") && !(canSell || canManage)) {
-            router.push(url("/mobile/profile")); // ← Changed
-        }
-
-        if (pathname === url("/mobile/analytics") && !canManage) {
-            router.push(url("/mobile/profile")); // ← Changed
-        }
-    }, [user, isLoading, pathname, canSell, canManage, router, url]); // ← Add url
+    }, [user, isLoading, pathname, router, url]);
 
     if (isLoading) {
         return (
@@ -198,7 +235,7 @@ export default function MobileLayoutClient({
 
                     <div className="text-right">
                         <h1 className="text-base font-bold text-gray-800">
-                            {user ? `Hi, ${profile?.full_name}` : "Welcome"}
+                            {user ? `Hi, ${profile?.fullName}` : "Welcome"}
                         </h1>
                         <p className="text-sm text-gray-500">
                             {format(new Date(), "MMMM dd, yyyy")}
