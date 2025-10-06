@@ -3,5 +3,5 @@
 import { redirect } from "next/navigation";
 
 export default function HomePage() {
-    redirect("/mobile");
+    redirect("/login");
 }
