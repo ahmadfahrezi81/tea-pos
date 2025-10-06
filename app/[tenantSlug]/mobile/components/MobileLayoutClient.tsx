@@ -314,6 +314,8 @@ export default function MobileLayoutClient({
     const router = useRouter();
     const pathname = usePathname();
     const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
+    const [showLoader, setShowLoader] = useState(true);
+
     const { url } = useTenantSlug();
 
     const { profile, isLoading: profileLoading } = useAuth();
@@ -329,7 +331,7 @@ export default function MobileLayoutClient({
         [storesData?.assignments]
     );
 
-    const isLoading = profileLoading || (profile && storesLoading);
+    const isLoading = profileLoading || storesLoading || !profile;
 
     const canSell = useMemo(
         () => !!user && hasSellerRole(user.id, assignments),
@@ -373,6 +375,13 @@ export default function MobileLayoutClient({
     );
 
     useEffect(() => {
+        if (!isLoading) {
+            const timer = setTimeout(() => setShowLoader(false), 200); // minimum 200ms splash
+            return () => clearTimeout(timer);
+        }
+    }, [isLoading]);
+
+    useEffect(() => {
         tabs.forEach((tab) => {
             router.prefetch(tab.path);
         });
@@ -384,7 +393,8 @@ export default function MobileLayoutClient({
         }
     }, [pathname, optimisticPath]);
 
-    if (isLoading) {
+    // if (isLoading) {
+    if (showLoader) {
         return (
             <div className="h-[100dvh] overflow-hidden bg-white flex flex-col items-center justify-center">
                 <div className="text-center" role="status" aria-live="polite">
