@@ -899,7 +899,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                 </form>
 
                 {/* Footer Link */}
-                <div className="mt-6 text-center text-sm text-gray-600">
+                {/* <div className="mt-6 text-center text-sm text-gray-600">
                     {mode === "login" ? (
                         <p>
                             Don&apos;t have an account?{" "}
@@ -921,7 +921,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                             </a>
                         </p>
                     )}
-                </div>
+                </div> */}
             </div>
         </div>
     );
