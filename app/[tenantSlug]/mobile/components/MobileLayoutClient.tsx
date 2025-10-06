@@ -374,12 +374,13 @@ export default function MobileLayoutClient({
         [canSell, canManage, url]
     );
 
+    // --- place this ABOVE your "if (showLoader)" return ---
     useEffect(() => {
-        if (!isLoading) {
-            const timer = setTimeout(() => setShowLoader(false), 200); // minimum 200ms splash
+        if (!isLoading && showLoader) {
+            const timer = setTimeout(() => setShowLoader(false), 200);
             return () => clearTimeout(timer);
         }
-    }, [isLoading]);
+    }, [isLoading, showLoader]);
 
     useEffect(() => {
         tabs.forEach((tab) => {
