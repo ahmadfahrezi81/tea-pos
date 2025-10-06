@@ -272,16 +272,59 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-    // Read cookie IMMEDIATELY, not in useEffect
-    const userFromCookie =
-        typeof window !== "undefined" ? getUserFromCookie() : null;
+// export function AuthProvider({ children }: { children: React.ReactNode }) {
+//     // Read cookie IMMEDIATELY, not in useEffect
+//     const userFromCookie =
+//         typeof window !== "undefined" ? getUserFromCookie() : null;
 
-    // Create initial profile synchronously
-    const initialProfile: Profile | null = userFromCookie
+//     // Create initial profile synchronously
+//     const initialProfile: Profile | null = userFromCookie
+//         ? {
+//               id: userFromCookie.id,
+//               role: userFromCookie.role,
+//               email: "",
+//               fullName: "",
+//               createdAt: null,
+//               updatedAt: null,
+//           }
+//         : null;
+
+//     // const {
+//     //     data: profile,
+//     //     isLoading,
+//     //     mutate,
+//     // } = useSWR<Profile | null>("profile", fetchProfile, {
+//     //     fallbackData: initialProfile,
+//     //     revalidateOnMount: true,
+//     // });
+
+//     const {
+//         data: profile = null,
+//         isLoading,
+//         mutate,
+//     } = useSWR<Profile | null>("profile", fetchProfile, {
+//         fallbackData: initialProfile,
+//         revalidateOnMount: true,
+//     });
+
+//     return (
+//         <AuthContext.Provider value={{ profile, isLoading, mutate }}>
+//             {children}
+//         </AuthContext.Provider>
+//     );
+// }
+
+export function AuthProvider({
+    children,
+    initialUser,
+}: {
+    children: React.ReactNode;
+    initialUser?: { id: string; role: string } | null;
+}) {
+    const initialProfile = initialUser
         ? {
-              id: userFromCookie.id,
-              role: userFromCookie.role,
+              id: initialUser.id,
+              role: initialUser.role,
               email: "",
               fullName: "",
               createdAt: null,
@@ -289,23 +332,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         : null;
 
-    // const {
-    //     data: profile,
-    //     isLoading,
-    //     mutate,
-    // } = useSWR<Profile | null>("profile", fetchProfile, {
-    //     fallbackData: initialProfile,
-    //     revalidateOnMount: true,
-    // });
-
     const {
-        data: profile = null,
+        data: profile,
         isLoading,
         mutate,
-    } = useSWR<Profile | null>("profile", fetchProfile, {
+    } = useSWR(initialUser ? "profile" : null, fetchProfile, {
         fallbackData: initialProfile,
         revalidateOnMount: true,
     });
+
+    if (isLoading && !profile) return <div>Loading...</div>;
 
     return (
         <AuthContext.Provider value={{ profile, isLoading, mutate }}>
