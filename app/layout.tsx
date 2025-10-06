@@ -33,8 +33,17 @@
 //     );
 // }
 
+import "./globals.css";
+import { Metadata } from "next";
 import { cookies } from "next/headers";
+import { SWRConfig } from "swr";
+import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "@/lib/context/AuthContext";
+
+export const metadata: Metadata = {
+    title: "POS System",
+    description: "Point of Sale System",
+};
 
 export default async function RootLayout({
     children,
@@ -48,9 +57,17 @@ export default async function RootLayout({
     return (
         <html lang="en">
             <body>
-                <AuthProvider initialUser={initialUser}>
-                    {children}
-                </AuthProvider>
+                <SWRConfig
+                    value={{
+                        dedupingInterval: 5000,
+                        revalidateOnFocus: true,
+                    }}
+                >
+                    <AuthProvider initialUser={initialUser}>
+                        {children}
+                        <Analytics />
+                    </AuthProvider>
+                </SWRConfig>
             </body>
         </html>
     );
