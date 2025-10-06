@@ -1,58 +1,61 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@/lib/supabase/server";
-import { Expense } from "@/lib/hooks/useSummaries";
+// import { NextRequest, NextResponse } from "next/server";
+// import { createRouteHandlerClient } from "@/lib/supabase/server";
+// import { Expense } from "@/lib/hooks/useSummaries";
+// import { getCurrentTenantId } from "@/lib/tenant";
 
-async function fetchAllOrders(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    supabase: any,
-    storeId: string,
-    startDate: string,
-    endDateStr: string
-) {
-    const pageSize = 1000;
-    let from = 0;
-    let to = pageSize - 1;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let allOrders: any[] = [];
+// async function fetchAllOrders(
+//     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+//     supabase: any,
+//     storeId: string,
+//     startDate: string,
+//     endDateStr: string
+// ) {
+//     const pageSize = 1000;
+//     let from = 0;
+//     let to = pageSize - 1;
+//     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+//     let allOrders: any[] = [];
 
-    while (true) {
-        const { data, error } = await supabase
-            .from("orders")
-            .select(
-                `
-                id,
-                total_amount,
-                created_at,
-                order_items(
-                    quantity,
-                    unit_price,
-                    total_price,
-                    products(name, price, image_url)
-                )
-            `
-            )
-            .eq("store_id", storeId)
-            .gte("created_at", `${startDate}T00:00:00Z`)
-            .lte("created_at", `${endDateStr}T23:59:59Z`)
-            .order("created_at", { ascending: true })
-            .range(from, to);
+//     while (true) {
+//         const { data, error } = await supabase
+//             .from("orders")
+//             .select(
+//                 `
+//                 id,
+//                 total_amount,
+//                 created_at,
+//                 order_items(
+//                     quantity,
+//                     unit_price,
+//                     total_price,
+//                     products(name, price, image_url)
+//                 )
+//             `
+//             )
+//             .eq("store_id", storeId)
+//             .gte("created_at", `${startDate}T00:00:00Z`)
+//             .lte("created_at", `${endDateStr}T23:59:59Z`)
+//             .order("created_at", { ascending: true })
+//             .range(from, to);
 
-        if (error) throw error;
-        if (!data || data.length === 0) break;
+//         if (error) throw error;
+//         if (!data || data.length === 0) break;
 
-        allOrders = allOrders.concat(data);
+//         allOrders = allOrders.concat(data);
 
-        // Move to next page
-        from += pageSize;
-        to += pageSize;
-    }
+//         // Move to next page
+//         from += pageSize;
+//         to += pageSize;
+//     }
 
-    return allOrders;
-}
+//     return allOrders;
+// }
 
 // export async function GET(request: NextRequest) {
 //     try {
 //         const supabase = await createRouteHandlerClient();
+//         const currentTenantId = await getCurrentTenantId();
+
 //         const { searchParams } = new URL(request.url);
 //         const storeId = searchParams.get("storeId");
 //         const month = searchParams.get("month"); // Format: YYYY-MM
@@ -71,7 +74,14 @@ async function fetchAllOrders(
 //         endDate.setDate(0);
 //         const endDateStr = endDate.toISOString().split("T")[0];
 
-//         // Fetch daily summaries with correct field names and relationships
+//         console.log(
+//             "Filtering summaries between:",
+//             startDate,
+//             "and",
+//             endDateStr
+//         );
+
+//         // Fetch daily summaries - FIXED: Filter by 'date' field, not 'created_at'
 //         const { data: summaries, error: summariesError } = await supabase
 //             .from("daily_summaries")
 //             .select(
@@ -83,9 +93,12 @@ async function fetchAllOrders(
 //             `
 //             )
 //             .eq("store_id", storeId)
-//             .gte("created_at", `${startDate}T17:00:00Z`) // 00:00 UTC+7 = 17:00 UTC previous day
-//             .lte("created_at", `${endDateStr}T16:59:59Z`) // 23:59 UTC+7 = 16:59 UTC next day
+//             .eq("tenant_id", currentTenantId) // 👈 ADD THIS
+//             .gte("date", startDate) // FIXED: Use 'date' field
+//             .lte("date", endDateStr) // FIXED: Use 'date' field
 //             .order("date", { ascending: false });
+
+//         console.log("Found summaries:", summaries?.length || 0);
 
 //         if (summariesError) {
 //             console.error("Summaries error:", summariesError);
@@ -97,7 +110,8 @@ async function fetchAllOrders(
 //         const { data: expenses, error: expensesError } = await supabase
 //             .from("expenses")
 //             .select("*")
-//             .in("daily_summary_id", summaryIds);
+//             .in("daily_summary_id", summaryIds)
+//             .eq("tenant_id", currentTenantId); // 👈 ADD THIS
 
 //         if (expensesError) {
 //             console.error("Expenses error:", expensesError);
@@ -129,31 +143,12 @@ async function fetchAllOrders(
 //             totalMonthlyExpenses += expense.amount;
 //         });
 
-//         // Fetch orders for product breakdown and calculations
-//         const { data: orders, error: ordersError } = await supabase
-//             .from("orders")
-//             .select(
-//                 `
-//                 id,
-//                 total_amount,
-//                 created_at,
-//                 order_items(
-//                     quantity,
-//                     unit_price,
-//                     total_price,
-//                     products(name, price, image_url)
-//                 )
-//             `
-//             )
-//             .eq("store_id", storeId)
-//             .gte("created_at", `${startDate}T17:00:00Z`) // 00:00 UTC+7 = 17:00 UTC previous day
-//             .lte("created_at", `${endDateStr}T16:59:59Z`) // 23:59 UTC+7 = 16:59 UTC next day
-//             .order("created_at", { ascending: true });
-
-//         if (ordersError) {
-//             console.error("Orders error:", ordersError);
-//             throw ordersError;
-//         }
+//         const orders = await fetchAllOrders(
+//             supabase,
+//             storeId,
+//             startDate,
+//             endDateStr
+//         );
 
 //         // Group orders by date and calculate accurate totals
 //         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -172,7 +167,6 @@ async function fetchAllOrders(
 //             }
 
 //             ordersByDate[date].push(order);
-//             // Use the order's total_amount for accurate sales calculation
 //             salesByDate[date] += order.total_amount;
 //         });
 
@@ -198,7 +192,6 @@ async function fetchAllOrders(
 //                     }
 //                     productBreakdown[date][productName].quantity +=
 //                         item.quantity;
-//                     // Use total_price from order_items for accurate revenue
 //                     productBreakdown[date][productName].revenue +=
 //                         item.total_price;
 //                 });
@@ -215,11 +208,9 @@ async function fetchAllOrders(
 //                     0
 //                 );
 
-//                 // Calculate expected cash with expenses: opening_balance + total_sales - total_expenses
 //                 const newExpectedCash =
 //                     summary.opening_balance + actualSales - totalExpenses;
 
-//                 // Only update if there's a discrepancy
 //                 const needsUpdate =
 //                     actualSales !== summary.total_sales ||
 //                     newExpectedCash !== summary.expected_cash;
@@ -247,7 +238,6 @@ async function fetchAllOrders(
 //                         );
 //                     } catch (updateError) {
 //                         console.error("Error updating summary:", updateError);
-//                         // Return the summary with corrected values even if DB update fails
 //                         return {
 //                             ...summary,
 //                             total_sales: actualSales,
@@ -273,7 +263,6 @@ async function fetchAllOrders(
 //         );
 //         const totalOrders = orders?.length || 0;
 
-//         // Calculate total cups more efficiently
 //         const totalCups = Object.values(productBreakdown).reduce(
 //             (monthTotal, dayBreakdown) =>
 //                 monthTotal +
@@ -284,7 +273,7 @@ async function fetchAllOrders(
 //             0
 //         );
 
-//         return NextResponse.json({
+//         const response = {
 //             summaries: updatedSummaries || [],
 //             productBreakdown,
 //             ordersByDate,
@@ -295,7 +284,10 @@ async function fetchAllOrders(
 //                 totalCups,
 //                 totalExpenses: totalMonthlyExpenses,
 //             },
-//         });
+//         };
+
+//         console.log("API Response summary count:", response.summaries.length);
+//         return NextResponse.json(response);
 //     } catch (error) {
 //         console.error("Error fetching summaries:", error);
 //         return NextResponse.json(
@@ -305,14 +297,245 @@ async function fetchAllOrders(
 //     }
 // }
 
-// Replace your GET method with this fixed version
+// export async function POST(request: NextRequest) {
+//     try {
+//         const supabase = await createRouteHandlerClient();
+//         const body = await request.json();
+//         const { storeId, sellerId, managerId, date, openingBalance } = body;
 
+//         if (!storeId || !sellerId || !date) {
+//             return NextResponse.json(
+//                 { error: "Missing required fields" },
+//                 { status: 400 }
+//             );
+//         }
+
+//         // Get tenant_id from parent store
+//         const { data: store, error: storeError } = await supabase
+//             .from("stores")
+//             .select("tenant_id")
+//             .eq("id", storeId)
+//             .single();
+
+//         if (storeError || !store || !store.tenant_id) {
+//             return NextResponse.json(
+//                 { error: "Invalid storeId or store missing tenant_id" },
+//                 { status: 400 }
+//             );
+//         }
+
+//         // Check if summary already exists for this store & date
+//         const { count, error: existsError } = await supabase
+//             .from("daily_summaries")
+//             .select("id", { count: "exact", head: true })
+//             .eq("store_id", storeId)
+//             .eq("date", date)
+//             .eq("tenant_id", store.tenant_id);
+
+//         if (existsError) throw existsError;
+//         if ((count ?? 0) > 0) {
+//             return NextResponse.json(
+//                 { error: "Daily summary already exists for this date" },
+//                 { status: 409 }
+//             );
+//         }
+
+//         // Get existing orders for this date (scoped to tenant)
+//         const { data: existingOrders, error: ordersError } = await supabase
+//             .from("orders")
+//             .select("total_amount")
+//             .eq("store_id", storeId)
+//             .eq("tenant_id", store.tenant_id)
+//             .gte("created_at", `${date}T17:00:00Z`)
+//             .lte("created_at", `${date}T16:59:59Z`);
+
+//         if (ordersError) throw ordersError;
+
+//         const totalSales =
+//             existingOrders?.reduce(
+//                 (sum, order) => sum + order.total_amount,
+//                 0
+//             ) || 0;
+
+//         const opening = openingBalance || 0;
+//         const expectedCash = opening + totalSales;
+
+//         // Insert summary with inherited tenant_id
+//         const { data, error } = await supabase
+//             .from("daily_summaries")
+//             .insert({
+//                 store_id: storeId,
+//                 seller_id: sellerId,
+//                 manager_id: managerId || null,
+//                 date,
+//                 opening_balance: opening,
+//                 total_sales: totalSales,
+//                 expected_cash: expectedCash,
+//                 tenant_id: store.tenant_id, // from parent store
+//             })
+//             .select()
+//             .single();
+
+//         if (error) throw error;
+
+//         return NextResponse.json(data);
+//     } catch (error) {
+//         console.error("Error creating summary:", error);
+//         return NextResponse.json(
+//             { error: "Internal server error" },
+//             { status: 500 }
+//         );
+//     }
+// }
+
+// export async function PUT(request: NextRequest) {
+//     try {
+//         const supabase = await createRouteHandlerClient();
+//         const currentTenantId = await getCurrentTenantId();
+
+//         const body = await request.json();
+//         const { id, ...updates } = body;
+
+//         if (!id) {
+//             return NextResponse.json(
+//                 { error: "Summary ID is required" },
+//                 { status: 400 }
+//             );
+//         }
+
+//         // If updating opening_balance, recalculate expected_cash including expenses
+//         if (updates.opening_balance !== undefined) {
+//             const { data: currentSummary } = await supabase
+//                 .from("daily_summaries")
+//                 .select("total_sales")
+//                 .eq("id", id)
+//                 .eq("tenant_id", currentTenantId) // 👈 ADD THIS
+//                 .single();
+
+//             // Get total expenses for this summary
+//             const { data: expenses } = await supabase
+//                 .from("expenses")
+//                 .select("amount")
+//                 .eq("daily_summary_id", id);
+
+//             const totalExpenses =
+//                 expenses?.reduce((sum, exp) => sum + exp.amount, 0) || 0;
+
+//             if (currentSummary) {
+//                 updates.expected_cash =
+//                     updates.opening_balance +
+//                     currentSummary.total_sales -
+//                     totalExpenses;
+//             }
+//         }
+
+//         const { data, error } = await supabase
+//             .from("daily_summaries")
+//             .update(updates)
+//             .eq("id", id)
+//             .select()
+//             .single();
+
+//         if (error) throw error;
+
+//         return NextResponse.json(data);
+//     } catch (error) {
+//         console.error("Error updating summary:", error);
+//         return NextResponse.json(
+//             { error: "Internal server error" },
+//             { status: 500 }
+//         );
+//     }
+// }
+
+// app/api/summaries/route.ts
+import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { getCurrentTenantId } from "@/lib/tenant";
+import { NextRequest, NextResponse } from "next/server";
+import {
+    CreateDailySummaryInput,
+    UpdateDailySummaryInput,
+    ListDailySummariesQuery,
+    DailySummaryListResponse,
+    CreateDailySummaryResponse,
+    UpdateDailySummaryResponse,
+} from "@/lib/schemas/daily-summaries";
+import { toCamelKeys, toSnakeKeys } from "@/lib/utils/schemas";
+
+// ============================================================================
+// HELPER: Fetch all orders with pagination
+// ============================================================================
+async function fetchAllOrders(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    supabase: any,
+    storeId: string,
+    tenantId: string,
+    startDate: string,
+    endDateStr: string
+) {
+    const pageSize = 1000;
+    let from = 0;
+    let to = pageSize - 1;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let allOrders: any[] = [];
+
+    while (true) {
+        const { data, error } = await supabase
+            .from("orders")
+            .select(
+                `
+                id,
+                total_amount,
+                created_at,
+                order_items(
+                    quantity,
+                    unit_price,
+                    total_price,
+                    products(name, price, image_url)
+                )
+            `
+            )
+            .eq("store_id", storeId)
+            .eq("tenant_id", tenantId)
+            .gte("created_at", `${startDate}T00:00:00Z`)
+            .lte("created_at", `${endDateStr}T23:59:59Z`)
+            .order("created_at", { ascending: true })
+            .range(from, to);
+
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+
+        allOrders = allOrders.concat(data);
+        from += pageSize;
+        to += pageSize;
+    }
+
+    return allOrders;
+}
+
+// ============================================================================
+// GET /api/summaries
+// ============================================================================
 export async function GET(request: NextRequest) {
     try {
         const supabase = await createRouteHandlerClient();
+        const currentTenantId = await getCurrentTenantId();
         const { searchParams } = new URL(request.url);
-        const storeId = searchParams.get("storeId");
-        const month = searchParams.get("month"); // Format: YYYY-MM
+
+        const queryResult = ListDailySummariesQuery.safeParse(
+            Object.fromEntries(searchParams)
+        );
+        if (!queryResult.success) {
+            return NextResponse.json(
+                {
+                    error: "Invalid query parameters",
+                    details: queryResult.error.format(),
+                },
+                { status: 400 }
+            );
+        }
+
+        const { storeId, month } = queryResult.data;
 
         if (!storeId || !month) {
             return NextResponse.json(
@@ -321,21 +544,14 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // Get start and end of month
+        // Calculate date range for the month
         const startDate = `${month}-01`;
         const endDate = new Date(month + "-01");
         endDate.setMonth(endDate.getMonth() + 1);
         endDate.setDate(0);
         const endDateStr = endDate.toISOString().split("T")[0];
 
-        console.log(
-            "Filtering summaries between:",
-            startDate,
-            "and",
-            endDateStr
-        );
-
-        // Fetch daily summaries - FIXED: Filter by 'date' field, not 'created_at'
+        // Fetch daily summaries
         const { data: summaries, error: summariesError } = await supabase
             .from("daily_summaries")
             .select(
@@ -347,15 +563,16 @@ export async function GET(request: NextRequest) {
             `
             )
             .eq("store_id", storeId)
-            .gte("date", startDate) // FIXED: Use 'date' field
-            .lte("date", endDateStr) // FIXED: Use 'date' field
+            .eq("tenant_id", currentTenantId)
+            .gte("date", startDate)
+            .lte("date", endDateStr)
             .order("date", { ascending: false });
 
-        console.log("Found summaries:", summaries?.length || 0);
-
         if (summariesError) {
-            console.error("Summaries error:", summariesError);
-            throw summariesError;
+            return NextResponse.json(
+                { error: summariesError.message },
+                { status: 400 }
+            );
         }
 
         // Fetch expenses for all summaries
@@ -363,16 +580,21 @@ export async function GET(request: NextRequest) {
         const { data: expenses, error: expensesError } = await supabase
             .from("expenses")
             .select("*")
-            .in("daily_summary_id", summaryIds);
+            .in("daily_summary_id", summaryIds)
+            .eq("tenant_id", currentTenantId);
 
         if (expensesError) {
-            console.error("Expenses error:", expensesError);
-            throw expensesError;
+            return NextResponse.json(
+                { error: expensesError.message },
+                { status: 400 }
+            );
         }
 
-        // Group expenses by daily_summary_id
-        const expensesBySummaryId: Record<string, Expense[]> = {};
-        const expensesByDate: Record<string, Expense[]> = {};
+        // Group expenses by summary_id and by date
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const expensesBySummaryId: Record<string, any[]> = {};
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const expensesByDate: Record<string, any[]> = {};
         let totalMonthlyExpenses = 0;
 
         expenses?.forEach((expense) => {
@@ -381,7 +603,6 @@ export async function GET(request: NextRequest) {
             }
             expensesBySummaryId[expense.daily_summary_id].push(expense);
 
-            // Find the summary to get the date
             const summary = summaries?.find(
                 (s) => s.id === expense.daily_summary_id
             );
@@ -395,40 +616,16 @@ export async function GET(request: NextRequest) {
             totalMonthlyExpenses += expense.amount;
         });
 
-        // // Fetch orders for product breakdown - FIXED: Also use proper date filtering
-        // const { data: orders, error: ordersError } = await supabase
-        //     .from("orders")
-        //     .select(
-        //         `
-        //         id,
-        //         total_amount,
-        //         created_at,
-        //         order_items(
-        //             quantity,
-        //             unit_price,
-        //             total_price,
-        //             products(name, price, image_url)
-        //         )
-        //     `
-        //     )
-        //     .eq("store_id", storeId)
-        //     .gte("created_at", `${startDate}T00:00:00Z`) // FIXED: Simpler timezone handling
-        //     .lte("created_at", `${endDateStr}T23:59:59Z`) // FIXED: Simpler timezone handling
-        //     .order("created_at", { ascending: true });
-
-        // if (ordersError) {
-        //     console.error("Orders error:", ordersError);
-        //     throw ordersError;
-        // }
-
+        // Fetch all orders for the month
         const orders = await fetchAllOrders(
             supabase,
             storeId,
+            currentTenantId,
             startDate,
             endDateStr
         );
 
-        // Group orders by date and calculate accurate totals
+        // Group orders by date and calculate sales
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const ordersByDate: Record<string, any[]> = {};
         const salesByDate: Record<string, number> = {};
@@ -439,6 +636,7 @@ export async function GET(request: NextRequest) {
                 utcDate.getTime() + 7 * 60 * 60 * 1000
             );
             const date = indonesianDate.toISOString().split("T")[0];
+
             if (!ordersByDate[date]) {
                 ordersByDate[date] = [];
                 salesByDate[date] = 0;
@@ -476,7 +674,7 @@ export async function GET(request: NextRequest) {
             });
         });
 
-        // Update daily summaries with accurate sales totals and expense calculations
+        // Update summaries with actual sales and expense calculations
         const updatedSummaries = await Promise.all(
             (summaries || []).map(async (summary) => {
                 const actualSales = salesByDate[summary.date] || 0;
@@ -502,6 +700,7 @@ export async function GET(request: NextRequest) {
                                 expected_cash: newExpectedCash,
                             })
                             .eq("id", summary.id)
+                            .eq("tenant_id", currentTenantId)
                             .select()
                             .single();
 
@@ -534,13 +733,12 @@ export async function GET(request: NextRequest) {
             })
         );
 
-        // Calculate accurate monthly totals
+        // Calculate monthly totals
         const totalSales = Object.values(salesByDate).reduce(
             (sum, sales) => sum + sales,
             0
         );
         const totalOrders = orders?.length || 0;
-
         const totalCups = Object.values(productBreakdown).reduce(
             (monthTotal, dayBreakdown) =>
                 monthTotal +
@@ -551,11 +749,16 @@ export async function GET(request: NextRequest) {
             0
         );
 
+        // Convert to camelCase
+        const camelSummaries = toCamelKeys(updatedSummaries);
+        const camelExpensesByDate = toCamelKeys(expensesByDate);
+
+        // Validate response
         const response = {
-            summaries: updatedSummaries || [],
+            summaries: camelSummaries,
             productBreakdown,
             ordersByDate,
-            expensesByDate,
+            expensesByDate: camelExpensesByDate,
             monthlyTotals: {
                 totalSales,
                 totalOrders,
@@ -564,10 +767,24 @@ export async function GET(request: NextRequest) {
             },
         };
 
-        console.log("API Response summary count:", response.summaries.length);
-        return NextResponse.json(response);
+        const parsed = DailySummaryListResponse.safeParse(response);
+        if (!parsed.success) {
+            console.error(
+                "Daily summaries response validation failed:",
+                parsed.error
+            );
+            return NextResponse.json(
+                {
+                    error: "Invalid response shape",
+                    details: parsed.error.format(),
+                },
+                { status: 500 }
+            );
+        }
+
+        return NextResponse.json(parsed.data);
     } catch (error) {
-        console.error("Error fetching summaries:", error);
+        console.error(error);
         return NextResponse.json(
             { error: "Internal server error" },
             { status: 500 }
@@ -575,27 +792,56 @@ export async function GET(request: NextRequest) {
     }
 }
 
+// ============================================================================
+// POST /api/summaries
+// ============================================================================
 export async function POST(request: NextRequest) {
     try {
         const supabase = await createRouteHandlerClient();
+        const currentTenantId = await getCurrentTenantId();
         const body = await request.json();
-        const { storeId, sellerId, managerId, date, openingBalance } = body;
 
-        if (!storeId || !sellerId || !date) {
+        const result = CreateDailySummaryInput.safeParse(body);
+        if (!result.success) {
             return NextResponse.json(
-                { error: "Missing required fields" },
+                { error: "Validation failed", details: result.error.format() },
                 { status: 400 }
             );
         }
 
-        // Check if summary already exists for this store and date
+        const { storeId, sellerId, managerId, date, openingBalance } =
+            result.data;
+
+        // Verify store exists and belongs to current tenant
+        const { data: store, error: storeError } = await supabase
+            .from("stores")
+            .select("id, tenant_id")
+            .eq("id", storeId)
+            .eq("tenant_id", currentTenantId)
+            .single();
+
+        if (storeError || !store) {
+            return NextResponse.json(
+                { error: "Store not found or access denied" },
+                { status: 404 }
+            );
+        }
+
+        // Check if summary already exists for this store & date
         const { count, error: existsError } = await supabase
             .from("daily_summaries")
             .select("id", { count: "exact", head: true })
             .eq("store_id", storeId)
-            .eq("date", date);
+            .eq("date", date)
+            .eq("tenant_id", currentTenantId);
 
-        if (existsError) throw existsError;
+        if (existsError) {
+            return NextResponse.json(
+                { error: existsError.message },
+                { status: 400 }
+            );
+        }
+
         if ((count ?? 0) > 0) {
             return NextResponse.json(
                 { error: "Daily summary already exists for this date" },
@@ -603,15 +849,21 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Get any existing orders for this date to calculate initial total_sales
+        // Get existing orders for this date
         const { data: existingOrders, error: ordersError } = await supabase
             .from("orders")
             .select("total_amount")
             .eq("store_id", storeId)
-            .gte("created_at", `${date}T17:00:00Z`) // 00:00 UTC+7 = 17:00 UTC previous day
-            .lte("created_at", `${date}T16:59:59Z`); // 23:59 UTC+7 = 16:59 UTC next day
+            .eq("tenant_id", currentTenantId)
+            .gte("created_at", `${date}T00:00:00Z`)
+            .lte("created_at", `${date}T23:59:59Z`);
 
-        if (ordersError) throw ordersError;
+        if (ordersError) {
+            return NextResponse.json(
+                { error: ordersError.message },
+                { status: 400 }
+            );
+        }
 
         const totalSales =
             existingOrders?.reduce(
@@ -620,28 +872,52 @@ export async function POST(request: NextRequest) {
             ) || 0;
 
         const opening = openingBalance || 0;
-        // Initial expected_cash without expenses (no expenses exist yet)
         const expectedCash = opening + totalSales;
 
-        const { data, error } = await supabase
+        // Insert summary with tenant_id inherited from store
+        const summaryPayload = toSnakeKeys({
+            storeId,
+            sellerId,
+            managerId: managerId || null,
+            date,
+            openingBalance: opening,
+            totalSales,
+            expectedCash,
+            tenantId: store.tenant_id,
+        });
+
+        const { data: summaryData, error: summaryError } = await supabase
             .from("daily_summaries")
-            .insert({
-                store_id: storeId,
-                seller_id: sellerId, // Correct field name
-                manager_id: managerId || null,
-                date,
-                opening_balance: opening,
-                total_sales: totalSales,
-                expected_cash: expectedCash,
-            })
+            .insert(summaryPayload)
             .select()
             .single();
 
-        if (error) throw error;
+        if (summaryError || !summaryData) {
+            return NextResponse.json(
+                {
+                    error:
+                        summaryError?.message || "Daily summary insert failed",
+                },
+                { status: 400 }
+            );
+        }
 
-        return NextResponse.json(data);
+        // Validate response
+        const camelSummary = toCamelKeys(summaryData);
+        const parsed = CreateDailySummaryResponse.safeParse(camelSummary);
+        if (!parsed.success) {
+            return NextResponse.json(
+                {
+                    error: "Invalid response shape",
+                    details: parsed.error.format(),
+                },
+                { status: 500 }
+            );
+        }
+
+        return NextResponse.json(parsed.data, { status: 201 });
     } catch (error) {
-        console.error("Error creating summary:", error);
+        console.error(error);
         return NextResponse.json(
             { error: "Internal server error" },
             { status: 500 }
@@ -649,56 +925,122 @@ export async function POST(request: NextRequest) {
     }
 }
 
+// ============================================================================
+// PUT /api/summaries
+// ============================================================================
 export async function PUT(request: NextRequest) {
     try {
         const supabase = await createRouteHandlerClient();
+        const currentTenantId = await getCurrentTenantId();
         const body = await request.json();
-        const { id, ...updates } = body;
 
-        if (!id) {
+        const result = UpdateDailySummaryInput.safeParse(body);
+        if (!result.success) {
             return NextResponse.json(
-                { error: "Summary ID is required" },
+                { error: "Validation failed", details: result.error.format() },
                 { status: 400 }
             );
         }
 
-        // If updating opening_balance, recalculate expected_cash including expenses
-        if (updates.opening_balance !== undefined) {
-            const { data: currentSummary } = await supabase
+        const { id, openingBalance, actualCash, notes, closedAt } = result.data;
+
+        // Build update payload
+        const updates: Record<string, unknown> = {};
+        if (openingBalance !== undefined)
+            updates.opening_balance = openingBalance;
+        if (actualCash !== undefined) updates.actual_cash = actualCash;
+        if (notes !== undefined) updates.notes = notes;
+        if (closedAt !== undefined) updates.closed_at = closedAt;
+
+        // If actualCash is provided (and not null), calculate variance = actualCash - expectedCash
+        if (actualCash !== undefined && actualCash !== null) {
+            const { data: currentSummary, error: fetchError } = await supabase
+                .from("daily_summaries")
+                .select("expected_cash")
+                .eq("id", id)
+                .eq("tenant_id", currentTenantId)
+                .single();
+
+            if (!fetchError && currentSummary?.expected_cash != null) {
+                updates.variance = actualCash - currentSummary.expected_cash;
+            }
+        }
+
+        // If updating opening_balance, recalculate expected_cash
+        if (openingBalance !== undefined) {
+            const { data: currentSummary, error: summaryError } = await supabase
                 .from("daily_summaries")
                 .select("total_sales")
                 .eq("id", id)
+                .eq("tenant_id", currentTenantId)
                 .single();
 
+            if (summaryError || !currentSummary) {
+                return NextResponse.json(
+                    { error: "Daily summary not found" },
+                    { status: 404 }
+                );
+            }
+
             // Get total expenses for this summary
-            const { data: expenses } = await supabase
+            const { data: expenses, error: expensesError } = await supabase
                 .from("expenses")
                 .select("amount")
-                .eq("daily_summary_id", id);
+                .eq("daily_summary_id", id)
+                .eq("tenant_id", currentTenantId);
+
+            if (expensesError) {
+                return NextResponse.json(
+                    { error: expensesError.message },
+                    { status: 400 }
+                );
+            }
 
             const totalExpenses =
                 expenses?.reduce((sum, exp) => sum + exp.amount, 0) || 0;
 
-            if (currentSummary) {
-                updates.expected_cash =
-                    updates.opening_balance +
-                    currentSummary.total_sales -
-                    totalExpenses;
-            }
+            updates.expected_cash =
+                openingBalance + currentSummary.total_sales - totalExpenses;
         }
 
-        const { data, error } = await supabase
+        if (Object.keys(updates).length === 0) {
+            return NextResponse.json(
+                { error: "No fields to update" },
+                { status: 400 }
+            );
+        }
+
+        const { data: summaryData, error: updateError } = await supabase
             .from("daily_summaries")
             .update(updates)
             .eq("id", id)
+            .eq("tenant_id", currentTenantId)
             .select()
             .single();
 
-        if (error) throw error;
+        if (updateError || !summaryData) {
+            return NextResponse.json(
+                { error: updateError?.message || "Daily summary not found" },
+                { status: 404 }
+            );
+        }
 
-        return NextResponse.json(data);
+        // Validate response
+        const camelSummary = toCamelKeys(summaryData);
+        const parsed = UpdateDailySummaryResponse.safeParse(camelSummary);
+        if (!parsed.success) {
+            return NextResponse.json(
+                {
+                    error: "Invalid response shape",
+                    details: parsed.error.format(),
+                },
+                { status: 500 }
+            );
+        }
+
+        return NextResponse.json(parsed.data);
     } catch (error) {
-        console.error("Error updating summary:", error);
+        console.error(error);
         return NextResponse.json(
             { error: "Internal server error" },
             { status: 500 }

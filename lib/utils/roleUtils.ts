@@ -1,12 +1,13 @@
-export interface Assignment {
-    user_id: string;
-    role: string;
-    is_default: boolean;
-}
+import type {
+    StoreListResponse,
+    StoreAssignmentResponse,
+} from "@/lib/schemas/stores";
 
-export interface Assignments {
-    [storeId: string]: Assignment[];
-}
+// 👇 Single assignment type (already camelCase)
+export type Assignment = StoreAssignmentResponse;
+
+// 👇 All assignments grouped by storeId
+export type Assignments = StoreListResponse["assignments"];
 
 export const hasManagerRole = (
     userId: string,
@@ -17,7 +18,7 @@ export const hasManagerRole = (
     return Object.values(assignments).some((storeAssignments) =>
         storeAssignments.some(
             (assignment) =>
-                assignment.user_id === userId && assignment.role === "manager"
+                assignment.userId === userId && assignment.role === "manager"
         )
     );
 };
@@ -31,7 +32,7 @@ export const hasSellerRole = (
     return Object.values(assignments).some((storeAssignments) =>
         storeAssignments.some(
             (assignment) =>
-                assignment.user_id === userId && assignment.role === "seller"
+                assignment.userId === userId && assignment.role === "seller"
         )
     );
 };
@@ -45,7 +46,7 @@ export const hasSellerRoleInStore = (
 
     return assignments[storeId].some(
         (assignment) =>
-            assignment.user_id === userId && assignment.role === "seller"
+            assignment.userId === userId && assignment.role === "seller"
     );
 };
 
@@ -58,6 +59,6 @@ export const hasManagerRoleInStore = (
 
     return assignments[storeId].some(
         (assignment) =>
-            assignment.user_id === userId && assignment.role === "manager"
+            assignment.userId === userId && assignment.role === "manager"
     );
 };
