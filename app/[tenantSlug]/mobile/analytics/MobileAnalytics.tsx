@@ -940,6 +940,7 @@ import {
     AlertTriangle,
     CheckCircle,
     Receipt,
+    BarChart3,
 } from "lucide-react";
 
 import { SetBalanceModal } from "./components/SetBalanceModal";
@@ -951,6 +952,8 @@ import {
 } from "./components/DetailsModal";
 
 import { ConfirmationPopup } from "@/components/mobile/shared/ConfirmationPopup";
+import { useRouter } from "next/navigation";
+import { useTenantSlug } from "@/lib/tenant-url";
 
 // ============================================================================
 // TYPES
@@ -1026,10 +1029,20 @@ const getExpensesForDate = (
 
 export default function MobileAnalytics() {
     const { profile } = useAuth();
+
+    const router = useRouter();
+    const { url } = useTenantSlug();
+
+    // const [selectedStore, setSelectedStore] = useState<string>("");
+    // const [selectedMonth, setSelectedMonth] = useState<string>(
+    //     new Date().toISOString().slice(0, 7)
+    // );
+
     const [selectedStore, setSelectedStore] = useState<string>("");
     const [selectedMonth, setSelectedMonth] = useState<string>(
         new Date().toISOString().slice(0, 7)
     );
+
     const [selectedSummary, setSelectedSummary] =
         useState<DailySummaryWithExtras | null>(null);
 
@@ -1305,11 +1318,31 @@ export default function MobileAnalytics() {
             {/* Monthly Summary */}
             {summariesData?.monthlyTotals && (
                 <div className="bg-white p-4 rounded-lg shadow-sm">
-                    <div className="flex items-center gap-2 mb-3">
-                        <Receipt size={20} className="text-gray-600" />
-                        <h3 className="font-semibold text-gray-800">
-                            Monthly Summary
-                        </h3>
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                            <Receipt size={20} className="text-gray-600" />
+                            <h3 className="font-semibold text-gray-800">
+                                Monthly Summary
+                            </h3>
+                        </div>
+                        <button
+                            onClick={() => {
+                                const params = new URLSearchParams();
+                                params.set("month", selectedMonth);
+                                params.set("storeId", selectedStore);
+                                router.push(
+                                    `${url(
+                                        "/mobile/analytics/chart"
+                                    )}?${params.toString()}`
+                                );
+                            }}
+                            className="flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-sm gap-2 text-xs font-medium transition-all duration-75 active:scale-95 hover:bg-blue-700"
+                        >
+                            <BarChart3 size={14} />
+                            <span>
+                                <span>Monthly Chart</span>
+                            </span>
+                        </button>
                     </div>
                     <div className="grid grid-cols-4 gap-2">
                         <div className="text-center">

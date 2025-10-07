@@ -1,7 +1,7 @@
 // app/mobile/chart/page.tsx
 
-import MobileAnalytics from "./MobileAnalytics";
+import MobileHourlySales from "./MobileHourlySales";
 
-export default function AnalyticsPage() {
-    return <MobileAnalytics />;
+export default function ChartPage() {
+    return <MobileHourlySales />;
 }

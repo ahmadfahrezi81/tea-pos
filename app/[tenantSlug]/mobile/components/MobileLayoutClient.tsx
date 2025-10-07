@@ -728,7 +728,10 @@ export default function MobileLayoutClient({
                     label: "Analytics",
                     icon: BarChart3,
                     show: canManage,
-                    matchPaths: [url("/mobile/analytics")], // Add this
+                    matchPaths: [
+                        url("/mobile/analytics"),
+                        url("/mobile/analytics/chart"),
+                    ], // Add this
                 },
                 {
                     path: url("/mobile/profile"),
@@ -858,8 +861,9 @@ export default function MobileLayoutClient({
     const getCurrentPageTitle = (path: string) => {
         if (path.endsWith("/mobile/pos")) return "POS";
         if (path.endsWith("/mobile/orders")) return "Orders";
-        if (path.endsWith("/mobile/orders/chart")) return "Chart";
+        if (path.endsWith("/mobile/orders/chart")) return "Daily Chart";
         if (path.endsWith("/mobile/analytics")) return "Analytics";
+        if (path.endsWith("/mobile/analytics/chart")) return "Monthly Chart";
         if (path.endsWith("/mobile/profile")) return "Profile";
 
         return "Mobile";
