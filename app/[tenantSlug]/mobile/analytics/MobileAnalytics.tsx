@@ -940,7 +940,7 @@ import {
     AlertTriangle,
     CheckCircle,
     Receipt,
-    BarChart3,
+    BarChart4,
 } from "lucide-react";
 
 import { SetBalanceModal } from "./components/SetBalanceModal";
@@ -1336,9 +1336,9 @@ export default function MobileAnalytics() {
                                     )}?${params.toString()}`
                                 );
                             }}
-                            className="flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-sm gap-2 text-xs font-medium transition-all duration-75 active:scale-95 hover:bg-blue-700"
+                            className="flex items-center px-3.5 py-1.5 bg-blue-600 text-white rounded-sm gap-1 text-xs font-medium transition-all duration-75 active:scale-95 hover:bg-blue-700"
                         >
-                            <BarChart3 size={14} />
+                            <BarChart4 size={14} />
                             <span>
                                 <span>Monthly Chart</span>
                             </span>
