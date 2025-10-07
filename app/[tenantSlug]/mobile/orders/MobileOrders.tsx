@@ -164,12 +164,30 @@ export default function MobileOrders() {
                     </div>
 
                     {/* Chart Button */}
-                    <button
+                    {/* <button
                         onClick={() => router.push(url("/mobile/orders/chart"))}
                         className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded-sm text-xs font-medium transition-all duration-75 active:scale-95 hover:bg-blue-700"
                     >
                         <BarChart3 size={14} />
                         <span>View Chart</span>
+                    </button> */}
+                    <button
+                        onClick={() => {
+                            const params = new URLSearchParams();
+                            params.set("date", selectedDate);
+                            params.set("storeId", selectedStore);
+                            router.push(
+                                `${url(
+                                    "/mobile/orders/chart"
+                                )}?${params.toString()}`
+                            );
+                        }}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded-sm text-xs font-medium transition-all duration-75 active:scale-95 hover:bg-blue-700"
+                    >
+                        <BarChart3 size={16} />
+                        <span>
+                            <span>View Chart</span>
+                        </span>
                     </button>
                 </div>
 
