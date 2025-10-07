@@ -182,10 +182,12 @@ export default function MobileOrders() {
                                 )}?${params.toString()}`
                             );
                         }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium transition-all duration-75 active:scale-95 hover:bg-blue-700"
+                        className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded-sm text-xs font-medium transition-all duration-75 active:scale-95 hover:bg-blue-700"
                     >
                         <BarChart3 size={16} />
-                        <span>Chart</span>
+                        <span>
+                            <span>View Chart</span>
+                        </span>
                     </button>
                 </div>
 
