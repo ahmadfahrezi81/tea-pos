@@ -177,14 +177,14 @@ export default function MobileAnalytics() {
             </div>
 
             {/* Chart Card */}
-            <Card>
+            <Card className="py-4 gap-4 [&>*]:px-4">
                 <CardHeader>
                     <CardTitle>Hourly Sales</CardTitle>
                     <CardDescription>
                         Cup sales throughout the day
                     </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-0! ml-[-10px]">
                     {hourlySales.length === 0 ? (
                         <div className="h-[300px] flex items-center justify-center text-gray-500">
                             No sales data for this date
@@ -208,11 +208,18 @@ export default function MobileAnalytics() {
                                     tickMargin={10}
                                     axisLine={false}
                                 />
+                                {/* <YAxis
+                                    tickLine={false}
+                                    axisLine={false}
+                                    tickMargin={10}
+                                /> */}
                                 <YAxis
+                                    allowDecimals={false}
                                     tickLine={false}
                                     axisLine={false}
                                     tickMargin={10}
                                 />
+
                                 <ChartTooltip
                                     cursor={false}
                                     content={<ChartTooltipContent />}
