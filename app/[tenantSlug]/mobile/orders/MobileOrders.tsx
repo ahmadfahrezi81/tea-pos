@@ -117,7 +117,9 @@ export default function MobileOrders() {
                 style={{ minHeight: "calc(100vh - 200px)" }}
             >
                 <div className="w-10 h-10 border-3 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                <p className="mt-4 text-gray-600 text-sm">Loading Orders...</p>
+                <p className="mt-4 text-gray-600 text-sm">
+                    Loading Daily Chart...
+                </p>
             </div>
         );
     }
@@ -182,7 +184,7 @@ export default function MobileOrders() {
                                 )}?${params.toString()}`
                             );
                         }}
-                        className="flex items-center px-3.5 py-1.5 bg-blue-600 text-white rounded-sm gap-1 text-xs font-medium transition-all duration-75 active:scale-95 hover:bg-blue-700"
+                        className="flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-md gap-1 text-xs font-medium transition-all duration-75 active:scale-95 hover:bg-blue-700"
                     >
                         <BarChart4 size={14} />
                         <span>

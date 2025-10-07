@@ -21,7 +21,7 @@ import {
 import useHourlySales from "@/lib/hooks/analytics/useHourlySales";
 import useUserStores from "@/lib/hooks/shared/useUserStores";
 import { useAuth } from "@/lib/context/AuthContext";
-// import { useTenantSlug } from "@/lib/tenant-url";
+import { useTenantSlug } from "@/lib/tenant-url";
 
 const formatDateForInput = (date: Date) => date.toISOString().split("T")[0];
 
@@ -35,7 +35,7 @@ export default function MobileHourlySales() {
     const { profile } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
-    // const { url } = useTenantSlug();
+    const { url } = useTenantSlug();
 
     // Get initial values from URL params or use defaults
     const initialDate =
@@ -115,7 +115,8 @@ export default function MobileHourlySales() {
                 <span className="font-medium text-md">Back to Orders</span>
             </button> */}
             <button
-                onClick={() => router.back()}
+                // onClick={() => router.back()}
+                onClick={() => router.push(url("/mobile/orders"))}
                 className="flex items-center gap-1 text-gray-700 hover:text-gray-900 transition-colors active:scale-95 duration-75"
             >
                 <ChevronLeft size={24} />
