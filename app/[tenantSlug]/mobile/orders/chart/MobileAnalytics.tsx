@@ -2,7 +2,7 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
 import { CalendarDays, StoreIcon, TrendingUp, ChevronLeft } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
     Card,
@@ -21,6 +21,7 @@ import {
 import useHourlySales from "@/lib/hooks/analytics/useHourlySales";
 import useUserStores from "@/lib/hooks/shared/useUserStores";
 import { useAuth } from "@/lib/context/AuthContext";
+// import { useTenantSlug } from "@/lib/tenant-url";
 
 const formatDateForInput = (date: Date) => date.toISOString().split("T")[0];
 
@@ -33,11 +34,21 @@ const chartConfig = {
 export default function MobileAnalytics() {
     const { profile } = useAuth();
     const router = useRouter();
+    const searchParams = useSearchParams();
+    // const { url } = useTenantSlug();
 
-    const [selectedDate, setSelectedDate] = useState(
-        formatDateForInput(new Date())
-    );
-    const [selectedStore, setSelectedStore] = useState<string>("");
+    // Get initial values from URL params or use defaults
+    const initialDate =
+        searchParams.get("date") || formatDateForInput(new Date());
+    const initialStoreId = searchParams.get("storeId") || "";
+
+    const [selectedDate, setSelectedDate] = useState(initialDate);
+    const [selectedStore, setSelectedStore] = useState<string>(initialStoreId);
+
+    // const [selectedDate, setSelectedDate] = useState(
+    //     formatDateForInput(new Date())
+    // );
+    // const [selectedStore, setSelectedStore] = useState<string>("");
 
     // Fetch user stores
     const { data: storesData, isLoading: storesLoading } = useUserStores(
@@ -46,12 +57,19 @@ export default function MobileAnalytics() {
     const stores = storesData?.stores ?? [];
     const defaultStore = storesData?.defaultStore;
 
-    // Auto-select default store on mount
+    // // Auto-select default store on mount
+    // useEffect(() => {
+    //     if (defaultStore && !selectedStore) {
+    //         setSelectedStore(defaultStore.id);
+    //     }
+    // }, [defaultStore, selectedStore]);
+
+    // Auto-select default store on mount (only if no store was passed via URL)
     useEffect(() => {
-        if (defaultStore && !selectedStore) {
+        if (defaultStore && !selectedStore && !initialStoreId) {
             setSelectedStore(defaultStore.id);
         }
-    }, [defaultStore, selectedStore]);
+    }, [defaultStore, selectedStore, initialStoreId]);
 
     // Fetch hourly sales data
     const { data: hourlySales = [], isLoading: salesLoading } = useHourlySales(
