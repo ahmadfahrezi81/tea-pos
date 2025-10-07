@@ -628,22 +628,39 @@ export default function MobileLayoutClient({
     }, [profile]);
 
     // Enhanced loading logic with recovery
+    // const isLoading = useMemo(() => {
+    //     // If we have a profile, never show loader
+    //     if (profile) return false;
+
+    //     // If loading and no profile yet, show loader
+    //     if (profileLoading) return true;
+
+    //     // If we've exhausted retries, stop loading to prevent infinite spinner
+    //     if (authRetryCount >= 3) {
+    //         console.warn("⚠️ Auth retries exhausted - allowing UI to render");
+    //         return false;
+    //     }
+
+    //     // Default to loading if no profile
+    //     return true;
+    // }, [profile, profileLoading, authRetryCount]);
+
     const isLoading = useMemo(() => {
-        // If we have a profile, never show loader
-        if (profile) return false;
-
-        // If loading and no profile yet, show loader
-        if (profileLoading) return true;
-
         // If we've exhausted retries, stop loading to prevent infinite spinner
         if (authRetryCount >= 3) {
             console.warn("⚠️ Auth retries exhausted - allowing UI to render");
             return false;
         }
 
-        // Default to loading if no profile
-        return true;
-    }, [profile, profileLoading, authRetryCount]);
+        // Show loader if profile is loading or not available
+        if (profileLoading || !profile) return true;
+
+        // Also wait for stores data since tabs depend on it
+        if (storesLoading) return true;
+
+        // Everything loaded
+        return false;
+    }, [profile, profileLoading, storesLoading, authRetryCount]);
 
     const canSell = useMemo(
         () => !!user && hasSellerRole(user.id, assignments),
