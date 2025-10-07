@@ -1,8 +1,9 @@
-// components/MobileAnalytics.tsx
+// components/MobileDailySales.tsx
 "use client";
 import { useState, useEffect, useMemo } from "react";
 import { CalendarDays, StoreIcon, TrendingUp, ChevronLeft } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+// import { useTenantSlug } from "@/lib/tenant-url";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
     Card,
@@ -18,37 +19,36 @@ import {
     ChartTooltip,
     ChartTooltipContent,
 } from "@/components/ui/chart";
-import useHourlySales from "@/lib/hooks/analytics/useHourlySales";
+import useDailySales from "@/lib/hooks/analytics/useDailySales";
 import useUserStores from "@/lib/hooks/shared/useUserStores";
 import { useAuth } from "@/lib/context/AuthContext";
-// import { useTenantSlug } from "@/lib/tenant-url";
 
-const formatDateForInput = (date: Date) => date.toISOString().split("T")[0];
+const formatMonthForInput = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    return `${year}-${month}`;
+};
 
 const chartConfig = {
     cups: {
         label: "Cups Sold",
-        color: "hsl(217, 91%, 60%)", // Blue color (matches your blue-600)
+        color: "#175EFA", // Blue color (matches your blue-600)
     },
 } satisfies ChartConfig;
-export default function MobileAnalytics() {
+
+export default function MobileDailySales() {
     const { profile } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
     // const { url } = useTenantSlug();
 
     // Get initial values from URL params or use defaults
-    const initialDate =
-        searchParams.get("date") || formatDateForInput(new Date());
+    const initialMonth =
+        searchParams.get("month") || formatMonthForInput(new Date());
     const initialStoreId = searchParams.get("storeId") || "";
 
-    const [selectedDate, setSelectedDate] = useState(initialDate);
+    const [selectedMonth, setSelectedMonth] = useState(initialMonth);
     const [selectedStore, setSelectedStore] = useState<string>(initialStoreId);
-
-    // const [selectedDate, setSelectedDate] = useState(
-    //     formatDateForInput(new Date())
-    // );
-    // const [selectedStore, setSelectedStore] = useState<string>("");
 
     // Fetch user stores
     const { data: storesData, isLoading: storesLoading } = useUserStores(
@@ -57,13 +57,6 @@ export default function MobileAnalytics() {
     const stores = storesData?.stores ?? [];
     const defaultStore = storesData?.defaultStore;
 
-    // // Auto-select default store on mount
-    // useEffect(() => {
-    //     if (defaultStore && !selectedStore) {
-    //         setSelectedStore(defaultStore.id);
-    //     }
-    // }, [defaultStore, selectedStore]);
-
     // Auto-select default store on mount (only if no store was passed via URL)
     useEffect(() => {
         if (defaultStore && !selectedStore && !initialStoreId) {
@@ -71,22 +64,57 @@ export default function MobileAnalytics() {
         }
     }, [defaultStore, selectedStore, initialStoreId]);
 
-    // Fetch hourly sales data
-    const { data: hourlySales = [], isLoading: salesLoading } = useHourlySales(
+    // Fetch daily sales data
+    const { data: dailySales = [], isLoading: salesLoading } = useDailySales(
         selectedStore,
-        selectedDate
+        selectedMonth
     );
+
+    // Transform data for chart - format dates as "Oct 15"
+    const chartData = useMemo(() => {
+        return dailySales.map((item) => {
+            const date = new Date(item.date + "T00:00:00");
+            const formattedDate = date.toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+            });
+            return {
+                date: formattedDate,
+                dateRaw: item.date, // Keep raw date for tooltip
+                cups: item.cups,
+            };
+        });
+    }, [dailySales]);
 
     // Calculate summary stats
     const summaryStats = useMemo(() => {
-        const totalCups = hourlySales.reduce((sum, item) => sum + item.cups, 0);
-        const peakHour = hourlySales.reduce(
+        const totalCups = dailySales.reduce((sum, item) => sum + item.cups, 0);
+        const peakDay = dailySales.reduce(
             (max, item) => (item.cups > max.cups ? item : max),
-            { hour: "N/A", cups: 0 }
+            { date: "N/A", cups: 0 }
         );
 
-        return { totalCups, peakHour };
-    }, [hourlySales]);
+        // Format peak day date
+        let peakDayFormatted = "N/A";
+        if (peakDay.date !== "N/A") {
+            const date = new Date(peakDay.date + "T00:00:00");
+            peakDayFormatted = date.toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+            });
+        }
+
+        const avgCups =
+            dailySales.length > 0
+                ? Math.round(totalCups / dailySales.length)
+                : 0;
+
+        return {
+            totalCups,
+            peakDay: { ...peakDay, dateFormatted: peakDayFormatted },
+            avgCups,
+        };
+    }, [dailySales]);
 
     const isLoading = storesLoading || salesLoading;
 
@@ -107,44 +135,37 @@ export default function MobileAnalytics() {
     return (
         <div className="space-y-4">
             {/* Back Button */}
-            {/* <button
-                onClick={() => router.back()}
-                className="flex items-center text-gray-700 hover:text-gray-900 transition-colors active:scale-95 duration-75"
-            >
-                <ChevronLeft size={24} />
-                <span className="font-medium text-md">Back to Orders</span>
-            </button> */}
             <button
                 onClick={() => router.back()}
                 className="flex items-center gap-1 text-gray-700 hover:text-gray-900 transition-colors active:scale-95 duration-75"
             >
                 <ChevronLeft size={24} />
                 <span className="font-medium text-md mb-0.5">
-                    Back to Orders
+                    Back to Analytics
                 </span>
             </button>
 
             {/* Filters Section */}
             <div className="bg-white p-4 rounded-lg shadow-sm space-y-3">
                 <div className="grid grid-cols-1 gap-3">
-                    {/* Date Filter */}
+                    {/* Month Filter */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             <CalendarDays size={16} className="inline mr-1" />
-                            Select Date
+                            Select Month
                         </label>
                         <input
-                            type="date"
-                            value={selectedDate}
+                            type="month"
+                            value={selectedMonth}
                             onChange={(e) => {
                                 const newValue = e.target.value;
                                 if (newValue === "") {
-                                    const today = new Date()
-                                        .toISOString()
-                                        .split("T")[0];
-                                    setSelectedDate(today);
+                                    const currentMonth = formatMonthForInput(
+                                        new Date()
+                                    );
+                                    setSelectedMonth(currentMonth);
                                 } else {
-                                    setSelectedDate(newValue);
+                                    setSelectedMonth(newValue);
                                 }
                             }}
                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
@@ -177,23 +198,23 @@ export default function MobileAnalytics() {
             </div>
 
             {/* Chart Card */}
-            <Card>
+            <Card className="py-4 gap-4 [&>*]:px-4">
                 <CardHeader>
-                    <CardTitle>Hourly Sales</CardTitle>
+                    <CardTitle>Daily Sales</CardTitle>
                     <CardDescription>
-                        Cup sales throughout the day
+                        Cup sales throughout the month
                     </CardDescription>
                 </CardHeader>
-                <CardContent>
-                    {hourlySales.length === 0 ? (
+                <CardContent className="px-0! ml-[-5px] mb-[-40px]">
+                    {chartData.length === 0 ? (
                         <div className="h-[300px] flex items-center justify-center text-gray-500">
-                            No sales data for this date
+                            No sales data for this month
                         </div>
                     ) : (
                         <ChartContainer config={chartConfig}>
                             <BarChart
                                 accessibilityLayer
-                                data={hourlySales}
+                                data={chartData}
                                 margin={{
                                     top: 20,
                                     right: 20,
@@ -203,10 +224,13 @@ export default function MobileAnalytics() {
                             >
                                 <CartesianGrid vertical={false} />
                                 <XAxis
-                                    dataKey="hour"
+                                    dataKey="date"
                                     tickLine={false}
                                     tickMargin={10}
                                     axisLine={false}
+                                    angle={-45}
+                                    textAnchor="end"
+                                    height={80}
                                 />
                                 <YAxis
                                     tickLine={false}
@@ -226,15 +250,16 @@ export default function MobileAnalytics() {
                         </ChartContainer>
                     )}
                 </CardContent>
-                {hourlySales.length > 0 && (
+                {chartData.length > 0 && (
                     <CardFooter className="flex-col items-start gap-2 text-sm">
                         <div className="flex gap-2 leading-none font-medium">
-                            Peak hour: {summaryStats.peakHour.hour} (
-                            {summaryStats.peakHour.cups} cups)
+                            Peak day: {summaryStats.peakDay.dateFormatted} (
+                            {summaryStats.peakDay.cups} cups)
                             <TrendingUp className="h-4 w-4" />
                         </div>
                         <div className="text-muted-foreground leading-none">
-                            Total cups sold today: {summaryStats.totalCups}
+                            Total: {summaryStats.totalCups} cups | Avg:{" "}
+                            {summaryStats.avgCups} cups/day
                         </div>
                     </CardFooter>
                 )}

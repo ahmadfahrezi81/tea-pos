@@ -29,6 +29,22 @@ export const HourlySalesQuery = z
     })
     .openapi({ title: "HourlySalesQuery" });
 
+export const DailySalesQuery = z
+    .object({
+        storeId: UUIDSchema.openapi({
+            description: "Store ID to fetch daily sales for",
+            example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        }),
+        month: z
+            .string()
+            .regex(/^\d{4}-\d{2}$/)
+            .openapi({
+                description: "Month in YYYY-MM format",
+                example: "2025-10",
+            }),
+    })
+    .openapi({ title: "DailySalesQuery" });
+
 // ============================================================================
 // RESPONSE SCHEMAS
 // ============================================================================
@@ -46,6 +62,19 @@ export const HourlySalesDataPoint = z
     })
     .openapi({ title: "HourlySalesDataPoint" });
 
+export const DailySalesDataPoint = z
+    .object({
+        date: z.string().openapi({
+            description: "Date in YYYY-MM-DD format",
+            example: "2025-10-15",
+        }),
+        cups: z.number().int().min(0).openapi({
+            description: "Number of cups sold on this day",
+            example: 156,
+        }),
+    })
+    .openapi({ title: "DailySalesDataPoint" });
+
 export const HourlySalesResponse = z
     .object({
         data: z.array(HourlySalesDataPoint).openapi({
@@ -54,6 +83,14 @@ export const HourlySalesResponse = z
     })
     .openapi({ title: "HourlySalesResponse" });
 
+export const DailySalesResponse = z
+    .object({
+        data: z.array(DailySalesDataPoint).openapi({
+            description: "Array of daily sales data points",
+        }),
+    })
+    .openapi({ title: "DailySalesResponse" });
+
 // ============================================================================
 // TYPE EXPORTS
 // ============================================================================
@@ -61,3 +98,7 @@ export const HourlySalesResponse = z
 export type HourlySalesQuery = z.infer<typeof HourlySalesQuery>;
 export type HourlySalesDataPoint = z.infer<typeof HourlySalesDataPoint>;
 export type HourlySalesResponse = z.infer<typeof HourlySalesResponse>;
+
+export type DailySalesQuery = z.infer<typeof DailySalesQuery>;
+export type DailySalesDataPoint = z.infer<typeof DailySalesDataPoint>;
+export type DailySalesResponse = z.infer<typeof DailySalesResponse>;
