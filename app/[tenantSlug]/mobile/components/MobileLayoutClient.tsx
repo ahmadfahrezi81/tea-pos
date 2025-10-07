@@ -672,6 +672,37 @@ export default function MobileLayoutClient({
         [user, assignments]
     );
 
+    // const tabs = useMemo(
+    //     () =>
+    //         [
+    //             {
+    //                 path: url("/mobile/pos"),
+    //                 label: "POS",
+    //                 icon: ShoppingCart,
+    //                 show: canSell,
+    //             },
+    //             {
+    //                 path: url("/mobile/orders"),
+    //                 label: "Orders",
+    //                 icon: Clock,
+    //                 show: canSell || canManage,
+    //             },
+    //             {
+    //                 path: url("/mobile/analytics"),
+    //                 label: "Analytics",
+    //                 icon: BarChart3,
+    //                 show: canManage,
+    //             },
+    //             {
+    //                 path: url("/mobile/profile"),
+    //                 label: "Profile",
+    //                 icon: User,
+    //                 show: true,
+    //             },
+    //         ].filter((tab) => tab.show),
+    //     [canSell, canManage, url]
+    // );
+
     const tabs = useMemo(
         () =>
             [
@@ -680,24 +711,31 @@ export default function MobileLayoutClient({
                     label: "POS",
                     icon: ShoppingCart,
                     show: canSell,
+                    matchPaths: [url("/mobile/pos")], // Add this
                 },
                 {
                     path: url("/mobile/orders"),
                     label: "Orders",
                     icon: Clock,
                     show: canSell || canManage,
+                    matchPaths: [
+                        url("/mobile/orders"),
+                        url("/mobile/orders/chart"),
+                    ], // Add this
                 },
                 {
                     path: url("/mobile/analytics"),
                     label: "Analytics",
                     icon: BarChart3,
                     show: canManage,
+                    matchPaths: [url("/mobile/analytics")], // Add this
                 },
                 {
                     path: url("/mobile/profile"),
                     label: "Profile",
                     icon: User,
                     show: true,
+                    matchPaths: [url("/mobile/profile")], // Add this
                 },
             ].filter((tab) => tab.show),
         [canSell, canManage, url]
@@ -820,8 +858,10 @@ export default function MobileLayoutClient({
     const getCurrentPageTitle = (path: string) => {
         if (path.endsWith("/mobile/pos")) return "POS";
         if (path.endsWith("/mobile/orders")) return "Orders";
+        if (path.endsWith("/mobile/orders/chart")) return "Chart";
         if (path.endsWith("/mobile/analytics")) return "Analytics";
         if (path.endsWith("/mobile/profile")) return "Profile";
+
         return "Mobile";
     };
 
@@ -877,7 +917,9 @@ export default function MobileLayoutClient({
                 <div className="flex">
                     {tabs.map((tab) => {
                         const Icon = tab.icon;
-                        const isActive = currentPath === tab.path;
+                        // const isActive = currentPath === tab.path;
+
+                        const isActive = tab.matchPaths.includes(currentPath);
 
                         return (
                             <button

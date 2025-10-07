@@ -4,10 +4,18 @@ import { useState, useMemo, useEffect } from "react";
 import useStoreOrders from "@/lib/hooks/orders/useStoreOrders";
 
 import useUserStores from "@/lib/hooks/shared/useUserStores";
-import { Calendar, CalendarDays, StoreIcon, Receipt } from "lucide-react";
+import {
+    Calendar,
+    CalendarDays,
+    StoreIcon,
+    Receipt,
+    BarChart3,
+} from "lucide-react";
 import { formatRupiah } from "@/lib/utils/formatCurrency";
 import CopyableField from "@/components/mobile/shared/CopyableField";
 import { useAuth } from "@/lib/context/AuthContext";
+import { useRouter } from "next/navigation";
+import { useTenantSlug } from "@/lib/tenant-url";
 
 // Utility functions
 const formatMobileDate = (dateString: string) => {
@@ -41,6 +49,9 @@ const formatDateForInput = (date: Date) => date.toISOString().split("T")[0];
 
 export default function MobileOrders() {
     const { profile } = useAuth();
+
+    const router = useRouter();
+    const { url } = useTenantSlug();
 
     const [selectedDate, setSelectedDate] = useState(
         formatDateForInput(new Date())
@@ -114,12 +125,52 @@ export default function MobileOrders() {
     return (
         <div className="space-y-4">
             {/* Summary Section */}
-            <div className="bg-white p-4 rounded-lg shadow-sm">
+            {/* <div className="bg-white p-4 rounded-lg shadow-sm">
                 <div className="flex items-center gap-2 mb-3">
                     <Receipt size={20} className="text-gray-600" />
                     <h3 className="font-semibold text-gray-800">
                         Daily Summary
                     </h3>
+                </div>
+
+                <div className="grid grid-cols-4 gap-2">
+                    <div className="text-center">
+                        <p className="text-xl font-bold text-blue-600">
+                            {summaryStats.totalOrders}
+                        </p>
+                        <p className="text-sm text-gray-600">Orders</p>
+                    </div>
+                    <div className="text-center">
+                        <p className="text-xl font-bold text-orange-600">
+                            {summaryStats.totalCups}
+                        </p>
+                        <p className="text-sm text-gray-600">Cups</p>
+                    </div>
+                    <div className="text-center col-span-2 border-l-2 border-gray-300">
+                        <p className="text-sm text-gray-600">Total Sales</p>
+                        <p className="text-xl font-bold text-green-600">
+                            {formatRupiah(summaryStats.totalSales)}
+                        </p>
+                    </div>
+                </div>
+            </div> */}
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                        <Receipt size={20} className="text-gray-600" />
+                        <h3 className="font-semibold text-gray-800">
+                            Daily Summary
+                        </h3>
+                    </div>
+
+                    {/* Chart Button */}
+                    <button
+                        onClick={() => router.push(url("/mobile/orders/chart"))}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded-sm text-xs font-medium transition-all duration-75 active:scale-95 hover:bg-blue-700"
+                    >
+                        <BarChart3 size={14} />
+                        <span>View Chart</span>
+                    </button>
                 </div>
 
                 <div className="grid grid-cols-4 gap-2">
