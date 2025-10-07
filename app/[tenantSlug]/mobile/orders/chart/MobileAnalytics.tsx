@@ -28,7 +28,7 @@ const formatDateForInput = (date: Date) => date.toISOString().split("T")[0];
 const chartConfig = {
     cups: {
         label: "Cups Sold",
-        color: "hsl(217, 91%, 60%)", // Blue color (matches your blue-600)
+        color: "#175EFA", // Blue color (matches your blue-600)
     },
 } satisfies ChartConfig;
 export default function MobileAnalytics() {
