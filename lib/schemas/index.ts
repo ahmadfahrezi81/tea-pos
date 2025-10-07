@@ -32,5 +32,8 @@ export * from "./userTenantAssignments";
 // Tenant Invites
 export * from "./tenantInvites";
 
+// Analytics
+export * from "./analytics";
+
 // Type exports for frontend
 export type { z } from "zod";
