@@ -166,10 +166,10 @@ export default function MobileOrders() {
                     {/* Chart Button */}
                     <button
                         onClick={() => router.push(url("/mobile/orders/chart"))}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium transition-all duration-75 active:scale-95 hover:bg-blue-700"
+                        className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded-sm text-xs font-medium transition-all duration-75 active:scale-95 hover:bg-blue-700"
                     >
-                        <BarChart3 size={16} />
-                        <span>Chart</span>
+                        <BarChart3 size={14} />
+                        <span>View Chart</span>
                     </button>
                 </div>
 

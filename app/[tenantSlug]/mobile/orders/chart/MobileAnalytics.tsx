@@ -1,9 +1,8 @@
 // components/MobileAnalytics.tsx
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import { CalendarDays, StoreIcon, TrendingUp, ArrowLeft } from "lucide-react";
+import { CalendarDays, StoreIcon, TrendingUp, ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTenantSlug } from "@/lib/tenant-url";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
     Card,
@@ -28,14 +27,12 @@ const formatDateForInput = (date: Date) => date.toISOString().split("T")[0];
 const chartConfig = {
     cups: {
         label: "Cups Sold",
-        color: "hsl(var(--chart-1))",
+        color: "hsl(217, 91%, 60%)", // Blue color (matches your blue-600)
     },
 } satisfies ChartConfig;
-
 export default function MobileAnalytics() {
     const { profile } = useAuth();
     const router = useRouter();
-    const { url } = useTenantSlug();
 
     const [selectedDate, setSelectedDate] = useState(
         formatDateForInput(new Date())
@@ -92,12 +89,21 @@ export default function MobileAnalytics() {
     return (
         <div className="space-y-4">
             {/* Back Button */}
+            {/* <button
+                onClick={() => router.back()}
+                className="flex items-center text-gray-700 hover:text-gray-900 transition-colors active:scale-95 duration-75"
+            >
+                <ChevronLeft size={24} />
+                <span className="font-medium text-md">Back to Orders</span>
+            </button> */}
             <button
                 onClick={() => router.back()}
-                className="flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors active:scale-95 duration-75"
+                className="flex items-center gap-1 text-gray-700 hover:text-gray-900 transition-colors active:scale-95 duration-75"
             >
-                <ArrowLeft size={20} />
-                <span className="font-medium">Back to Orders</span>
+                <ChevronLeft size={24} />
+                <span className="font-medium text-md mb-0.5">
+                    Back to Orders
+                </span>
             </button>
 
             {/* Filters Section */}
