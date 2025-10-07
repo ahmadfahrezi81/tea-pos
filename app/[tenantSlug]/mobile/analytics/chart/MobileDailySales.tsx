@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { CalendarDays, StoreIcon, TrendingUp, ChevronLeft } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-// import { useTenantSlug } from "@/lib/tenant-url";
+import { useTenantSlug } from "@/lib/tenant-url";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
     Card,
@@ -40,7 +40,7 @@ export default function MobileDailySales() {
     const { profile } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
-    // const { url } = useTenantSlug();
+    const { url } = useTenantSlug();
 
     // Get initial values from URL params or use defaults
     const initialMonth =
@@ -126,7 +126,7 @@ export default function MobileDailySales() {
             >
                 <div className="w-10 h-10 border-3 border-blue-500 border-t-transparent rounded-full animate-spin" />
                 <p className="mt-4 text-gray-600 text-sm">
-                    Loading Analytics...
+                    Loading Monthly Chart...
                 </p>
             </div>
         );
@@ -136,7 +136,8 @@ export default function MobileDailySales() {
         <div className="space-y-4">
             {/* Back Button */}
             <button
-                onClick={() => router.back()}
+                // onClick={() => router.back()}
+                onClick={() => router.push(url("/mobile/analytics"))}
                 className="flex items-center gap-1 text-gray-700 hover:text-gray-900 transition-colors active:scale-95 duration-75"
             >
                 <ChevronLeft size={24} />
