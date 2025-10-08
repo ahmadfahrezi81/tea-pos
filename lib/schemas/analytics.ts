@@ -45,6 +45,22 @@ export const DailySalesQuery = z
     })
     .openapi({ title: "DailySalesQuery" });
 
+export const ProductSalesQuery = z
+    .object({
+        storeId: UUIDSchema.openapi({
+            description: "Store ID to fetch product sales for",
+            example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        }),
+        month: z
+            .string()
+            .regex(/^\d{4}-\d{2}$/)
+            .openapi({
+                description: "Month in YYYY-MM format",
+                example: "2025-10",
+            }),
+    })
+    .openapi({ title: "ProductSalesQuery" });
+
 // ============================================================================
 // RESPONSE SCHEMAS
 // ============================================================================
@@ -91,6 +107,40 @@ export const DailySalesResponse = z
     })
     .openapi({ title: "DailySalesResponse" });
 
+export const ProductSalesDataPoint = z
+    .object({
+        productId: z.string().openapi({
+            description: "Product ID",
+            example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        }),
+        productName: z.string().openapi({
+            description: "Product name",
+            example: "Espresso",
+        }),
+        quantity: z.number().int().min(0).openapi({
+            description: "Total quantity sold",
+            example: 450,
+        }),
+        percentage: z.number().min(0).max(100).openapi({
+            description: "Percentage of total sales",
+            example: 75.5,
+        }),
+    })
+    .openapi({ title: "ProductSalesDataPoint" });
+
+export const ProductSalesResponse = z
+    .object({
+        data: z.array(ProductSalesDataPoint).openapi({
+            description:
+                "Array of product sales data points, sorted by quantity descending",
+        }),
+        totalQuantity: z.number().int().min(0).openapi({
+            description: "Total quantity of all products sold",
+            example: 596,
+        }),
+    })
+    .openapi({ title: "ProductSalesResponse" });
+
 // ============================================================================
 // TYPE EXPORTS
 // ============================================================================
@@ -102,3 +152,7 @@ export type HourlySalesResponse = z.infer<typeof HourlySalesResponse>;
 export type DailySalesQuery = z.infer<typeof DailySalesQuery>;
 export type DailySalesDataPoint = z.infer<typeof DailySalesDataPoint>;
 export type DailySalesResponse = z.infer<typeof DailySalesResponse>;
+
+export type ProductSalesQuery = z.infer<typeof ProductSalesQuery>;
+export type ProductSalesDataPoint = z.infer<typeof ProductSalesDataPoint>;
+export type ProductSalesResponse = z.infer<typeof ProductSalesResponse>;

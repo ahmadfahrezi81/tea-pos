@@ -1,7 +1,13 @@
 // components/MobileDailySales.tsx
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import { CalendarDays, StoreIcon, TrendingUp, ChevronLeft } from "lucide-react";
+import {
+    CalendarDays,
+    StoreIcon,
+    TrendingUp,
+    ChevronLeft,
+    Package,
+} from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTenantSlug } from "@/lib/tenant-url";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
@@ -20,6 +26,7 @@ import {
     ChartTooltipContent,
 } from "@/components/ui/chart";
 import useDailySales from "@/lib/hooks/analytics/useDailySales";
+import useProductSales from "@/lib/hooks/analytics/useProductSales";
 import useUserStores from "@/lib/hooks/shared/useUserStores";
 import { useAuth } from "@/lib/context/AuthContext";
 
@@ -29,12 +36,18 @@ const formatMonthForInput = (date: Date) => {
     return `${year}-${month}`;
 };
 
-const chartConfig = {
+const dailySalesChartConfig = {
     cups: {
         label: "Cups Sold",
-        color: "#175EFA", // Blue color (matches your blue-600)
+        color: "#175EFA",
     },
 } satisfies ChartConfig;
+
+// Generate color palette for products
+const generateColor = (index: number, total: number) => {
+    const hue = (index * 360) / total;
+    return `hsl(${hue}, 70%, 55%)`;
+};
 
 export default function MobileDailySales() {
     const { profile } = useAuth();
@@ -42,7 +55,6 @@ export default function MobileDailySales() {
     const searchParams = useSearchParams();
     const { url } = useTenantSlug();
 
-    // Get initial values from URL params or use defaults
     const initialMonth =
         searchParams.get("month") || formatMonthForInput(new Date());
     const initialStoreId = searchParams.get("storeId") || "";
@@ -50,28 +62,34 @@ export default function MobileDailySales() {
     const [selectedMonth, setSelectedMonth] = useState(initialMonth);
     const [selectedStore, setSelectedStore] = useState<string>(initialStoreId);
 
-    // Fetch user stores
     const { data: storesData, isLoading: storesLoading } = useUserStores(
         profile!.id
     );
     const stores = storesData?.stores ?? [];
     const defaultStore = storesData?.defaultStore;
 
-    // Auto-select default store on mount (only if no store was passed via URL)
     useEffect(() => {
         if (defaultStore && !selectedStore && !initialStoreId) {
             setSelectedStore(defaultStore.id);
         }
     }, [defaultStore, selectedStore, initialStoreId]);
 
-    // Fetch daily sales data
     const { data: dailySales = [], isLoading: salesLoading } = useDailySales(
         selectedStore,
         selectedMonth
     );
 
-    // Transform data for chart - format dates as "Oct 15"
-    const chartData = useMemo(() => {
+    const { data: productSalesData, isLoading: productSalesLoading } =
+        useProductSales(selectedStore, selectedMonth);
+
+    const productSales = useMemo(() => {
+        return productSalesData?.data ?? [];
+    }, [productSalesData]);
+
+    const totalProductQuantity = productSalesData?.totalQuantity ?? 0;
+
+    // Transform daily sales data for chart
+    const dailyChartData = useMemo(() => {
         return dailySales.map((item) => {
             const date = new Date(item.date + "T00:00:00");
             const formattedDate = date.toLocaleDateString("en-US", {
@@ -80,21 +98,40 @@ export default function MobileDailySales() {
             });
             return {
                 date: formattedDate,
-                dateRaw: item.date, // Keep raw date for tooltip
+                dateRaw: item.date,
                 cups: item.cups,
             };
         });
     }, [dailySales]);
 
-    // Calculate summary stats
-    const summaryStats = useMemo(() => {
+    // Transform product sales data for chart
+    const productChartData = useMemo(() => {
+        return productSales.map((item, index) => ({
+            ...item,
+            fill: generateColor(index, productSales.length),
+        }));
+    }, [productSales]);
+
+    // Create chart config for product sales
+    // const productChartConfig = useMemo(() => {
+    //     const config: ChartConfig = {};
+    //     productSales.forEach((product, index) => {
+    //         config[product.productId] = {
+    //             label: product.productName,
+    //             color: generateColor(index, productSales.length),
+    //         };
+    //     });
+    //     return config;
+    // }, [productSales]);
+
+    // Calculate summary stats for daily sales
+    const dailySummaryStats = useMemo(() => {
         const totalCups = dailySales.reduce((sum, item) => sum + item.cups, 0);
         const peakDay = dailySales.reduce(
             (max, item) => (item.cups > max.cups ? item : max),
             { date: "N/A", cups: 0 }
         );
 
-        // Format peak day date
         let peakDayFormatted = "N/A";
         if (peakDay.date !== "N/A") {
             const date = new Date(peakDay.date + "T00:00:00");
@@ -116,7 +153,7 @@ export default function MobileDailySales() {
         };
     }, [dailySales]);
 
-    const isLoading = storesLoading || salesLoading;
+    const isLoading = storesLoading || salesLoading || productSalesLoading;
 
     if (isLoading) {
         return (
@@ -136,7 +173,6 @@ export default function MobileDailySales() {
         <div className="space-y-4">
             {/* Back Button */}
             <button
-                // onClick={() => router.back()}
                 onClick={() => router.push(url("/mobile/analytics"))}
                 className="flex items-center gap-1 text-gray-700"
             >
@@ -198,7 +234,7 @@ export default function MobileDailySales() {
                 </div>
             </div>
 
-            {/* Chart Card */}
+            {/* Daily Sales Chart */}
             <Card className="py-4 gap-4 [&>*]:px-4">
                 <CardHeader>
                     <CardTitle>Daily Sales</CardTitle>
@@ -207,15 +243,15 @@ export default function MobileDailySales() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="px-0! ml-[-5px] mb-[-40px]">
-                    {chartData.length === 0 ? (
+                    {dailyChartData.length === 0 ? (
                         <div className="h-[300px] flex items-center justify-center text-gray-500">
                             No sales data for this month
                         </div>
                     ) : (
-                        <ChartContainer config={chartConfig}>
+                        <ChartContainer config={dailySalesChartConfig}>
                             <BarChart
                                 accessibilityLayer
-                                data={chartData}
+                                data={dailyChartData}
                                 margin={{
                                     top: 20,
                                     right: 20,
@@ -251,16 +287,81 @@ export default function MobileDailySales() {
                         </ChartContainer>
                     )}
                 </CardContent>
-                {chartData.length > 0 && (
+                {dailyChartData.length > 0 && (
                     <CardFooter className="flex-col items-start gap-2 text-sm">
                         <div className="flex gap-2 leading-none font-medium">
-                            Peak day: {summaryStats.peakDay.dateFormatted} (
-                            {summaryStats.peakDay.cups} cups)
+                            Peak day: {dailySummaryStats.peakDay.dateFormatted}{" "}
+                            ({dailySummaryStats.peakDay.cups} cups)
                             <TrendingUp className="h-4 w-4" />
                         </div>
                         <div className="text-muted-foreground leading-none">
-                            Total: {summaryStats.totalCups} cups | Avg:{" "}
-                            {summaryStats.avgCups} cups/day
+                            Total: {dailySummaryStats.totalCups} cups | Avg:{" "}
+                            {dailySummaryStats.avgCups} cups/day
+                        </div>
+                    </CardFooter>
+                )}
+            </Card>
+
+            {/* Product Sales Chart */}
+            <Card className="py-4 gap-4 [&>*]:px-4">
+                <CardHeader>
+                    <CardTitle>Product Sales</CardTitle>
+                    <CardDescription>
+                        Breakdown by product for the month
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {productChartData.length === 0 ? (
+                        <div className="h-[200px] flex items-center justify-center text-gray-500">
+                            No product sales data for this month
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {productChartData.map((product) => (
+                                <div
+                                    key={product.productId}
+                                    className="space-y-1"
+                                >
+                                    <div className="flex items-center justify-between text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <div
+                                                className="w-3 h-3 rounded-sm"
+                                                style={{
+                                                    backgroundColor:
+                                                        product.fill,
+                                                }}
+                                            />
+                                            <span className="font-medium">
+                                                {product.productName}
+                                            </span>
+                                        </div>
+                                        <span className="text-muted-foreground">
+                                            {product.quantity} cups (
+                                            {product.percentage}%)
+                                        </span>
+                                    </div>
+                                    <div className="w-full bg-gray-200 rounded-full h-2">
+                                        <div
+                                            className="h-2 rounded-full transition-all"
+                                            style={{
+                                                width: `${product.percentage}%`,
+                                                backgroundColor: product.fill,
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </CardContent>
+                {productChartData.length > 0 && (
+                    <CardFooter className="flex-col items-start gap-2 text-sm">
+                        <div className="flex gap-2 leading-none font-medium">
+                            <Package className="h-4 w-4" />
+                            {productChartData.length} products sold this month
+                        </div>
+                        <div className="text-muted-foreground leading-none">
+                            Total: {totalProductQuantity} cups
                         </div>
                     </CardFooter>
                 )}

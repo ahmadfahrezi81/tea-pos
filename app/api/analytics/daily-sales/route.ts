@@ -1,3 +1,5 @@
+//app/api/analytics/daily-sales/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import { createRouteHandlerClient } from "@/lib/supabase/server";
 import { DailySalesQuery, DailySalesResponse } from "@/lib/schemas/analytics";
