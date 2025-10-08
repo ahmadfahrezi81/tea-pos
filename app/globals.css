@@ -165,3 +165,24 @@ body {
     @apply bg-background text-foreground;
     }
 }
+
+
+/* --- iOS form normalization --- */
+select,
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="month"] {
+    -webkit-appearance: none;
+    appearance: none;
+    background-color: transparent;
+    font: inherit;
+    color: inherit;
+}
+
+/* Optional: remove weird inner padding from date/time inputs on iOS */
+input[type="date"]::-webkit-date-and-time-value {
+    text-align: left;
+    padding: 0;
+    margin: 0;
+}
