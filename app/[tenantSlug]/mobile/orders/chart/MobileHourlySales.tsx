@@ -117,7 +117,7 @@ export default function MobileHourlySales() {
             <button
                 // onClick={() => router.back()}
                 onClick={() => router.push(url("/mobile/orders"))}
-                className="flex items-center gap-1 text-gray-700 hover:text-gray-900 transition-colors active:scale-95 duration-75"
+                className="flex items-center gap-1 text-gray-700"
             >
                 <ChevronLeft size={24} />
                 <span className="font-medium text-md mb-0.5">
