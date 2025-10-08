@@ -1336,7 +1336,7 @@ export default function MobileAnalytics() {
                                     )}?${params.toString()}`
                                 );
                             }}
-                            className="flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-md gap-1 text-xs font-medium transition-all duration-75 active:scale-95 hover:bg-blue-700"
+                            className="flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-md gap-1 text-xs font-medium cursor-pointer"
                         >
                             <BarChart4 size={14} />
                             <span>
