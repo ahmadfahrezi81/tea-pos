@@ -47,8 +47,10 @@ export default function useDailySales(storeId: string | null, month: string) {
         key,
         () => fetchDailySales({ storeId, month }),
         {
-            revalidateOnFocus: true,
-            dedupingInterval: 5000,
+            revalidateOnFocus: false,
+            dedupingInterval: 900000, // 5 min
+            refreshInterval: 0, //Disable polling (this assumes daily sales are not changing every second)
+            keepPreviousData: true,
         }
     );
 }
