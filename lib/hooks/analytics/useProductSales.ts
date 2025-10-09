@@ -57,8 +57,10 @@ export default function useProductSales(storeId: string | null, month: string) {
         key,
         () => fetchProductSales({ storeId, month }),
         {
-            revalidateOnFocus: true,
-            dedupingInterval: 5000,
+            revalidateOnFocus: false,
+            dedupingInterval: 300000, // 5 min
+            refreshInterval: 0, //Disable polling (this assumes daily sales are not changing every second)
+            keepPreviousData: true,
         }
     );
 }
