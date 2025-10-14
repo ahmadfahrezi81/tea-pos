@@ -97,7 +97,7 @@ export const createColumns = (): ColumnDef<Store>[] => [
         },
         cell: ({ row }) => {
             const id = row.original.id;
-            const shortened = `STR-${id.substring(0, 8)}`;
+            const shortened = `STR-${id.substring(0, 4).toUpperCase()}`;
             return <div className="font-mono text-sm">{shortened}</div>;
         },
     },
