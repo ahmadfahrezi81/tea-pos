@@ -1,3 +1,4 @@
+// app/[tenantSlug]/admin/orders/_components/data-table.tsx
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 
@@ -32,33 +33,25 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import {
-    Settings2,
-    Copy,
-    Download,
-    Plus,
-    X,
-    ArrowDown,
-    ArrowUp,
-} from "lucide-react";
+import { Settings2, Copy, X, ArrowDown, ArrowUp } from "lucide-react";
 import { useState } from "react";
+import { ProductFilter } from "./product-filter";
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
     data: TData[];
+    availableProducts?: { id: string; name: string }[];
+    selectedProductIds?: string[];
+    onSelectionChange?: (ids: string[]) => void;
 }
-
-const ROLES = ["owner", "manager", "staff"];
 
 export function DataTable<TData, TValue>({
     columns,
     data,
+    availableProducts = [],
+    selectedProductIds = [],
+    onSelectionChange,
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -66,7 +59,6 @@ export function DataTable<TData, TValue>({
         {}
     );
     const [rowSelection, setRowSelection] = useState({});
-    const [roleFilter, setRoleFilter] = useState<string[]>([]);
 
     const table = useReactTable({
         data,
@@ -87,28 +79,11 @@ export function DataTable<TData, TValue>({
         },
     });
 
-    const handleRoleFilterChange = (role: string) => {
-        const newRoleFilter = roleFilter.includes(role)
-            ? roleFilter.filter((r) => r !== role)
-            : [...roleFilter, role];
-
-        setRoleFilter(newRoleFilter);
-
-        // If no roles selected, clear the filter entirely instead of setting empty array
-        if (newRoleFilter.length === 0) {
-            table.getColumn("role")?.setFilterValue(undefined);
-        } else {
-            table.getColumn("role")?.setFilterValue(newRoleFilter);
-        }
-    };
-
     const clearFilters = () => {
-        setRoleFilter([]);
         table.resetColumnFilters();
     };
 
-    const hasFilters =
-        roleFilter.length > 0 || table.getColumn("email")?.getFilterValue();
+    const hasFilters = table.getColumn("orderId")?.getFilterValue();
 
     return (
         <div className="space-y-4">
@@ -116,113 +91,26 @@ export function DataTable<TData, TValue>({
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 flex-1">
                     <Input
-                        placeholder="Filter users..."
+                        placeholder="Search by Order ID..."
                         value={
                             (table
-                                .getColumn("email")
+                                .getColumn("orderId")
                                 ?.getFilterValue() as string) ?? ""
                         }
                         onChange={(event) =>
                             table
-                                .getColumn("email")
+                                .getColumn("orderId")
                                 ?.setFilterValue(event.target.value)
                         }
                         className="max-w-sm w-60"
                     />
-                    {/* Role Filter */}
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button
-                                variant="outline"
-                                className="gap-2 border-dashed h-auto min-h-8 py-2"
-                            >
-                                <Plus className="h-4 w-4" />
-                                Role
-                                {roleFilter.length > 0 && (
-                                    <>
-                                        <div className="h-4 w-px bg-border" />
-                                        <div className="flex gap-1">
-                                            {roleFilter.map((role) => (
-                                                <Badge
-                                                    key={role}
-                                                    variant="secondary"
-                                                    className="rounded-sm px-1 font-normal capitalize"
-                                                >
-                                                    {role}
-                                                </Badge>
-                                            ))}
-                                        </div>
-                                    </>
-                                )}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[200px] p-0" align="start">
-                            <div className="p-2">
-                                <div className="flex items-center justify-between px-2 py-1.5">
-                                    <span className="text-sm font-medium">
-                                        Role
-                                    </span>
-                                    {roleFilter.length > 0 && (
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="h-auto p-0 text-xs"
-                                            onClick={() => {
-                                                setRoleFilter([]);
-                                                table
-                                                    .getColumn("role")
-                                                    ?.setFilterValue(undefined); // Change from [] to undefined
-                                            }}
-                                        >
-                                            Clear
-                                        </Button>
-                                    )}
-                                </div>
-                                <div className="space-y-1">
-                                    {ROLES.map((role) => {
-                                        const isSelected =
-                                            roleFilter.includes(role);
-                                        return (
-                                            <div
-                                                key={role}
-                                                className="flex items-center gap-2 rounded-sm px-2 py-1.5 cursor-pointer hover:bg-accent"
-                                                onClick={() =>
-                                                    handleRoleFilterChange(role)
-                                                }
-                                            >
-                                                <div
-                                                    className={`h-4 w-4 rounded-sm border ${
-                                                        isSelected
-                                                            ? "bg-primary border-primary"
-                                                            : "border-input"
-                                                    } flex items-center justify-center`}
-                                                >
-                                                    {isSelected && (
-                                                        <svg
-                                                            className="h-3 w-3 text-primary-foreground"
-                                                            fill="none"
-                                                            viewBox="0 0 24 24"
-                                                            stroke="currentColor"
-                                                        >
-                                                            <path
-                                                                strokeLinecap="round"
-                                                                strokeLinejoin="round"
-                                                                strokeWidth={3}
-                                                                d="M5 13l4 4L19 7"
-                                                            />
-                                                        </svg>
-                                                    )}
-                                                </div>
-                                                <span className="text-sm capitalize">
-                                                    {role}
-                                                </span>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        </PopoverContent>
-                    </Popover>
+                    {availableProducts.length > 0 && (
+                        <ProductFilter
+                            products={availableProducts}
+                            selectedProductIds={selectedProductIds}
+                            onSelectionChange={onSelectionChange}
+                        />
+                    )}
                     {hasFilters && (
                         <Button
                             variant="ghost"
@@ -275,68 +163,6 @@ export function DataTable<TData, TValue>({
                                                 ),
                                             ].join("\n");
 
-                                            navigator.clipboard.writeText(csv);
-                                        }}
-                                    >
-                                        Copy as CSV
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                        onClick={() => {
-                                            const rows =
-                                                table.getFilteredSelectedRowModel()
-                                                    .rows;
-                                            const data = rows.map(
-                                                (row) => row.original
-                                            );
-                                            const json = JSON.stringify(
-                                                data,
-                                                null,
-                                                2
-                                            );
-                                            navigator.clipboard.writeText(json);
-                                        }}
-                                    >
-                                        Copy as JSON
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-
-                            {/* Export Dropdown */}
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" size="sm">
-                                        <Download className="mr-2 h-4 w-4" />
-                                        Export
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuItem
-                                        onClick={() => {
-                                            const rows =
-                                                table.getFilteredSelectedRowModel()
-                                                    .rows;
-                                            const data = rows.map(
-                                                (row) => row.original
-                                            );
-
-                                            // Convert to CSV
-                                            const headers = Object.keys(
-                                                data[0]
-                                            );
-                                            const csv = [
-                                                headers.join(","),
-                                                ...data.map((row) =>
-                                                    headers
-                                                        .map((header) =>
-                                                            JSON.stringify(
-                                                                row[header] ??
-                                                                    ""
-                                                            )
-                                                        )
-                                                        .join(",")
-                                                ),
-                                            ].join("\n");
-
                                             // Download CSV
                                             const blob = new Blob([csv], {
                                                 type: "text/csv",
@@ -348,7 +174,7 @@ export function DataTable<TData, TValue>({
                                             const a =
                                                 document.createElement("a");
                                             a.href = url;
-                                            a.download = `users-${
+                                            a.download = `orders-${
                                                 new Date()
                                                     .toISOString()
                                                     .split("T")[0]
@@ -384,7 +210,7 @@ export function DataTable<TData, TValue>({
                                             const a =
                                                 document.createElement("a");
                                             a.href = url;
-                                            a.download = `users-${
+                                            a.download = `orders-${
                                                 new Date()
                                                     .toISOString()
                                                     .split("T")[0]
@@ -442,12 +268,13 @@ export function DataTable<TData, TValue>({
             {sorting.length > 0 && (
                 <div className="flex items-center gap-2">
                     {sorting.map((sort) => {
-                        // const column = table.getColumn(sort.id);
                         const columnName =
-                            sort.id === "fullName"
-                                ? "Name"
-                                : sort.id === "phoneNumber"
-                                ? "Phone Number"
+                            sort.id === "timestamp"
+                                ? "Timestamp"
+                                : sort.id === "totalAmount"
+                                ? "Total Amount"
+                                : sort.id === "totalQuantity"
+                                ? "Total Quantity"
                                 : sort.id.charAt(0).toUpperCase() +
                                   sort.id.slice(1);
                         return (
