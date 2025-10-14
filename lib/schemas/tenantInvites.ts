@@ -28,14 +28,47 @@ import { UUIDSchema } from "./common";
 // INPUT SCHEMAS
 // ============================================================================
 
+/**
+ * Schema for inviting a user via the modal form
+ * This is used by InviteUserModal component
+ */
+export const InviteUserInput = z
+    .object({
+        fullName: z.string().min(1, "Full name is required").openapi({
+            description: "User's full name",
+            example: "John Doe",
+        }),
+        email: z.string().email("Invalid email address").openapi({
+            description: "User's email address",
+            example: "john.doe@example.com",
+        }),
+        role: z.enum(["owner", "manager", "staff"]).openapi({
+            description: "User's role in the tenant",
+            example: "staff",
+        }),
+    })
+    .openapi({ title: "InviteUserInput" });
+
+/**
+ * Schema for creating a tenant invite via API
+ * This extends InviteUserInput with tenantId
+ */
 export const CreateTenantInviteInput = z
     .object({
         tenantId: UUIDSchema.openapi({
             description: "Tenant ID to invite user to",
         }),
-        invitedEmail: z.string().email().openapi({
-            description: "Email address of the person to invite",
-            example: "user@example.com",
+        fullName: z.string().min(1, "Full name is required").openapi({
+            description: "User's full name",
+            example: "John Doe",
+        }),
+        invitedEmail: z.string().email("Invalid email address").openapi({
+            description: "Email address to send invitation to",
+            example: "john.doe@example.com",
+        }),
+        role: z.enum(["owner", "manager", "staff"]).openapi({
+            description: "User's role in the tenant",
+            example: "staff",
         }),
     })
     .openapi({ title: "CreateTenantInviteInput" });
@@ -48,6 +81,9 @@ export const AcceptTenantInviteInput = z
         }),
     })
     .openapi({ title: "AcceptTenantInviteInput" });
+
+// Backward compatibility - keeping the old name
+export const InviteUserSchema = InviteUserInput;
 
 // ============================================================================
 // QUERY SCHEMAS
@@ -104,14 +140,12 @@ export const TenantInviteListResponse = z
 export const CreateTenantInviteResponse = z
     .object({
         success: z.boolean().openapi({ example: true }),
-        inviteId: UUIDSchema,
-        token: z.string().openapi({
-            description: "Invite token to send to the user",
-            example: "abc123def456",
+        message: z.string().openapi({
+            description: "Success message",
+            example: "Invitation sent successfully",
         }),
-        expiresAt: z.string().openapi({
-            description: "Expiration timestamp (ISO 8601)",
-            example: "2025-10-10T12:00:00Z",
+        userId: UUIDSchema.optional().openapi({
+            description: "ID of the invited/added user",
         }),
     })
     .openapi({ title: "CreateTenantInviteResponse" });
@@ -135,6 +169,7 @@ export const AcceptTenantInviteResponse = z
 // TYPE EXPORTS
 // ============================================================================
 
+export type InviteUserInput = z.infer<typeof InviteUserInput>;
 export type CreateTenantInviteInput = z.infer<typeof CreateTenantInviteInput>;
 export type AcceptTenantInviteInput = z.infer<typeof AcceptTenantInviteInput>;
 export type ListTenantInvitesQuery = z.infer<typeof ListTenantInvitesQuery>;

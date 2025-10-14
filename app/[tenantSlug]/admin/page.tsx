@@ -1,29 +1,50 @@
-//app/admin/page.tsx
+export default async function AdminDashboardPage({
+    params,
+}: {
+    params: Promise<{ tenantSlug: string }>;
+}) {
+    const { tenantSlug } = await params;
 
-import Link from "next/link";
-
-export default function AdminPage() {
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-            <div className="text-center">
-                <h1 className="text-4xl font-bold text-gray-900 mb-8">
-                    POS System - Admin
+        <div className="space-y-8">
+            <header>
+                <h1 className="text-3xl font-bold tracking-tight">
+                    Admin Dashboard
                 </h1>
-                <div className="space-x-4">
-                    <Link
-                        href="/login"
-                        className="bg-blue-500 text-white px-6 py-3 rounded hover:bg-blue-600"
-                    >
-                        Login
-                    </Link>
-                    <Link
-                        href="/signup"
-                        className="bg-green-500 text-white px-6 py-3 rounded hover:bg-green-600"
-                    >
-                        Sign Up
-                    </Link>
-                </div>
-            </div>
+                <p className="text-muted-foreground">
+                    Tenant: <strong>{tenantSlug}</strong>
+                </p>
+            </header>
+
+            <section className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <DashboardCard title="Placeholder 1" value="—" />
+                <DashboardCard title="Placeholder 2" value="—" />
+                <DashboardCard title="Placeholder 3" value="—" />
+            </section>
+
+            <section className="border rounded-lg p-6 bg-card text-muted-foreground">
+                <p>
+                    This is an empty dashboard layout — start adding your
+                    components here.
+                </p>
+            </section>
+        </div>
+    );
+}
+
+function DashboardCard({
+    title,
+    value,
+}: {
+    title: string;
+    value: string | number;
+}) {
+    return (
+        <div className="p-6 rounded-lg border bg-card shadow-sm">
+            <h3 className="text-sm font-medium text-muted-foreground">
+                {title}
+            </h3>
+            <p className="text-2xl font-bold mt-2">{value}</p>
         </div>
     );
 }

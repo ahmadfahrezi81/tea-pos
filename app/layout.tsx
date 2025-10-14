@@ -55,7 +55,7 @@ export default async function RootLayout({
     const initialUser = userCookie ? JSON.parse(userCookie.value) : null;
 
     return (
-        <html lang="en">
+        <html lang="en" suppressHydrationWarning>
             <body>
                 <SWRConfig
                     value={{
