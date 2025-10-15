@@ -1,31 +1,14 @@
-// "use client";
-
-// import React from "react";
-// import { usePathname } from "next/navigation";
-
-// const Page = () => {
-//     const pathname = usePathname();
-
-//     return (
-//         <main className="flex items-center justify-center h-screen flex-col font-sans">
-//             <p className="text-lg">
-//                 Current Route: <strong>{pathname}</strong>
-//             </p>
-//         </main>
-//     );
-// };
-
-// export default Page;
-
 "use client";
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { toast } from "sonner";
+import { AddProductModal } from "./_components/add-product-modal";
+import { useProducts } from "@/lib/hooks/products/useProducts";
 import { useTenant } from "../TenantProvider";
-// import { useProducts } from "";
 import { DataTable } from "./_components/data-table";
-import { createColumns, Product } from "./_components/columns";
+import { createColumns } from "./_components/columns";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -36,26 +19,27 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { toast } from "sonner";
-import { useProducts } from "@/lib/hooks/products/useProducts";
+import { EditProductModal } from "./_components/edit-product-modal";
+import { Product } from "@/lib/schemas/products";
 
 export default function ProductsPage() {
     const { tenantId } = useTenant();
-    const { data: products, error, isLoading, mutate } = useProducts(false);
+    const { data: products, error, isLoading, mutate } = useProducts(true);
+
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [productToDelete, setProductToDelete] = useState<Product | null>(
         null
     );
     const [isDeleting, setIsDeleting] = useState(false);
-
-    const handleAddProduct = () => {
-        // Will be implemented later
-        toast.info("Add product modal will be implemented soon");
-    };
+    const [addModalOpen, setAddModalOpen] = useState(false);
+    const [editModalOpen, setEditModalOpen] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState<Product | null>(
+        null
+    );
 
     const handleEditProduct = (product: Product) => {
-        // Will be implemented later
-        toast.info("Edit product modal will be implemented soon");
+        setSelectedProduct(product);
+        setEditModalOpen(true);
     };
 
     const handleDeleteProduct = (product: Product) => {
@@ -65,14 +49,11 @@ export default function ProductsPage() {
 
     const confirmDelete = async () => {
         if (!productToDelete) return;
-
         setIsDeleting(true);
         try {
-            const response = await fetch(`/api/products`, {
+            const response = await fetch("/api/products", {
                 method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ id: productToDelete.id }),
             });
 
@@ -96,12 +77,7 @@ export default function ProductsPage() {
         }
     };
 
-    const handleSuccess = () => {
-        mutate();
-    };
-
     const columns = createColumns(handleEditProduct, handleDeleteProduct);
-
     if (!tenantId) {
         return (
             <div className="flex items-center justify-center h-[50vh]">
@@ -143,7 +119,6 @@ export default function ProductsPage() {
 
     return (
         <div className="space-y-6 p-8">
-            {/* Header */}
             <div className="flex items-start justify-between">
                 <div>
                     <h1 className="text-3xl font-bold">Product List</h1>
@@ -151,16 +126,27 @@ export default function ProductsPage() {
                         Manage your products and their availability here.
                     </p>
                 </div>
-                <Button size="default" onClick={handleAddProduct} disabled>
+                <Button size="default" onClick={() => setAddModalOpen(true)}>
                     <Plus className="mr-2 h-4 w-4" />
                     Add Product
                 </Button>
             </div>
 
-            {/* Data Table */}
             <DataTable columns={columns} data={products || []} />
 
-            {/* Delete Confirmation Dialog */}
+            <AddProductModal
+                open={addModalOpen}
+                onOpenChange={setAddModalOpen}
+                onSuccess={() => mutate()}
+            />
+
+            <EditProductModal
+                open={editModalOpen}
+                onOpenChange={setEditModalOpen}
+                product={selectedProduct}
+                onSuccess={() => mutate()}
+            />
+
             <AlertDialog
                 open={deleteDialogOpen}
                 onOpenChange={setDeleteDialogOpen}

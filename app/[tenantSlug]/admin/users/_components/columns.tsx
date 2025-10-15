@@ -81,44 +81,25 @@ export const createColumns = (
         enableHiding: false,
     },
     {
-        accessorKey: "profiles.fullName",
-        id: "fullName",
-        header: ({ column }) => {
-            const isSorted = column.getIsSorted();
+        accessorKey: "userId",
+        id: "userId",
+        header: () => <div className="font-semibold pl-3">User ID</div>,
+        cell: ({ row }) => {
+            const userId = row.original.userId;
+            const shortened = `USR-${userId.substring(0, 8).toUpperCase()}`;
             return (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button
-                            variant="ghost"
-                            className="h-auto p-0 hover:bg-transparent justify-start font-semibold"
-                        >
-                            Name
-                            {isSorted === "asc" ? (
-                                <ArrowUp className="ml-2 h-3 w-3" />
-                            ) : isSorted === "desc" ? (
-                                <ArrowDown className="ml-2 h-3 w-3" />
-                            ) : (
-                                <ArrowUpDown className="ml-2 h-3 w-3" />
-                            )}
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start">
-                        <DropdownMenuItem
-                            onClick={() => column.toggleSorting(false)}
-                        >
-                            <ArrowUp className="mr-2 h-3 w-3" />
-                            Asc
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                            onClick={() => column.toggleSorting(true)}
-                        >
-                            <ArrowDown className="mr-2 h-3 w-3" />
-                            Desc
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="font-mono text-xs text-muted-foreground">
+                    {shortened}
+                </div>
             );
         },
+        enableSorting: false,
+    },
+    {
+        accessorKey: "profiles.fullName",
+        id: "fullName",
+        header: () => <div className="font-semibold pl-3">Name</div>,
+
         cell: ({ row }) => (
             <div className="font-medium">
                 {row.original.profiles?.fullName || "N/A"}

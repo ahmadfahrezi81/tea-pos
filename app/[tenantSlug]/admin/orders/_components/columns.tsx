@@ -24,10 +24,6 @@ import { Badge } from "@/components/ui/badge";
 import { OrderListItem } from "@/lib/schemas/order-list";
 import { format } from "date-fns";
 
-const formatOrderId = (id: string): string => {
-    return `ORD-${id.substring(0, 4).toUpperCase()}`;
-};
-
 const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat("id-ID", {
         style: "currency",
@@ -68,14 +64,16 @@ export const createColumns = (
     {
         accessorKey: "id",
         id: "orderId",
-        header: () => {
-            return <div className="font-semibold pl-3">Order ID</div>;
+        header: () => <div className="font-semibold pl-3">Order ID</div>,
+        cell: ({ row }) => {
+            const id = row.original.id;
+            const shortened = `ORD-${id.substring(0, 8).toUpperCase()}`;
+            return (
+                <div className="font-mono text-xs text-muted-foreground">
+                    {shortened}
+                </div>
+            );
         },
-        cell: ({ row }) => (
-            <div className="font-mono text-sm">
-                {formatOrderId(row.original.id)}
-            </div>
-        ),
         enableSorting: false,
     },
     {
