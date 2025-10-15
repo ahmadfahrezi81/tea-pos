@@ -24,11 +24,13 @@ import {
     SidebarContent,
     SidebarFooter,
     SidebarGroup,
+    SidebarGroupLabel,
     SidebarHeader,
     SidebarRail,
 } from "@/components/ui/sidebar";
 
 import { useTenantSlug } from "@/lib/tenant-url";
+import { StoreSwitcher } from "./store-switcher";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const { url } = useTenantSlug();
@@ -115,6 +117,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarContent>
                 <SidebarGroup>
                     <NavSearch items={data.navMain} />
+                </SidebarGroup>
+                <SidebarGroup>
+                    <SidebarGroupLabel>Stores</SidebarGroupLabel>
+                    <StoreSwitcher />
                 </SidebarGroup>
 
                 <NavMain label="General" items={data.navMain} />
