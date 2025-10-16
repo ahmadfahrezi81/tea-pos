@@ -87,6 +87,7 @@
 //     );
 // }
 
+// /app/[tenantSlug]/admin/StoreScopeProvider.tsx
 "use client";
 
 import * as React from "react";

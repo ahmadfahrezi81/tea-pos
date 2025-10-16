@@ -372,13 +372,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 )
                 .map((item) => {
                     if (item.title === "Dashboard")
-                        return { ...item, title: "Store Dashboard" };
-                    if (item.title === "POS")
-                        return { ...item, title: "Store POS" };
+                        return { ...item, title: "Dashboard" };
+                    if (item.title === "POS") return { ...item, title: "POS" };
                     if (item.title === "Orders")
-                        return { ...item, title: "Store Orders" };
+                        return { ...item, title: "Orders" };
                     if (item.title === "Manage Users")
-                        return { ...item, title: "Manage Store Users" };
+                        return { ...item, title: "Manage Users" };
                     return item;
                 });
         }

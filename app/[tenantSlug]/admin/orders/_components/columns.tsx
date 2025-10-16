@@ -23,6 +23,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { OrderListItem } from "@/lib/schemas/order-list";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat("id-ID", {
@@ -286,10 +287,10 @@ export const createColumns = (
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuItem
-                            disabled
-                            onClick={() =>
-                                navigator.clipboard.writeText(order.id)
-                            }
+                            onClick={() => {
+                                navigator.clipboard.writeText(order.id);
+                                toast.success("Order ID copied!");
+                            }}
                         >
                             <Copy className="mr-2 h-4 w-4" />
                             Copy Order ID
