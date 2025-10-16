@@ -1,4 +1,5 @@
 import { createServerComponentClient } from "@/lib/supabase/server";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 export default async function UnauthorizedPage({
@@ -102,7 +103,7 @@ export default async function UnauthorizedPage({
                 </div>
 
                 {/* Actions */}
-                <div className="space-y-3">
+                {/* <div className="space-y-3">
                     {validTenantSlug && (
                         <a
                             href={`/${validTenantSlug}/mobile`}
@@ -117,6 +118,24 @@ export default async function UnauthorizedPage({
                     >
                         {user ? "Switch Account" : "Back to Login"}
                     </a>
+                </div> */}
+
+                {/* Actions */}
+                <div className="space-y-3">
+                    {validTenantSlug && (
+                        <Link
+                            href={`/${validTenantSlug}/mobile`}
+                            className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg text-center transition"
+                        >
+                            Go to My Dashboard
+                        </Link>
+                    )}
+                    <Link
+                        href="/login"
+                        className="block w-full bg-white hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-lg text-center border border-gray-300 transition"
+                    >
+                        {user ? "Switch Account" : "Back to Login"}
+                    </Link>
                 </div>
 
                 {/* Help Text */}
