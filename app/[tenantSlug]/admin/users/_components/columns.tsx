@@ -219,6 +219,7 @@ export const createColumns = (
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
+                            disabled
                             className="text-red-600"
                             onClick={() => onDelete(user)}
                         >

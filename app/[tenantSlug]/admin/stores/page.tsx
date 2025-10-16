@@ -23,10 +23,11 @@
 
 import { Button } from "@/components/ui/button";
 import { Store } from "lucide-react";
-import { useTenant } from "../TenantProvider";
+import { useTenant } from "../../TenantProvider";
 import { useAllStores } from "@/lib/hooks/stores/useAllStores";
 import { DataTable } from "./_components/data-table";
 import { createColumns } from "./_components/columns";
+import { ScopeBadge } from "../_components/scope-badge";
 
 export default function StoresPage() {
     const { tenantId } = useTenant();
@@ -74,11 +75,14 @@ export default function StoresPage() {
     }
 
     return (
-        <div className="space-y-6 p-8">
+        <div className="space-y-6 p-8 pt-6">
+            {/* Scope Tagging */}
+            <ScopeBadge />
+
             {/* Header */}
             <div className="flex items-start justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold">Store List</h1>
+                    <h1 className="text-3xl font-bold">Store Management</h1>
                     <p className="text-muted-foreground mt-1">
                         Manage your stores and locations across your
                         organization.

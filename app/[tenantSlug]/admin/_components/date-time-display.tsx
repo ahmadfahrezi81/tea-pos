@@ -18,16 +18,20 @@ export function DateTimeDisplay() {
 
     const locale = navigator.language || "en-US";
 
-    const formattedDate = dateTime
-        .toLocaleDateString(locale, {
-            weekday: "short",
-            day: "2-digit",
-            month: "2-digit",
-            year: "2-digit",
-        })
-        .replace(/\//g, ".")
-        .replace(",", "");
+    // Helper function to format numbers with leading zeros
+    const pad = (num: number): string => num.toString().padStart(2, "0");
 
+    // Format date: DD.MM.YY
+    const day = pad(dateTime.getDate());
+    const month = pad(dateTime.getMonth() + 1);
+    const year = pad(dateTime.getFullYear());
+
+    // Get short day name (e.g. "Mon")
+    const weekday = dateTime.toLocaleDateString(locale, { weekday: "short" });
+
+    const formattedDate = `${weekday} ${day}.${month}.${year} `;
+
+    // Format time
     const formattedTime = dateTime.toLocaleTimeString(locale, {
         hour: "numeric",
         minute: "2-digit",
@@ -41,7 +45,7 @@ export function DateTimeDisplay() {
                 <span>{formattedDate}</span>
                 <Separator
                     orientation="vertical"
-                    className="mr-2 data-[orientation=vertical]:h-4"
+                    className="data-[orientation=vertical]:h-4"
                 />
                 <span>{formattedTime}</span>
             </div>

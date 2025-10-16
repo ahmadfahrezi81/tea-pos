@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useTenant } from "../TenantProvider";
+import { useTenant } from "../../TenantProvider";
 import { useAllStores } from "@/lib/hooks/stores/useAllStores";
 import useOrdersList from "@/lib/hooks/orders/useOrdersList";
 import { DataTable } from "./_components/data-table";
@@ -12,6 +12,7 @@ import { DateSelector } from "./_components/date-selector";
 import { OrderListItem } from "@/lib/schemas/order-list";
 import { format } from "date-fns";
 import { OrderMetrics } from "./_components/order-metrics";
+import { ScopeBadge } from "../_components/scope-badge";
 
 export default function OrdersPage() {
     const { tenantId } = useTenant();
@@ -125,7 +126,10 @@ export default function OrdersPage() {
     // Main UI
     // ──────────────────────────────
     return (
-        <div className="space-y-6 p-8">
+        <div className="space-y-6 p-8 pt-6">
+            {/* Scope Tagging */}
+            <ScopeBadge />
+
             {/* Header */}
             <div className="flex items-start justify-between">
                 <div>

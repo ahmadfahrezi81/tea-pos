@@ -6,7 +6,7 @@ import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { AddProductModal } from "./_components/add-product-modal";
 import { useProducts } from "@/lib/hooks/products/useProducts";
-import { useTenant } from "../TenantProvider";
+import { useTenant } from "../../TenantProvider";
 import { DataTable } from "./_components/data-table";
 import { createColumns } from "./_components/columns";
 import {
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { EditProductModal } from "./_components/edit-product-modal";
 import { Product } from "@/lib/schemas/products";
+import { ScopeBadge } from "../_components/scope-badge";
 
 export default function ProductsPage() {
     const { tenantId } = useTenant();
@@ -118,7 +119,9 @@ export default function ProductsPage() {
     }
 
     return (
-        <div className="space-y-6 p-8">
+        <div className="space-y-6 p-8 pt-6">
+            {/* Scope Tagging */}
+            <ScopeBadge />
             <div className="flex items-start justify-between">
                 <div>
                     <h1 className="text-3xl font-bold">Product List</h1>

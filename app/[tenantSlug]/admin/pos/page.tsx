@@ -17,6 +17,7 @@ import { Cart } from "./_components/cart";
 import { CreateOrderInput, CreateOrderResponse } from "@/lib/schemas/orders";
 import { toast } from "sonner";
 import type { Product } from "@/lib/schemas/products";
+import { ScopeBadge } from "../_components/scope-badge";
 
 export interface CartItem {
     productId: string;
@@ -155,7 +156,9 @@ export default function POSPage() {
     return (
         <div className="flex h-[calc(100vh-64px-16px)]">
             {/* Main Content Area */}
-            <div className="flex-1 flex flex-col p-8 pb-0 overflow-hidden">
+            <div className="flex-1 flex flex-col p-8 pb-0 pt-6 overflow-hidden">
+                {/* Scope Tagging */}
+                <ScopeBadge />
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6 shrink-0">
                     <h1 className="text-3xl font-bold">POS Menu</h1>
