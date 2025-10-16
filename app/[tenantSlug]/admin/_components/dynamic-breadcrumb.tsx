@@ -595,8 +595,23 @@ export function DynamicBreadcrumb() {
     const [mounted, setMounted] = React.useState(false);
     React.useEffect(() => setMounted(true), []);
 
-    const humanize = (segment: string) =>
-        segment.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    // const humanize = (segment: string) =>
+    //     segment.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+    const humanize = (segment: string) => {
+        // Normalize to lowercase for matching special cases
+        const lower = segment.toLowerCase();
+
+        // Handle known special cases
+        if (lower === "pos") return "POS";
+        // Add more custom cases as needed
+        // if (lower === "crm") return "CRM";
+
+        // Default case: Replace hyphens and capitalize
+        return segment
+            .replace(/-/g, " ")
+            .replace(/\b\w/g, (c) => c.toUpperCase());
+    };
 
     const generateBreadcrumbs = React.useCallback(() => {
         const segments = pathname.split("/").filter(Boolean);
@@ -641,7 +656,7 @@ export function DynamicBreadcrumb() {
                             if (scope === "store") router.push(url("/admin"));
                         }}
                         className={cn(
-                            "inline-flex items-center gap-2 rounded-md bg-muted/40 px-2 py-2 border border-border text-xs font-medium text-muted-foreground font-mono transition-colors",
+                            "inline-flex items-center gap-2 rounded-md bg-muted/60 px-2 py-2 text-xs font-medium font-mono transition-colors text-gray-700",
                             scope === "store" && "cursor-pointer hover:bg-muted"
                         )}
                     >
@@ -659,7 +674,7 @@ export function DynamicBreadcrumb() {
                     <>
                         <BreadcrumbItem>
                             <div className="flex items-center gap-1">
-                                <div className="inline-flex items-center gap-2 rounded-md bg-muted/60 px-2 py-2 border border-border text-xs font-medium text-muted-foreground font-mono">
+                                <div className="inline-flex items-center gap-2 rounded-md bg-muted/60 px-2 py-2 text-xs font-medium text-gray-700 font-mono">
                                     <Box size={18} />
                                     <span>{storeName || "Loading..."}</span>
                                 </div>
@@ -720,7 +735,7 @@ export function DynamicBreadcrumb() {
                 {breadcrumbs.length > 0 ? (
                     breadcrumbs.map((crumb, i) => (
                         <React.Fragment key={i}>
-                            <BreadcrumbItem>
+                            <BreadcrumbItem className="font-mono text-gray-600">
                                 {crumb.isLast ? (
                                     <BreadcrumbPage>
                                         {crumb.label}
@@ -737,7 +752,7 @@ export function DynamicBreadcrumb() {
                 ) : (
                     <>
                         <BreadcrumbSeparator />
-                        <BreadcrumbItem>
+                        <BreadcrumbItem className="font-mono text-gray-600">
                             <BreadcrumbPage>Dashboard</BreadcrumbPage>
                         </BreadcrumbItem>
                     </>
