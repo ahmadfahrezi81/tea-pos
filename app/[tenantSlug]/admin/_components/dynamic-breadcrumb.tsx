@@ -595,19 +595,9 @@ export function DynamicBreadcrumb() {
     const [mounted, setMounted] = React.useState(false);
     React.useEffect(() => setMounted(true), []);
 
-    // const humanize = (segment: string) =>
-    //     segment.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-
     const humanize = (segment: string) => {
-        // Normalize to lowercase for matching special cases
         const lower = segment.toLowerCase();
-
-        // Handle known special cases
         if (lower === "pos") return "POS";
-        // Add more custom cases as needed
-        // if (lower === "crm") return "CRM";
-
-        // Default case: Replace hyphens and capitalize
         return segment
             .replace(/-/g, " ")
             .replace(/\b\w/g, (c) => c.toUpperCase());
@@ -633,11 +623,7 @@ export function DynamicBreadcrumb() {
                     .slice(0, index + 1)
                     .join("/")}`
             );
-            return {
-                label: humanize(segment),
-                href,
-                isLast,
-            };
+            return { label: humanize(segment), href, isLast };
         });
     }, [pathname, scope, storeId, url]);
 
@@ -649,18 +635,19 @@ export function DynamicBreadcrumb() {
     return (
         <Breadcrumb>
             <BreadcrumbList>
-                {/* ✅ Tenant (company) badge */}
+                {/* Company / Tenant badge */}
                 <BreadcrumbItem>
                     <div
                         onClick={() => {
                             if (scope === "store") router.push(url("/admin"));
                         }}
                         className={cn(
-                            "inline-flex items-center gap-2 rounded-md bg-muted/60 px-2 py-2 text-xs font-medium font-mono transition-colors text-gray-700",
+                            "inline-flex items-center gap-2 rounded-md px-2 py-2 text-xs font-medium font-mono transition-colors",
+                            "bg-muted/60 text-foreground", // <- this line changed
                             scope === "store" && "cursor-pointer hover:bg-muted"
                         )}
                     >
-                        <Boxes size={18} />
+                        <Boxes size={18} className="text-current" />
                         <span>{tenantName || "Company"}</span>
                     </div>
                 </BreadcrumbItem>
@@ -669,21 +656,23 @@ export function DynamicBreadcrumb() {
                     <BreadcrumbSeparator />
                 )}
 
-                {/* ✅ Store badge with dropdown */}
+                {/* Store badge with dropdown */}
                 {scope === "store" && (
                     <>
                         <BreadcrumbItem>
                             <div className="flex items-center gap-1">
-                                <div className="inline-flex items-center gap-2 rounded-md bg-muted/60 px-2 py-2 text-xs font-medium text-gray-700 font-mono">
-                                    <Box size={18} />
+                                <div className="inline-flex items-center gap-2 rounded-md px-2 py-2 text-xs font-medium font-mono transition-colors bg-muted/60 text-foreground">
+                                    <Box size={18} className="text-current" />
                                     <span>{storeName || "Loading..."}</span>
                                 </div>
 
-                                {/* ✅ Compact store dropdown */}
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <button className="flex items-center justify-center rounded-md px-1 py-2 border border-border hover:bg-muted transition">
-                                            <ChevronsUpDown size={16} />
+                                        <button className="flex items-center justify-center rounded-md px-1 py-2 border border-border hover:bg-muted transition-colors">
+                                            <ChevronsUpDown
+                                                size={16}
+                                                className="text-muted-foreground"
+                                            />
                                         </button>
                                     </DropdownMenuTrigger>
 
@@ -704,7 +693,7 @@ export function DynamicBreadcrumb() {
                                                         switchStore(s.id)
                                                     }
                                                     className={cn(
-                                                        "flex items-center gap-2 px-2 py-1.5 text-sm",
+                                                        "flex items-center gap-2 px-2 py-1.5 text-sm transition-colors",
                                                         storeId === s.id &&
                                                             "bg-muted"
                                                     )}
@@ -727,15 +716,16 @@ export function DynamicBreadcrumb() {
                                 </DropdownMenu>
                             </div>
                         </BreadcrumbItem>
+
                         {breadcrumbs.length > 0 && <BreadcrumbSeparator />}
                     </>
                 )}
 
-                {/* ✅ Dynamic breadcrumbs */}
+                {/* Dynamic breadcrumbs */}
                 {breadcrumbs.length > 0 ? (
                     breadcrumbs.map((crumb, i) => (
                         <React.Fragment key={i}>
-                            <BreadcrumbItem className="font-mono text-gray-600">
+                            <BreadcrumbItem className="font-mono text-muted-foreground">
                                 {crumb.isLast ? (
                                     <BreadcrumbPage>
                                         {crumb.label}
@@ -752,7 +742,7 @@ export function DynamicBreadcrumb() {
                 ) : (
                     <>
                         <BreadcrumbSeparator />
-                        <BreadcrumbItem className="font-mono text-gray-600">
+                        <BreadcrumbItem className="font-mono text-muted-foreground">
                             <BreadcrumbPage>Dashboard</BreadcrumbPage>
                         </BreadcrumbItem>
                     </>

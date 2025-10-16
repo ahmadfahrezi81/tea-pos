@@ -377,7 +377,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     if (item.title === "Orders")
                         return { ...item, title: "Orders" };
                     if (item.title === "Manage Users")
-                        return { ...item, title: "Manage Users" };
+                        return { ...item, title: "Manage Store People" };
                     return item;
                 });
         }
