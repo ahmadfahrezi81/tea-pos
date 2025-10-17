@@ -1,8 +1,11 @@
+//app/[tenantSlug]/admin/pos/page.tsx
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
 import { useProducts } from "@/lib/hooks/products/useProducts";
-import { useAllStores } from "@/lib/hooks/stores/useAllStores"; // ✅ updated import
+import { useAllStores } from "@/lib/hooks/stores/useAllStores";
+import { Input } from "@/components/ui/input"; // ✅ add this import
 import {
     Select,
     SelectContent,
@@ -11,7 +14,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Store } from "lucide-react";
+import { Store, Search } from "lucide-react"; // ✅ add Search icon
 import { ProductGrid } from "./_components/product-grid";
 import { Cart } from "./_components/cart";
 import { CreateOrderInput, CreateOrderResponse } from "@/lib/schemas/orders";
@@ -29,19 +32,37 @@ export interface CartItem {
 
 export default function POSPage() {
     const { data: products = [], isLoading: productsLoading } = useProducts();
-
-    // ✅ now using useAllStores
     const { data: storesData, isLoading: storesLoading } = useAllStores();
+
     const stores = useMemo(() => storesData?.stores ?? [], [storesData]);
 
     const [selectedStore, setSelectedStore] = useState<string>("");
     const [cart, setCart] = useState<CartItem[]>([]);
     const [processing, setProcessing] = useState(false);
 
-    const mainProducts = products.filter((p) => p.isMain && p.isActive);
-    const otherProducts = products.filter((p) => !p.isMain && p.isActive);
-    const allProducts = products.filter((p) => p.isActive);
+    // ✅ New state for search query
+    const [searchQuery, setSearchQuery] = useState("");
 
+    // --- Filtering logic ---
+    const filteredProducts = useMemo(() => {
+        const query = searchQuery.toLowerCase();
+        return products.filter(
+            (p) => p.isActive && p.name.toLowerCase().includes(query)
+        );
+    }, [products, searchQuery]);
+
+    // Derived product sets
+    const mainProducts = filteredProducts
+        .filter((p) => p.isMain)
+        .sort((a, b) => a.price - b.price);
+
+    const otherProducts = filteredProducts
+        .filter((p) => !p.isMain)
+        .sort((a, b) => a.price - b.price);
+
+    const allProducts = filteredProducts.sort((a, b) => a.price - b.price);
+
+    // Auto-select first store
     useEffect(() => {
         if (stores.length > 0 && !selectedStore) {
             setSelectedStore(stores[0].id);
@@ -160,7 +181,7 @@ export default function POSPage() {
                 {/* Scope Tagging */}
                 <ScopeBadge />
                 {/* Header */}
-                <div className="flex items-center justify-between mb-6 shrink-0">
+                <div className="flex items-center justify-between mb-2 shrink-0">
                     <h1 className="text-3xl font-bold">POS Menu</h1>
                     <div className="flex items-center gap-2">
                         <Store className="h-5 w-5 text-muted-foreground" />
@@ -187,12 +208,28 @@ export default function POSPage() {
                     defaultValue="all"
                     className="flex-1 flex flex-col overflow-hidden"
                 >
-                    <TabsList className="w-fit mb-4 shrink-0">
-                        <TabsTrigger value="all">All</TabsTrigger>
-                        <TabsTrigger value="main">Main</TabsTrigger>
-                        <TabsTrigger value="others">Others</TabsTrigger>
-                    </TabsList>
+                    {/* Tabs header row */}
+                    <div className="flex items-center justify-between mb-4 shrink-0">
+                        <TabsList className="shrink-0">
+                            <TabsTrigger value="all">All</TabsTrigger>
+                            <TabsTrigger value="main">Main</TabsTrigger>
+                            <TabsTrigger value="others">Others</TabsTrigger>
+                        </TabsList>
 
+                        {/* ✅ Search box */}
+                        <div className="relative w-56">
+                            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+                            <Input
+                                type="text"
+                                placeholder="Search products..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="pl-8 focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0 focus-visible:outline-none"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Tab Content */}
                     <TabsContent value="all" className="flex-1 overflow-y-auto">
                         <ProductGrid
                             products={allProducts}

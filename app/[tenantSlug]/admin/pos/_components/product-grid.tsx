@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Card } from "@/components/ui/card";
 import type { Product } from "@/lib/schemas/products";
 import type { CartItem } from "../page";
+import { CirclePlus } from "lucide-react";
 
 interface ProductGridProps {
     products: Product[];
@@ -40,10 +41,10 @@ export function ProductGrid({ products, onAddToCart, cart }: ProductGridProps) {
                     <Card
                         key={product.id}
                         onClick={() => onAddToCart(product)}
-                        className="cursor-pointer relative overflow-hidden p-3 space-y-1 rounded-lg"
+                        className="cursor-pointer relative overflow-hidden p-3 space-y-1 rounded-lg shadow select-none"
                     >
                         {quantityInCart > 0 && (
-                            <div className="absolute top-2 right-2 z-10 bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs font-semibold shadow">
+                            <div className="absolute top-2 right-2 z-10 bg-primary text-primary-foreground rounded-sm w-6 h-6 flex items-center justify-center text-xs font-semibold">
                                 {quantityInCart}
                             </div>
                         )}
@@ -62,13 +63,19 @@ export function ProductGrid({ products, onAddToCart, cart }: ProductGridProps) {
                                     <span className="text-3xl">📦</span>
                                 </div>
                             )}
-                            <div className="flex flex-col gap-0 items-start">
-                                <h3 className="font-bold text-left leading-tight">
-                                    {product.name}
-                                </h3>
-                                <p className="text-primary font-medium text-base text-left leading-tight">
-                                    {formatRupiah(product.price)}
-                                </p>
+                            <div className="relative flex items-start gap-2">
+                                <div>
+                                    <h3 className="font-bold text-left leading-tight">
+                                        {product.name}
+                                    </h3>
+                                    <p className="text-primary font-medium text-base text-left leading-tight">
+                                        {formatRupiah(product.price)}
+                                    </p>
+                                </div>
+
+                                <div className="absolute bottom-[-3] right-[-5]">
+                                    <CirclePlus size={26} />
+                                </div>
                             </div>
                         </div>
                     </Card>
