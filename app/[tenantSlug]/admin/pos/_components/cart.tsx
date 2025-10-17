@@ -164,26 +164,30 @@ export function Cart({
                 </div>
 
                 {/* Cart Footer */}
-                <div className="p-4 border-t bg-muted/30 rounded-b-2xl space-y-3">
-                    <div className="flex justify-between items-center">
-                        <span className="font-semibold text-lg">
-                            Total Transaction
-                        </span>
-                        <span className="font-bold text-lg text-primary">
-                            {formatRupiah(calculateTotal())}
-                        </span>
-                    </div>
+                {cart.length > 0 && (
+                    <div className="p-4 border-t bg-muted/30 rounded-b-2xl space-y-3">
+                        <div className="flex justify-between items-center">
+                            <span className="font-semibold text-lg">
+                                Total Transaction
+                            </span>
+                            <span className="font-bold text-lg text-primary">
+                                {formatRupiah(calculateTotal())}
+                            </span>
+                        </div>
 
-                    <Button
-                        onClick={onProcessOrder}
-                        disabled={
-                            processing || !selectedStore || cart.length === 0
-                        }
-                        className="w-full h-11 text-base font-semibold"
-                    >
-                        {processing ? "Processing..." : "Confirm Order"}
-                    </Button>
-                </div>
+                        <Button
+                            onClick={onProcessOrder}
+                            disabled={
+                                processing ||
+                                !selectedStore ||
+                                cart.length === 0
+                            }
+                            className="w-full h-11 text-base font-semibold"
+                        >
+                            {processing ? "Processing..." : "Confirm Order"}
+                        </Button>
+                    </div>
+                )}
             </div>
         </div>
     );
