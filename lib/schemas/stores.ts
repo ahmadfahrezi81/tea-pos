@@ -39,6 +39,8 @@ export const CreateStoreInput = z
             example: "123 Main St, Jakarta",
         }),
         // tenantId is NOT included in input - it's derived from session
+        latitude: z.number().nullable().optional(),
+        longitude: z.number().nullable().optional(),
     })
     .openapi({ title: "CreateStoreInput" });
 
@@ -94,7 +96,9 @@ export const StoreResponse = z
         id: UUIDSchema,
         name: z.string(),
         address: z.string().nullable(),
-        tenantId: UUIDSchema, // ← Added for response
+        latitude: z.number().nullable().optional(),
+        longitude: z.number().nullable().optional(),
+        tenantId: UUIDSchema,
         createdAt: z.string().nullable(),
         updatedAt: z.string().nullable(),
     })

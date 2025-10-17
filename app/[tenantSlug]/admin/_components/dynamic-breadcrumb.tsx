@@ -643,7 +643,7 @@ export function DynamicBreadcrumb() {
                         }}
                         className={cn(
                             "inline-flex items-center gap-2 rounded-md px-2 py-2 text-xs font-medium font-mono transition-colors",
-                            "bg-muted/60 text-foreground", // <- this line changed
+                            "bg-muted/60 text-foreground",
                             scope === "store" && "cursor-pointer hover:bg-muted"
                         )}
                     >

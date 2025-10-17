@@ -22,6 +22,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 export type User = {
     id: string;
@@ -208,9 +209,10 @@ export const createColumns = (
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuItem
-                            onClick={() =>
-                                navigator.clipboard.writeText(user.userId)
-                            }
+                            onClick={() => {
+                                navigator.clipboard.writeText(user.userId);
+                                toast.success("User ID copied!");
+                            }}
                         >
                             Copy user ID
                         </DropdownMenuItem>

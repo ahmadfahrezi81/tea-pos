@@ -224,6 +224,7 @@ export function AddProductModal({
                     <form
                         onSubmit={form.handleSubmit(onSubmit)}
                         className="space-y-4"
+                        autoComplete="off"
                     >
                         {/* Image Upload */}
                         <div className="space-y-2">

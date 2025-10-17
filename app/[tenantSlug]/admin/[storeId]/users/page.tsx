@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { ScopeBadge } from "../../_components/scope-badge";
+import { AddAssignmentModal } from "./_components/add-assignment-modal";
 
 export default function StoreUsersPage() {
     const { tenantId } = useTenant();
@@ -36,10 +37,10 @@ export default function StoreUsersPage() {
     const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
     const [userToRemove, setUserToRemove] = useState<StoreUser | null>(null);
     const [isRemoving, setIsRemoving] = useState(false);
+    const [addModalOpen, setAddModalOpen] = useState(false);
 
     const handleAddAssignment = () => {
-        // TODO: Open modal to assign existing tenant user to this store
-        toast.info("Add assignment feature coming soon");
+        setAddModalOpen(true);
     };
 
     const handleRemoveAssignment = (user: StoreUser) => {
@@ -144,11 +145,7 @@ export default function StoreUsersPage() {
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    <Button
-                        size="default"
-                        onClick={handleAddAssignment}
-                        disabled
-                    >
+                    <Button size="default" onClick={handleAddAssignment}>
                         <UserPlus className="mr-2 h-4 w-4" />
                         Add Assignment
                     </Button>
@@ -192,6 +189,15 @@ export default function StoreUsersPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            <AddAssignmentModal
+                open={addModalOpen}
+                onOpenChange={setAddModalOpen}
+                onSuccess={() => {
+                    mutate(); // Refresh the user list after adding
+                    toast.success("Assignments updated successfully");
+                }}
+            />
         </div>
     );
 }

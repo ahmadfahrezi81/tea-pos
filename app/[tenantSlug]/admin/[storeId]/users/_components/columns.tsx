@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { StoreUser } from "@/lib/schemas/userStoreAssignments";
+import { toast } from "sonner";
 
 const getRoleIcon = (role: string) => {
     const iconClass = "h-4 w-4";
@@ -184,16 +185,15 @@ export const createColumns = (
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuItem
-                            disabled
-                            onClick={() =>
-                                navigator.clipboard.writeText(user.userId)
-                            }
+                            onClick={() => {
+                                navigator.clipboard.writeText(user.userId);
+                                toast.success("User ID copied!");
+                            }}
                         >
                             Copy user ID
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
-                            disabled
                             className="text-red-600"
                             onClick={() => onRemove(user)}
                         >

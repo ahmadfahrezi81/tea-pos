@@ -209,12 +209,22 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const { name, address } = result.data;
+        // const { name, address } = result.data;
 
-        // Insert store with tenant_id
+        // // Insert store with tenant_id
+        // const storePayload = toSnakeKeys({
+        //     name: name.trim(),
+        //     address: address?.trim() || null,
+        //     tenantId: currentTenantId,
+        // });
+
+        const { name, address, latitude, longitude } = result.data;
+
         const storePayload = toSnakeKeys({
             name: name.trim(),
             address: address?.trim() || null,
+            latitude,
+            longitude,
             tenantId: currentTenantId,
         });
 

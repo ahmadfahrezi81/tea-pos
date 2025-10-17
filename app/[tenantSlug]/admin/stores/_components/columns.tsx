@@ -11,6 +11,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 
 export type Store = {
     id: string;
@@ -198,10 +199,10 @@ export const createColumns = (): ColumnDef<Store>[] => [
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuItem
-                            disabled
-                            onClick={() =>
-                                navigator.clipboard.writeText(store.id)
-                            }
+                            onClick={() => {
+                                navigator.clipboard.writeText(store.id);
+                                toast.success("Store ID copied!");
+                            }}
                         >
                             Copy Store ID
                         </DropdownMenuItem>

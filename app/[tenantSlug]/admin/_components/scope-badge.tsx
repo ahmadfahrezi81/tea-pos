@@ -24,9 +24,13 @@ export function ScopeBadge({ className, showIcon = true }: ScopeBadgeProps) {
     return (
         <div
             className={cn(
-                "inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-medium text-muted-foreground w-fit bg-muted/50 mb-1",
+                "inline-flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-mono bg-background text-foreground border border-border mb-1 w-fit",
                 className
             )}
+            // className={cn(
+            //     "inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-medium text-muted-foreground w-fit bg-muted/50 mb-1",
+            //     className
+            // )}
         >
             {showIcon && <Icon size={14} />}
             <span>{label}</span>
