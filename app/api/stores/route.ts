@@ -359,6 +359,18 @@ export async function DELETE(request: NextRequest) {
             .eq("tenant_id", currentTenantId);
 
         if (storeError) {
+            // Check for foreign key violation
+            if (
+                storeError.message.includes("violates foreign key constraint")
+            ) {
+                return NextResponse.json(
+                    {
+                        error: "Cannot delete store because it has related data (e.g. daily summaries). Remove those first or archive the store.",
+                    },
+                    { status: 400 }
+                );
+            }
+
             return NextResponse.json(
                 { error: storeError.message },
                 { status: 400 }

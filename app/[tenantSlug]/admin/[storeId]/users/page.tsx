@@ -195,7 +195,6 @@ export default function StoreUsersPage() {
                 onOpenChange={setAddModalOpen}
                 onSuccess={() => {
                     mutate(); // Refresh the user list after adding
-                    toast.success("Assignments updated successfully");
                 }}
             />
         </div>

@@ -32,7 +32,11 @@ const formatDate = (dateString: string | null) => {
     });
 };
 
-export const createColumns = (): ColumnDef<Store>[] => [
+export const createColumns = ({
+    onDelete,
+}: {
+    onDelete?: (store: Store) => void;
+}): ColumnDef<Store>[] => [
     {
         id: "select",
         header: ({ table }) => (
@@ -210,7 +214,10 @@ export const createColumns = (): ColumnDef<Store>[] => [
                             View Store Details
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem disabled className="text-red-600">
+                        <DropdownMenuItem
+                            onClick={() => onDelete?.(store)}
+                            className="text-red-600 focus:text-red-600"
+                        >
                             Delete Store
                         </DropdownMenuItem>
                     </DropdownMenuContent>
