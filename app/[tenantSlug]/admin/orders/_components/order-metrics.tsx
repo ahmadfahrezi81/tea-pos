@@ -72,7 +72,7 @@ export function OrderMetrics({ orders }: OrderMetricsProps) {
                 return (
                     <Card
                         key={index}
-                        className="overflow-hidden p-0 rounded-lg"
+                        className="overflow-hidden p-0 rounded-lg shadow-none"
                     >
                         <CardContent className="p-5 py-4">
                             <div className="flex items-center justify-between">
