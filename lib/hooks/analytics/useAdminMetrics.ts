@@ -5,11 +5,13 @@ import { AdminMetricsResponse } from "@/lib/schemas/analytics";
 interface UseAdminMetricsParams {
     dateFrom: string; // YYYY-MM-DD
     dateTo: string; // YYYY-MM-DD
+    storeIds?: string[]; // optional filter
 }
 
 const fetchAdminMetrics = async ({
     dateFrom,
     dateTo,
+    storeIds,
 }: UseAdminMetricsParams): Promise<AdminMetricsResponse> => {
     if (!dateFrom || !dateTo) {
         throw new Error("Date range is required");
@@ -18,6 +20,9 @@ const fetchAdminMetrics = async ({
     const params = new URLSearchParams();
     params.append("dateFrom", dateFrom);
     params.append("dateTo", dateTo);
+    if (storeIds && storeIds.length > 0) {
+        params.append("storeIds", storeIds.join(","));
+    }
 
     const res = await fetch(
         `/api/analytics/admin/metrics?${params.toString()}`
@@ -37,13 +42,21 @@ const fetchAdminMetrics = async ({
     return res.json();
 };
 
-export default function useAdminMetrics(dateFrom: string, dateTo: string) {
+export default function useAdminMetrics(
+    dateFrom: string,
+    dateTo: string,
+    storeIds?: string[]
+) {
     const key =
-        dateFrom && dateTo ? `admin-metrics-${dateFrom}-${dateTo}` : null;
+        dateFrom && dateTo
+            ? `admin-metrics-${dateFrom}-${dateTo}-${(storeIds || []).join(
+                  ","
+              )}`
+            : null;
 
     return useSWR<AdminMetricsResponse>(
         key,
-        () => fetchAdminMetrics({ dateFrom, dateTo }),
+        () => fetchAdminMetrics({ dateFrom, dateTo, storeIds }),
         {
             revalidateOnFocus: true,
             dedupingInterval: 5000,

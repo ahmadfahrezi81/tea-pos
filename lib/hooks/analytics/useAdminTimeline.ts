@@ -5,11 +5,13 @@ import { AdminTimelineResponse } from "@/lib/schemas/analytics";
 interface UseAdminTimelineParams {
     dateFrom: string; // YYYY-MM-DD
     dateTo: string; // YYYY-MM-DD
+    storeIds?: string[];
 }
 
 const fetchAdminTimeline = async ({
     dateFrom,
     dateTo,
+    storeIds,
 }: UseAdminTimelineParams): Promise<AdminTimelineResponse> => {
     if (!dateFrom || !dateTo) {
         throw new Error("Date range is required");
@@ -18,6 +20,9 @@ const fetchAdminTimeline = async ({
     const params = new URLSearchParams();
     params.append("dateFrom", dateFrom);
     params.append("dateTo", dateTo);
+    if (storeIds && storeIds.length > 0) {
+        params.append("storeIds", storeIds.join(","));
+    }
 
     const res = await fetch(
         `/api/analytics/admin/timeline?${params.toString()}`
@@ -37,13 +42,21 @@ const fetchAdminTimeline = async ({
     return res.json();
 };
 
-export default function useAdminTimeline(dateFrom: string, dateTo: string) {
+export default function useAdminTimeline(
+    dateFrom: string,
+    dateTo: string,
+    storeIds?: string[]
+) {
     const key =
-        dateFrom && dateTo ? `admin-timeline-${dateFrom}-${dateTo}` : null;
+        dateFrom && dateTo
+            ? `admin-timeline-${dateFrom}-${dateTo}-${(storeIds || []).join(
+                  ","
+              )}`
+            : null;
 
     return useSWR<AdminTimelineResponse>(
         key,
-        () => fetchAdminTimeline({ dateFrom, dateTo }),
+        () => fetchAdminTimeline({ dateFrom, dateTo, storeIds }),
         {
             revalidateOnFocus: true,
             dedupingInterval: 5000,

@@ -1,3 +1,5 @@
+//app/[tenantSlug]/admin/[storeId]/orders/page.tsx
+
 "use client";
 
 import { useState, useMemo } from "react";

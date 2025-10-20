@@ -5,11 +5,13 @@ import { AdminStoreBreakdownResponse } from "@/lib/schemas/analytics";
 interface UseAdminStoreBreakdownParams {
     dateFrom: string; // YYYY-MM-DD
     dateTo: string; // YYYY-MM-DD
+    storeIds?: string[];
 }
 
 const fetchAdminStoreBreakdown = async ({
     dateFrom,
     dateTo,
+    storeIds,
 }: UseAdminStoreBreakdownParams): Promise<AdminStoreBreakdownResponse> => {
     if (!dateFrom || !dateTo) {
         throw new Error("Date range is required");
@@ -18,6 +20,9 @@ const fetchAdminStoreBreakdown = async ({
     const params = new URLSearchParams();
     params.append("dateFrom", dateFrom);
     params.append("dateTo", dateTo);
+    if (storeIds && storeIds.length > 0) {
+        params.append("storeIds", storeIds.join(","));
+    }
 
     const res = await fetch(
         `/api/analytics/admin/store-breakdown?${params.toString()}`
@@ -39,16 +44,19 @@ const fetchAdminStoreBreakdown = async ({
 
 export default function useAdminStoreBreakdown(
     dateFrom: string,
-    dateTo: string
+    dateTo: string,
+    storeIds?: string[]
 ) {
     const key =
         dateFrom && dateTo
-            ? `admin-store-breakdown-${dateFrom}-${dateTo}`
+            ? `admin-store-breakdown-${dateFrom}-${dateTo}-${(
+                  storeIds || []
+              ).join(",")}`
             : null;
 
     return useSWR<AdminStoreBreakdownResponse>(
         key,
-        () => fetchAdminStoreBreakdown({ dateFrom, dateTo }),
+        () => fetchAdminStoreBreakdown({ dateFrom, dateTo, storeIds }),
         {
             revalidateOnFocus: true,
             dedupingInterval: 5000,

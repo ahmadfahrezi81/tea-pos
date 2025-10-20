@@ -15,7 +15,8 @@ async function fetchAllOrders(
     supabase: any,
     tenantId: string,
     startDate: string,
-    endDate: string
+    endDate: string,
+    storeIds?: string[]
 ) {
     const pageSize = 1000;
     let from = 0;
@@ -24,13 +25,14 @@ async function fetchAllOrders(
     let allOrders: any[] = [];
 
     while (true) {
-        const { data, error } = await supabase
+        let query = supabase
             .from("orders")
             .select(
                 `
                 id,
                 created_at,
-                order_items(quantity)
+                order_items(quantity),
+                store_id
             `
             )
             .eq("tenant_id", tenantId)
@@ -38,6 +40,12 @@ async function fetchAllOrders(
             .lte("created_at", endDate)
             .order("created_at", { ascending: true })
             .range(from, to);
+
+        if (storeIds && storeIds.length > 0) {
+            query = query.in("store_id", storeIds);
+        }
+
+        const { data, error } = await query;
 
         if (error) throw error;
         if (!data || data.length === 0) break;
@@ -76,6 +84,13 @@ export async function GET(request: NextRequest) {
 
         const { dateFrom, dateTo } = queryResult.data;
 
+        // Parse optional storeIds (comma-separated)
+        const storeIdsParam = searchParams.get("storeIds") ?? "";
+        const storeIds =
+            storeIdsParam.trim().length > 0
+                ? storeIdsParam.split(",").map((s) => s.trim())
+                : undefined;
+
         // Build date range with timezone
         const TIMEZONE_OFFSET = Number(process.env.TIMEZONE_OFFSET ?? 7);
         const start = new Date(
@@ -91,12 +106,13 @@ export async function GET(request: NextRequest) {
         // Determine granularity (same day = hourly, otherwise daily)
         const granularity = dateFrom === dateTo ? "hourly" : "daily";
 
-        // Fetch orders for date range with pagination
+        // Fetch orders for date range with pagination (optionally filtered by stores)
         const orders = await fetchAllOrders(
             supabase,
             currentTenantId,
             start,
-            end
+            end,
+            storeIds
         );
 
         // Aggregate data based on granularity
