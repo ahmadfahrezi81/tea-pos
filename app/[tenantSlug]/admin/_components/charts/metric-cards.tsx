@@ -147,21 +147,6 @@ export default function MetricCards({
     return (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <MetricCard
-                title="Total Revenue"
-                value={formatRupiah(data?.totalRevenue || 0)}
-                change={`${
-                    data?.revenueChange && data.revenueChange > 0 ? "+" : ""
-                }${data?.revenueChange || 0}%`}
-                icon={DollarSign}
-                trend={
-                    data?.revenueChange && data.revenueChange >= 0
-                        ? "up"
-                        : "down"
-                }
-                periodLabel={periodLabel}
-                isLoading={isLoading}
-            />
-            <MetricCard
                 title="Total Orders"
                 value={data?.totalOrders?.toLocaleString("id-ID") || "0"}
                 change={`${
@@ -182,6 +167,21 @@ export default function MetricCards({
                 }%`}
                 icon={CupSoda}
                 trend={data?.cupsChange && data.cupsChange >= 0 ? "up" : "down"}
+                periodLabel={periodLabel}
+                isLoading={isLoading}
+            />
+            <MetricCard
+                title="Total Revenue"
+                value={formatRupiah(data?.totalRevenue || 0)}
+                change={`${
+                    data?.revenueChange && data.revenueChange > 0 ? "+" : ""
+                }${data?.revenueChange || 0}%`}
+                icon={DollarSign}
+                trend={
+                    data?.revenueChange && data.revenueChange >= 0
+                        ? "up"
+                        : "down"
+                }
                 periodLabel={periodLabel}
                 isLoading={isLoading}
             />
