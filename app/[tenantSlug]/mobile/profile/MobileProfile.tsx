@@ -196,7 +196,7 @@ export default function MobileProfile() {
     // }, [router, url]);
 
     const handleAdminDashboard = useCallback(() => {
-        window.open(url("/admin/dashboard"), "_blank", "noopener,noreferrer");
+        window.open(url("/admin"), "_blank", "noopener,noreferrer");
     }, [url]);
 
     // Profile is guaranteed by middleware, but check for safety

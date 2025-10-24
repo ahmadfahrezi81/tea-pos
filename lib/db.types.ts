@@ -250,41 +250,92 @@ export type Database = {
           },
         ]
       }
-      products: {
+      product_categories: {
         Row: {
           created_at: string | null
           id: string
-          image_url: string | null
-          is_active: boolean | null
-          is_main: boolean
           name: string
-          price: number
-          tenant_id: string | null
+          slug: string
+          tenant_id: string
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           id?: string
-          image_url?: string | null
-          is_active?: boolean | null
-          is_main?: boolean
           name: string
-          price: number
-          tenant_id?: string | null
+          slug: string
+          tenant_id: string
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
+          name?: string
+          slug?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_categories_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          category_id: string | null
+          created_at: string | null
+          id: string
+          image_path: string | null
+          image_url: string | null
+          is_active: boolean | null
+          is_main: boolean
+          name: string
+          price: number
+          status: string | null
+          tenant_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string | null
+          id?: string
+          image_path?: string | null
+          image_url?: string | null
+          is_active?: boolean | null
+          is_main?: boolean
+          name: string
+          price: number
+          status?: string | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string | null
+          id?: string
+          image_path?: string | null
           image_url?: string | null
           is_active?: boolean | null
           is_main?: boolean
           name?: string
           price?: number
+          status?: string | null
           tenant_id?: string | null
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_products_category_id"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "product_categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "products_tenant_id_fkey"
             columns: ["tenant_id"]

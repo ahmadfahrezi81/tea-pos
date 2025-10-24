@@ -62,6 +62,29 @@ export const ProductSalesQuery = z
     .openapi({ title: "ProductSalesQuery" });
 
 // ============================================================================
+// ADMIN DASHBOARD QUERY SCHEMAS (NEW)
+// ============================================================================
+
+export const AdminDateRangeQuery = z
+    .object({
+        dateFrom: z
+            .string()
+            .regex(/^\d{4}-\d{2}-\d{2}$/)
+            .openapi({
+                description: "Start date in YYYY-MM-DD format",
+                example: "2025-10-01",
+            }),
+        dateTo: z
+            .string()
+            .regex(/^\d{4}-\d{2}-\d{2}$/)
+            .openapi({
+                description: "End date in YYYY-MM-DD format",
+                example: "2025-10-07",
+            }),
+    })
+    .openapi({ title: "AdminDateRangeQuery" });
+
+// ============================================================================
 // RESPONSE SCHEMAS
 // ============================================================================
 
@@ -142,6 +165,109 @@ export const ProductSalesResponse = z
     .openapi({ title: "ProductSalesResponse" });
 
 // ============================================================================
+// ADMIN DASHBOARD RESPONSE SCHEMAS (NEW)
+// ============================================================================
+
+export const AdminMetricsResponse = z
+    .object({
+        totalRevenue: z.number().min(0).openapi({
+            description: "Total revenue in Rupiah",
+            example: 1249500,
+        }),
+        totalOrders: z.number().int().min(0).openapi({
+            description: "Total number of orders",
+            example: 1284,
+        }),
+        totalCups: z.number().int().min(0).openapi({
+            description: "Total number of cups sold",
+            example: 3842,
+        }),
+        averageOrderValue: z.number().min(0).openapi({
+            description: "Average order value in Rupiah",
+            example: 18375,
+        }),
+        revenueChange: z.number().openapi({
+            description: "Revenue percentage change vs previous period",
+            example: 20.1,
+        }),
+        ordersChange: z.number().openapi({
+            description: "Orders percentage change vs previous period",
+            example: 15.3,
+        }),
+        cupsChange: z.number().openapi({
+            description: "Cups percentage change vs previous period",
+            example: 12.5,
+        }),
+        aovChange: z.number().openapi({
+            description: "AOV percentage change vs previous period",
+            example: -2.4,
+        }),
+    })
+    .openapi({ title: "AdminMetricsResponse" });
+
+export const AdminTimelineDataPoint = z
+    .object({
+        label: z.string().openapi({
+            description: "Time label (HH:00 for hourly, YYYY-MM-DD for daily)",
+            example: "14:00",
+        }),
+        orders: z.number().int().min(0).openapi({
+            description: "Number of orders",
+            example: 105,
+        }),
+        cups: z.number().int().min(0).openapi({
+            description: "Number of cups sold",
+            example: 145,
+        }),
+    })
+    .openapi({ title: "AdminTimelineDataPoint" });
+
+export const AdminTimelineResponse = z
+    .object({
+        data: z.array(AdminTimelineDataPoint).openapi({
+            description: "Array of timeline data points",
+        }),
+        granularity: z.enum(["hourly", "daily"]).openapi({
+            description: "Data granularity based on date range",
+            example: "hourly",
+        }),
+    })
+    .openapi({ title: "AdminTimelineResponse" });
+
+export const AdminStoreBreakdownDataPoint = z
+    .object({
+        storeId: z.string().openapi({
+            description: "Store ID",
+            example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        }),
+        storeName: z.string().openapi({
+            description: "Store name",
+            example: "Downtown Store",
+        }),
+        orders: z.number().int().min(0).openapi({
+            description: "Number of orders from this store",
+            example: 450,
+        }),
+        percentage: z.number().min(0).max(100).openapi({
+            description: "Percentage of total orders",
+            example: 35,
+        }),
+    })
+    .openapi({ title: "AdminStoreBreakdownDataPoint" });
+
+export const AdminStoreBreakdownResponse = z
+    .object({
+        data: z.array(AdminStoreBreakdownDataPoint).openapi({
+            description: "Array of store breakdown data points",
+        }),
+        totalOrders: z.number().int().min(0).openapi({
+            description: "Total orders across all stores",
+            example: 1285,
+        }),
+    })
+    .openapi({ title: "AdminStoreBreakdownResponse" });
+
+// ============================================================================
 // TYPE EXPORTS
 // ============================================================================
 
@@ -156,3 +282,15 @@ export type DailySalesResponse = z.infer<typeof DailySalesResponse>;
 export type ProductSalesQuery = z.infer<typeof ProductSalesQuery>;
 export type ProductSalesDataPoint = z.infer<typeof ProductSalesDataPoint>;
 export type ProductSalesResponse = z.infer<typeof ProductSalesResponse>;
+
+// Admin Dashboard Types
+export type AdminDateRangeQuery = z.infer<typeof AdminDateRangeQuery>;
+export type AdminMetricsResponse = z.infer<typeof AdminMetricsResponse>;
+export type AdminTimelineDataPoint = z.infer<typeof AdminTimelineDataPoint>;
+export type AdminTimelineResponse = z.infer<typeof AdminTimelineResponse>;
+export type AdminStoreBreakdownDataPoint = z.infer<
+    typeof AdminStoreBreakdownDataPoint
+>;
+export type AdminStoreBreakdownResponse = z.infer<
+    typeof AdminStoreBreakdownResponse
+>;

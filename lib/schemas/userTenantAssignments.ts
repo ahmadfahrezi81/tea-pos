@@ -37,20 +37,20 @@ export const AssignUserToTenantInput = z
             description: "Tenant ID",
         }),
         role: z
-            .enum(["owner", "admin", "member", "viewer"])
-            .default("member")
+            .enum(["owner", "manager", "staff"]) // Match your DB constraint
+            .default("staff")
             .openapi({
                 description: "Role for the user in this tenant",
-                example: "member",
+                example: "staff",
             }),
     })
     .openapi({ title: "AssignUserToTenantInput" });
 
 export const UpdateUserTenantAssignmentInput = z
     .object({
-        role: z.enum(["owner", "admin", "member", "viewer"]).openapi({
+        role: z.enum(["owner", "manager", "staff"]).openapi({
             description: "Updated role for the user",
-            example: "admin",
+            example: "owner",
         }),
     })
     .openapi({ title: "UpdateUserTenantAssignmentInput" });

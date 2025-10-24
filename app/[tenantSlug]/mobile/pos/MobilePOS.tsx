@@ -130,50 +130,6 @@ export default function MobilePOS() {
         setTimeout(() => setToast(null), 4000); // Auto-hide after 4 seconds
     };
 
-    // const processOrder = async () => {
-    //     if (!selectedStore || cart.length === 0) {
-    //         showToast("Please select a store and add items to cart", "error");
-    //         return;
-    //     }
-
-    //     setProcessing(true);
-
-    //     const items = cart.map((item) => ({
-    //         productId: item.product.id,
-    //         quantity: item.quantity,
-    //         unitPrice: item.product.price,
-    //     }));
-
-    //     try {
-    //         const response = await fetch("/api/orders", {
-    //             method: "POST",
-    //             headers: { "Content-Type": "application/json" },
-    //             body: JSON.stringify({
-    //                 storeId: selectedStore,
-    //                 items,
-    //             }),
-    //         });
-
-    //         const data = await response.json();
-
-    //         if (data.success) {
-    //             showToast(
-    //                 `Order processed! Total: ${formatRupiah(data.totalAmount)}`,
-    //                 "success"
-    //             );
-    //             setCart([]);
-    //             setShowCart(false);
-    //         } else {
-    //             showToast("Failed to process order: " + data.error, "error");
-    //         }
-    //     } catch (error) {
-    //         showToast("Error processing order", "error");
-    //         console.log(error);
-    //     } finally {
-    //         setProcessing(false);
-    //     }
-    // };
-
     const processOrder = async () => {
         if (!selectedStore || cart.length === 0) {
             showToast("Please select a store and add items to cart", "error");

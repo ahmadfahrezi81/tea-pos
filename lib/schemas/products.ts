@@ -1,28 +1,6 @@
-// lib/schemas/products.ts
+//lib/schemas/products.ts
 import { z } from "zod";
 import { UUIDSchema } from "./common";
-
-/**
- * NAMING CONVENTION FOR SCHEMAS
- * ==============================
- *
- * Input Schemas (for POST/PUT/PATCH requests):
- *   - Format: {Action}{Entity}Input
- *   - Example: CreateProductInput, UpdateProductInput
- *   - Use camelCase for fields (API layer)
- *
- * Query Schemas (for GET request parameters):
- *   - Format: {Action}{Entity}Query or List{Entity}Query
- *   - Example: ListProductsQuery, GetProductQuery
- *   - Use camelCase for fields (API layer)
- *
- * Response Schemas (for API responses):
- *   - Format: {Entity}Response or {Action}{Entity}Response
- *   - Example: ProductResponse, CreateProductResponse, ProductListResponse
- *   - Use camelCase for fields (API layer)
- *
- * Note: Use transformKeys() helper to convert DB snake_case to API camelCase
- */
 
 // ============================================================================
 // INPUT SCHEMAS
@@ -42,11 +20,22 @@ export const CreateProductInput = z
             description: "URL to product image",
             example: "https://example.com/tea.jpg",
         }),
+        imagePath: z.string().nullable().optional().openapi({
+            description: "Storage path for product image",
+            example: "product-images/abc123.jpg",
+        }),
+        categoryId: UUIDSchema.nullable().optional().openapi({
+            description: "Product category ID",
+            example: "123e4567-e89b-12d3-a456-426614174000",
+        }),
+        status: z.enum(["active", "inactive", "draft"]).optional().openapi({
+            description: "Product status",
+            example: "active",
+        }),
         isMain: z.boolean().optional().openapi({
-            description: "Whether this is a main/featured product",
+            description: "Whether this is a main/featured product (legacy)",
             example: false,
         }),
-        // tenantId is NOT included in input - it's derived from session
     })
     .openapi({ title: "CreateProductInput" });
 
@@ -64,12 +53,22 @@ export const UpdateProductInput = z
         imageUrl: z.string().url().nullable().optional().openapi({
             description: "URL to product image",
         }),
+        imagePath: z.string().nullable().optional().openapi({
+            description: "Storage path for product image",
+        }),
+        categoryId: UUIDSchema.nullable().optional().openapi({
+            description: "Product category ID",
+        }),
+        status: z.enum(["active", "inactive", "draft"]).optional().openapi({
+            description: "Product status",
+            example: "active",
+        }),
         isActive: z.boolean().optional().openapi({
-            description: "Whether the product is active/available",
+            description: "Whether the product is active/available (legacy)",
             example: true,
         }),
         isMain: z.boolean().optional().openapi({
-            description: "Whether this is a main/featured product",
+            description: "Whether this is a main/featured product (legacy)",
             example: false,
         }),
     })
@@ -89,7 +88,14 @@ export const ListProductsQuery = z
                 description: "Show all products including inactive ones",
                 example: "true",
             }),
-        // tenantId is NOT a query param - it's from the session
+        categoryId: z.string().uuid().optional().openapi({
+            description: "Filter by category ID",
+            example: "123e4567-e89b-12d3-a456-426614174000",
+        }),
+        status: z.enum(["active", "inactive", "draft"]).optional().openapi({
+            description: "Filter by status",
+            example: "active",
+        }),
     })
     .openapi({ title: "ListProductsQuery" });
 
@@ -103,9 +109,13 @@ export const ProductResponse = z
         name: z.string(),
         price: z.number(),
         imageUrl: z.string().nullable(),
+        imagePath: z.string().nullable(), // NEW: Storage path for deletion
+        categoryId: UUIDSchema.nullable(),
+        categoryName: z.string().nullable(), // NEW: Added for joined data
+        status: z.string().nullable(),
         isActive: z.boolean().nullable(),
         isMain: z.boolean(),
-        tenantId: UUIDSchema, // ← Added for response
+        tenantId: UUIDSchema,
         createdAt: z.string().nullable(),
         updatedAt: z.string().nullable(),
     })
