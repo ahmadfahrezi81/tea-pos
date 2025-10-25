@@ -81,9 +81,32 @@ export async function PATCH(
             );
         }
 
-        // Update profile if fullName provided
-        if (fullName) {
-            const profilePayload = toSnakeKeys({ fullName });
+        // // Update profile if fullName provided
+        // if (fullName) {
+        //     const profilePayload = toSnakeKeys({ fullName });
+        //     const { error: profileError } = await supabaseAdmin
+        //         .from("profiles")
+        //         .update(profilePayload)
+        //         .eq("id", userId);
+
+        //     if (profileError) {
+        //         console.error("Profile update error:", profileError);
+        //         return NextResponse.json(
+        //             { error: "Failed to update user profile" },
+        //             { status: 400 }
+        //         );
+        //     }
+        // }
+
+        // Update profile fields if provided
+        const profilePayload = toSnakeKeys({
+            fullName,
+            phoneNumber: result.data.phoneNumber,
+            status: result.data.status,
+        });
+
+        // Only update if something exists to update
+        if (Object.values(profilePayload).some((v) => v !== undefined)) {
             const { error: profileError } = await supabaseAdmin
                 .from("profiles")
                 .update(profilePayload)

@@ -229,7 +229,7 @@ export function AuthProvider({
     initialUser?: { id: string; role: string } | null;
 }) {
     const {
-        data: profile,
+        data: profile = null,
         isLoading,
         error,
         mutate,
@@ -242,16 +242,20 @@ export function AuthProvider({
             return fetchProfile();
         },
         {
-            fallbackData: initialUser
-                ? {
-                      id: initialUser.id,
-                      role: initialUser.role,
-                      email: "",
-                      fullName: "",
-                      createdAt: null,
-                      updatedAt: null,
-                  }
-                : null,
+            fallbackData:
+                initialUser != null
+                    ? {
+                          id: initialUser.id,
+                          role: initialUser.role,
+                          email: "",
+                          fullName: "",
+                          phoneNumber: null,
+                          status: "active",
+                          createdAt: null,
+                          updatedAt: null,
+                      }
+                    : null,
+
             revalidateOnMount: true,
             shouldRetryOnError: true,
             errorRetryCount: 3,

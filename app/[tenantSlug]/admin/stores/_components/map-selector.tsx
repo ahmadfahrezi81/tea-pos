@@ -1,52 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// /* eslint-disable @typescript-eslint/no-explicit-any */
-// "use client";
-
-// import { useMapEvents, MapContainer, TileLayer, Marker } from "react-leaflet";
-// import L, { LeafletMouseEvent } from "leaflet";
-// import "leaflet/dist/leaflet.css";
-
-// // Fix default marker icon for Next.js
-// import markerIcon from "leaflet/dist/images/marker-icon.png";
-// import markerShadow from "leaflet/dist/images/marker-shadow.png";
-// L.Marker.prototype.options.icon = L.icon({
-//     iconUrl: (markerIcon as any).src ?? markerIcon,
-//     shadowUrl: (markerShadow as any).src ?? markerShadow,
-// });
-
-// export function MapSelector({
-//     position,
-//     onSelect,
-// }: {
-//     position: [number, number] | null;
-//     onSelect: (lat: number, lng: number) => void;
-// }) {
-//     function LocationPicker() {
-//         useMapEvents({
-//             click(e: LeafletMouseEvent) {
-//                 onSelect(e.latlng.lat, e.latlng.lng);
-//             },
-//         });
-//         return null;
-//     }
-
-//     return (
-//         <div className="h-[250px] w-full rounded-md overflow-hidden border">
-//             <MapContainer
-//                 center={position ?? [0, 0]}
-//                 zoom={position ? 13 : 2}
-//                 style={{ height: "100%", width: "100%" }}
-//             >
-//                 <TileLayer
-//                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-//                     attribution='© <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
-//                 />
-//                 <LocationPicker />
-//                 {position && <Marker position={position} />}
-//             </MapContainer>
-//         </div>
-//     );
-// }
 
 "use client";
 
@@ -86,45 +38,46 @@ export function MapSelector({ position, onSelect }: MapSelectorProps) {
     const [isSearching, setIsSearching] = useState(false);
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
     const [selected, setSelected] = useState<[number, number] | null>(position);
+    const [shouldZoomIn, setShouldZoomIn] = useState(false);
 
     useEffect(() => {
         setSelected(position);
     }, [position]);
 
-    // map click handler to set marker + notify parent
+    // 🧭 Map click handler
     function LocationPicker() {
         useMapEvents({
             click(e: LeafletMouseEvent) {
-                const lat = e.latlng.lat;
-                const lng = e.latlng.lng;
+                const { lat, lng } = e.latlng;
                 setSelected([lat, lng]);
+                setShouldZoomIn(false); // preserve current zoom on manual click
                 onSelect(lat, lng);
             },
         });
         return null;
     }
 
-    // programmatic recenter helper
-    // function RecenterMap({ lat, lng }: { lat: number; lng: number }) {
-    //     const map = useMap();
-    //     useEffect(() => {
-    //         map.setView([lat, lng], 13);
-    //     }, [lat, lng, map]);
-    //     return null;
-    // }
-
-    // --- Keep same imports and other parts as before ---
-    function RecenterMap({ lat, lng }: { lat: number; lng: number }) {
+    // 🎯 Recenter map when a new location is chosen
+    function RecenterMap({
+        lat,
+        lng,
+        zoomIn,
+    }: {
+        lat: number;
+        lng: number;
+        zoomIn: boolean;
+    }) {
         const map = useMap();
         useEffect(() => {
-            // 🟢 preserve current zoom instead of resetting
-            const currentZoom = map.getZoom();
-            map.setView([lat, lng], currentZoom);
-        }, [lat, lng, map]);
+            const targetZoom = zoomIn
+                ? Math.max(map.getZoom(), 15)
+                : map.getZoom();
+            map.flyTo([lat, lng], targetZoom, { animate: true, duration: 1.2 });
+        }, [lat, lng, zoomIn, map]);
         return null;
     }
 
-    // search function (no event param)
+    // 🌍 Nominatim search
     const handleSearch = async () => {
         const q = searchQuery.trim();
         if (!q) return;
@@ -146,6 +99,7 @@ export function MapSelector({ position, onSelect }: MapSelectorProps) {
         }
     };
 
+    // 📍 When user selects a search result
     const handleSelectResult = (lat: string, lon: string) => {
         const latNum = parseFloat(lat);
         const lonNum = parseFloat(lon);
@@ -153,20 +107,21 @@ export function MapSelector({ position, onSelect }: MapSelectorProps) {
         onSelect(latNum, lonNum);
         setSearchResults([]);
         setSearchQuery("");
+        setShouldZoomIn(true); // trigger zoom
     };
 
-    // handle Enter key in the input to trigger search without submitting outer form
+    // ⌨️ Handle Enter key to trigger search
     const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === "Enter") {
             e.preventDefault();
-            e.stopPropagation(); // critical: prevent parent form submit
+            e.stopPropagation();
             handleSearch();
         }
     };
 
     return (
         <div className="space-y-2">
-            {/* Search UI (not a form) */}
+            {/* 🔍 Search bar */}
             <div className="flex gap-2">
                 <input
                     type="text"
@@ -178,8 +133,8 @@ export function MapSelector({ position, onSelect }: MapSelectorProps) {
                     className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
                 />
                 <button
-                    type="button" // important — not "submit"
-                    onClick={() => handleSearch()}
+                    type="button"
+                    onClick={handleSearch}
                     disabled={isSearching}
                     className="px-3 py-2 text-sm bg-primary text-white rounded-md disabled:opacity-50"
                 >
@@ -187,7 +142,7 @@ export function MapSelector({ position, onSelect }: MapSelectorProps) {
                 </button>
             </div>
 
-            {/* Results dropdown */}
+            {/* 📋 Results dropdown */}
             {searchResults.length > 0 && (
                 <ul className="bg-popover border rounded-md shadow-sm text-sm max-h-40 overflow-y-auto">
                     {searchResults.map((r, idx) => (
@@ -202,7 +157,7 @@ export function MapSelector({ position, onSelect }: MapSelectorProps) {
                 </ul>
             )}
 
-            {/* Map */}
+            {/* 🗺️ Map */}
             <div className="h-[300px] w-full rounded-md overflow-hidden border relative z-0">
                 <MapContainer
                     center={selected ?? [0, 0]}
@@ -217,7 +172,11 @@ export function MapSelector({ position, onSelect }: MapSelectorProps) {
                     <LocationPicker />
                     {selected && <Marker position={selected} />}
                     {selected && (
-                        <RecenterMap lat={selected[0]} lng={selected[1]} />
+                        <RecenterMap
+                            lat={selected[0]}
+                            lng={selected[1]}
+                            zoomIn={shouldZoomIn}
+                        />
                     )}
                 </MapContainer>
             </div>

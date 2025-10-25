@@ -31,11 +31,11 @@ import {
 import { useTheme } from "next-themes";
 
 const settingsNav = [
-    { id: "general", name: "General", icon: Settings },
-    { id: "notifications", name: "Notifications", icon: Bell },
-    { id: "apps", name: "Apps & Connectors", icon: Grid3x3 },
-    { id: "security", name: "Security", icon: Shield },
-    { id: "account", name: "Account", icon: User },
+    { id: "general", name: "General", icon: Settings, disabled: false },
+    { id: "notifications", name: "Notifications", icon: Bell, disabled: true },
+    { id: "apps", name: "Apps & Connectors", icon: Grid3x3, disabled: true },
+    { id: "security", name: "Security", icon: Shield, disabled: true },
+    { id: "account", name: "Account", icon: User, disabled: true },
 ];
 
 export function SettingsDialog() {
@@ -68,7 +68,6 @@ export function SettingsDialog() {
                                         {settingsNav.map((item) => (
                                             <SidebarMenuItem key={item.id}>
                                                 <SidebarMenuButton
-                                                    disabled
                                                     isActive={
                                                         item.id ===
                                                         activeSection
@@ -78,6 +77,7 @@ export function SettingsDialog() {
                                                             item.id
                                                         )
                                                     }
+                                                    disabled={item.disabled}
                                                 >
                                                     <item.icon className="h-4 w-4" />
                                                     <span>{item.name}</span>

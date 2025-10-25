@@ -82,6 +82,8 @@ export const UserTenantAssignmentResponse = z
             .object({
                 fullName: z.string(),
                 email: z.string(),
+                phoneNumber: z.string().nullable(),
+                status: z.enum(["active", "inactive", "pending", "suspended"]),
             })
             .nullable(),
     })
