@@ -3,11 +3,8 @@
 import { useState } from "react";
 import {
     Bell,
-    Smile,
     Grid3x3,
-    Database,
     Shield,
-    Users,
     User,
     Settings,
     SettingsIcon,
@@ -36,11 +33,8 @@ import { useTheme } from "next-themes";
 const settingsNav = [
     { id: "general", name: "General", icon: Settings },
     { id: "notifications", name: "Notifications", icon: Bell },
-    { id: "personalization", name: "Personalization", icon: Smile },
     { id: "apps", name: "Apps & Connectors", icon: Grid3x3 },
-    { id: "data", name: "Data controls", icon: Database },
     { id: "security", name: "Security", icon: Shield },
-    { id: "parental", name: "Parental controls", icon: Users },
     { id: "account", name: "Account", icon: User },
 ];
 
@@ -74,6 +68,7 @@ export function SettingsDialog() {
                                         {settingsNav.map((item) => (
                                             <SidebarMenuItem key={item.id}>
                                                 <SidebarMenuButton
+                                                    disabled
                                                     isActive={
                                                         item.id ===
                                                         activeSection
@@ -111,16 +106,9 @@ export function SettingsDialog() {
                             {activeSection === "notifications" && (
                                 <NotificationsSettings />
                             )}
-                            {activeSection === "personalization" && (
-                                <PersonalizationSettings />
-                            )}
                             {activeSection === "apps" && <AppsSettings />}
-                            {activeSection === "data" && <DataSettings />}
                             {activeSection === "security" && (
                                 <SecuritySettings />
-                            )}
-                            {activeSection === "parental" && (
-                                <ParentalSettings />
                             )}
                             {activeSection === "account" && <AccountSettings />}
                         </div>
@@ -151,7 +139,10 @@ function GeneralSettings() {
 
             <div className="space-y-2">
                 <div className="text-sm font-medium">Accent color</div>
-                <select className="w-[280px] px-3 py-2 border rounded-md bg-background">
+                <select
+                    className="w-[280px] px-3 py-2 rounded-md border border-input bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
+                    disabled
+                >
                     <option>Default</option>
                     <option>Blue</option>
                     <option>Green</option>
@@ -161,8 +152,11 @@ function GeneralSettings() {
 
             <div className="space-y-2">
                 <div className="text-sm font-medium">Language</div>
-                <select className="w-[280px] px-3 py-2 border rounded-md bg-background">
-                    <option>Auto-detect</option>
+                <select
+                    className="w-[280px] px-3 py-2 rounded-md border border-input bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
+                    disabled
+                >
+                    {/* <option>Auto-detect</option> */}
                     <option>English</option>
                     <option>Spanish</option>
                     <option>French</option>
@@ -193,34 +187,6 @@ function NotificationsSettings() {
                         <span>{item}</span>
                         <Button variant="outline" size="sm">
                             Configure
-                        </Button>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-}
-
-function PersonalizationSettings() {
-    return (
-        <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-                Customize your experience with personalization options.
-            </p>
-            <div className="space-y-4">
-                {[
-                    "Custom instructions",
-                    "Response style",
-                    "Memory preferences",
-                    "Conversation starters",
-                ].map((item) => (
-                    <div
-                        key={item}
-                        className="flex items-center justify-between py-2 border-b"
-                    >
-                        <span>{item}</span>
-                        <Button variant="outline" size="sm">
-                            Edit
                         </Button>
                     </div>
                 ))}
@@ -264,34 +230,6 @@ function AppsSettings() {
     );
 }
 
-function DataSettings() {
-    return (
-        <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-                Control your data and how it&apos;s used.
-            </p>
-            <div className="space-y-4">
-                {[
-                    "Export data",
-                    "Delete conversations",
-                    "Clear history",
-                    "Data usage preferences",
-                ].map((item) => (
-                    <div
-                        key={item}
-                        className="flex items-center justify-between py-2 border-b"
-                    >
-                        <span>{item}</span>
-                        <Button variant="outline" size="sm">
-                            Manage
-                        </Button>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-}
-
 function SecuritySettings() {
     return (
         <div className="space-y-4">
@@ -312,34 +250,6 @@ function SecuritySettings() {
                         <span>{item}</span>
                         <Button variant="outline" size="sm">
                             Configure
-                        </Button>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-}
-
-function ParentalSettings() {
-    return (
-        <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-                Set up parental controls and content restrictions.
-            </p>
-            <div className="space-y-4">
-                {[
-                    "Content filters",
-                    "Usage limits",
-                    "Supervised mode",
-                    "Activity reports",
-                ].map((item) => (
-                    <div
-                        key={item}
-                        className="flex items-center justify-between py-2 border-b"
-                    >
-                        <span>{item}</span>
-                        <Button variant="outline" size="sm">
-                            Setup
                         </Button>
                     </div>
                 ))}
