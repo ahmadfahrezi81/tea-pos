@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Orders - Lite POS</title>
+
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+        <script src="common.js"></script>
+
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 16px;
+                padding-bottom: 80px;
+                background: #fff;
+            }
+
+            h2,
+            h3,
+            h4 {
+                margin: 0 0 12px 0;
+            }
+
+            .header {
+                margin-bottom: 16px;
+                padding-bottom: 16px;
+                border-bottom: 2px solid #000;
+            }
+
+            label {
+                display: block;
+                font-weight: bold;
+                margin: 12px 0 4px 0;
+            }
+
+            select,
+            input {
+                width: 100%;
+                padding: 8px;
+                border: 1px solid #000;
+                font-size: 14px;
+                box-sizing: border-box;
+                color: #000;
+            }
+
+            select,
+            input {
+                -webkit-appearance: none;
+                -moz-appearance: none;
+                appearance: none;
+                background-color: #fff;
+                background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+                background-repeat: no-repeat;
+                background-position: right 8px center;
+                background-size: 16px;
+                padding-right: 32px;
+            }
+
+            .summary-box {
+                border: 2px solid #000;
+                padding: 12px;
+                margin-bottom: 16px;
+            }
+
+            .summary-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 12px;
+                text-align: center;
+            }
+
+            .summary-item {
+                padding: 8px;
+            }
+
+            .summary-value {
+                font-size: 18px;
+                font-weight: bold;
+                margin-bottom: 4px;
+            }
+
+            .summary-label {
+                font-size: 12px;
+                color: #666;
+            }
+
+            .filter-box {
+                border: 1px solid #000;
+                padding: 12px;
+                margin-bottom: 16px;
+            }
+
+            .order-card {
+                border: 2px solid #000;
+                margin-bottom: 12px;
+                background: #fff;
+            }
+
+            .order-header {
+                padding: 12px;
+                border-bottom: 1px solid #000;
+                display: flex;
+                justify-content: space-between;
+            }
+
+            .order-body {
+                padding: 12px;
+                background: #fff;
+            }
+
+            .order-item {
+                background: #fff;
+                border: 1px solid #000;
+                padding: 8px;
+                margin-bottom: 8px;
+                display: flex;
+                justify-content: space-between;
+            }
+
+            .order-id-row {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .order-id-text {
+                font-family: monospace;
+                font-size: 10px;
+                color: #666;
+                flex: 1;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .copy-btn {
+                background: #000;
+                color: #fff;
+                border: none;
+                padding: 2px 8px;
+                font-size: 10px;
+                cursor: pointer;
+                white-space: nowrap;
+            }
+
+            .copy-btn:active {
+                background: #333;
+            }
+
+            .hidden {
+                display: none;
+            }
+
+            .error {
+                color: #d00;
+                padding: 12px;
+                border: 2px solid #d00;
+                margin-bottom: 16px;
+            }
+
+            .empty-state {
+                text-align: center;
+                padding: 32px 16px;
+                color: #666;
+            }
+
+            /* Bottom Navigation */
+            .bottom-nav {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: #fff;
+                border-top: 2px solid #000;
+                display: flex;
+                justify-content: space-around;
+                padding: 8px 0 16px 0;
+            }
+
+            .nav-item {
+                flex: 1;
+                text-align: center;
+                padding: 8px;
+                text-decoration: none;
+                color: #666;
+                font-size: 16px;
+            }
+
+            .nav-item.active {
+                color: #000;
+                font-weight: bold;
+            }
+
+            .nav-item:active {
+                background: #f0f0f0;
+            }
+
+            .toast {
+                position: fixed;
+                top: 16px;
+                left: 16px;
+                right: 16px;
+                padding: 12px;
+                color: #fff;
+                z-index: 2000;
+                display: none;
+                font-weight: bold;
+            }
+
+            .toast.success {
+                background: #000;
+            }
+
+            .toast.error {
+                background: #d00;
+            }
+
+            .toast.active {
+                display: block;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div class="header">
+            <div
+                id="tenant-name"
+                style="
+                    font-size: 11px;
+                    color: #555;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    font-weight: 600;
+                    margin-bottom: 8px;
+                "
+            >
+                Loading tenant...
+            </div>
+            <h2>Orders - Lite</h2>
+            <div id="auth-status">Checking login...</div>
+        </div>
+
+        <div class="summary-box">
+            <h3>Daily Summary</h3>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="summary-value" id="total-orders">0</div>
+                    <div class="summary-label">Orders</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value" id="total-cups">0</div>
+                    <div class="summary-label">Cups</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value" id="total-sales">Rp 0</div>
+                    <div class="summary-label">Sales</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="filter-box">
+            <div style="margin-bottom: 12px">
+                <label>Select Date</label>
+                <input type="date" id="date-select" />
+            </div>
+
+            <div class="hidden" id="store-selector">
+                <label>Select Store</label>
+                <select id="store-select"></select>
+            </div>
+        </div>
+
+        <div id="orders-container"></div>
+
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav">
+            <a href="index.html" class="nav-item">POS</a>
+            <a href="orders.html" class="nav-item active">Orders</a>
+            <a href="profile.html" class="nav-item">Profile</a>
+        </div>
+
+        <div class="toast" id="toast"></div>
+
+        <script>
+            let selectedStore = "";
+            let selectedDate = formatDateForInput(new Date());
+            let orders = [];
+
+            function formatOrderTime(dateString) {
+                const date = new Date(dateString + "Z");
+                return date.toLocaleString("en-US", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true,
+                });
+            }
+
+            function copyOrderId(orderId) {
+                // Modern way - try clipboard API first
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard
+                        .writeText(orderId)
+                        .then(() => {
+                            showToast("Order ID copied!", "success");
+                        })
+                        .catch(() => {
+                            // Fallback if clipboard API fails
+                            fallbackCopy(orderId);
+                        });
+                } else {
+                    // Fallback for older browsers
+                    fallbackCopy(orderId);
+                }
+            }
+
+            function fallbackCopy(text) {
+                const textarea = document.createElement("textarea");
+                textarea.value = text;
+                textarea.style.position = "fixed";
+                textarea.style.opacity = "0";
+                document.body.appendChild(textarea);
+                textarea.select();
+
+                try {
+                    document.execCommand("copy");
+                    showToast("Order ID copied!", "success");
+                } catch (err) {
+                    showToast("Failed to copy", "error");
+                }
+
+                document.body.removeChild(textarea);
+            }
+
+            function calculateSummary() {
+                const totalOrders = orders.length;
+                const totalCups = orders.reduce(
+                    (sum, order) =>
+                        sum +
+                        order.orderItems.reduce(
+                            (itemSum, item) => itemSum + item.quantity,
+                            0
+                        ),
+                    0
+                );
+                const totalSales = orders.reduce(
+                    (sum, order) => sum + order.totalAmount,
+                    0
+                );
+
+                $("#total-orders").text(totalOrders);
+                $("#total-cups").text(totalCups);
+                $("#total-sales").text(formatRupiah(totalSales));
+            }
+
+            function renderOrders() {
+                const container = $("#orders-container");
+
+                if (orders.length === 0) {
+                    container.html(`
+                        <div class="empty-state">
+                            <p style="font-weight: bold">No orders found</p>
+                            <p style="font-size: 12px">No orders for the selected date and store</p>
+                        </div>
+                    `);
+                    return;
+                }
+
+                let html = "";
+
+                orders.forEach((order, index) => {
+                    const orderNumber = orders.length - index;
+                    const totalCups = order.orderItems.reduce(
+                        (sum, item) => sum + item.quantity,
+                        0
+                    );
+
+                    html += `
+                        <div class="order-card">
+                            <div class="order-header">
+                                <div>
+                                    <div style="font-weight: bold; font-size: 16px">Order #${orderNumber}</div>
+                                    <div style="font-size: 12px; color: #666">${formatOrderTime(
+                                        order.createdAt
+                                    )}</div>
+                                </div>
+                                <div style="text-align: right">
+                                    <div style="font-weight: bold; font-size: 16px">${formatRupiah(
+                                        order.totalAmount
+                                    )}</div>
+                                    <div style="font-size: 12px; color: #666">${totalCups} cups</div>
+                                </div>
+                            </div>
+                            <div class="order-body">
+                                <div style="margin-bottom: 8px">
+                                    <div style="font-size: 12px; font-weight: bold; margin-bottom: 4px">Order Details</div>
+                                    <div class="order-id-row">
+                                        <span style="font-size: 11px; font-weight: 600;">ID:</span>
+                                        <span class="order-id-text">${
+                                            order.id
+                                        }</span>
+                                        <button class="copy-btn" onclick="copyOrderId('${
+                                            order.id
+                                        }')">Copy</button>
+                                    </div>
+                                    <div style="font-size: 11px; color: #000; line-height: 1.4">
+                                        <div><strong>Store:</strong> ${
+                                            order.stores?.name || "N/A"
+                                        }</div>
+                                        <div><strong>Seller:</strong> ${
+                                            order.profiles?.fullName || "N/A"
+                                        }</div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 12px; font-weight: bold; margin-bottom: 4px">Items</div>
+                    `;
+
+                    order.orderItems.forEach((item) => {
+                        html += `
+                            <div class="order-item">
+                                <div>
+                                    <div style="font-weight: bold; font-size: 13px">${
+                                        item.products?.name || "Unknown"
+                                    }</div>
+                                    <div style="font-size: 11px; color: #666">${formatRupiah(
+                                        item.unitPrice
+                                    )} each</div>
+                                </div>
+                                <div style="text-align: right">
+                                    <div style="font-weight: bold">x${
+                                        item.quantity
+                                    }</div>
+                                    <div style="font-size: 11px">${formatRupiah(
+                                        item.totalPrice
+                                    )}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    html += `
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                container.html(html);
+            }
+
+            async function loadOrders() {
+                if (!selectedStore || !selectedDate) return;
+
+                try {
+                    const response = await fetch(
+                        `${apiBase}/orders?storeId=${selectedStore}&date=${selectedDate}`,
+                        { credentials: "include" }
+                    );
+
+                    if (!response.ok) {
+                        throw new Error("Failed to load orders");
+                    }
+
+                    const data = await response.json();
+                    orders = data.orders || [];
+
+                    calculateSummary();
+                    renderOrders();
+                } catch (error) {
+                    console.error(error);
+                    $("#orders-container").html(
+                        '<div class="error">Failed to load orders</div>'
+                    );
+                }
+            }
+
+            async function init() {
+                try {
+                    await initAuth();
+
+                    if (!window.profile) {
+                        $("#auth-status").html(
+                            'Not logged in. Please <a href="/login">login via main app</a> first.'
+                        );
+                        return;
+                    }
+
+                    // Load tenant name
+                    await loadTenantName();
+
+                    $("#auth-status").text(
+                        `${window.profile.fullName} - ${window.profile.email}`
+                    );
+
+                    await loadStores(window.profile.id);
+
+                    if (window.stores.length === 0) {
+                        $("#orders-container").html(
+                            '<div class="error">No stores assigned to you</div>'
+                        );
+                        return;
+                    }
+
+                    const storeSelect = $("#store-select");
+                    window.stores.forEach((store) => {
+                        const isDefault = window.assignments[store.id]?.some(
+                            (a) => a.userId === window.profile.id && a.isDefault
+                        );
+                        storeSelect.append(
+                            `<option value="${store.id}" ${
+                                isDefault ? "selected" : ""
+                            }>${store.name}</option>`
+                        );
+                    });
+
+                    selectedStore = storeSelect.val();
+                    $("#store-selector").removeClass("hidden");
+
+                    storeSelect.on("change", function () {
+                        selectedStore = $(this).val();
+                        loadOrders();
+                    });
+
+                    $("#date-select").val(selectedDate);
+                    $("#date-select").on("change", function () {
+                        selectedDate =
+                            $(this).val() || formatDateForInput(new Date());
+                        loadOrders();
+                    });
+
+                    await loadOrders();
+                } catch (err) {
+                    console.error(err);
+                    $("#auth-status").text("Initialization failed");
+                }
+            }
+
+            init();
+        </script>
+    </body>
+</html>

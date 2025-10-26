@@ -1,7 +1,6 @@
 @import "tailwindcss";
 @import "tailwindcss-animate";
 
-/* Base shadcn variable setup, but scoped */
 @layer base {
     .admin-theme {
         --background: 0 0% 100%;
@@ -48,7 +47,6 @@
         --ring: 224.3 76.3% 48%;
     }
 
-    /* Apply the background/text from vars */
     .admin-theme {
         @apply bg-background text-foreground;
     }

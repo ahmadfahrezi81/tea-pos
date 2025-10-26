@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Lite POS</title>
+
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+        <script src="common.js"></script>
+
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 16px;
+                padding-bottom: 80px;
+                background: #fff;
+            }
+
+            h2,
+            h3,
+            h4 {
+                margin: 0 0 12px 0;
+            }
+
+            .header {
+                margin-bottom: 16px;
+                padding-bottom: 16px;
+                border-bottom: 2px solid #000;
+            }
+
+            label {
+                display: block;
+                font-weight: bold;
+                margin: 12px 0 4px 0;
+            }
+
+            select {
+                width: 100%;
+                padding: 8px;
+                border: 1px solid #000;
+                font-size: 14px;
+                color: #000;
+                box-sizing: border-box;
+                -webkit-appearance: none;
+                -moz-appearance: none;
+                appearance: none;
+                background-color: #fff;
+                background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+                background-repeat: no-repeat;
+                background-position: right 8px center;
+                background-size: 16px;
+                padding-right: 32px;
+            }
+
+            #products-container {
+                padding-bottom: 100px; /* enough to clear the cart summary + nav */
+            }
+
+            .products-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                margin-bottom: 16px;
+            }
+
+            .product-card {
+                border: 1px solid #000;
+                padding: 8px;
+                cursor: pointer;
+                position: relative;
+            }
+
+            .product-card:active {
+                background: #f0f0f0;
+            }
+
+            .badge {
+                position: absolute;
+                top: 4px;
+                right: 4px;
+                background: #000;
+                color: #fff;
+                padding: 2px 6px;
+                font-size: 12px;
+                font-weight: bold;
+            }
+
+            .price {
+                font-weight: bold;
+                margin: 4px 0;
+            }
+
+            .add-text {
+                margin-top: 8px;
+                text-align: center;
+                border: 1px solid #000;
+                padding: 4px;
+                font-size: 12px;
+            }
+
+            .cart-summary {
+                position: fixed;
+                bottom: 60px;
+                left: 0;
+                right: 0;
+                background: #fff;
+                border-top: 2px solid #000;
+                padding: 16px 16px;
+            }
+
+            .cart-summary-content {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            button {
+                background: #000;
+                color: #fff;
+                border: none;
+                padding: 8px 16px;
+                cursor: pointer;
+                font-size: 14px;
+            }
+
+            button:active {
+                background: #333;
+            }
+
+            button:disabled {
+                background: #999;
+                cursor: not-allowed;
+            }
+
+            .modal {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 1000;
+            }
+
+            .modal.active {
+                display: flex;
+                align-items: flex-end;
+            }
+
+            .modal-content {
+                background: #fff;
+                width: 100%;
+                max-height: 80vh;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .modal-header {
+                padding: 12px 16px;
+                border-bottom: 2px solid #000;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .close-btn {
+                background: none;
+                color: #000;
+                border: none;
+                font-size: 24px;
+                cursor: pointer;
+                padding: 0;
+            }
+
+            .modal-body {
+                padding: 16px;
+                overflow-y: auto;
+                flex: 1;
+            }
+
+            .cart-item {
+                padding: 12px 0;
+                border-bottom: 1px solid #000;
+            }
+
+            .cart-item-header {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 8px;
+            }
+
+            .cart-item-controls {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .quantity-controls {
+                display: flex;
+                gap: 8px;
+                align-items: center;
+            }
+
+            .quantity-controls button {
+                width: 32px;
+                height: 32px;
+                padding: 0;
+            }
+
+            .btn-delete {
+                background: #fff;
+                color: #000;
+                border: 1px solid #000;
+            }
+
+            .modal-footer {
+                padding: 16px 16px 32px 16px; /* top, right, bottom, left */
+                border-top: 2px solid #000;
+            }
+
+            .modal-footer button {
+                width: 100%;
+                padding: 12px;
+            }
+
+            .toast {
+                position: fixed;
+                top: 16px;
+                left: 16px;
+                right: 16px;
+                padding: 12px;
+                color: #fff;
+                z-index: 2000;
+                display: none;
+                font-weight: bold;
+            }
+
+            .toast.success {
+                background: #000;
+            }
+
+            .toast.error {
+                background: #d00;
+            }
+
+            .toast.active {
+                display: block;
+            }
+
+            .error {
+                color: #d00;
+                padding: 12px;
+                border: 2px solid #d00;
+                margin-bottom: 16px;
+            }
+
+            .hidden {
+                display: none;
+            }
+
+            /* Bottom Navigation */
+            .bottom-nav {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: #fff;
+                border-top: 2px solid #000;
+                display: flex;
+                justify-content: space-around;
+                padding: 8px 0 16px 0;
+            }
+
+            .nav-item {
+                flex: 1;
+                text-align: center;
+                padding: 8px;
+                text-decoration: none;
+                color: #666;
+                font-size: 16px;
+            }
+
+            .nav-item.active {
+                color: #000;
+                font-weight: bold;
+            }
+
+            .nav-item:active {
+                background: #f0f0f0;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div class="header">
+            <div
+                id="tenant-name"
+                style="
+                    font-size: 11px;
+                    color: #555;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    font-weight: 600;
+                    margin-bottom: 8px;
+                "
+            >
+                Loading tenant...
+            </div>
+
+            <h2 style="margin-bottom: 12px">POS - Lite</h2>
+
+            <div id="auth-status">Checking login...</div>
+
+            <div class="hidden" id="store-selector">
+                <label>Select Store</label>
+                <select id="store-select"></select>
+            </div>
+        </div>
+
+        <div id="products-container"></div>
+
+        <div class="cart-summary hidden" id="cart-summary">
+            <div class="cart-summary-content">
+                <div>
+                    <div id="cart-count">0 items</div>
+                    <div id="cart-total" style="font-weight: bold">Rp 0</div>
+                </div>
+                <button onclick="openCart()">View Cart</button>
+            </div>
+        </div>
+
+        <div class="modal" id="cart-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Cart</h3>
+                    <button class="close-btn" onclick="closeCart()">
+                        &times;
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div
+                        style="
+                            display: flex;
+                            justify-content: space-between;
+                            margin-bottom: 16px;
+                        "
+                    >
+                        <h4>Current Order</h4>
+                        <button
+                            onclick="clearCart()"
+                            style="
+                                background: #fff;
+                                color: #000;
+                                border: 1px solid #000;
+                                padding: 4px 8px;
+                                font-size: 12px;
+                            "
+                        >
+                            Clear All
+                        </button>
+                    </div>
+                    <div id="cart-items"></div>
+                </div>
+                <div class="modal-footer">
+                    <div style="margin-bottom: 12px">
+                        <div
+                            style="
+                                display: flex;
+                                justify-content: space-between;
+                                font-weight: bold;
+                            "
+                        >
+                            <span>Total</span>
+                            <span id="modal-total">Rp 0</span>
+                        </div>
+                    </div>
+                    <button onclick="processOrder()" id="confirm-btn">
+                        Confirm Order
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav">
+            <a href="index.html" class="nav-item active">POS</a>
+            <a href="orders.html" class="nav-item">Orders</a>
+            <a href="profile.html" class="nav-item">Profile</a>
+        </div>
+
+        <div class="toast" id="toast"></div>
+
+        <script>
+            let selectedStore = "";
+            let products = [];
+            let cart = [];
+            let processing = false;
+
+            function hasSellerRole(userId, storeId) {
+                const storeAssignments = window.assignments[storeId] || [];
+                return storeAssignments.some(
+                    (a) =>
+                        a.userId === userId &&
+                        (a.role === "seller" || a.role === "manager")
+                );
+            }
+
+            function getProductQuantityInCart(productId) {
+                const item = cart.find((item) => item.product.id === productId);
+                return item ? item.quantity : 0;
+            }
+
+            function addToCart(product) {
+                const existing = cart.find(
+                    (item) => item.product.id === product.id
+                );
+                if (existing) {
+                    existing.quantity += 1;
+                } else {
+                    cart.push({ product, quantity: 1 });
+                }
+                updateCartUI();
+            }
+
+            function updateQuantity(productId, quantity) {
+                if (quantity <= 0) {
+                    cart = cart.filter((item) => item.product.id !== productId);
+                } else {
+                    const item = cart.find(
+                        (item) => item.product.id === productId
+                    );
+                    if (item) item.quantity = quantity;
+                }
+                updateCartUI();
+                renderCartItems();
+            }
+
+            function removeFromCart(productId) {
+                cart = cart.filter((item) => item.product.id !== productId);
+                updateCartUI();
+                renderCartItems();
+            }
+
+            function clearCart() {
+                cart = [];
+                updateCartUI();
+                renderCartItems();
+                renderProducts();
+            }
+
+            function calculateTotal() {
+                return cart.reduce(
+                    (sum, item) => sum + item.product.price * item.quantity,
+                    0
+                );
+            }
+
+            function getItemCount() {
+                return cart.reduce((count, item) => count + item.quantity, 0);
+            }
+
+            function updateCartUI() {
+                const count = getItemCount();
+                const total = calculateTotal();
+
+                $("#cart-count").text(`${count} items`);
+                $("#cart-total").text(formatRupiah(total));
+                $("#modal-total").text(formatRupiah(total));
+
+                if (count > 0) {
+                    $("#cart-summary").removeClass("hidden");
+                } else {
+                    $("#cart-summary").addClass("hidden");
+                }
+
+                renderProducts();
+            }
+
+            function renderCartItems() {
+                const container = $("#cart-items");
+
+                if (cart.length === 0) {
+                    container.html(
+                        "<p style='text-align: center'>No items in cart</p>"
+                    );
+                    return;
+                }
+
+                const html = cart
+                    .map(
+                        (item) => `
+                    <div class="cart-item">
+                        <div class="cart-item-header">
+                            <div>
+                                <h5 style="font-weight: bold; margin: 0 0 4px 0">${
+                                    item.product.name
+                                }</h5>
+                                <p style="font-size: 13px; margin: 0">
+                                    ${item.quantity} x ${formatRupiah(
+                            item.product.price
+                        )}
+                                </p>
+                            </div>
+                            <div style="font-weight: bold">
+                                ${formatRupiah(
+                                    item.product.price * item.quantity
+                                )}
+                            </div>
+                        </div>
+                        <div class="cart-item-controls">
+                            <button class="btn-delete" onclick="removeFromCart('${
+                                item.product.id
+                            }')">Delete</button>
+                            <div class="quantity-controls">
+                                <button onclick="updateQuantity('${
+                                    item.product.id
+                                }', ${item.quantity - 1})">-</button>
+                                <span style="font-weight: bold">${
+                                    item.quantity
+                                }</span>
+                                <button onclick="updateQuantity('${
+                                    item.product.id
+                                }', ${item.quantity + 1})">+</button>
+                            </div>
+                        </div>
+                    </div>
+                `
+                    )
+                    .join("");
+
+                container.html(html);
+            }
+
+            function openCart() {
+                $("#cart-modal").addClass("active");
+                renderCartItems();
+            }
+
+            function closeCart() {
+                $("#cart-modal").removeClass("active");
+            }
+
+            async function processOrder() {
+                if (!selectedStore || cart.length === 0) {
+                    showToast("Please select a store and add items", "error");
+                    return;
+                }
+
+                if (processing) return;
+                processing = true;
+                $("#confirm-btn").prop("disabled", true).text("Processing...");
+
+                const payload = {
+                    storeId: selectedStore,
+                    items: cart.map((item) => ({
+                        productId: item.product.id,
+                        quantity: item.quantity,
+                        unitPrice: item.product.price,
+                    })),
+                };
+
+                try {
+                    const response = await fetch("/api/orders", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: "include",
+                        body: JSON.stringify(payload),
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        showToast(
+                            `Order processed! Total: ${formatRupiah(
+                                data.totalAmount
+                            )}`,
+                            "success"
+                        );
+                        clearCart();
+                        closeCart();
+                    } else {
+                        showToast("Failed to process order", "error");
+                    }
+                } catch (error) {
+                    console.error(error);
+                    showToast("Error processing order", "error");
+                } finally {
+                    processing = false;
+                    $("#confirm-btn")
+                        .prop("disabled", false)
+                        .text("Confirm Order");
+                }
+            }
+
+            function renderProducts() {
+                const mainProducts = products
+                    .filter((p) => p.isMain)
+                    .sort((a, b) => a.price - b.price);
+                const otherProducts = products
+                    .filter((p) => !p.isMain)
+                    .sort((a, b) => a.price - b.price);
+
+                let html = "";
+
+                if (mainProducts.length > 0) {
+                    html += '<h4 style="margin: 16px 0 8px 0">Main</h4>';
+                    html += '<div class="products-grid">';
+
+                    mainProducts.forEach((product) => {
+                        const qty = getProductQuantityInCart(product.id);
+                        const badge =
+                            qty > 0 ? `<div class="badge">${qty}</div>` : "";
+
+                        html += `
+                            <div class="product-card" onclick='addToCart(${JSON.stringify(
+                                product
+                            )})'>
+                                ${badge}
+                                <h3 style="font-size: 14px; margin: 0 0 4px 0">${
+                                    product.name
+                                }</h3>
+                                <p class="price">${formatRupiah(
+                                    product.price
+                                )}</p>
+                                <div class="add-text">Tap to add</div>
+                            </div>
+                        `;
+                    });
+
+                    html += "</div>";
+                }
+
+                if (otherProducts.length > 0) {
+                    html += '<h4 style="margin: 16px 0 8px 0">Others</h4>';
+                    html += '<div class="products-grid">';
+
+                    otherProducts.forEach((product) => {
+                        const qty = getProductQuantityInCart(product.id);
+                        const badge =
+                            qty > 0 ? `<div class="badge">${qty}</div>` : "";
+
+                        html += `
+                            <div class="product-card" onclick='addToCart(${JSON.stringify(
+                                product
+                            )})'>
+                                ${badge}
+                                <h3 style="font-size: 14px; margin: 0 0 4px 0">${
+                                    product.name
+                                }</h3>
+                                <p class="price">${formatRupiah(
+                                    product.price
+                                )}</p>
+                                <div class="add-text">Tap to add</div>
+                            </div>
+                        `;
+                    });
+
+                    html += "</div>";
+                }
+
+                $("#products-container").html(html);
+            }
+
+            async function init() {
+                try {
+                    await initAuth();
+
+                    if (!window.profile) {
+                        $("#auth-status").html(
+                            'Not logged in. Please <a href="/login">login via main app</a> first.'
+                        );
+                        return;
+                    }
+
+                    // Load tenant name
+                    await loadTenantName();
+
+                    $("#auth-status").text(
+                        `${window.profile.fullName} - ${window.profile.email}`
+                    );
+
+                    await loadStores(window.profile.id);
+
+                    const sellerStores = window.stores.filter((store) =>
+                        hasSellerRole(window.profile.id, store.id)
+                    );
+
+                    if (sellerStores.length === 0) {
+                        $("#products-container").html(
+                            '<div class="error">No stores assigned to you</div>'
+                        );
+                        return;
+                    }
+
+                    const storeSelect = $("#store-select");
+                    sellerStores.forEach((store) => {
+                        const isDefault = window.assignments[store.id]?.some(
+                            (a) => a.userId === window.profile.id && a.isDefault
+                        );
+                        storeSelect.append(
+                            `<option value="${store.id}" ${
+                                isDefault ? "selected" : ""
+                            }>${store.name}</option>`
+                        );
+                    });
+
+                    selectedStore = storeSelect.val();
+                    $("#store-selector").removeClass("hidden");
+
+                    storeSelect.on("change", function () {
+                        selectedStore = $(this).val();
+                    });
+
+                    const productsRes = await fetch("/api/products", {
+                        credentials: "include",
+                    });
+
+                    if (!productsRes.ok) {
+                        throw new Error("Failed to load products");
+                    }
+
+                    const productsData = await productsRes.json();
+                    products = productsData.products || [];
+
+                    renderProducts();
+                } catch (err) {
+                    console.error(err);
+                    $("#auth-status").text("Initialization failed");
+                }
+            }
+
+            init();
+        </script>
+    </body>
+</html>

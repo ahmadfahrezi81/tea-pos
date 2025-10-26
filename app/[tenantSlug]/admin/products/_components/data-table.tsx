@@ -29,7 +29,6 @@
 //     DropdownMenu,
 //     DropdownMenuCheckboxItem,
 //     DropdownMenuContent,
-//     DropdownMenuItem,
 //     DropdownMenuTrigger,
 // } from "@/components/ui/dropdown-menu";
 // import {
@@ -40,21 +39,12 @@
 // import { Badge } from "@/components/ui/badge";
 // import { Settings2, Plus, X, ArrowDown, ArrowUp } from "lucide-react";
 // import { useState } from "react";
+// import { useCategories } from "@/lib/hooks/products/useCategories";
 
 // interface DataTableProps<TData, TValue> {
 //     columns: ColumnDef<TData, TValue>[];
 //     data: TData[];
 // }
-
-// const CATEGORIES = [
-//     { id: true, label: "Main" },
-//     { id: false, label: "Others" },
-// ];
-
-// // const STATUS_OPTIONS = [
-// //     { id: true, label: "Active" },
-// //     { id: false, label: "Inactive" },
-// // ];
 
 // const STATUS_OPTIONS = [
 //     { id: "active", label: "Active" },
@@ -72,9 +62,11 @@
 //         {}
 //     );
 //     const [rowSelection, setRowSelection] = useState({});
-//     const [categoryFilter, setCategoryFilter] = useState<boolean[]>([]);
-//     // const [statusFilter, setStatusFilter] = useState<boolean[]>([]);
+//     const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
 //     const [statusFilter, setStatusFilter] = useState<string[]>([]);
+
+//     // Fetch categories dynamically
+//     const { data: categories, isLoading: categoriesLoading } = useCategories();
 
 //     const table = useReactTable({
 //         data,
@@ -95,10 +87,10 @@
 //         },
 //     });
 
-//     const handleCategoryFilterChange = (category: boolean) => {
-//         const newCategoryFilter = categoryFilter.includes(category)
-//             ? categoryFilter.filter((c) => c !== category)
-//             : [...categoryFilter, category];
+//     const handleCategoryFilterChange = (categoryName: string) => {
+//         const newCategoryFilter = categoryFilter.includes(categoryName)
+//             ? categoryFilter.filter((c) => c !== categoryName)
+//             : [...categoryFilter, categoryName];
 
 //         setCategoryFilter(newCategoryFilter);
 
@@ -108,20 +100,6 @@
 //             table.getColumn("category")?.setFilterValue(newCategoryFilter);
 //         }
 //     };
-
-//     // const handleStatusFilterChange = (status: boolean) => {
-//     //     const newStatusFilter = statusFilter.includes(status)
-//     //         ? statusFilter.filter((s) => s !== status)
-//     //         : [...statusFilter, status];
-
-//     //     setStatusFilter(newStatusFilter);
-
-//     //     if (newStatusFilter.length === 0) {
-//     //         table.getColumn("isActive")?.setFilterValue(undefined);
-//     //     } else {
-//     //         table.getColumn("isActive")?.setFilterValue(newStatusFilter);
-//     //     }
-//     // };
 
 //     const handleStatusFilterChange = (status: string) => {
 //         const newStatusFilter = statusFilter.includes(status)
@@ -182,16 +160,19 @@
 //                                         <div className="h-4 w-px bg-border" />
 //                                         <div className="flex gap-1">
 //                                             {statusFilter.map((status) => {
-//                                                 const label = status
-//                                                     ? "Active"
-//                                                     : "Inactive";
+//                                                 const option =
+//                                                     STATUS_OPTIONS.find(
+//                                                         (opt) =>
+//                                                             opt.id === status
+//                                                     );
 //                                                 return (
 //                                                     <Badge
-//                                                         key={String(status)}
+//                                                         key={status}
 //                                                         variant="secondary"
 //                                                         className="rounded-sm px-1 font-normal"
 //                                                     >
-//                                                         {label}
+//                                                         {option?.label ||
+//                                                             status}
 //                                                     </Badge>
 //                                                 );
 //                                             })}
@@ -228,7 +209,7 @@
 //                                             statusFilter.includes(option.id);
 //                                         return (
 //                                             <div
-//                                                 key={String(option.id)}
+//                                                 key={option.id}
 //                                                 className="flex items-center gap-2 rounded-sm px-2 py-1.5 cursor-pointer hover:bg-accent"
 //                                                 onClick={() =>
 //                                                     handleStatusFilterChange(
@@ -276,6 +257,7 @@
 //                             <Button
 //                                 variant="outline"
 //                                 className="gap-2 border-dashed h-auto min-h-8 py-2"
+//                                 disabled={categoriesLoading}
 //                             >
 //                                 <Plus className="h-4 w-4" />
 //                                 Category
@@ -283,20 +265,15 @@
 //                                     <>
 //                                         <div className="h-4 w-px bg-border" />
 //                                         <div className="flex gap-1">
-//                                             {categoryFilter.map((category) => {
-//                                                 const label = category
-//                                                     ? "Main"
-//                                                     : "Others";
-//                                                 return (
-//                                                     <Badge
-//                                                         key={String(category)}
-//                                                         variant="secondary"
-//                                                         className="rounded-sm px-1 font-normal"
-//                                                     >
-//                                                         {label}
-//                                                     </Badge>
-//                                                 );
-//                                             })}
+//                                             {categoryFilter.map((category) => (
+//                                                 <Badge
+//                                                     key={category}
+//                                                     variant="secondary"
+//                                                     className="rounded-sm px-1 font-normal"
+//                                                 >
+//                                                     {category}
+//                                                 </Badge>
+//                                             ))}
 //                                         </div>
 //                                     </>
 //                                 )}
@@ -325,50 +302,66 @@
 //                                     )}
 //                                 </div>
 //                                 <div className="space-y-1">
-//                                     {CATEGORIES.map((category) => {
-//                                         const isSelected =
-//                                             categoryFilter.includes(
-//                                                 category.id
-//                                             );
-//                                         return (
-//                                             <div
-//                                                 key={String(category.id)}
-//                                                 className="flex items-center gap-2 rounded-sm px-2 py-1.5 cursor-pointer hover:bg-accent"
-//                                                 onClick={() =>
-//                                                     handleCategoryFilterChange(
-//                                                         category.id
-//                                                     )
-//                                                 }
-//                                             >
-//                                                 <div
-//                                                     className={`h-4 w-4 rounded-sm border ${
-//                                                         isSelected
-//                                                             ? "bg-primary border-primary"
-//                                                             : "border-input"
-//                                                     } flex items-center justify-center`}
-//                                                 >
-//                                                     {isSelected && (
-//                                                         <svg
-//                                                             className="h-3 w-3 text-primary-foreground"
-//                                                             fill="none"
-//                                                             viewBox="0 0 24 24"
-//                                                             stroke="currentColor"
+//                                     {categoriesLoading ? (
+//                                         <div className="px-2 py-1.5 text-sm text-muted-foreground">
+//                                             Loading...
+//                                         </div>
+//                                     ) : !categories ||
+//                                       categories.length === 0 ? (
+//                                         <div className="px-2 py-1.5 text-sm text-muted-foreground">
+//                                             No categories found
+//                                         </div>
+//                                     ) : (
+//                                         <>
+//                                             {/* Actual categories */}
+//                                             {categories.map((category) => {
+//                                                 const isSelected =
+//                                                     categoryFilter.includes(
+//                                                         category.name
+//                                                     );
+//                                                 return (
+//                                                     <div
+//                                                         key={category.id}
+//                                                         className="flex items-center gap-2 rounded-sm px-2 py-1.5 cursor-pointer hover:bg-accent"
+//                                                         onClick={() =>
+//                                                             handleCategoryFilterChange(
+//                                                                 category.name
+//                                                             )
+//                                                         }
+//                                                     >
+//                                                         <div
+//                                                             className={`h-4 w-4 rounded-sm border ${
+//                                                                 isSelected
+//                                                                     ? "bg-primary border-primary"
+//                                                                     : "border-input"
+//                                                             } flex items-center justify-center`}
 //                                                         >
-//                                                             <path
-//                                                                 strokeLinecap="round"
-//                                                                 strokeLinejoin="round"
-//                                                                 strokeWidth={3}
-//                                                                 d="M5 13l4 4L19 7"
-//                                                             />
-//                                                         </svg>
-//                                                     )}
-//                                                 </div>
-//                                                 <span className="text-sm">
-//                                                     {category.label}
-//                                                 </span>
-//                                             </div>
-//                                         );
-//                                     })}
+//                                                             {isSelected && (
+//                                                                 <svg
+//                                                                     className="h-3 w-3 text-primary-foreground"
+//                                                                     fill="none"
+//                                                                     viewBox="0 0 24 24"
+//                                                                     stroke="currentColor"
+//                                                                 >
+//                                                                     <path
+//                                                                         strokeLinecap="round"
+//                                                                         strokeLinejoin="round"
+//                                                                         strokeWidth={
+//                                                                             3
+//                                                                         }
+//                                                                         d="M5 13l4 4L19 7"
+//                                                                     />
+//                                                                 </svg>
+//                                                             )}
+//                                                         </div>
+//                                                         <span className="text-sm">
+//                                                             {category.name}
+//                                                         </span>
+//                                                     </div>
+//                                                 );
+//                                             })}
+//                                         </>
+//                                     )}
 //                                 </div>
 //                             </div>
 //                         </PopoverContent>
@@ -633,7 +626,6 @@ import {
     DropdownMenu,
     DropdownMenuCheckboxItem,
     DropdownMenuContent,
-    DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -667,6 +659,7 @@ export function DataTable<TData, TValue>({
         {}
     );
     const [rowSelection, setRowSelection] = useState({});
+    const [globalFilter, setGlobalFilter] = useState("");
     const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
     const [statusFilter, setStatusFilter] = useState<string[]>([]);
 
@@ -684,11 +677,25 @@ export function DataTable<TData, TValue>({
         getFilteredRowModel: getFilteredRowModel(),
         onColumnVisibilityChange: setColumnVisibility,
         onRowSelectionChange: setRowSelection,
+        onGlobalFilterChange: setGlobalFilter,
+        globalFilterFn: (row, columnId, filterValue) => {
+            const search = filterValue.toLowerCase();
+
+            // Search in both name and id columns
+            const name = row.getValue("name");
+            const id = row.getValue("id");
+
+            return (
+                (name && String(name).toLowerCase().includes(search)) ||
+                (id && String(id).toLowerCase().includes(search))
+            );
+        },
         state: {
             sorting,
             columnFilters,
             columnVisibility,
             rowSelection,
+            globalFilter,
         },
     });
 
@@ -723,13 +730,12 @@ export function DataTable<TData, TValue>({
     const clearFilters = () => {
         setCategoryFilter([]);
         setStatusFilter([]);
+        setGlobalFilter("");
         table.resetColumnFilters();
     };
 
     const hasFilters =
-        categoryFilter.length > 0 ||
-        statusFilter.length > 0 ||
-        table.getColumn("name")?.getFilterValue();
+        categoryFilter.length > 0 || statusFilter.length > 0 || globalFilter;
 
     return (
         <div className="space-y-4">
@@ -737,16 +743,10 @@ export function DataTable<TData, TValue>({
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 flex-1">
                     <Input
-                        placeholder="Search by product name..."
-                        value={
-                            (table
-                                .getColumn("name")
-                                ?.getFilterValue() as string) ?? ""
-                        }
+                        placeholder="Search by name or ID..."
+                        value={globalFilter ?? ""}
                         onChange={(event) =>
-                            table
-                                .getColumn("name")
-                                ?.setFilterValue(event.target.value)
+                            setGlobalFilter(event.target.value)
                         }
                         className="max-w-sm w-60"
                     />

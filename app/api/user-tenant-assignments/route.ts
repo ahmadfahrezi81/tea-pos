@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
             .select(
                 `
                 *,
-                profiles(full_name, email)
+                profiles(full_name, email, phone_number, status)
             `
             )
             .eq("tenant_id", tenantId)

@@ -68,7 +68,7 @@ export const createColumns = ({
 
         cell: ({ row }) => {
             const id = row.original.id;
-            const shortened = `STR-${id.substring(0, 8).toUpperCase()}`;
+            const shortened = `${id.substring(0, 13).toUpperCase()}`;
             return (
                 <div className="font-mono text-xs text-muted-foreground">
                     {shortened}

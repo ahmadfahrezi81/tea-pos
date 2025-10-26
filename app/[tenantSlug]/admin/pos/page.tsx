@@ -21,6 +21,7 @@ import { CreateOrderInput, CreateOrderResponse } from "@/lib/schemas/orders";
 import { toast } from "sonner";
 import type { Product } from "@/lib/schemas/products";
 import { ScopeBadge } from "../_components/scope-badge";
+import { cn } from "@/lib/utils";
 
 export interface CartItem {
     productId: string;
@@ -224,7 +225,16 @@ export default function POSPage() {
                                 placeholder="Search products..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-8 focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0 focus-visible:outline-none"
+                                className={cn(
+                                    "pl-8",
+                                    "bg-background", // Base background
+                                    "focus:outline-none",
+                                    "focus:ring-0",
+                                    "focus-visible:outline-none",
+                                    "focus-visible:ring-0",
+                                    "focus:bg-muted", // Slightly darker background for light mode
+                                    "dark:focus:bg-muted/60" // Slightly lighter background in dark mode
+                                )}
                             />
                         </div>
                     </div>

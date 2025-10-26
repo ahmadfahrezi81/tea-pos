@@ -71,7 +71,7 @@ export const createColumns = (
         header: () => <div className="font-semibold pl-3">Product ID</div>,
         cell: ({ row }) => {
             const id = row.original.id;
-            const shortened = `PRO-${id.substring(0, 8).toUpperCase()}`;
+            const shortened = `${id.substring(0, 13).toUpperCase()}`;
             return (
                 <div className="font-mono text-xs text-muted-foreground">
                     {shortened}

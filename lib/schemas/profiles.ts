@@ -25,6 +25,18 @@ import { UUIDSchema } from "./common";
  */
 
 // ============================================================================
+// CONSTANTS
+// ============================================================================
+
+export const PROFILE_STATUSES = [
+    "active",
+    "inactive",
+    "pending",
+    "suspended",
+] as const;
+export type ProfileStatus = (typeof PROFILE_STATUSES)[number];
+
+// ============================================================================
 // INPUT SCHEMAS
 // ============================================================================
 
@@ -42,6 +54,19 @@ export const CreateProfileInput = z
             description: "User role",
             example: "seller",
         }),
+        phoneNumber: z
+            .string()
+            .regex(/^\+?[1-9]\d{1,14}$/)
+            .optional()
+            .openapi({
+                description:
+                    "User phone number with country code (E.164 format)",
+                example: "+6281234567890",
+            }),
+        status: z.enum(PROFILE_STATUSES).default("active").openapi({
+            description: "User account status",
+            example: "active",
+        }),
     })
     .openapi({ title: "CreateProfileInput" });
 
@@ -58,6 +83,19 @@ export const UpdateProfileInput = z
         role: z.string().optional().openapi({
             description: "User role",
             example: "manager",
+        }),
+        phoneNumber: z
+            .string()
+            .regex(/^\+?[1-9]\d{1,14}$/)
+            .optional()
+            .openapi({
+                description:
+                    "User phone number with country code (E.164 format)",
+                example: "+6281234567890",
+            }),
+        status: z.enum(PROFILE_STATUSES).optional().openapi({
+            description: "User account status",
+            example: "active",
         }),
     })
     .openapi({ title: "UpdateProfileInput" });
@@ -80,6 +118,10 @@ export const ListProfilesQuery = z
             description: "Filter profiles by role",
             example: "seller",
         }),
+        status: z.enum(PROFILE_STATUSES).optional().openapi({
+            description: "Filter profiles by status",
+            example: "active",
+        }),
     })
     .openapi({ title: "ListProfilesQuery" });
 
@@ -93,6 +135,8 @@ export const ProfileResponse = z
         email: z.string(),
         fullName: z.string(),
         role: z.string(),
+        phoneNumber: z.string().nullable(),
+        status: z.enum(PROFILE_STATUSES),
         createdAt: z.string().nullable(),
         updatedAt: z.string().nullable(),
     })
