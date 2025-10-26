@@ -170,9 +170,9 @@
 
             .version-info {
                 text-align: center;
-                font-size: 11px;
-                color: #999;
-                margin-top: 16px;
+                font-size: 12px;
+                margin-top: 12px;
+                font-family: "Courier New", Courier, monospace;
             }
         </style>
     </head>
@@ -268,11 +268,10 @@
                         <span>${memberSince}</span>
                     </div>
                 `;
-
                 html += `
                     <button onclick="handleLogout()">Log Out</button>
 
-                    <div class="version-info">Lite POS v1.0.0 (<span id="backend-version">loading...</span>)</div>
+                    <div class="version-info">V<span id="frontend-version">...</span> (<span id="backend-version">loading...</span>)</div>
                 `;
 
                 $("#profile-container").html(html);
@@ -297,10 +296,16 @@
                     }
 
                     const data = await response.json();
-                    return data.backendVersion || "unknown";
+                    return {
+                        frontend: data.frontendVersion || "unknown",
+                        backend: data.backendVersion || "unknown",
+                    };
                 } catch (error) {
                     console.error("Failed to load version:", error);
-                    return "error";
+                    return {
+                        frontend: "error",
+                        backend: "error",
+                    };
                 }
             }
 
@@ -355,8 +360,9 @@
                     renderProfile();
 
                     // Load and display backend version
-                    const backendVersion = await loadVersion();
-                    $("#backend-version").text(backendVersion);
+                    const versions = await loadVersion();
+                    $("#frontend-version").text(versions.frontend);
+                    $("#backend-version").text(versions.backend);
                 } catch (err) {
                     console.error(err);
                     $("#auth-status").text("Failed to load profile");
