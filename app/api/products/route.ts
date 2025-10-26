@@ -95,7 +95,13 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        return NextResponse.json(parsed.data);
+        // return NextResponse.json(parsed.data);
+
+        return NextResponse.json(parsed.data, {
+            headers: {
+                "Access-Control-Allow-Origin": "*",
+            },
+        });
     } catch (error) {
         console.error("Products GET error:", error);
         return NextResponse.json(

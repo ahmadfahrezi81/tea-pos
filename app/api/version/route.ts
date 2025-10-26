@@ -1,3 +1,5 @@
+//app/api/version/route.ts
+
 import { NextResponse } from "next/server";
 import { getBackendVersion } from "@/lib/version";
 

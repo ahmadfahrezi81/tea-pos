@@ -15,6 +15,7 @@
 //     return `${day}.${month}.${year}-${sha}`;
 // }
 
+//lib/version.ts
 import packageJson from "./../package.json";
 
 export function getBackendVersion() {

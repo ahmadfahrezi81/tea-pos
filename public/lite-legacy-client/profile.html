@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Profile - Lite POS</title>
+
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+        <script src="common.js"></script>
+
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 16px;
+                padding-bottom: 80px;
+                background: #fff;
+            }
+
+            h2,
+            h3,
+            h4 {
+                margin: 0 0 12px 0;
+            }
+
+            .header {
+                margin-bottom: 16px;
+                padding-bottom: 16px;
+                border-bottom: 2px solid #000;
+            }
+
+            .profile-box {
+                border: 2px solid #000;
+                padding: 16px;
+                margin-bottom: 16px;
+            }
+
+            .profile-avatar {
+                width: 60px;
+                height: 60px;
+                background: #000;
+                color: #fff;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 24px;
+                font-weight: bold;
+                margin: 0 auto 12px;
+            }
+
+            .profile-info {
+                text-align: center;
+                margin-bottom: 16px;
+            }
+
+            .profile-name {
+                font-size: 18px;
+                font-weight: bold;
+                margin-bottom: 4px;
+            }
+
+            .profile-email {
+                font-size: 14px;
+                color: #666;
+            }
+
+            .stores-box {
+                border: 1px solid #000;
+                padding: 12px;
+                margin-bottom: 16px;
+            }
+
+            .store-item {
+                padding: 8px 0;
+                border-bottom: 1px solid #000;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .store-item:last-child {
+                border-bottom: none;
+            }
+
+            .store-name {
+                font-weight: bold;
+                font-size: 14px;
+            }
+
+            .store-roles {
+                font-size: 12px;
+            }
+
+            .role-tag {
+                display: inline-block;
+                padding: 2px 6px;
+                border: 1px solid #000;
+                margin-left: 4px;
+                font-size: 11px;
+            }
+
+            .info-box {
+                border: 1px solid #000;
+                padding: 12px;
+                margin-bottom: 16px;
+                display: flex;
+                justify-content: space-between;
+            }
+
+            button {
+                background: #000;
+                color: #fff;
+                border: none;
+                padding: 12px 24px;
+                cursor: pointer;
+                font-size: 14px;
+                width: 100%;
+                margin-bottom: 8px;
+            }
+
+            button:active {
+                background: #333;
+            }
+
+            .btn-secondary {
+                background: #fff;
+                color: #000;
+                border: 1px solid #000;
+            }
+
+            .btn-secondary:active {
+                background: #f0f0f0;
+            }
+
+            .hidden {
+                display: none;
+            }
+
+            /* Bottom Navigation */
+            .bottom-nav {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: #fff;
+                border-top: 2px solid #000;
+                display: flex;
+                justify-content: space-around;
+                padding: 8px 0;
+            }
+
+            .nav-item {
+                flex: 1;
+                text-align: center;
+                padding: 8px;
+                text-decoration: none;
+                color: #666;
+                font-size: 16px;
+            }
+
+            .nav-item.active {
+                color: #000;
+                font-weight: bold;
+            }
+
+            .nav-item:active {
+                background: #f0f0f0;
+            }
+
+            .version-info {
+                text-align: center;
+                font-size: 11px;
+                color: #999;
+                margin-top: 16px;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div class="header">
+            <div
+                id="tenant-name"
+                style="
+                    font-size: 11px;
+                    color: #555;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    font-weight: 600;
+                    margin-bottom: 8px;
+                "
+            >
+                Loading tenant...
+            </div>
+            <h2>Profile - Lite</h2>
+            <div id="auth-status">Loading...</div>
+        </div>
+
+        <div id="profile-container"></div>
+
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav">
+            <a href="index.html" class="nav-item">POS</a>
+            <a href="orders.html" class="nav-item">Orders</a>
+            <a href="profile.html" class="nav-item active">Profile</a>
+        </div>
+
+        <script>
+            function renderProfile() {
+                if (!window.profile) return;
+
+                const initial = window.profile.fullName.charAt(0).toUpperCase();
+                const memberSince = window.profile.createdAt
+                    ? new Date(window.profile.createdAt).toLocaleDateString()
+                    : "N/A";
+
+                const isAdmin = window.profile.role === "ADMIN";
+
+                let html = `
+                    <div class="profile-box">
+                        <div class="profile-avatar">${initial}</div>
+                        <div class="profile-info">
+                            <div class="profile-name">${window.profile.fullName}</div>
+                            <div class="profile-email">${window.profile.email}</div>
+                        </div>
+                    </div>
+
+                    <h4>Assigned Stores</h4>
+                    <div class="stores-box">
+                `;
+
+                if (window.stores.length === 0) {
+                    html +=
+                        '<div style="text-align: center; color: #666">No stores assigned</div>';
+                } else {
+                    window.stores.forEach((store) => {
+                        html += `<div class="store-item">`;
+                        html += `<div class="store-name">${store.name}</div>`;
+
+                        if (window.assignments[store.id]) {
+                            html += '<div class="store-roles">';
+                            window.assignments[store.id].forEach(
+                                (assignment) => {
+                                    const roleName =
+                                        assignment.role
+                                            .charAt(0)
+                                            .toUpperCase() +
+                                        assignment.role.slice(1);
+                                    html += `<span class="role-tag">${roleName}</span>`;
+                                    if (assignment.isDefault) {
+                                        html +=
+                                            '<span class="role-tag">Default</span>';
+                                    }
+                                }
+                            );
+                            html += "</div>";
+                        }
+
+                        html += "</div>";
+                    });
+                }
+
+                html += `
+                    </div>
+
+                    <div class="info-box">
+                        <span style="font-weight: bold">Member since:</span>
+                        <span>${memberSince}</span>
+                    </div>
+                `;
+
+                html += `
+                    <button onclick="handleLogout()">Log Out</button>
+
+                    <div class="version-info">Lite POS v1.0.0 (<span id="backend-version">loading...</span>)</div>
+                `;
+
+                $("#profile-container").html(html);
+            }
+
+            function openAdminDashboard() {
+                // Get current tenant from URL
+                const pathParts = window.location.pathname.split("/");
+                const tenantSlug = pathParts[1]; // Assuming /{tenant}/...
+
+                window.open(`/${tenantSlug}/admin`, "_blank");
+            }
+
+            async function loadVersion() {
+                try {
+                    const response = await fetch("/api/version", {
+                        credentials: "include",
+                    });
+
+                    if (!response.ok) {
+                        throw new Error("Failed to fetch version");
+                    }
+
+                    const data = await response.json();
+                    return data.backendVersion || "unknown";
+                } catch (error) {
+                    console.error("Failed to load version:", error);
+                    return "error";
+                }
+            }
+
+            async function handleLogout() {
+                const confirmed = confirm("Are you sure you want to log out?");
+                if (!confirmed) return;
+
+                try {
+                    const response = await fetch("/api/auth/signout", {
+                        // Fixed path
+                        method: "POST",
+                        credentials: "include",
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        // Successfully logged out
+                        window.location.href = "/login";
+                    } else {
+                        console.error("Logout failed:", data.error);
+                        // Still redirect to login page
+                        window.location.href = "/login";
+                    }
+                } catch (error) {
+                    console.error("Logout error:", error);
+                    // Still redirect on error
+                    window.location.href = "/login";
+                }
+            }
+
+            async function init() {
+                try {
+                    await initAuth();
+
+                    if (!window.profile) {
+                        $("#auth-status").html(
+                            'Not logged in. Please <a href="/login">login via main app</a> first.'
+                        );
+                        return;
+                    }
+
+                    // Load tenant name
+                    await loadTenantName();
+
+                    $("#auth-status").text(
+                        `${window.profile.fullName} - ${window.profile.email}`
+                    );
+
+                    await loadStores(window.profile.id);
+
+                    renderProfile();
+
+                    // Load and display backend version
+                    const backendVersion = await loadVersion();
+                    $("#backend-version").text(backendVersion);
+                } catch (err) {
+                    console.error(err);
+                    $("#auth-status").text("Failed to load profile");
+                }
+            }
+
+            init();
+        </script>
+    </body>
+</html>
