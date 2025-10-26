@@ -1,48 +1,87 @@
-import { createServerComponentClient } from "@/lib/supabase/server";
+//app/unauthorized/page.tsx
+
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
-export default async function UnauthorizedPage({
-    searchParams,
-}: {
-    searchParams: Promise<{ reason?: string }>;
-}) {
-    const params = await searchParams;
-    const reason = params.reason;
+type Profile = {
+    id: string;
+    email: string;
+    fullName: string;
+    role: string;
+};
 
-    // ✅ Try to help user escape by checking their valid tenants
-    const supabase = await createServerComponentClient();
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
+export default function UnauthorizedPage() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const reason = searchParams.get("reason");
 
-    let validTenantSlug: string | null = null;
+    const [profile, setProfile] = useState<Profile | null>(null);
+    const [validTenantSlug, setValidTenantSlug] = useState<string | null>(null);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-    if (user) {
-        const { data: tenantAssignments } = await supabase
-            .from("user_tenant_assignments")
-            .select("tenant_id, tenants(slug)")
-            .eq("user_id", user.id)
-            .limit(1)
-            .single();
+    useEffect(() => {
+        async function loadProfile() {
+            try {
+                const res = await fetch("/api/profiles", {
+                    credentials: "include",
+                });
 
-        if (tenantAssignments?.tenants) {
-            // ✅ FIX: Handle both array and object types
-            const tenantsData = tenantAssignments.tenants;
-            const tenant = Array.isArray(tenantsData)
-                ? tenantsData[0]
-                : tenantsData;
-
-            if (tenant?.slug) {
-                validTenantSlug = tenant.slug;
+                if (res.ok) {
+                    const data = await res.json();
+                    setProfile(data);
+                }
+            } catch (error) {
+                console.error("Failed to load profile:", error);
             }
         }
-    }
 
-    // ✅ Auto-redirect if user has valid tenant
-    if (validTenantSlug && reason !== "no-access") {
-        redirect(`/${validTenantSlug}/mobile`);
-    }
+        async function checkValidTenant() {
+            try {
+                const res = await fetch("/api/tenants", {
+                    credentials: "include",
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.tenants && data.tenants.length > 0) {
+                        setValidTenantSlug(data.tenants[0].slug);
+
+                        // Auto-redirect if user has valid tenant and not "no-access"
+                        if (reason !== "no-access") {
+                            router.push(`/${data.tenants[0].slug}/mobile`);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to check tenants:", error);
+            }
+        }
+
+        loadProfile();
+        checkValidTenant();
+    }, [reason, router]);
+
+    const handleLogout = async () => {
+        const confirmed = window.confirm("Are you sure you want to log out?");
+        if (!confirmed) return;
+
+        setIsLoggingOut(true);
+
+        try {
+            await fetch("/api/auth/signout", {
+                method: "POST",
+                credentials: "include",
+            });
+
+            router.push("/login");
+        } catch (error) {
+            console.error("Logout error:", error);
+            router.push("/login");
+        }
+    };
 
     const messages: Record<string, { title: string; description: string }> = {
         "no-tenant": {
@@ -99,26 +138,23 @@ export default async function UnauthorizedPage({
                     <h1 className="text-2xl font-bold text-gray-900 mb-2">
                         {message.title}
                     </h1>
-                    <p className="text-gray-600">{message.description}</p>
-                </div>
+                    <p className="text-gray-600 mb-4">{message.description}</p>
 
-                {/* Actions */}
-                {/* <div className="space-y-3">
-                    {validTenantSlug && (
-                        <a
-                            href={`/${validTenantSlug}/mobile`}
-                            className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg text-center transition"
-                        >
-                            Go to My Dashboard
-                        </a>
+                    {/* Current User Info */}
+                    {profile && (
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-left">
+                            <p className="text-xs text-gray-500 mb-1">
+                                Logged in as:
+                            </p>
+                            <p className="font-semibold text-gray-900 text-sm">
+                                {profile.fullName}
+                            </p>
+                            <p className="text-xs text-gray-600">
+                                {profile.email}
+                            </p>
+                        </div>
                     )}
-                    <a
-                        href="/login"
-                        className="block w-full bg-white hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-lg text-center border border-gray-300 transition"
-                    >
-                        {user ? "Switch Account" : "Back to Login"}
-                    </a>
-                </div> */}
+                </div>
 
                 {/* Actions */}
                 <div className="space-y-3">
@@ -130,11 +166,20 @@ export default async function UnauthorizedPage({
                             Go to My Dashboard
                         </Link>
                     )}
+
+                    <button
+                        onClick={handleLogout}
+                        disabled={isLoggingOut}
+                        className="block w-full bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-medium py-2.5 px-4 rounded-lg text-center transition"
+                    >
+                        {isLoggingOut ? "Logging out..." : "Log Out"}
+                    </button>
+
                     <Link
                         href="/login"
                         className="block w-full bg-white hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-lg text-center border border-gray-300 transition"
                     >
-                        {user ? "Switch Account" : "Back to Login"}
+                        Back to Login
                     </Link>
                 </div>
 

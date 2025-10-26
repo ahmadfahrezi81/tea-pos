@@ -1,8 +1,8 @@
 export default function OldBrowserPage() {
-    const searchParams = new URLSearchParams(
-        typeof window !== "undefined" ? window.location.search : ""
-    );
-    const tenant = searchParams.get("tenant") || "";
+    // const searchParams = new URLSearchParams(
+    //     typeof window !== "undefined" ? window.location.search : ""
+    // );
+    // const tenant = searchParams.get("tenant") || "";
 
     const legacyUrl = `/lite-legacy-client/index.html`;
 
