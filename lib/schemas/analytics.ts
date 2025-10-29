@@ -61,6 +61,22 @@ export const ProductSalesQuery = z
     })
     .openapi({ title: "ProductSalesQuery" });
 
+export const DayOfWeekSalesQuery = z
+    .object({
+        storeId: UUIDSchema.openapi({
+            description: "Store ID to fetch day-of-week sales for",
+            example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        }),
+        month: z
+            .string()
+            .regex(/^\d{4}-\d{2}$/)
+            .openapi({
+                description: "Month in YYYY-MM format",
+                example: "2025-10",
+            }),
+    })
+    .openapi({ title: "DayOfWeekSalesQuery" });
+
 // ============================================================================
 // ADMIN DASHBOARD QUERY SCHEMAS (NEW)
 // ============================================================================
@@ -114,6 +130,31 @@ export const DailySalesDataPoint = z
     })
     .openapi({ title: "DailySalesDataPoint" });
 
+export const DayOfWeekSalesDataPoint = z
+    .object({
+        dayOfWeek: z.string().openapi({
+            description: "Day of week name",
+            example: "Monday",
+        }),
+        dayIndex: z.number().int().min(0).max(6).openapi({
+            description: "Day index (0=Sunday, 6=Saturday)",
+            example: 1,
+        }),
+        averageCups: z.number().min(0).openapi({
+            description: "Average cups sold on this day of week",
+            example: 150.5,
+        }),
+        totalCups: z.number().int().min(0).openapi({
+            description: "Total cups sold on this day of week",
+            example: 602,
+        }),
+        occurrences: z.number().int().min(0).openapi({
+            description: "Number of times this day occurred in the month",
+            example: 4,
+        }),
+    })
+    .openapi({ title: "DayOfWeekSalesDataPoint" });
+
 export const HourlySalesResponse = z
     .object({
         data: z.array(HourlySalesDataPoint).openapi({
@@ -163,6 +204,14 @@ export const ProductSalesResponse = z
         }),
     })
     .openapi({ title: "ProductSalesResponse" });
+
+export const DayOfWeekSalesResponse = z
+    .object({
+        data: z.array(DayOfWeekSalesDataPoint).openapi({
+            description: "Array of day-of-week sales data points",
+        }),
+    })
+    .openapi({ title: "DayOfWeekSalesResponse" });
 
 // ============================================================================
 // ADMIN DASHBOARD RESPONSE SCHEMAS (NEW)
@@ -294,3 +343,7 @@ export type AdminStoreBreakdownDataPoint = z.infer<
 export type AdminStoreBreakdownResponse = z.infer<
     typeof AdminStoreBreakdownResponse
 >;
+
+export type DayOfWeekSalesQuery = z.infer<typeof DayOfWeekSalesQuery>;
+export type DayOfWeekSalesDataPoint = z.infer<typeof DayOfWeekSalesDataPoint>;
+export type DayOfWeekSalesResponse = z.infer<typeof DayOfWeekSalesResponse>;
