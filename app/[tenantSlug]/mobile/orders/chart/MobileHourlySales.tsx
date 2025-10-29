@@ -1,9 +1,17 @@
-// components/MobileAnalytics.tsx
+//app/[tenantSlug]/mobile/orders/chart/MobileHourlySales.tsx
 "use client";
 import { useState, useEffect, useMemo } from "react";
 import { CalendarDays, StoreIcon, TrendingUp, ChevronLeft } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import {
+    Area,
+    AreaChart,
+    CartesianGrid,
+    XAxis,
+    YAxis,
+    ReferenceLine,
+    Dot,
+} from "recharts";
 import {
     Card,
     CardContent,
@@ -31,6 +39,25 @@ const chartConfig = {
         color: "#175EFA", // Blue color (matches your blue-600)
     },
 } satisfies ChartConfig;
+
+// Custom dot component to highlight peak
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const CustomDot = (props: any) => {
+    const { cx, cy, payload, peakHour } = props;
+    const isPeak = payload.hour === peakHour;
+
+    return (
+        <Dot
+            cx={cx}
+            cy={cy}
+            r={4}
+            fill={isPeak ? "#ef4444" : "#175EFA"}
+            stroke={isPeak ? "#fff" : "none"}
+            strokeWidth={isPeak ? 2 : 0}
+        />
+    );
+};
+
 export default function MobileHourlySales() {
     const { profile } = useAuth();
     const router = useRouter();
@@ -45,24 +72,12 @@ export default function MobileHourlySales() {
     const [selectedDate, setSelectedDate] = useState(initialDate);
     const [selectedStore, setSelectedStore] = useState<string>(initialStoreId);
 
-    // const [selectedDate, setSelectedDate] = useState(
-    //     formatDateForInput(new Date())
-    // );
-    // const [selectedStore, setSelectedStore] = useState<string>("");
-
     // Fetch user stores
     const { data: storesData, isLoading: storesLoading } = useUserStores(
         profile!.id
     );
     const stores = storesData?.stores ?? [];
     const defaultStore = storesData?.defaultStore;
-
-    // // Auto-select default store on mount
-    // useEffect(() => {
-    //     if (defaultStore && !selectedStore) {
-    //         setSelectedStore(defaultStore.id);
-    //     }
-    // }, [defaultStore, selectedStore]);
 
     // Auto-select default store on mount (only if no store was passed via URL)
     useEffect(() => {
@@ -107,15 +122,7 @@ export default function MobileHourlySales() {
     return (
         <div className="space-y-4">
             {/* Back Button */}
-            {/* <button
-                onClick={() => router.back()}
-                className="flex items-center text-gray-700 hover:text-gray-900 transition-colors active:scale-95 duration-75"
-            >
-                <ChevronLeft size={24} />
-                <span className="font-medium text-md">Back to Orders</span>
-            </button> */}
             <button
-                // onClick={() => router.back()}
                 onClick={() => router.push(url("/mobile/orders"))}
                 className="flex items-center gap-1 text-gray-700"
             >
@@ -192,7 +199,7 @@ export default function MobileHourlySales() {
                         </div>
                     ) : (
                         <ChartContainer config={chartConfig}>
-                            <BarChart
+                            <AreaChart
                                 accessibilityLayer
                                 data={hourlySales}
                                 margin={{
@@ -202,6 +209,26 @@ export default function MobileHourlySales() {
                                     left: 0,
                                 }}
                             >
+                                <defs>
+                                    <linearGradient
+                                        id="fillCups"
+                                        x1="0"
+                                        y1="0"
+                                        x2="0"
+                                        y2="1"
+                                    >
+                                        <stop
+                                            offset="5%"
+                                            stopColor="var(--color-cups)"
+                                            stopOpacity={0.8}
+                                        />
+                                        <stop
+                                            offset="95%"
+                                            stopColor="var(--color-cups)"
+                                            stopOpacity={0.1}
+                                        />
+                                    </linearGradient>
+                                </defs>
                                 <CartesianGrid vertical={false} />
                                 <XAxis
                                     dataKey="hour"
@@ -209,28 +236,46 @@ export default function MobileHourlySales() {
                                     tickMargin={10}
                                     axisLine={false}
                                 />
-                                {/* <YAxis
-                                    tickLine={false}
-                                    axisLine={false}
-                                    tickMargin={10}
-                                /> */}
                                 <YAxis
                                     allowDecimals={false}
                                     tickLine={false}
                                     axisLine={false}
                                     tickMargin={10}
                                 />
-
+                                {/* Reference line at peak */}
+                                {summaryStats.peakHour.hour !== "N/A" && (
+                                    <ReferenceLine
+                                        x={summaryStats.peakHour.hour}
+                                        stroke="#ef4444"
+                                        strokeDasharray="3 3"
+                                        strokeWidth={1.5}
+                                    />
+                                )}
                                 <ChartTooltip
                                     cursor={false}
                                     content={<ChartTooltipContent />}
                                 />
-                                <Bar
+                                <Area
                                     dataKey="cups"
-                                    fill="var(--color-cups)"
-                                    radius={8}
+                                    type="linear"
+                                    fill="url(#fillCups)"
+                                    fillOpacity={0.4}
+                                    stroke="var(--color-cups)"
+                                    strokeWidth={2}
+                                    dot={(props) => {
+                                        const { key, ...dotProps } = props;
+                                        return (
+                                            <CustomDot
+                                                key={key}
+                                                {...dotProps}
+                                                peakHour={
+                                                    summaryStats.peakHour.hour
+                                                }
+                                            />
+                                        );
+                                    }}
                                 />
-                            </BarChart>
+                            </AreaChart>
                         </ChartContainer>
                     )}
                 </CardContent>
