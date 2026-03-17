@@ -15,7 +15,7 @@ export default function VersionInfo() {
 
     return (
         <span className="font-mono text-xs opacity-90">
-            V{frontend} ({backend === null ? "loading..." : backend})
+            v{frontend} ({backend === null ? "loading..." : backend})
         </span>
     );
 }
