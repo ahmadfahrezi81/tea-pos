@@ -188,14 +188,23 @@
 // }
 
 "use client";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
+import { hasSellerRoleInStore } from "@/lib/utils/roleUtils";
 import { createClient } from "@/lib/supabase/client";
 import { useStores } from "@/lib/hooks/stores/useStores";
 import { useAuth } from "@/lib/context/AuthContext";
 import VersionInfo from "@/components/shared/VersionInfo";
 import { useRouter } from "next/navigation";
 import { useTenantSlug } from "@/lib/tenant-url";
-import { Smile } from "lucide-react";
+import {
+    Pencil,
+    Store,
+    Bell,
+    Globe,
+    Wrench,
+    UserRound,
+    Bot,
+} from "lucide-react";
 import { Icon } from "@iconify/react";
 
 const ChevronRight = () => (
@@ -244,10 +253,30 @@ export default function MobileProfile() {
     const router = useRouter();
     const { url } = useTenantSlug();
     const { profile } = useAuth();
-    const { data: storeData } = useStores();
-    const stores = storeData?.stores ?? [];
+    const { data: storesData, isLoading: storesLoading } = useStores();
+    const stores = storesData?.stores ?? [];
 
     const [advancedMode, setAdvancedMode] = useState(false);
+
+    const assignments = storesData?.assignments ?? {};
+    const [selectedStore, setSelectedStore] = useState<string>("");
+
+    const sellerStores = stores.filter((store) =>
+        hasSellerRoleInStore(profile?.id ?? "", store.id, assignments),
+    );
+
+    const defaultStore = stores.find((store) =>
+        assignments[store.id]?.some(
+            (assignment) =>
+                assignment.userId === profile?.id && assignment.isDefault,
+        ),
+    );
+
+    useEffect(() => {
+        if (defaultStore && !selectedStore) {
+            setSelectedStore(defaultStore.id);
+        }
+    }, [defaultStore, selectedStore, storesData]);
 
     const handleLogout = useCallback(async () => {
         const shouldLogout = window.confirm(
@@ -279,16 +308,41 @@ export default function MobileProfile() {
         : null;
 
     return (
-        <div className="min-h-screen space-y-3">
+        <div className="min-h-screen space-y-4">
+            {/* Store Selector */}
+            {sellerStores.length > 0 && (
+                <div className="bg-white p-3 rounded-xl shadow-sm">
+                    {/* <div className="flex items-center gap-2 mb-3">
+                        <Store size={20} className="text-gray-600" />
+                        <label className="block text-base font-semibold">
+                            {sellerStores.length === 1
+                                ? "Your Store"
+                                : "Select Store"}
+                        </label>
+                    </div> */}
+                    <select
+                        disabled={sellerStores.length === 1}
+                        value={selectedStore}
+                        onChange={(e) => setSelectedStore(e.target.value)}
+                        className={`w-full p-3 border rounded-lg focus:ring-2 ${
+                            sellerStores.length === 1
+                                ? "bg-gray-100 text-gray-500 cursor-not-allowed border-gray-200"
+                                : "border-gray-300 focus:ring-blue-500"
+                        }`}
+                    >
+                        {sellerStores.map((store) => (
+                            <option key={store.id} value={store.id}>
+                                {store.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            )}
             <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
                 {/* Profile Header */}
                 <div className="flex items-center gap-3">
                     <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                        <Icon
-                            icon="fluent-emoji:smiling-face-with-sunglasses"
-                            width="30"
-                            height="30"
-                        />
+                        <Bot size={30} className="text-gray-600" />
                     </div>
                     <div className="flex-1 min-w-0">
                         <p className="text-xl font-semibold text-gray-900 leading-tight truncate">
@@ -332,73 +386,39 @@ export default function MobileProfile() {
             </div>
 
             {/* Settings Sections */}
-            <p className="text-lg text-gray-900 font-bold tracking-wider mb-1">
+            <h3 className="text-lg font-semibold text-gray-800 mb-1">
                 Account Settings
-            </p>
+            </h3>
             <div className="bg-white rounded-xl p-4 py-2 space-y-1 shadow-sm">
                 <SettingsRow
-                    icon={
-                        <Icon
-                            icon="fluent-emoji:pencil"
-                            width="24"
-                            height="24"
-                        />
-                    }
+                    icon={<Pencil size={24} className="text-gray-900" />}
                     label="Personal Details"
                     disabled
                 />
                 <SettingsRow
-                    icon={
-                        <Icon
-                            icon="fluent-emoji:convenience-store"
-                            width="24"
-                            height="24"
-                        />
-                    }
+                    icon={<Store size={24} className="text-gray-900" />}
                     label={`Assigned Stores (${stores.length} ${stores.length !== 1 ? "Stores" : "Store"})`}
                     onClick={handleAssignedStores}
                 />
-
                 <SettingsRow
-                    icon={
-                        <Icon icon="fluent-emoji:bell" width="24" height="24" />
-                    }
+                    icon={<Bell size={24} className="text-gray-900" />}
                     label="Notifications"
                     disabled
                 />
                 <SettingsRow
-                    icon={
-                        <Icon
-                            icon="fluent-emoji:globe-showing-asia-australia"
-                            width="24"
-                            height="24"
-                        />
-                    }
+                    icon={<Globe size={24} className="text-gray-900" />}
                     label="Language"
                     disabled
                 />
+                {isAdmin && (
+                    <SettingsRow
+                        icon={<Wrench size={24} className="text-gray-900" />}
+                        label="Admin Dashboard"
+                        onClick={handleAdminDashboard}
+                    />
+                )}
             </div>
 
-            {isAdmin && (
-                <>
-                    <p className="text-lg text-gray-900 font-bold tracking-wider mb-1 mt-3">
-                        Admin
-                    </p>
-                    <div className="bg-white rounded-xl p-4 py-2 shadow-sm">
-                        <SettingsRow
-                            icon={
-                                <Icon
-                                    icon="fluent-emoji:wrench"
-                                    width="24"
-                                    height="24"
-                                />
-                            }
-                            label="Admin Dashboard"
-                            onClick={handleAdminDashboard}
-                        />
-                    </div>
-                </>
-            )}
             {/* Logout + Version */}
             <div className="mt-8 pb-10 flex flex-col items-center gap-2">
                 <div className="text-gray-900">
