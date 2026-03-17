@@ -1,7 +1,14 @@
 // app/mobile/MobileLayoutClient.tsx
 "use client";
 import { useEffect, ReactNode, useMemo, useState } from "react";
-import { User, ShoppingCart, Clock, BarChart3, Bell } from "lucide-react";
+import {
+    User,
+    ShoppingCart,
+    Clock,
+    BarChart3,
+    Bell,
+    ArrowLeft,
+} from "lucide-react";
 import { useStores } from "@/lib/hooks/stores/useStores";
 import { format } from "date-fns";
 import Image from "next/image";
@@ -300,35 +307,45 @@ export default function MobileLayoutClient({
     //     // navigate to notifications page or open a drawer
     // };
 
+    const isSubPage = (path: string) => {
+        return path.includes("/mobile/profile/");
+    };
+
     return (
         <div className="h-dvh flex flex-col bg-gray-50 select-none">
             <header className="fixed top-0 left-0 right-0 z-40 bg-gray-50 p-4">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">
-                            {getCurrentPageTitle(currentPath)}
-                        </h1>
-                        {currentPath.endsWith("/mobile/pos") && (
-                            <p className="text-xl text-gray-600 font-bold mt-1">
-                                {format(new Date(), "dd MMMM")}
-                            </p>
+                        {isSubPage(currentPath) ? (
+                            <button
+                                onClick={() => router.back()}
+                                className="text-gray-900"
+                            >
+                                <ArrowLeft size={28} strokeWidth={2} />
+                            </button>
+                        ) : (
+                            <>
+                                <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+                                    {getCurrentPageTitle(currentPath)}
+                                </h1>
+                                {currentPath.endsWith("/mobile/pos") && (
+                                    <p className="text-xl text-blue-600/90 font-bold mt-1">
+                                        {format(new Date(), "dd MMMM")}
+                                    </p>
+                                )}
+                            </>
                         )}
                     </div>
 
-                    {/* Notification button - UI ready, disabled until logic is implemented */}
-                    <button
-                        disabled
-                        className="relative p-2 rounded-full border border-gray-200 bg-white opacity-40 cursor-not-allowed"
-                        aria-label="Notifications"
-                    >
-                        <Bell size={24} className="text-gray-800" />
-                        {/* Notification badge - uncomment and wire up count when ready */}
-                        {/* {notificationCount > 0 && (
-        <span className="absolute top-1 right-1 min-w-[16px] h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
-            {notificationCount > 99 ? "99+" : notificationCount}
-        </span>
-    )} */}
-                    </button>
+                    {!isSubPage(currentPath) && (
+                        <button
+                            disabled
+                            className="relative p-2 rounded-full border border-gray-200 bg-white opacity-40 cursor-not-allowed"
+                            aria-label="Notifications"
+                        >
+                            <Bell size={24} className="text-gray-800" />
+                        </button>
+                    )}
                 </div>
             </header>
 
