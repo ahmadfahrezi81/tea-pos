@@ -7,12 +7,9 @@ import {
     BarChart3,
     Bell,
     ArrowLeft,
-    CornerDownRight,
     ChevronsUpDown,
-    Pencil,
 } from "lucide-react";
 import { useStores } from "@/lib/hooks/stores/useStores";
-import { format } from "date-fns";
 import Image from "next/image";
 import { hasManagerRole, hasSellerRole } from "@/lib/utils/roleUtils";
 import { useRouter, usePathname } from "next/navigation";
@@ -22,7 +19,6 @@ import { useTenantSlug } from "@/lib/tenant-url";
 import { useStore } from "@/lib/context/StoreContext";
 import { StorePickerDrawer } from "./StorePickerDrawer";
 import { useFastOrderMode } from "@/lib/context/FastOrderModeContext";
-import { Icon } from "@iconify/react";
 
 export interface Assignment {
     user_id: string;
@@ -48,7 +44,6 @@ export default function MobileLayoutClient({
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     const { url } = useTenantSlug();
-
     const { fastOrderMode } = useFastOrderMode();
 
     const {
@@ -70,16 +65,21 @@ export default function MobileLayoutClient({
 
     const { selectedStore, setIsPickerOpen, isPickerOpen } = useStore();
 
+    // Accent color helpers
+    const accent = fastOrderMode ? "text-rose-600" : "text-blue-600";
+    const accentBg = fastOrderMode ? "bg-rose-600" : "bg-blue-600";
+    const accentBgLight = fastOrderMode ? "bg-rose-50" : "bg-blue-50";
+    const accentHover = fastOrderMode
+        ? "hover:text-rose-500"
+        : "hover:text-blue-500";
+
     // Restore scroll position when drawer closes
     useEffect(() => {
         const el = scrollContainerRef.current;
         if (!el) return;
-
         if (isPickerOpen) {
-            // Save scroll position when opening
             el.dataset.scrollY = String(el.scrollTop);
         } else {
-            // Restore scroll position when closing
             const saved = el.dataset.scrollY;
             if (saved !== undefined) {
                 requestAnimationFrame(() => {
@@ -92,43 +92,29 @@ export default function MobileLayoutClient({
     // Auth state synchronization and recovery
     useEffect(() => {
         let mounted = true;
-
         const checkAuthState = async () => {
             if ((profileLoading || !profile) && authRetryCount < 3) {
                 const timer = setTimeout(async () => {
                     if (mounted && (profileLoading || !profile)) {
-                        console.log(
-                            `🔄 Force refreshing auth state (attempt ${
-                                authRetryCount + 1
-                            })...`,
-                        );
                         await refreshProfile();
                         setAuthRetryCount((prev) => prev + 1);
                     }
                 }, 3000);
-
                 return () => clearTimeout(timer);
             }
         };
-
         checkAuthState();
-
         return () => {
             mounted = false;
         };
     }, [profileLoading, profile, refreshProfile, authRetryCount]);
 
     useEffect(() => {
-        if (profile) {
-            setAuthRetryCount(0);
-        }
+        if (profile) setAuthRetryCount(0);
     }, [profile]);
 
     const isLoading = useMemo(() => {
-        if (authRetryCount >= 3) {
-            console.warn("⚠️ Auth retries exhausted - allowing UI to render");
-            return false;
-        }
+        if (authRetryCount >= 3) return false;
         if (profileLoading || !profile) return true;
         if (storesLoading) return true;
         return false;
@@ -186,32 +172,7 @@ export default function MobileLayoutClient({
     );
 
     useEffect(() => {
-        console.log("🔍 MobileLayoutClient Debug:", {
-            profileLoading,
-            storesLoading,
-            profile: !!profile,
-            profileData: profile
-                ? { id: profile.id, name: profile.fullName }
-                : null,
-            isLoading,
-            assignments: !!assignments,
-            authRetryCount,
-            pathname,
-        });
-    }, [
-        profileLoading,
-        storesLoading,
-        profile,
-        isLoading,
-        assignments,
-        authRetryCount,
-        pathname,
-    ]);
-
-    useEffect(() => {
-        tabs.forEach((tab) => {
-            router.prefetch(tab.path);
-        });
+        tabs.forEach((tab) => router.prefetch(tab.path));
     }, [tabs, router]);
 
     useEffect(() => {
@@ -292,7 +253,6 @@ export default function MobileLayoutClient({
     }
 
     const currentPath = optimisticPath || pathname;
-
     const isProfilePage = currentPath.endsWith("/mobile/profile");
 
     const getCurrentPageTitle = (path: string) => {
@@ -309,15 +269,6 @@ export default function MobileLayoutClient({
         if (path === pathname) return;
         setOptimisticPath(path);
         router.push(path);
-    };
-
-    const handleLogoClick = () => {
-        const targetPath = canSell
-            ? url("/mobile/pos")
-            : url("/mobile/profile");
-        if (targetPath === pathname) return;
-        setOptimisticPath(targetPath);
-        router.push(targetPath);
     };
 
     const isSubPage = (path: string) => {
@@ -345,20 +296,20 @@ export default function MobileLayoutClient({
                                 <h1 className="text-3xl font-bold tracking-tight text-gray-900">
                                     {getCurrentPageTitle(currentPath)}
                                 </h1>
-
                                 {selectedStore && !isProfilePage && (
                                     <button
                                         onClick={() => setIsPickerOpen(true)}
-                                        className="flex items-center mt-1.75 gap-0.75"
+                                        className="flex items-center mt-1.5"
                                     >
-                                        <p className="text-xl text-blue-600 font-semibold">
+                                        <p
+                                            className={`text-xl font-semibold ${accent}`}
+                                        >
                                             {selectedStore.name}
                                         </p>
-
                                         <ChevronsUpDown
-                                            size={18}
-                                            strokeWidth={3.5}
-                                            className="text-blue-600"
+                                            size={16}
+                                            strokeWidth={3}
+                                            className={accent}
                                         />
                                     </button>
                                 )}
@@ -378,7 +329,6 @@ export default function MobileLayoutClient({
                 </div>
             </header>
 
-            {/* Scrollable content area with ref */}
             <div
                 ref={scrollContainerRef}
                 className="flex-1 overflow-y-auto pt-18 p-4 pb-28 bg-gray-50"
@@ -398,8 +348,8 @@ export default function MobileLayoutClient({
                                 onClick={() => handleNavClick(tab.path)}
                                 className={`flex-1 py-3 px-4 flex flex-col items-center space-y-1 relative transition-all duration-75 active:scale-95 ${
                                     isActive
-                                        ? "text-blue-600 bg-blue-50"
-                                        : "text-gray-600 hover:text-blue-500"
+                                        ? `${accent} ${accentBgLight}`
+                                        : `text-gray-600 ${accentHover}`
                                 }`}
                             >
                                 <Icon
@@ -410,7 +360,9 @@ export default function MobileLayoutClient({
                                     {tab.label}
                                 </span>
                                 {isActive && (
-                                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-blue-600 rounded-b-full transition-all duration-200"></div>
+                                    <div
+                                        className={`absolute top-0 left-1/2 transform -translate-x-1/2 w-8 h-0.5 ${accentBg} rounded-b-full transition-all duration-200`}
+                                    />
                                 )}
                             </button>
                         );
