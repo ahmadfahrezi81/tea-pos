@@ -1,6 +1,11 @@
 "use client";
 import { useState, useMemo } from "react";
-import { CalendarDays, TrendingUp, ChevronLeft } from "lucide-react";
+import {
+    CalendarDays,
+    TrendingUp,
+    ChevronLeft,
+    ChevronsUpDown,
+} from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
     Area,
@@ -55,10 +60,12 @@ const CustomDot = (props: any) => {
 };
 
 export default function MobileHourlySales() {
-    const { selectedStoreId } = useStore();
+    // const { selectedStoreId } = useStore();
     const router = useRouter();
     const searchParams = useSearchParams();
     const { url } = useTenantSlug();
+
+    const { selectedStoreId, selectedStore, setIsPickerOpen } = useStore();
 
     const [selectedDate, setSelectedDate] = useState(
         searchParams.get("date") || formatDateForInput(new Date()),
@@ -92,16 +99,26 @@ export default function MobileHourlySales() {
 
     return (
         <div className="space-y-4">
-            {/* Back Button */}
-            <button
-                onClick={() => router.push(url("/mobile/orders"))}
-                className="flex items-center gap-1 text-gray-700"
-            >
-                <ChevronLeft size={24} />
-                <span className="font-medium text-md mb-0.5">
-                    Back to Orders
-                </span>
-            </button>
+            <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-semibold tracking-tight text-gray-900">
+                    Daily Chart
+                </h1>
+                {selectedStore && (
+                    <button
+                        onClick={() => setIsPickerOpen(true)}
+                        className="flex items-center mt-1 gap-0.5"
+                    >
+                        <p className="text-lg text-blue-600/90 font-bold">
+                            {selectedStore.name}
+                        </p>
+                        <ChevronsUpDown
+                            size={14}
+                            strokeWidth={3}
+                            className="text-blue-600/90"
+                        />
+                    </button>
+                )}
+            </div>
 
             {/* Date Filter */}
             <div className="bg-white p-4 rounded-lg shadow-sm">

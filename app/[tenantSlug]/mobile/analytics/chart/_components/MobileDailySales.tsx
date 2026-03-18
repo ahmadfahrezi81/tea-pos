@@ -6,6 +6,7 @@ import {
     ChevronLeft,
     Package,
     Calendar,
+    ChevronsUpDown,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTenantSlug } from "@/lib/tenant-url";
@@ -85,7 +86,7 @@ const CustomDot = (props: any) => {
 };
 
 export default function MobileDailySales() {
-    const { selectedStoreId } = useStore();
+    const { selectedStoreId, selectedStore, setIsPickerOpen } = useStore();
     const router = useRouter();
     const searchParams = useSearchParams();
     const { url } = useTenantSlug();
@@ -186,16 +187,26 @@ export default function MobileDailySales() {
 
     return (
         <div className="space-y-4">
-            {/* Back Button */}
-            <button
-                onClick={() => router.push(url("/mobile/analytics"))}
-                className="flex items-center gap-1 text-gray-700"
-            >
-                <ChevronLeft size={24} />
-                <span className="font-medium text-md mb-0.5">
-                    Back to Analytics
-                </span>
-            </button>
+            <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-semibold tracking-tight text-gray-900">
+                    Monthly Chart
+                </h1>
+                {selectedStore && (
+                    <button
+                        onClick={() => setIsPickerOpen(true)}
+                        className="flex items-center mt-1 gap-0.5"
+                    >
+                        <p className="text-lg text-blue-600/90 font-bold">
+                            {selectedStore.name}
+                        </p>
+                        <ChevronsUpDown
+                            size={14}
+                            strokeWidth={3}
+                            className="text-blue-600/90"
+                        />
+                    </button>
+                )}
+            </div>
 
             {/* Month Filter */}
             <div className="bg-white p-4 rounded-lg shadow-sm">

@@ -316,13 +316,9 @@ export default function MobileLayoutClient({
         setOptimisticPath(targetPath);
         router.push(targetPath);
     };
-
     const isSubPage = (path: string) => {
-        return path.includes("/mobile/profile/");
-    };
-
-    const isChartPage = (path: string) => {
         return (
+            path.includes("/mobile/profile/") ||
             path.endsWith("/mobile/orders/chart") ||
             path.endsWith("/mobile/analytics/chart")
         );
@@ -371,7 +367,7 @@ export default function MobileLayoutClient({
                         )}
                     </div>
 
-                    {!isSubPage(currentPath) && !isChartPage(currentPath) && (
+                    {!isSubPage(currentPath) && (
                         <button
                             disabled
                             className="relative p-2 rounded-lg border border-gray-200 bg-white opacity-40 cursor-not-allowed"
@@ -386,7 +382,7 @@ export default function MobileLayoutClient({
             {/* Scrollable content area with ref */}
             <div
                 ref={scrollContainerRef}
-                className="flex-1 overflow-y-auto pt-20 p-4 pb-28 bg-gray-50"
+                className="flex-1 overflow-y-auto pt-16 p-4 pb-28 bg-gray-50"
             >
                 {children}
             </div>
