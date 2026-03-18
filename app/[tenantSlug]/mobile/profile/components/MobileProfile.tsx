@@ -202,10 +202,7 @@ import {
     Bell,
     Globe,
     Wrench,
-    UserRound,
-    Bot,
     StoreIcon,
-    Smile,
     Leaf,
 } from "lucide-react";
 import { Icon } from "@iconify/react";
