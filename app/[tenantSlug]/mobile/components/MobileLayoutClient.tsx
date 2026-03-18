@@ -349,11 +349,17 @@ export default function MobileLayoutClient({
                                 {selectedStore && !isProfilePage && (
                                     <button
                                         onClick={() => setIsPickerOpen(true)}
-                                        className="flex items-center mt-1.75"
+                                        className="flex items-center mt-1.75 gap-0.75"
                                     >
-                                        <p className="text-xl text-blue-600/90 font-bold">
+                                        <p className="text-xl text-blue-600 font-semibold">
                                             {selectedStore.name}
                                         </p>
+
+                                        <ChevronsUpDown
+                                            size={18}
+                                            strokeWidth={3.5}
+                                            className="text-blue-600"
+                                        />
                                     </button>
                                 )}
                             </div>

@@ -224,7 +224,7 @@ export default function MobilePOS() {
                 </div>
                 {fastOrderMode && (
                     <div>
-                        {cart.length > 0 ? (
+                        {cart.length > 0 && (
                             <button
                                 onClick={() => setCart([])}
                                 className="flex items-center gap-1 bg-red-500 px-2 py-1 rounded-full"
@@ -233,12 +233,6 @@ export default function MobilePOS() {
                                     Clear All
                                 </span>
                             </button>
-                        ) : (
-                            <Icon
-                                icon="fluent-emoji:rocket"
-                                width="30"
-                                height="30"
-                            />
                         )}
                     </div>
                 )}

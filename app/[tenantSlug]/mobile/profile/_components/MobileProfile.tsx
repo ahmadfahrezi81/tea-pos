@@ -205,27 +205,13 @@ import {
     StoreIcon,
     Leaf,
     ChevronsUpDown,
+    ChevronRight,
 } from "lucide-react";
 import { Icon } from "@iconify/react";
 import { useStore } from "@/lib/context/StoreContext";
 import { StorePickerDrawer } from "../../components/StorePickerDrawer";
 import { useFastOrderMode } from "@/lib/context/FastOrderModeContext";
 
-const ChevronRight = () => (
-    <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="text-blue-500"
-    >
-        <path d="M9 18l6-6-6-6" />
-    </svg>
-);
 const SettingsRow = ({
     icon,
     label,
@@ -240,7 +226,7 @@ const SettingsRow = ({
     <button
         onClick={onClick}
         disabled={disabled}
-        className={`w-full flex items-center gap-3 py-4 border-b border-gray-100 last:border-none text-left ${
+        className={`w-full flex items-center gap-1 py-4 border-b border-gray-100 last:border-none text-left ${
             disabled ? "opacity-40 cursor-default" : "active:bg-gray-50"
         }`}
     >
@@ -248,7 +234,13 @@ const SettingsRow = ({
         <div className="flex-1 min-w-0">
             <p className="text-base text-gray-800">{label}</p>
         </div>
-        {!disabled && <ChevronRight />}
+        {!disabled && (
+            <ChevronRight
+                size={20}
+                strokeWidth={2.5}
+                className="text-blue-500"
+            />
+        )}
     </button>
 );
 
@@ -302,7 +294,7 @@ export default function MobileProfile() {
             <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
                 {/* Profile Header */}
                 <div className="flex items-center gap-3">
-                    <div className="w-14 h-14 rounded-full bg-blue-400 flex items-center justify-center flex-shrink-0">
+                    <div className="w-14 h-14 rounded-full bg-blue-600/70 flex items-center justify-center flex-shrink-0">
                         <Leaf size={24} className="text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -334,7 +326,7 @@ export default function MobileProfile() {
                     <button
                         onClick={toggleFastOrderMode}
                         className={`relative w-13 h-8 rounded-full transition-colors duration-200 focus:outline-none flex-shrink-0 ${
-                            fastOrderMode ? "bg-blue-500" : "bg-gray-300"
+                            fastOrderMode ? "bg-rose-600" : "bg-gray-300"
                         }`}
                     >
                         <span
@@ -384,28 +376,28 @@ export default function MobileProfile() {
             </h3>
             <div className="bg-white rounded-xl p-4 py-2 space-y-1 shadow-sm">
                 <SettingsRow
-                    icon={<Pencil size={24} className="text-gray-900" />}
+                    icon={<Pencil size={20} className="text-gray-900" />}
                     label="Personal Details"
                     disabled
                 />
                 <SettingsRow
-                    icon={<Store size={24} className="text-gray-900" />}
+                    icon={<Store size={20} className="text-gray-900" />}
                     label={`Assigned Stores (${stores.length} ${stores.length !== 1 ? "Stores" : "Store"})`}
                     onClick={handleAssignedStores}
                 />
                 <SettingsRow
-                    icon={<Bell size={24} className="text-gray-900" />}
+                    icon={<Bell size={20} className="text-gray-900" />}
                     label="Notifications"
                     disabled
                 />
                 <SettingsRow
-                    icon={<Globe size={24} className="text-gray-900" />}
+                    icon={<Globe size={20} className="text-gray-900" />}
                     label="Language"
                     disabled
                 />
                 {isAdmin && (
                     <SettingsRow
-                        icon={<Wrench size={24} className="text-gray-900" />}
+                        icon={<Wrench size={20} className="text-gray-900" />}
                         label="Admin Dashboard"
                         onClick={handleAdminDashboard}
                     />

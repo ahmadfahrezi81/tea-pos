@@ -47,13 +47,13 @@ export function StorePickerDrawer() {
             </Drawer.Trigger>
 
             <Drawer.Portal>
-                <Drawer.Overlay className="fixed inset-0 bg-black/40 z-50" />
-                <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl px-6 pt-5 pb-10 focus:outline-none">
-                    <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-2" />
+                <Drawer.Overlay className="fixed inset-0 bg-black/60 z-50" />
+                <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl px-6 pt-8 pb-10 focus:outline-none">
+                    {/* <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-2" /> */}
 
-                    <Drawer.Title className="text-xl font-bold text-gray-900  mb-4 pb-2">
+                    <Drawer.Title className="text-xl font-bold text-gray-900  mb-4">
                         <Store
-                            size={20}
+                            size={18}
                             className="inline text-gray-700 mb-1"
                         />
                         <span className="ml-1.5">Select Store</span>
@@ -70,7 +70,7 @@ export function StorePickerDrawer() {
                                         setSelectedStoreId(store.id);
                                         setIsPickerOpen(false);
                                     }}
-                                    className={`w-full flex items-center justify-between py-3 transition-colors ${
+                                    className={`w-full flex items-center justify-between py-5 mb-0 transition-colors ${
                                         !isLast ? "border-b" : ""
                                     }`}
                                 >
