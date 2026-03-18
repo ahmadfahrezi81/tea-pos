@@ -292,9 +292,9 @@ export default function MobileLayoutClient({
     const getCurrentPageTitle = (path: string) => {
         if (path.endsWith("/mobile/pos")) return "POS";
         if (path.endsWith("/mobile/orders")) return "Orders";
-        if (path.endsWith("/mobile/orders/chart")) return "Daily Chart";
+        if (path.endsWith("/mobile/orders/chart")) return "Daily";
         if (path.endsWith("/mobile/analytics")) return "Analytics";
-        if (path.endsWith("/mobile/analytics/chart")) return "Monthly Chart";
+        if (path.endsWith("/mobile/analytics/chart")) return "Monthly";
         if (path.endsWith("/mobile/profile")) return "Profile";
         return "Mobile";
     };
@@ -316,6 +316,13 @@ export default function MobileLayoutClient({
 
     const isSubPage = (path: string) => {
         return path.includes("/mobile/profile/");
+    };
+
+    const isChartPage = (path: string) => {
+        return (
+            path.endsWith("/mobile/orders/chart") ||
+            path.endsWith("/mobile/analytics/chart")
+        );
     };
 
     return (
@@ -354,7 +361,7 @@ export default function MobileLayoutClient({
                         )}
                     </div>
 
-                    {!isSubPage(currentPath) && (
+                    {!isSubPage(currentPath) && !isChartPage(currentPath) && (
                         <button
                             disabled
                             className="relative p-2 rounded-lg border border-gray-200 bg-white opacity-40 cursor-not-allowed"
