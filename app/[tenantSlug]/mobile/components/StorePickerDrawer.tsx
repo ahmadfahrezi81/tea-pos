@@ -7,14 +7,14 @@ export function StorePickerDrawer() {
     const {
         selectedStoreId,
         setSelectedStoreId,
-        sellerStores,
+        assignedStores,
         isPickerOpen,
         setIsPickerOpen,
     } = useStore();
 
-    if (sellerStores.length === 0) return null;
+    if (assignedStores.length === 0) return null;
 
-    const selectedStore = sellerStores.find((s) => s.id === selectedStoreId);
+    const selectedStore = assignedStores.find((s) => s.id === selectedStoreId);
 
     return (
         <Drawer.Root
@@ -33,14 +33,14 @@ export function StorePickerDrawer() {
             <Drawer.Trigger asChild>
                 <button
                     className={`w-full p-3 border rounded-lg text-left flex items-center justify-between ${
-                        sellerStores.length === 1
+                        assignedStores.length === 1
                             ? "bg-gray-100 text-gray-500 cursor-not-allowed border-gray-200"
                             : "border-gray-300 bg-white"
                     }`}
-                    disabled={sellerStores.length === 1}
+                    disabled={assignedStores.length === 1}
                 >
                     <span>{selectedStore?.name ?? "Select Store"}</span>
-                    {sellerStores.length > 1 && (
+                    {assignedStores.length > 1 && (
                         <ChevronsUpDown size={18} className="text-blue-500" />
                     )}
                 </button>
@@ -59,7 +59,7 @@ export function StorePickerDrawer() {
                     </Drawer.Description>
 
                     <div className="space-y-3">
-                        {sellerStores.map((store) => {
+                        {assignedStores.map((store) => {
                             const isSelected = store.id === selectedStoreId;
                             return (
                                 <button

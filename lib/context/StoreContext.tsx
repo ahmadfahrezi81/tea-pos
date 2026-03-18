@@ -2,7 +2,10 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { useStores } from "@/lib/hooks/stores/useStores";
 import { useAuth } from "@/lib/context/AuthContext";
-import { hasSellerRoleInStore } from "@/lib/utils/roleUtils";
+import {
+    hasSellerRoleInStore,
+    hasManagerRoleInStore,
+} from "@/lib/utils/roleUtils";
 
 type Store = {
     id: string;
@@ -13,7 +16,7 @@ type StoreContextType = {
     selectedStoreId: string;
     setSelectedStoreId: (id: string) => void;
     selectedStore: Store | null;
-    sellerStores: Store[];
+    assignedStores: Store[];
     stores: Store[];
     isPickerOpen: boolean;
     setIsPickerOpen: (v: boolean) => void;
@@ -27,8 +30,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const stores = storesData?.stores ?? [];
     const assignments = storesData?.assignments ?? {};
 
-    const sellerStores = stores.filter((store) =>
-        hasSellerRoleInStore(profile?.id ?? "", store.id, assignments),
+    const assignedStores = stores.filter(
+        (store) =>
+            hasSellerRoleInStore(profile?.id ?? "", store.id, assignments) ||
+            hasManagerRoleInStore(profile?.id ?? "", store.id, assignments),
     );
 
     const defaultStore = stores.find((store) =>
@@ -44,13 +49,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
     const [isPickerOpen, setIsPickerOpen] = useState(false);
 
-    // Persist to localStorage on change
     const setSelectedStoreId = (id: string) => {
         localStorage.setItem("selectedStoreId", id);
         setSelectedStoreIdRaw(id);
     };
 
-    // Fall back to default store if nothing selected
     useEffect(() => {
         if (!selectedStoreId && defaultStore) {
             setSelectedStoreId(defaultStore.id);
@@ -65,7 +68,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
                 selectedStoreId,
                 setSelectedStoreId,
                 selectedStore,
-                sellerStores,
+                assignedStores,
                 stores,
                 isPickerOpen,
                 setIsPickerOpen,

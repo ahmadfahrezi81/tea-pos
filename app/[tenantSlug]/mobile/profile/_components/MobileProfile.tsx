@@ -261,7 +261,7 @@ export default function MobileProfile() {
         selectedStoreId,
         setSelectedStoreId,
         selectedStore,
-        sellerStores,
+        assignedStores,
         stores,
         setIsPickerOpen,
     } = useStore();
@@ -348,27 +348,27 @@ export default function MobileProfile() {
                 </div>
             </div>
 
-            {sellerStores.length > 0 && (
+            {assignedStores.length > 0 && (
                 <div className="bg-white p-4 rounded-lg shadow-sm">
                     <div className="flex items-center gap-2 mb-3">
                         <StoreIcon size={20} className="text-gray-600" />
                         <label className="block text-base font-semibold">
-                            {sellerStores.length === 1
+                            {assignedStores.length === 1
                                 ? "Your Store"
                                 : "Select Store"}
                         </label>
                     </div>
                     <button
-                        disabled={sellerStores.length === 1}
+                        disabled={assignedStores.length === 1}
                         onClick={() => setIsPickerOpen(true)}
                         className={`w-full p-3 border rounded-lg text-left flex items-center justify-between ${
-                            sellerStores.length === 1
+                            assignedStores.length === 1
                                 ? "bg-gray-100 text-gray-500 cursor-not-allowed border-gray-200"
                                 : "border-gray-300 bg-white"
                         }`}
                     >
                         <span>{selectedStore?.name ?? "Select Store"}</span>
-                        {sellerStores.length > 1 && (
+                        {assignedStores.length > 1 && (
                             <ChevronsUpDown
                                 size={18}
                                 className="text-blue-500"
