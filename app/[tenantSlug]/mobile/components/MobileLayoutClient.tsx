@@ -325,8 +325,8 @@ export default function MobileLayoutClient({
     };
 
     return (
-        <div className="h-dvh flex flex-col bg-gray-50 select-none overflow-hidden">
-            <header className="fixed top-0 left-0 right-0 z-40 bg-gray-50 p-4 py-3">
+        <div className="h-dvh flex flex-col bg-gray-100 select-none overflow-hidden">
+            <header className="fixed top-0 left-0 right-0 z-40 bg-gray-100 p-4 py-3">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         {isSubPage(currentPath) ? (
@@ -382,7 +382,7 @@ export default function MobileLayoutClient({
             {/* Scrollable content area with ref */}
             <div
                 ref={scrollContainerRef}
-                className="flex-1 overflow-y-auto pt-16 p-4 pb-28 bg-gray-50"
+                className="flex-1 overflow-y-auto pt-16 p-4 pb-28 bg-gray-100"
             >
                 {children}
             </div>

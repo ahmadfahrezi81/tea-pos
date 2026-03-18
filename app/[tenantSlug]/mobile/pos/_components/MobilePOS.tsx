@@ -226,9 +226,9 @@ export default function MobilePOS() {
                         {cart.length > 0 && (
                             <button
                                 onClick={() => setCart([])}
-                                className="flex items-center gap-1 bg-red-50 border border-red-200 px-2 py-1 rounded-full"
+                                className="flex items-center gap-1 bg-red-500 px-2 py-1 rounded-full"
                             >
-                                <span className="text-sm font-semibold text-red-500">
+                                <span className="text-sm font-bold text-white">
                                     Clear All
                                 </span>
                             </button>
