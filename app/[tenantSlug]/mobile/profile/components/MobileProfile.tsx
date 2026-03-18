@@ -204,8 +204,11 @@ import {
     Wrench,
     StoreIcon,
     Leaf,
+    ChevronsUpDown,
 } from "lucide-react";
 import { Icon } from "@iconify/react";
+import { useStore } from "@/lib/context/StoreContext";
+import { StorePickerDrawer } from "../stores/_components/StorePickerDrawer";
 
 const ChevronRight = () => (
     <svg
@@ -253,30 +256,16 @@ export default function MobileProfile() {
     const router = useRouter();
     const { url } = useTenantSlug();
     const { profile } = useAuth();
-    const { data: storesData, isLoading: storesLoading } = useStores();
-    const stores = storesData?.stores ?? [];
+    const {
+        selectedStoreId,
+        setSelectedStoreId,
+        selectedStore,
+        sellerStores,
+        stores,
+        setIsPickerOpen,
+    } = useStore();
 
     const [advancedMode, setAdvancedMode] = useState(false);
-
-    const assignments = storesData?.assignments ?? {};
-    const [selectedStore, setSelectedStore] = useState<string>("");
-
-    const sellerStores = stores.filter((store) =>
-        hasSellerRoleInStore(profile?.id ?? "", store.id, assignments),
-    );
-
-    const defaultStore = stores.find((store) =>
-        assignments[store.id]?.some(
-            (assignment) =>
-                assignment.userId === profile?.id && assignment.isDefault,
-        ),
-    );
-
-    useEffect(() => {
-        if (defaultStore && !selectedStore) {
-            setSelectedStore(defaultStore.id);
-        }
-    }, [defaultStore, selectedStore, storesData]);
 
     const handleLogout = useCallback(async () => {
         const shouldLogout = window.confirm(
@@ -366,22 +355,23 @@ export default function MobileProfile() {
                                 : "Select Store"}
                         </label>
                     </div>
-                    <select
+                    <button
                         disabled={sellerStores.length === 1}
-                        value={selectedStore}
-                        onChange={(e) => setSelectedStore(e.target.value)}
-                        className={`w-full p-3 border rounded-lg focus:ring-2 ${
+                        onClick={() => setIsPickerOpen(true)}
+                        className={`w-full p-3 border rounded-lg text-left flex items-center justify-between ${
                             sellerStores.length === 1
                                 ? "bg-gray-100 text-gray-500 cursor-not-allowed border-gray-200"
-                                : "border-gray-300 focus:ring-blue-500"
+                                : "border-gray-300 bg-white"
                         }`}
                     >
-                        {sellerStores.map((store) => (
-                            <option key={store.id} value={store.id}>
-                                {store.name}
-                            </option>
-                        ))}
-                    </select>
+                        <span>{selectedStore?.name ?? "Select Store"}</span>
+                        {sellerStores.length > 1 && (
+                            <ChevronsUpDown
+                                size={18}
+                                className="text-blue-500"
+                            />
+                        )}
+                    </button>
                 </div>
             )}
 

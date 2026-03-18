@@ -1,72 +1,38 @@
-// components/MobilePOS.tsx
 "use client";
 import { useState, useEffect } from "react";
-import { useAuth } from "@/lib/context/AuthContext";
-// import { useProducts, useStores } from "@/lib/hooks/useData";
-
 import Image from "next/image";
-
-import {
-    Plus,
-    Minus,
-    ShoppingCart,
-    X,
-    Trash2,
-    Store as Store1,
-} from "lucide-react";
+import { Plus, Minus, ShoppingCart, X, Trash2 } from "lucide-react";
 import { formatRupiah } from "@/lib/utils/formatCurrency";
-import { hasSellerRoleInStore } from "@/lib/utils/roleUtils";
-
-// import { Product, CartItem, Store } from "@/lib/types";
-// import { CartItem } from "@/lib/types";
-// import { Tables } from "@/lib/db.types";
 import { CreateOrderInput, CreateOrderResponse } from "@/lib/schemas/orders";
 import { mutate } from "swr";
 import { useProducts } from "@/lib/hooks/products/useProducts";
-import { useStores } from "@/lib/hooks/stores/useStores";
-
-import type {
-    StoreAssignmentResponse,
-    StoreListResponse,
-} from "@/lib/schemas/stores";
-
-export type Assignment = StoreAssignmentResponse;
-export type Assignments = StoreListResponse["assignments"];
-import type { Product } from "@/lib/schemas/products";
-
+import { useStore } from "@/lib/context/StoreContext";
 import type { ProductResponse } from "@/lib/schemas/products";
+import type { Product } from "@/lib/schemas/products";
+import { format } from "date-fns";
 
 export interface CartItem {
     product: ProductResponse;
     quantity: number;
 }
 
-// export type Assignment = Tables<"user_store_assignments">;
-
 export default function MobilePOS() {
-    const { profile } = useAuth();
+    const { selectedStoreId } = useStore();
     const { data: products = [], isLoading: productsLoading } = useProducts();
-    const { data: storesData, isLoading: storesLoading } = useStores();
-    const stores = storesData?.stores ?? [];
-    const assignments = storesData?.assignments ?? {};
 
-    const [selectedStore, setSelectedStore] = useState<string>("");
     const [cart, setCart] = useState<CartItem[]>([]);
     const [processing, setProcessing] = useState(false);
     const [showCart, setShowCart] = useState(false);
-    // Add state for showing/hiding others menu section
     const [showOthers, setShowOthers] = useState(false);
+    const [toast, setToast] = useState<{
+        message: string;
+        type: "success" | "error";
+    } | null>(null);
 
-    const sellerStores = stores.filter((store) =>
-        hasSellerRoleInStore(profile?.id ?? "", store.id, assignments),
-    );
-
-    const defaultStore = stores.find((store) =>
-        assignments[store.id]?.some(
-            (assignment) =>
-                assignment.userId === profile?.id && assignment.isDefault,
-        ),
-    );
+    const showToast = (message: string, type: "success" | "error") => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 4000);
+    };
 
     const addToCart = (product: Product) => {
         setCart((prev) => {
@@ -104,45 +70,25 @@ export default function MobilePOS() {
         setCart((prev) => prev.filter((item) => item.product.id !== productId));
     };
 
-    const calculateTotal = () => {
-        return cart.reduce(
-            (sum, item) => sum + item.product.price * item.quantity,
-            0,
-        );
-    };
+    const calculateTotal = () =>
+        cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
 
-    const getItemCount = () => {
-        return cart.reduce((count, item) => count + item.quantity, 0);
-    };
+    const getItemCount = () =>
+        cart.reduce((count, item) => count + item.quantity, 0);
 
-    const getProductQuantityInCart = (productId: string) => {
-        const item = cart.find((item) => item.product.id === productId);
-        return item ? item.quantity : 0;
-    };
-
-    // Add these state variables after existing useState declarations:
-    const [toast, setToast] = useState<{
-        message: string;
-        type: "success" | "error";
-    } | null>(null);
-
-    // Add toast function
-    const showToast = (message: string, type: "success" | "error") => {
-        setToast({ message, type });
-        setTimeout(() => setToast(null), 4000); // Auto-hide after 4 seconds
-    };
+    const getProductQuantityInCart = (productId: string) =>
+        cart.find((item) => item.product.id === productId)?.quantity ?? 0;
 
     const processOrder = async () => {
-        if (!selectedStore || cart.length === 0) {
-            showToast("Please select a store and add items to cart", "error");
+        if (!selectedStoreId || cart.length === 0) {
+            showToast("No store selected or cart is empty", "error");
             return;
         }
 
         setProcessing(true);
 
-        // ✅ Typesafe payload
         const payload: CreateOrderInput = {
-            storeId: selectedStore,
+            storeId: selectedStoreId,
             items: cart.map((item) => ({
                 productId: item.product.id,
                 quantity: item.quantity,
@@ -157,7 +103,6 @@ export default function MobilePOS() {
                 body: JSON.stringify(payload),
             });
 
-            // ✅ Typesafe response
             const data: CreateOrderResponse = await response.json();
 
             if (data.success) {
@@ -167,12 +112,8 @@ export default function MobilePOS() {
                 );
                 setCart([]);
                 setShowCart(false);
-
-                // Force Mutate for useStoreOrders.ts
                 mutate(
-                    `orders-${selectedStore}-${new Date()
-                        .toISOString()
-                        .slice(0, 10)}`,
+                    `orders-${selectedStoreId}-${new Date().toISOString().slice(0, 10)}`,
                 );
             } else {
                 showToast("Failed to process order", "error");
@@ -186,40 +127,38 @@ export default function MobilePOS() {
     };
 
     const mainProducts = [...products]
-        .filter((product) => product.isMain)
+        .filter((p) => p.isMain)
         .sort((a, b) => a.price - b.price);
 
     const otherProducts = [...products]
-        .filter((product) => !product.isMain)
+        .filter((p) => !p.isMain)
         .sort((a, b) => a.price - b.price);
 
-    // Auto-select store if only one available
-    useEffect(() => {
-        if (defaultStore && !selectedStore) {
-            setSelectedStore(defaultStore.id);
-        }
-    }, [defaultStore, selectedStore, storesData]);
-
-    // Prevent background scrolling when modal is open
     useEffect(() => {
         if (showCart) {
             document.body.style.overflow = "hidden";
         } else {
             document.body.style.overflow = "unset";
         }
-
         return () => {
             document.body.style.overflow = "unset";
         };
     }, [showCart]);
 
-    if (productsLoading || storesLoading) {
+    const getGreeting = () => {
+        const hour = new Date().getHours();
+        if (hour < 12) return "Good Morning";
+        if (hour < 17) return "Good Afternoon";
+        return "Good Evening";
+    };
+
+    if (productsLoading) {
         return (
             <div
                 className="flex flex-col items-center justify-center"
                 style={{ minHeight: "calc(100vh - 200px)" }}
             >
-                <div className="w-10 h-10 border-3 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-10 h-10 border-3 border-blue-500 border-t-transparent rounded-full animate-spin" />
                 <p className="mt-4 text-gray-600 text-sm">Loading POS...</p>
             </div>
         );
@@ -227,58 +166,30 @@ export default function MobilePOS() {
 
     return (
         <div className="space-y-4 pb-24">
-            {/* Store Selection - Always show if stores exist */}
-            {sellerStores.length > 0 && (
-                <div className="bg-white p-4 rounded-lg shadow-sm">
-                    <div className="flex items-center gap-2 mb-3">
-                        <Store1 size={20} className="text-gray-600" />
-                        <label className="block text-base font-semibold">
-                            {sellerStores.length === 1
-                                ? "Your Store"
-                                : "Select Store"}
-                        </label>
-                    </div>
-                    <select
-                        disabled={sellerStores.length === 1}
-                        value={selectedStore}
-                        onChange={(e) => setSelectedStore(e.target.value)}
-                        className={`w-full p-3 border rounded-lg focus:ring-2 ${
-                            sellerStores.length === 1
-                                ? "bg-gray-100 text-gray-500 cursor-not-allowed border-gray-200"
-                                : "border-gray-300 focus:ring-blue-500"
-                        }`}
-                    >
-                        {sellerStores.map((store) => (
-                            <option key={store.id} value={store.id}>
-                                {store.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-            )}
-
+            <div>
+                <p className="text-xl font-bold text-gray-900">
+                    {getGreeting()}
+                </p>
+                <p className="text-base font-medium text-gray-600">
+                    {format(new Date(), "EE, dd MMMM")}
+                </p>
+            </div>
             {/* Main Products Grid */}
             <div className="grid grid-cols-2 gap-3">
                 {mainProducts.map((product) => {
                     const quantityInCart = getProductQuantityInCart(product.id);
-
                     return (
                         <div
                             key={product.id}
-                            className="bg-white rounded-xl shadow-sm overflow-hidden select-none relative cursor-pointer 
-                       hover:shadow-md transition-all duration-200 
-                       active:scale-90 active:bg-blue-50"
+                            className="bg-white rounded-xl shadow-sm overflow-hidden select-none relative cursor-pointer hover:shadow-md transition-all duration-200 active:scale-90 active:bg-blue-50"
                             onClick={() => addToCart(product)}
                         >
-                            {/* Cart Counter Badge */}
                             {quantityInCart > 0 && (
                                 <div className="absolute top-2 right-2 z-0 bg-red-500 text-white rounded-lg w-6 h-6 text-sm flex items-center justify-center font-medium">
                                     {quantityInCart}
                                 </div>
                             )}
-
                             <div className="p-3">
-                                {/* Product Image and Info */}
                                 {product.imageUrl && (
                                     <div className="flex gap-2 mb-3">
                                         <div className="flex-shrink-0">
@@ -300,8 +211,6 @@ export default function MobilePOS() {
                                         </div>
                                     </div>
                                 )}
-
-                                {/* Add to Cart Button */}
                                 <div className="text-center text-blue-500 text-xs font-medium py-1.5 rounded-lg border-blue-500 border-1">
                                     Tap to add
                                 </div>
@@ -322,9 +231,7 @@ export default function MobilePOS() {
                             Others ({otherProducts.length} items)
                         </span>
                         <div
-                            className={`transform transition-transform duration-200 ${
-                                showOthers ? "rotate-180" : ""
-                            }`}
+                            className={`transform transition-transform duration-200 ${showOthers ? "rotate-180" : ""}`}
                         >
                             <svg
                                 className="w-5 h-5 text-gray-500"
@@ -348,24 +255,18 @@ export default function MobilePOS() {
                                 const quantityInCart = getProductQuantityInCart(
                                     product.id,
                                 );
-
                                 return (
                                     <div
                                         key={product.id}
-                                        className="bg-white rounded-xl shadow-sm overflow-hidden select-none relative cursor-pointer 
-                                   hover:shadow-md transition-all duration-200 
-                                   active:scale-90 active:bg-blue-50 opacity-90"
+                                        className="bg-white rounded-xl shadow-sm overflow-hidden select-none relative cursor-pointer hover:shadow-md transition-all duration-200 active:scale-90 active:bg-blue-50 opacity-90"
                                         onClick={() => addToCart(product)}
                                     >
-                                        {/* Cart Counter Badge */}
                                         {quantityInCart > 0 && (
                                             <div className="absolute top-2 right-2 z-0 bg-red-500 text-white rounded-lg w-6 h-6 text-sm flex items-center justify-center font-medium">
                                                 {quantityInCart}
                                             </div>
                                         )}
-
                                         <div className="p-3">
-                                            {/* Product Image and Info */}
                                             {product.imageUrl && (
                                                 <div className="flex gap-2 mb-3">
                                                     <div className="flex-shrink-0">
@@ -391,8 +292,6 @@ export default function MobilePOS() {
                                                     </div>
                                                 </div>
                                             )}
-
-                                            {/* Add to Cart Button */}
                                             <div className="text-center text-blue-500 text-xs font-medium py-1.5 rounded-lg border-blue-500 border-1">
                                                 Tap to add
                                             </div>
@@ -405,9 +304,9 @@ export default function MobilePOS() {
                 </div>
             )}
 
-            {/* Sticky Bottom Cart Summary Bar */}
+            {/* Sticky Bottom Cart Bar */}
             {cart.length > 0 && (
-                <div className="fixed bottom-16 left-0 right-0 bg-white border-y border-gray-400 p-4 z-40 ">
+                <div className="fixed bottom-16 left-0 right-0 bg-white border-y border-gray-400 p-4 z-40">
                     <div className="flex items-center justify-between max-w-md mx-auto">
                         <div className="flex-1">
                             <p className="text-sm text-gray-600">
@@ -417,17 +316,16 @@ export default function MobilePOS() {
                                 {formatRupiah(calculateTotal())}
                             </p>
                         </div>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setShowCart(true)}
-                                className="px-3 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600"
-                            >
-                                View Cart
-                            </button>
-                        </div>
+                        <button
+                            onClick={() => setShowCart(true)}
+                            className="px-3 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600"
+                        >
+                            View Cart
+                        </button>
                     </div>
                 </div>
             )}
+
             {/* Cart Modal */}
             {showCart && (
                 <div
@@ -438,7 +336,6 @@ export default function MobilePOS() {
                         className="bg-white w-full rounded-t-2xl max-h-[80vh] flex flex-col"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        {/* Fixed Header */}
                         <div className="flex-shrink-0 p-4 border-b border-gray-200 bg-white rounded-t-2xl sticky top-0 z-10">
                             <div className="flex justify-between items-center">
                                 <h3 className="text-xl font-semibold">Cart</h3>
@@ -451,7 +348,6 @@ export default function MobilePOS() {
                             </div>
                         </div>
 
-                        {/* Scrollable Content */}
                         <div className="flex-1 overflow-y-auto">
                             <div className="px-4 pt-4">
                                 <h4 className="text-lg font-bold text-gray-800 mb-4 flex items-center justify-between">
@@ -459,7 +355,7 @@ export default function MobilePOS() {
                                     {cart.length > 0 && (
                                         <button
                                             onClick={() => setCart([])}
-                                            className="text-red-500 hover:text-red-700 p-1 px-2 hover:bg-red-50 text-sm border border-red-200 rounded-full transition-colors"
+                                            className="text-red-500 p-1 px-2 hover:bg-red-50 text-sm border border-red-200 rounded-full transition-colors"
                                         >
                                             Clear All
                                         </button>
@@ -492,18 +388,13 @@ export default function MobilePOS() {
                                                             / Pcs
                                                         </p>
                                                     </div>
-                                                    <div className="flex items-center gap-3">
-                                                        <p className="text-lg font-bold text-gray-900">
-                                                            {formatRupiah(
-                                                                item.product
-                                                                    .price *
-                                                                    item.quantity,
-                                                            )}
-                                                        </p>
-                                                    </div>
+                                                    <p className="text-lg font-bold text-gray-900">
+                                                        {formatRupiah(
+                                                            item.product.price *
+                                                                item.quantity,
+                                                        )}
+                                                    </p>
                                                 </div>
-
-                                                {/* Quantity Controls */}
                                                 <div className="flex items-center justify-between">
                                                     <button
                                                         onClick={() =>
@@ -554,24 +445,20 @@ export default function MobilePOS() {
                             </div>
                         </div>
 
-                        {/* Fixed Footer with Total and Actions */}
                         <div className="flex-shrink-0 bg-white p-4 pb-8 border-t border-gray-200">
                             <div className="flex justify-between items-center mb-4">
                                 <span className="text-xl font-bold text-gray-900">
                                     Total Transaction
                                 </span>
-                                <div className="flex items-center gap-3">
-                                    <span className="text-xl font-bold text-gray-900">
-                                        {formatRupiah(calculateTotal())}
-                                    </span>
-                                </div>
+                                <span className="text-xl font-bold text-gray-900">
+                                    {formatRupiah(calculateTotal())}
+                                </span>
                             </div>
-
                             <button
                                 onClick={processOrder}
                                 disabled={
                                     processing ||
-                                    !selectedStore ||
+                                    !selectedStoreId ||
                                     cart.length === 0
                                 }
                                 className="w-full bg-green-500 text-white py-4 rounded-xl text-lg font-semibold hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -582,14 +469,11 @@ export default function MobilePOS() {
                     </div>
                 </div>
             )}
-            {/* Toast Notification */}
+
+            {/* Toast */}
             {toast && (
                 <div
-                    className={`fixed top-20 left-4 right-4 z-50 p-4 rounded-lg shadow-lg text-sm ${
-                        toast.type === "success"
-                            ? "bg-green-500 text-white"
-                            : "bg-red-500 text-white"
-                    }`}
+                    className={`fixed top-20 left-4 right-4 z-50 p-4 rounded-lg shadow-lg text-sm ${toast.type === "success" ? "bg-green-500 text-white" : "bg-red-500 text-white"}`}
                 >
                     <div className="flex justify-between items-center">
                         <span className="font-medium">{toast.message}</span>
