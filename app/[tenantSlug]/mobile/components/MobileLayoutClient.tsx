@@ -22,6 +22,7 @@ import { useTenantSlug } from "@/lib/tenant-url";
 import { useStore } from "@/lib/context/StoreContext";
 import { StorePickerDrawer } from "./StorePickerDrawer";
 import { useFastOrderMode } from "@/lib/context/FastOrderModeContext";
+import { Icon } from "@iconify/react";
 
 export interface Assignment {
     user_id: string;
@@ -292,6 +293,8 @@ export default function MobileLayoutClient({
 
     const currentPath = optimisticPath || pathname;
 
+    const isProfilePage = currentPath.endsWith("/mobile/profile");
+
     const getCurrentPageTitle = (path: string) => {
         if (path.endsWith("/mobile/pos")) return "POS";
         if (path.endsWith("/mobile/orders")) return "Orders";
@@ -316,6 +319,7 @@ export default function MobileLayoutClient({
         setOptimisticPath(targetPath);
         router.push(targetPath);
     };
+
     const isSubPage = (path: string) => {
         return (
             path.includes("/mobile/profile/") ||
@@ -325,8 +329,8 @@ export default function MobileLayoutClient({
     };
 
     return (
-        <div className="h-dvh flex flex-col bg-gray-100 select-none overflow-hidden">
-            <header className="fixed top-0 left-0 right-0 z-40 bg-gray-100 p-4 py-3">
+        <div className="h-dvh flex flex-col bg-gray-50 select-none overflow-hidden">
+            <header className="fixed top-0 left-0 right-0 z-40 bg-gray-50 p-4 py-3">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         {isSubPage(currentPath) ? (
@@ -338,29 +342,18 @@ export default function MobileLayoutClient({
                             </button>
                         ) : (
                             <div className="flex items-center gap-2">
-                                <h1
-                                    className={`text-3xl font-bold tracking-tight ${
-                                        fastOrderMode
-                                            ? "bg-linear-to-tr from-pink-600 via-rose-400 to-orange-400 bg-clip-text text-transparent"
-                                            : "text-gray-900"
-                                    }`}
-                                >
+                                <h1 className="text-3xl font-bold tracking-tight text-gray-900">
                                     {getCurrentPageTitle(currentPath)}
                                 </h1>
-                                {selectedStore && (
+
+                                {selectedStore && !isProfilePage && (
                                     <button
                                         onClick={() => setIsPickerOpen(true)}
-                                        className="flex items-center mt-1 gap-0.5"
+                                        className="flex items-center mt-1.75"
                                     >
                                         <p className="text-xl text-blue-600/90 font-bold">
                                             {selectedStore.name}
                                         </p>
-
-                                        <ChevronsUpDown
-                                            size={16}
-                                            strokeWidth={3}
-                                            className="text-blue-600/90"
-                                        />
                                     </button>
                                 )}
                             </div>
@@ -382,7 +375,7 @@ export default function MobileLayoutClient({
             {/* Scrollable content area with ref */}
             <div
                 ref={scrollContainerRef}
-                className="flex-1 overflow-y-auto pt-16 p-4 pb-28 bg-gray-100"
+                className="flex-1 overflow-y-auto pt-18 p-4 pb-28 bg-gray-50"
             >
                 {children}
             </div>

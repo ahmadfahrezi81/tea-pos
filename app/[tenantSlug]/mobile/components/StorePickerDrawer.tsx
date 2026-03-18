@@ -1,6 +1,6 @@
 "use client";
 import { Drawer } from "vaul";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Store } from "lucide-react";
 import { useStore } from "@/lib/context/StoreContext";
 
 export function StorePickerDrawer() {
@@ -48,19 +48,21 @@ export function StorePickerDrawer() {
 
             <Drawer.Portal>
                 <Drawer.Overlay className="fixed inset-0 bg-black/40 z-50" />
-                <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl px-4 pt-5 pb-10 focus:outline-none">
-                    <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-5" />
+                <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl px-6 pt-5 pb-10 focus:outline-none">
+                    <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-2" />
 
-                    <Drawer.Title className="text-xl font-bold text-gray-900 mb-1">
-                        Select Store
+                    <Drawer.Title className="text-xl font-bold text-gray-900  mb-4 pb-2">
+                        <Store
+                            size={20}
+                            className="inline text-gray-700 mb-1"
+                        />
+                        <span className="ml-1.5">Select Store</span>
                     </Drawer.Title>
-                    <Drawer.Description className="text-sm text-gray-500 mb-5">
-                        Tap a store to switch. Changes apply everywhere.
-                    </Drawer.Description>
 
                     <div className="space-y-3">
-                        {assignedStores.map((store) => {
+                        {assignedStores.map((store, index) => {
                             const isSelected = store.id === selectedStoreId;
+                            const isLast = index === assignedStores.length - 1;
                             return (
                                 <button
                                     key={store.id}
@@ -68,33 +70,25 @@ export function StorePickerDrawer() {
                                         setSelectedStoreId(store.id);
                                         setIsPickerOpen(false);
                                     }}
-                                    className={`w-full flex items-center justify-between p-3 rounded-lg border transition-colors ${
-                                        isSelected
-                                            ? "border-blue-500 bg-blue-50"
-                                            : "border-gray-100 bg-gray-50 active:bg-gray-100"
+                                    className={`w-full flex items-center justify-between py-3 transition-colors ${
+                                        !isLast ? "border-b" : ""
                                     }`}
                                 >
-                                    <span
-                                        className={`text-base font-medium ${
-                                            isSelected
-                                                ? "text-blue-700"
-                                                : "text-gray-800"
-                                        }`}
-                                    >
+                                    <span className="text-lg text-gray-900">
                                         {store.name}
                                     </span>
                                     <span
-                                        className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
+                                        className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
                                             isSelected
-                                                ? "bg-blue-500"
-                                                : "bg-gray-200"
+                                                ? "border-blue-500 bg-blue-500"
+                                                : "border-gray-300"
                                         }`}
                                     >
                                         {isSelected && (
                                             <Check
-                                                size={18}
+                                                size={16}
                                                 className="text-white"
-                                                strokeWidth={3}
+                                                strokeWidth={4}
                                             />
                                         )}
                                     </span>
