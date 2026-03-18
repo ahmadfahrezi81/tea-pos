@@ -21,6 +21,7 @@ import VersionInfo from "@/components/shared/VersionInfo";
 import { useTenantSlug } from "@/lib/tenant-url";
 import { useStore } from "@/lib/context/StoreContext";
 import { StorePickerDrawer } from "./StorePickerDrawer";
+import { useFastOrderMode } from "@/lib/context/FastOrderModeContext";
 
 export interface Assignment {
     user_id: string;
@@ -46,6 +47,8 @@ export default function MobileLayoutClient({
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     const { url } = useTenantSlug();
+
+    const { fastOrderMode } = useFastOrderMode();
 
     const {
         profile,
@@ -339,19 +342,26 @@ export default function MobileLayoutClient({
                             </button>
                         ) : (
                             <div className="flex items-center gap-2">
-                                <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+                                <h1
+                                    className={`text-3xl font-bold tracking-tight ${
+                                        fastOrderMode
+                                            ? "bg-linear-to-tr from-pink-600 via-rose-400 to-orange-400 bg-clip-text text-transparent"
+                                            : "text-gray-900"
+                                    }`}
+                                >
                                     {getCurrentPageTitle(currentPath)}
                                 </h1>
                                 {selectedStore && (
                                     <button
                                         onClick={() => setIsPickerOpen(true)}
-                                        className="flex items-center mt-1"
+                                        className="flex items-center mt-1 gap-0.5"
                                     >
                                         <p className="text-xl text-blue-600/90 font-bold">
                                             {selectedStore.name}
                                         </p>
+
                                         <ChevronsUpDown
-                                            size={14}
+                                            size={16}
                                             strokeWidth={3}
                                             className="text-blue-600/90"
                                         />

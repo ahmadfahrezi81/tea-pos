@@ -20,6 +20,7 @@ import { ReactNode } from "react";
 import MobileLayoutClient from "./components/MobileLayoutClient";
 import InactivityRefreshPopup from "@/components/shared/InactivityRefreshPopup";
 import { StoreProvider } from "@/lib/context/StoreContext";
+import { FastOrderModeProvider } from "@/lib/context/FastOrderModeContext";
 
 interface MobileLayoutProps {
     children: ReactNode;
@@ -28,10 +29,12 @@ interface MobileLayoutProps {
 export default function MobileLayout({ children }: MobileLayoutProps) {
     return (
         <StoreProvider>
-            <MobileLayoutClient>
-                {children}
-                <InactivityRefreshPopup />
-            </MobileLayoutClient>
+            <FastOrderModeProvider>
+                <MobileLayoutClient>
+                    {children}
+                    <InactivityRefreshPopup />
+                </MobileLayoutClient>
+            </FastOrderModeProvider>
         </StoreProvider>
     );
 }

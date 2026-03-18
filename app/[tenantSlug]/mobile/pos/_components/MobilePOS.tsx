@@ -1,12 +1,13 @@
 "use client";
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Plus, Minus, ShoppingCart, X, Trash2 } from "lucide-react";
+import { Plus, Minus, ShoppingCart, X, Trash2, Zap } from "lucide-react";
 import { formatRupiah } from "@/lib/utils/formatCurrency";
 import { CreateOrderInput, CreateOrderResponse } from "@/lib/schemas/orders";
 import { mutate } from "swr";
 import { useProducts } from "@/lib/hooks/products/useProducts";
 import { useStore } from "@/lib/context/StoreContext";
+import { useFastOrderMode } from "@/lib/context/FastOrderModeContext";
 import type { ProductResponse } from "@/lib/schemas/products";
 import type { Product } from "@/lib/schemas/products";
 import { format } from "date-fns";
@@ -18,6 +19,7 @@ export interface CartItem {
 
 export default function MobilePOS() {
     const { selectedStoreId } = useStore();
+    const { fastOrderMode } = useFastOrderMode();
     const { data: products = [], isLoading: productsLoading } = useProducts();
 
     const [cart, setCart] = useState<CartItem[]>([]);
@@ -152,6 +154,49 @@ export default function MobilePOS() {
         return "Good Evening";
     };
 
+    const renderProductCard = (product: ProductResponse, dimmed = false) => {
+        const quantityInCart = getProductQuantityInCart(product.id);
+        return (
+            <div
+                key={product.id}
+                className={`bg-white rounded-xl shadow-sm overflow-hidden select-none relative cursor-pointer hover:shadow-md transition-all duration-200 active:scale-90 active:bg-blue-50 ${dimmed ? "opacity-90" : ""}`}
+                onClick={() => addToCart(product)}
+            >
+                {quantityInCart > 0 && (
+                    <div className="absolute top-2 right-2 z-0 bg-red-500 text-white rounded-lg w-6 h-6 text-sm flex items-center justify-center font-medium">
+                        {quantityInCart}
+                    </div>
+                )}
+                <div className="p-3">
+                    {product.imageUrl && (
+                        <div className="flex gap-2 mb-3">
+                            <div className="flex-shrink-0">
+                                <Image
+                                    src={product.imageUrl}
+                                    alt={product.name}
+                                    width={50}
+                                    height={50}
+                                    className="rounded object-cover"
+                                />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="font-bold text-gray-800 text-base leading-tight mt-1">
+                                    {product.name}
+                                </h3>
+                                <p className="text-base font-semibold text-green-600">
+                                    {formatRupiah(product.price)}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+                    <div className="text-center text-blue-500 text-xs font-medium py-1.5 rounded-lg border-blue-500 border-1">
+                        Tap to add
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     if (productsLoading) {
         return (
             <div
@@ -166,58 +211,35 @@ export default function MobilePOS() {
 
     return (
         <div className="space-y-4 pb-24">
-            <div>
-                <p className="text-xl font-bold text-gray-900">
-                    {getGreeting()}
-                </p>
-                <p className="text-base font-medium text-gray-600">
-                    {format(new Date(), "EE, dd MMMM")}
-                </p>
+            {/* Greeting */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <p className="text-xl font-bold text-gray-900">
+                        {getGreeting()}
+                    </p>
+                    <p className="text-base font-medium text-gray-600">
+                        {format(new Date(), "EE, dd MMMM")}
+                    </p>
+                </div>
+                {fastOrderMode && (
+                    <div>
+                        {cart.length > 0 && (
+                            <button
+                                onClick={() => setCart([])}
+                                className="flex items-center gap-1 bg-red-50 border border-red-200 px-2 py-1 rounded-full"
+                            >
+                                <span className="text-sm font-semibold text-red-500">
+                                    Clear All
+                                </span>
+                            </button>
+                        )}
+                    </div>
+                )}
             </div>
+
             {/* Main Products Grid */}
             <div className="grid grid-cols-2 gap-3">
-                {mainProducts.map((product) => {
-                    const quantityInCart = getProductQuantityInCart(product.id);
-                    return (
-                        <div
-                            key={product.id}
-                            className="bg-white rounded-xl shadow-sm overflow-hidden select-none relative cursor-pointer hover:shadow-md transition-all duration-200 active:scale-90 active:bg-blue-50"
-                            onClick={() => addToCart(product)}
-                        >
-                            {quantityInCart > 0 && (
-                                <div className="absolute top-2 right-2 z-0 bg-red-500 text-white rounded-lg w-6 h-6 text-sm flex items-center justify-center font-medium">
-                                    {quantityInCart}
-                                </div>
-                            )}
-                            <div className="p-3">
-                                {product.imageUrl && (
-                                    <div className="flex gap-2 mb-3">
-                                        <div className="flex-shrink-0">
-                                            <Image
-                                                src={product.imageUrl}
-                                                alt={product.name}
-                                                width={50}
-                                                height={50}
-                                                className="rounded object-cover"
-                                            />
-                                        </div>
-                                        <div className="flex-1">
-                                            <h3 className="font-bold text-gray-800 text-base leading-tight mt-1">
-                                                {product.name}
-                                            </h3>
-                                            <p className="text-base font-semibold text-green-600">
-                                                {formatRupiah(product.price)}
-                                            </p>
-                                        </div>
-                                    </div>
-                                )}
-                                <div className="text-center text-blue-500 text-xs font-medium py-1.5 rounded-lg border-blue-500 border-1">
-                                    Tap to add
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })}
+                {mainProducts.map((product) => renderProductCard(product))}
             </div>
 
             {/* Others Section */}
@@ -251,60 +273,15 @@ export default function MobilePOS() {
 
                     {showOthers && (
                         <div className="grid grid-cols-2 gap-3 mt-3">
-                            {otherProducts.map((product) => {
-                                const quantityInCart = getProductQuantityInCart(
-                                    product.id,
-                                );
-                                return (
-                                    <div
-                                        key={product.id}
-                                        className="bg-white rounded-xl shadow-sm overflow-hidden select-none relative cursor-pointer hover:shadow-md transition-all duration-200 active:scale-90 active:bg-blue-50 opacity-90"
-                                        onClick={() => addToCart(product)}
-                                    >
-                                        {quantityInCart > 0 && (
-                                            <div className="absolute top-2 right-2 z-0 bg-red-500 text-white rounded-lg w-6 h-6 text-sm flex items-center justify-center font-medium">
-                                                {quantityInCart}
-                                            </div>
-                                        )}
-                                        <div className="p-3">
-                                            {product.imageUrl && (
-                                                <div className="flex gap-2 mb-3">
-                                                    <div className="flex-shrink-0">
-                                                        <Image
-                                                            src={
-                                                                product.imageUrl
-                                                            }
-                                                            alt={product.name}
-                                                            width={50}
-                                                            height={50}
-                                                            className="rounded object-cover"
-                                                        />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <h3 className="font-bold text-gray-800 text-base leading-tight mt-1">
-                                                            {product.name}
-                                                        </h3>
-                                                        <p className="text-base font-semibold text-green-600">
-                                                            {formatRupiah(
-                                                                product.price,
-                                                            )}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            )}
-                                            <div className="text-center text-blue-500 text-xs font-medium py-1.5 rounded-lg border-blue-500 border-1">
-                                                Tap to add
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                            {otherProducts.map((product) =>
+                                renderProductCard(product, true),
+                            )}
                         </div>
                     )}
                 </div>
             )}
 
-            {/* Sticky Bottom Cart Bar */}
+            {/* Sticky Bottom Bar */}
             {cart.length > 0 && (
                 <div className="fixed bottom-16 left-0 right-0 bg-white border-y border-gray-400 p-4 z-40">
                     <div className="flex items-center justify-between max-w-md mx-auto">
@@ -316,18 +293,28 @@ export default function MobilePOS() {
                                 {formatRupiah(calculateTotal())}
                             </p>
                         </div>
-                        <button
-                            onClick={() => setShowCart(true)}
-                            className="px-3 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600"
-                        >
-                            View Cart
-                        </button>
+                        {fastOrderMode ? (
+                            <button
+                                onClick={processOrder}
+                                disabled={processing}
+                                className="px-4 py-2 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 disabled:opacity-50 flex items-center gap-1.5"
+                            >
+                                {processing ? "Processing..." : "Confirm Order"}
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => setShowCart(true)}
+                                className="px-3 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600"
+                            >
+                                View Cart
+                            </button>
+                        )}
                     </div>
                 </div>
             )}
 
-            {/* Cart Modal */}
-            {showCart && (
+            {/* Cart Modal — only in normal mode */}
+            {!fastOrderMode && showCart && (
                 <div
                     className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end"
                     onClick={() => setShowCart(false)}
@@ -361,7 +348,6 @@ export default function MobilePOS() {
                                         </button>
                                     )}
                                 </h4>
-
                                 {cart.length === 0 ? (
                                     <div className="text-center text-gray-500 my-20">
                                         <ShoppingCart className="w-16 h-16 mx-auto mb-4 opacity-50" />

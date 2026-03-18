@@ -209,6 +209,7 @@ import {
 import { Icon } from "@iconify/react";
 import { useStore } from "@/lib/context/StoreContext";
 import { StorePickerDrawer } from "../../components/StorePickerDrawer";
+import { useFastOrderMode } from "@/lib/context/FastOrderModeContext";
 
 const ChevronRight = () => (
     <svg
@@ -265,7 +266,7 @@ export default function MobileProfile() {
         setIsPickerOpen,
     } = useStore();
 
-    const [advancedMode, setAdvancedMode] = useState(false);
+    const { fastOrderMode, toggleFastOrderMode } = useFastOrderMode();
 
     const handleLogout = useCallback(async () => {
         const shouldLogout = window.confirm(
@@ -319,7 +320,7 @@ export default function MobileProfile() {
                     </div>
                 </div>
 
-                {/* Advanced Mode Toggle */}
+                {/* Fast Order Mode Toggle */}
                 <div className="rounded-lg p-4 flex items-center gap-3 bg-gray-50">
                     {/* <span className="text-xl w-6 text-center">⚡</span> */}
                     <Icon icon="fluent-emoji:rocket" width="40" height="40" />
@@ -331,14 +332,16 @@ export default function MobileProfile() {
                         <p className="text-xs text-gray-500">For power users</p>
                     </div>
                     <button
-                        onClick={() => setAdvancedMode((v) => !v)}
+                        onClick={toggleFastOrderMode}
                         className={`relative w-13 h-8 rounded-full transition-colors duration-200 focus:outline-none flex-shrink-0 ${
-                            advancedMode ? "bg-blue-500" : "bg-gray-300"
+                            fastOrderMode ? "bg-blue-500" : "bg-gray-300"
                         }`}
                     >
                         <span
                             className={`absolute top-0.5 left-0.5 w-7 h-7 bg-white rounded-full shadow-md transition-transform duration-200 ${
-                                advancedMode ? "translate-x-5" : "translate-x-0"
+                                fastOrderMode
+                                    ? "translate-x-5"
+                                    : "translate-x-0"
                             }`}
                         />
                     </button>
