@@ -58,26 +58,26 @@ export default function MobilePOS() {
     const [showOthers, setShowOthers] = useState(false);
 
     const sellerStores = stores.filter((store) =>
-        hasSellerRoleInStore(profile?.id ?? "", store.id, assignments)
+        hasSellerRoleInStore(profile?.id ?? "", store.id, assignments),
     );
 
     const defaultStore = stores.find((store) =>
         assignments[store.id]?.some(
             (assignment) =>
-                assignment.userId === profile?.id && assignment.isDefault
-        )
+                assignment.userId === profile?.id && assignment.isDefault,
+        ),
     );
 
     const addToCart = (product: Product) => {
         setCart((prev) => {
             const existing = prev.find(
-                (item) => item.product.id === product.id
+                (item) => item.product.id === product.id,
             );
             if (existing) {
                 return prev.map((item) =>
                     item.product.id === product.id
                         ? { ...item, quantity: item.quantity + 1 }
-                        : item
+                        : item,
                 );
             }
             return [...prev, { product, quantity: 1 }];
@@ -87,13 +87,15 @@ export default function MobilePOS() {
     const updateQuantity = (productId: string, quantity: number) => {
         if (quantity <= 0) {
             setCart((prev) =>
-                prev.filter((item) => item.product.id !== productId)
+                prev.filter((item) => item.product.id !== productId),
             );
         } else {
             setCart((prev) =>
                 prev.map((item) =>
-                    item.product.id === productId ? { ...item, quantity } : item
-                )
+                    item.product.id === productId
+                        ? { ...item, quantity }
+                        : item,
+                ),
             );
         }
     };
@@ -105,7 +107,7 @@ export default function MobilePOS() {
     const calculateTotal = () => {
         return cart.reduce(
             (sum, item) => sum + item.product.price * item.quantity,
-            0
+            0,
         );
     };
 
@@ -161,7 +163,7 @@ export default function MobilePOS() {
             if (data.success) {
                 showToast(
                     `Order processed! Total: ${formatRupiah(data.totalAmount)}`,
-                    "success"
+                    "success",
                 );
                 setCart([]);
                 setShowCart(false);
@@ -170,7 +172,7 @@ export default function MobilePOS() {
                 mutate(
                     `orders-${selectedStore}-${new Date()
                         .toISOString()
-                        .slice(0, 10)}`
+                        .slice(0, 10)}`,
                 );
             } else {
                 showToast("Failed to process order", "error");
@@ -344,7 +346,7 @@ export default function MobilePOS() {
                         <div className="grid grid-cols-2 gap-3 mt-3">
                             {otherProducts.map((product) => {
                                 const quantityInCart = getProductQuantityInCart(
-                                    product.id
+                                    product.id,
                                 );
 
                                 return (
@@ -383,7 +385,7 @@ export default function MobilePOS() {
                                                         </h3>
                                                         <p className="text-base font-semibold text-green-600">
                                                             {formatRupiah(
-                                                                product.price
+                                                                product.price,
                                                             )}
                                                         </p>
                                                     </div>
@@ -485,7 +487,7 @@ export default function MobilePOS() {
                                                             {item.quantity} x{" "}
                                                             {formatRupiah(
                                                                 item.product
-                                                                    .price
+                                                                    .price,
                                                             )}{" "}
                                                             / Pcs
                                                         </p>
@@ -495,7 +497,7 @@ export default function MobilePOS() {
                                                             {formatRupiah(
                                                                 item.product
                                                                     .price *
-                                                                    item.quantity
+                                                                    item.quantity,
                                                             )}
                                                         </p>
                                                     </div>
@@ -506,7 +508,7 @@ export default function MobilePOS() {
                                                     <button
                                                         onClick={() =>
                                                             removeFromCart(
-                                                                item.product.id
+                                                                item.product.id,
                                                             )
                                                         }
                                                         className="w-8 h-8 text-red-500 rounded-full flex items-center justify-center border border-red-200 hover:bg-red-50 transition-colors"
@@ -520,7 +522,7 @@ export default function MobilePOS() {
                                                                     item.product
                                                                         .id,
                                                                     item.quantity -
-                                                                        1
+                                                                        1,
                                                                 )
                                                             }
                                                             className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors"
@@ -536,7 +538,7 @@ export default function MobilePOS() {
                                                                     item.product
                                                                         .id,
                                                                     item.quantity +
-                                                                        1
+                                                                        1,
                                                                 )
                                                             }
                                                             className="w-8 h-8 bg-green-500 text-white rounded-lg flex items-center justify-center hover:bg-green-600 transition-colors"

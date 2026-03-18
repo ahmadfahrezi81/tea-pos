@@ -340,10 +340,10 @@ export default function MobileLayoutClient({
                     {!isSubPage(currentPath) && (
                         <button
                             disabled
-                            className="relative p-2 rounded-full border border-gray-200 bg-white opacity-40 cursor-not-allowed"
+                            className="relative p-2 rounded-lg border border-gray-200 bg-white opacity-40 cursor-not-allowed"
                             aria-label="Notifications"
                         >
-                            <Bell size={24} className="text-gray-800" />
+                            <Bell size={20} className="text-gray-800" />
                         </button>
                     )}
                 </div>

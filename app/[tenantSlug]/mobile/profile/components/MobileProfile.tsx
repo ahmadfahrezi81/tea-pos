@@ -204,6 +204,9 @@ import {
     Wrench,
     UserRound,
     Bot,
+    StoreIcon,
+    Smile,
+    Leaf,
 } from "lucide-react";
 import { Icon } from "@iconify/react";
 
@@ -309,40 +312,11 @@ export default function MobileProfile() {
 
     return (
         <div className="min-h-screen space-y-4">
-            {/* Store Selector */}
-            {sellerStores.length > 0 && (
-                <div className="bg-white p-3 rounded-xl shadow-sm">
-                    {/* <div className="flex items-center gap-2 mb-3">
-                        <Store size={20} className="text-gray-600" />
-                        <label className="block text-base font-semibold">
-                            {sellerStores.length === 1
-                                ? "Your Store"
-                                : "Select Store"}
-                        </label>
-                    </div> */}
-                    <select
-                        disabled={sellerStores.length === 1}
-                        value={selectedStore}
-                        onChange={(e) => setSelectedStore(e.target.value)}
-                        className={`w-full p-3 border rounded-lg focus:ring-2 ${
-                            sellerStores.length === 1
-                                ? "bg-gray-100 text-gray-500 cursor-not-allowed border-gray-200"
-                                : "border-gray-300 focus:ring-blue-500"
-                        }`}
-                    >
-                        {sellerStores.map((store) => (
-                            <option key={store.id} value={store.id}>
-                                {store.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-            )}
             <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
                 {/* Profile Header */}
                 <div className="flex items-center gap-3">
-                    <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                        <Bot size={30} className="text-gray-600" />
+                    <div className="w-14 h-14 rounded-full bg-blue-400 flex items-center justify-center flex-shrink-0">
+                        <Leaf size={24} className="text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
                         <p className="text-xl font-semibold text-gray-900 leading-tight truncate">
@@ -384,6 +358,35 @@ export default function MobileProfile() {
                     </button>
                 </div>
             </div>
+
+            {sellerStores.length > 0 && (
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                    <div className="flex items-center gap-2 mb-3">
+                        <StoreIcon size={20} className="text-gray-600" />
+                        <label className="block text-base font-semibold">
+                            {sellerStores.length === 1
+                                ? "Your Store"
+                                : "Select Store"}
+                        </label>
+                    </div>
+                    <select
+                        disabled={sellerStores.length === 1}
+                        value={selectedStore}
+                        onChange={(e) => setSelectedStore(e.target.value)}
+                        className={`w-full p-3 border rounded-lg focus:ring-2 ${
+                            sellerStores.length === 1
+                                ? "bg-gray-100 text-gray-500 cursor-not-allowed border-gray-200"
+                                : "border-gray-300 focus:ring-blue-500"
+                        }`}
+                    >
+                        {sellerStores.map((store) => (
+                            <option key={store.id} value={store.id}>
+                                {store.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            )}
 
             {/* Settings Sections */}
             <h3 className="text-lg font-semibold text-gray-800 mb-1">
