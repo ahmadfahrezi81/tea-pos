@@ -20,7 +20,7 @@ import { useAuth } from "@/lib/context/AuthContext";
 import VersionInfo from "@/components/shared/VersionInfo";
 import { useTenantSlug } from "@/lib/tenant-url";
 import { useStore } from "@/lib/context/StoreContext";
-import { StorePickerDrawer } from "../profile/stores/_components/StorePickerDrawer";
+import { StorePickerDrawer } from "./StorePickerDrawer";
 
 export interface Assignment {
     user_id: string;
