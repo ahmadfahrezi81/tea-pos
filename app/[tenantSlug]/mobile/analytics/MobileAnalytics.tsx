@@ -936,10 +936,10 @@ import {
     Receipt,
     BarChart4,
 } from "lucide-react";
-import { SetBalanceModal } from "./components/SetBalanceModal";
-import { SetExpenseModal } from "./components/SetExpenseModal";
-import { CloseDayModal } from "./components/CloseDayModal";
-import { DetailsModal } from "./components/DetailsModal";
+import { SetBalanceModal } from "./_components/SetBalanceModal";
+import { SetExpenseModal } from "./_components/SetExpenseModal";
+import { CloseDayModal } from "./_components/CloseDayModal";
+import { DetailsModal } from "./_components/DetailsModal";
 import { ConfirmationPopup } from "@/components/mobile/shared/ConfirmationPopup";
 import { useRouter } from "next/navigation";
 import { useTenantSlug } from "@/lib/tenant-url";
