@@ -1,7 +1,11 @@
-//app/[tenantSlug]/mobile/orders/chart/MobileHourlySales.tsx
 "use client";
-import { useState, useEffect, useMemo } from "react";
-import { CalendarDays, StoreIcon, TrendingUp, ChevronLeft } from "lucide-react";
+import { useState, useMemo } from "react";
+import {
+    CalendarDays,
+    TrendingUp,
+    ChevronLeft,
+    ChevronsUpDown,
+} from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
     Area,
@@ -27,25 +31,22 @@ import {
     ChartTooltipContent,
 } from "@/components/ui/chart";
 import useHourlySales from "@/lib/hooks/analytics/useHourlySales";
-import useUserStores from "@/lib/hooks/shared/useUserStores";
-import { useAuth } from "@/lib/context/AuthContext";
 import { useTenantSlug } from "@/lib/tenant-url";
+import { useStore } from "@/lib/context/StoreContext";
 
 const formatDateForInput = (date: Date) => date.toISOString().split("T")[0];
 
 const chartConfig = {
     cups: {
         label: "Cups Sold",
-        color: "#175EFA", // Blue color (matches your blue-600)
+        color: "#175EFA",
     },
 } satisfies ChartConfig;
 
-// Custom dot component to highlight peak
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomDot = (props: any) => {
     const { cx, cy, payload, peakHour } = props;
     const isPeak = payload.hour === peakHour;
-
     return (
         <Dot
             cx={cx}
@@ -59,132 +60,88 @@ const CustomDot = (props: any) => {
 };
 
 export default function MobileHourlySales() {
-    const { profile } = useAuth();
+    // const { selectedStoreId } = useStore();
     const router = useRouter();
     const searchParams = useSearchParams();
     const { url } = useTenantSlug();
 
-    // Get initial values from URL params or use defaults
-    const initialDate =
-        searchParams.get("date") || formatDateForInput(new Date());
-    const initialStoreId = searchParams.get("storeId") || "";
+    const { selectedStoreId, selectedStore, setIsPickerOpen } = useStore();
 
-    const [selectedDate, setSelectedDate] = useState(initialDate);
-    const [selectedStore, setSelectedStore] = useState<string>(initialStoreId);
-
-    // Fetch user stores
-    const { data: storesData, isLoading: storesLoading } = useUserStores(
-        profile!.id
+    const [selectedDate, setSelectedDate] = useState(
+        searchParams.get("date") || formatDateForInput(new Date()),
     );
-    const stores = storesData?.stores ?? [];
-    const defaultStore = storesData?.defaultStore;
 
-    // Auto-select default store on mount (only if no store was passed via URL)
-    useEffect(() => {
-        if (defaultStore && !selectedStore && !initialStoreId) {
-            setSelectedStore(defaultStore.id);
-        }
-    }, [defaultStore, selectedStore, initialStoreId]);
-
-    // Fetch hourly sales data
     const { data: hourlySales = [], isLoading: salesLoading } = useHourlySales(
-        selectedStore,
-        selectedDate
+        selectedStoreId,
+        selectedDate,
     );
 
-    // Calculate summary stats
     const summaryStats = useMemo(() => {
         const totalCups = hourlySales.reduce((sum, item) => sum + item.cups, 0);
         const peakHour = hourlySales.reduce(
             (max, item) => (item.cups > max.cups ? item : max),
-            { hour: "N/A", cups: 0 }
+            { hour: "N/A", cups: 0 },
         );
-
         return { totalCups, peakHour };
     }, [hourlySales]);
 
-    const isLoading = storesLoading || salesLoading;
-
-    if (isLoading) {
+    if (salesLoading) {
         return (
             <div
                 className="flex flex-col items-center justify-center"
                 style={{ minHeight: "calc(100vh - 200px)" }}
             >
                 <div className="w-10 h-10 border-3 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                <p className="mt-4 text-gray-600 text-sm">
-                    Loading Analytics...
-                </p>
+                <p className="mt-4 text-gray-600 text-sm">Loading Chart...</p>
             </div>
         );
     }
 
     return (
         <div className="space-y-4">
-            {/* Back Button */}
-            <button
-                onClick={() => router.push(url("/mobile/orders"))}
-                className="flex items-center gap-1 text-gray-700"
-            >
-                <ChevronLeft size={24} />
-                <span className="font-medium text-md mb-0.5">
-                    Back to Orders
-                </span>
-            </button>
-
-            {/* Filters Section */}
-            <div className="bg-white p-4 rounded-lg shadow-sm space-y-3">
-                <div className="grid grid-cols-1 gap-3">
-                    {/* Date Filter */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            <CalendarDays size={16} className="inline mr-1" />
-                            Select Date
-                        </label>
-                        <input
-                            type="date"
-                            value={selectedDate}
-                            onChange={(e) => {
-                                const newValue = e.target.value;
-                                if (newValue === "") {
-                                    const today = new Date()
-                                        .toISOString()
-                                        .split("T")[0];
-                                    setSelectedDate(today);
-                                } else {
-                                    setSelectedDate(newValue);
-                                }
-                            }}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-semibold tracking-tight text-gray-900">
+                    Daily Chart
+                </h1>
+                {selectedStore && (
+                    <button
+                        onClick={() => setIsPickerOpen(true)}
+                        className="flex items-center mt-1 gap-0.5"
+                    >
+                        <p className="text-lg text-blue-600/90 font-bold">
+                            {selectedStore.name}
+                        </p>
+                        <ChevronsUpDown
+                            size={14}
+                            strokeWidth={3}
+                            className="text-blue-600/90"
                         />
-                    </div>
-
-                    {/* Store Filter */}
-                    {stores.length > 1 && (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                <StoreIcon size={16} className="inline mr-1" />
-                                Select Store
-                            </label>
-                            <select
-                                value={selectedStore}
-                                onChange={(e) =>
-                                    setSelectedStore(e.target.value)
-                                }
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                            >
-                                {stores.map((store) => (
-                                    <option key={store.id} value={store.id}>
-                                        {store.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    )}
-                </div>
+                    </button>
+                )}
             </div>
 
-            {/* Chart Card */}
+            {/* Date Filter */}
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <CalendarDays size={16} className="inline mr-1" />
+                    Select Date
+                </label>
+                <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => {
+                        const newValue = e.target.value;
+                        setSelectedDate(
+                            newValue === ""
+                                ? formatDateForInput(new Date())
+                                : newValue,
+                        );
+                    }}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+            </div>
+
+            {/* Chart */}
             <Card className="py-4 gap-4 [&>*]:px-4">
                 <CardHeader>
                     <CardTitle>Hourly Sales</CardTitle>
@@ -242,7 +199,6 @@ export default function MobileHourlySales() {
                                     axisLine={false}
                                     tickMargin={10}
                                 />
-                                {/* Reference line at peak */}
                                 {summaryStats.peakHour.hour !== "N/A" && (
                                     <ReferenceLine
                                         x={summaryStats.peakHour.hour}

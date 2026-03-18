@@ -1,23 +1,13 @@
-// components/MobileOrders.tsx
 "use client";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import useStoreOrders from "@/lib/hooks/orders/useStoreOrders";
-
-import useUserStores from "@/lib/hooks/shared/useUserStores";
-import {
-    Calendar,
-    CalendarDays,
-    StoreIcon,
-    Receipt,
-    BarChart4,
-} from "lucide-react";
+import { Calendar, CalendarDays, Receipt, BarChart4 } from "lucide-react";
 import { formatRupiah } from "@/lib/utils/formatCurrency";
 import CopyableField from "@/components/mobile/shared/CopyableField";
-import { useAuth } from "@/lib/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useTenantSlug } from "@/lib/tenant-url";
+import { useStore } from "@/lib/context/StoreContext";
 
-// Utility functions
 const formatMobileDate = (dateString: string) => {
     const date = new Date(dateString + "T00:00:00");
     const today = new Date();
@@ -48,114 +38,61 @@ const formatFullTimestamp = (dateString: string) => {
 const formatDateForInput = (date: Date) => date.toISOString().split("T")[0];
 
 export default function MobileOrders() {
-    const { profile } = useAuth();
-
+    const { selectedStoreId } = useStore();
     const router = useRouter();
     const { url } = useTenantSlug();
 
     const [selectedDate, setSelectedDate] = useState(
-        formatDateForInput(new Date())
+        formatDateForInput(new Date()),
     );
-    const [selectedStore, setSelectedStore] = useState<string>("");
 
-    // Fetch user stores
-    const { data: storesData, isLoading: storesLoading } = useUserStores(
-        profile!.id
-    );
-    const stores = storesData?.stores ?? [];
-    const defaultStore = storesData?.defaultStore;
-
-    // Auto-select default store on mount
-    useEffect(() => {
-        if (defaultStore && !selectedStore) {
-            setSelectedStore(defaultStore.id);
-        }
-    }, [defaultStore, selectedStore]);
-
-    // Fetch orders for selected store and date
     const { data: orders = [], isLoading: ordersLoading } = useStoreOrders(
-        selectedStore,
-        selectedDate
+        selectedStoreId,
+        selectedDate,
     );
 
-    // Add order numbers (reverse index for display)
     const ordersWithNumbers = useMemo(
         () =>
             orders.map((order, index) => ({
                 ...order,
                 orderNumber: orders.length - index,
             })),
-        [orders]
+        [orders],
     );
 
-    // Calculate summary statistics
     const summaryStats = useMemo(() => {
         const totalOrders = orders.length;
         const totalSales = orders.reduce(
             (sum, order) => sum + order.totalAmount,
-            0
+            0,
         );
         const totalCups = orders.reduce(
             (sum, order) =>
                 sum +
                 order.orderItems.reduce(
                     (itemSum, item) => itemSum + item.quantity,
-                    0
+                    0,
                 ),
-            0
+            0,
         );
-
         return { totalOrders, totalSales, totalCups };
     }, [orders]);
 
-    const isLoading = storesLoading || ordersLoading;
-
-    if (isLoading) {
+    if (ordersLoading) {
         return (
             <div
                 className="flex flex-col items-center justify-center"
                 style={{ minHeight: "calc(100vh - 200px)" }}
             >
                 <div className="w-10 h-10 border-3 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                <p className="mt-4 text-gray-600 text-sm">
-                    Loading Daily Chart...
-                </p>
+                <p className="mt-4 text-gray-600 text-sm">Loading Orders...</p>
             </div>
         );
     }
 
     return (
         <div className="space-y-4">
-            {/* Summary Section */}
-            {/* <div className="bg-white p-4 rounded-lg shadow-sm">
-                <div className="flex items-center gap-2 mb-3">
-                    <Receipt size={20} className="text-gray-600" />
-                    <h3 className="font-semibold text-gray-800">
-                        Daily Summary
-                    </h3>
-                </div>
-
-                <div className="grid grid-cols-4 gap-2">
-                    <div className="text-center">
-                        <p className="text-xl font-bold text-blue-600">
-                            {summaryStats.totalOrders}
-                        </p>
-                        <p className="text-sm text-gray-600">Orders</p>
-                    </div>
-                    <div className="text-center">
-                        <p className="text-xl font-bold text-orange-600">
-                            {summaryStats.totalCups}
-                        </p>
-                        <p className="text-sm text-gray-600">Cups</p>
-                    </div>
-                    <div className="text-center col-span-2 border-l-2 border-gray-300">
-                        <p className="text-sm text-gray-600">Total Sales</p>
-                        <p className="text-xl font-bold text-green-600">
-                            {formatRupiah(summaryStats.totalSales)}
-                        </p>
-                    </div>
-                </div>
-            </div> */}
+            {/* Summary */}
             <div className="bg-white p-4 rounded-lg shadow-sm">
                 <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
@@ -164,32 +101,19 @@ export default function MobileOrders() {
                             Daily Summary
                         </h3>
                     </div>
-
-                    {/* Chart Button */}
-                    {/* <button
-                        onClick={() => router.push(url("/mobile/orders/chart"))}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded-sm text-xs font-medium transition-all duration-75 active:scale-95 hover:bg-blue-700"
-                    >
-                        <BarChart3 size={14} />
-                        <span>View Chart</span>
-                    </button> */}
                     <button
                         onClick={() => {
                             const params = new URLSearchParams();
                             params.set("date", selectedDate);
-                            params.set("storeId", selectedStore);
+                            params.set("storeId", selectedStoreId);
                             router.push(
-                                `${url(
-                                    "/mobile/orders/chart"
-                                )}?${params.toString()}`
+                                `${url("/mobile/orders/chart")}?${params.toString()}`,
                             );
                         }}
                         className="flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-md gap-1 text-xs font-medium cursor-pointer"
                     >
                         <BarChart4 size={14} />
-                        <span>
-                            <span>Daily Chart</span>
-                        </span>
+                        <span>Daily Chart</span>
                     </button>
                 </div>
 
@@ -215,57 +139,25 @@ export default function MobileOrders() {
                 </div>
             </div>
 
-            {/* Filters Section */}
-            <div className="bg-white p-4 rounded-lg shadow-sm space-y-3">
-                <div className="grid grid-cols-1 gap-3">
-                    {/* Date Filter */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            <CalendarDays size={16} className="inline mr-1" />
-                            Select Date
-                        </label>
-                        <input
-                            type="date"
-                            value={selectedDate}
-                            // onChange={(e) => setSelectedDate(e.target.value)}
-                            onChange={(e) => {
-                                const newValue = e.target.value;
-                                if (newValue === "") {
-                                    const today = new Date()
-                                        .toISOString()
-                                        .split("T")[0];
-                                    setSelectedDate(today);
-                                } else {
-                                    setSelectedDate(newValue);
-                                }
-                            }}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                        />
-                    </div>
-
-                    {/* Store Filter */}
-                    {stores.length > 1 && (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                <StoreIcon size={16} className="inline mr-1" />
-                                Select Store
-                            </label>
-                            <select
-                                value={selectedStore}
-                                onChange={(e) =>
-                                    setSelectedStore(e.target.value)
-                                }
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                            >
-                                {stores.map((store) => (
-                                    <option key={store.id} value={store.id}>
-                                        {store.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    )}
-                </div>
+            {/* Date Filter */}
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <CalendarDays size={16} className="inline mr-1" />
+                    Select Date
+                </label>
+                <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => {
+                        const newValue = e.target.value;
+                        setSelectedDate(
+                            newValue === ""
+                                ? new Date().toISOString().split("T")[0]
+                                : newValue,
+                        );
+                    }}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
             </div>
 
             {/* Orders List */}
@@ -282,7 +174,6 @@ export default function MobileOrders() {
                 </div>
             ) : (
                 <div className="space-y-3">
-                    {/* Date Header */}
                     <div className="flex items-center justify-between">
                         <h3 className="text-lg font-semibold text-gray-800">
                             {formatMobileDate(selectedDate)}
@@ -293,13 +184,11 @@ export default function MobileOrders() {
                         </span>
                     </div>
 
-                    {/* Orders */}
                     {ordersWithNumbers.map((order) => (
                         <div
                             key={order.id}
                             className="bg-white rounded-lg shadow-sm overflow-hidden"
                         >
-                            {/* Order Header */}
                             <div className="p-3.5 bg-white">
                                 <div className="flex justify-between items-start">
                                     <div className="flex-1">
@@ -308,11 +197,10 @@ export default function MobileOrders() {
                                         </p>
                                         <span className="text-sm text-gray-500">
                                             {formatFullTimestamp(
-                                                order.createdAt ?? ""
+                                                order.createdAt ?? "",
                                             )}
                                         </span>
                                     </div>
-
                                     <div className="text-right">
                                         <p className="text-lg font-bold text-green-600">
                                             {formatRupiah(order.totalAmount)}
@@ -321,7 +209,7 @@ export default function MobileOrders() {
                                             {order.orderItems.reduce(
                                                 (sum, item) =>
                                                     sum + item.quantity,
-                                                0
+                                                0,
                                             )}{" "}
                                             cups
                                         </p>
@@ -329,10 +217,8 @@ export default function MobileOrders() {
                                 </div>
                             </div>
 
-                            {/* Order Details */}
                             <div className="border-t border-gray-100 p-3 bg-gray-50">
                                 <div className="space-y-3">
-                                    {/* Order Info */}
                                     <div>
                                         <h4 className="font-medium text-gray-800 mb-2 text-sm">
                                             Order Details
@@ -368,13 +254,12 @@ export default function MobileOrders() {
                                                     Full Timestamp:
                                                 </span>{" "}
                                                 {new Date(
-                                                    order.createdAt + "Z"
+                                                    order.createdAt + "Z",
                                                 ).toLocaleString()}
                                             </p>
                                         </div>
                                     </div>
 
-                                    {/* Items Breakdown */}
                                     <div>
                                         <h4 className="font-medium text-gray-800 mb-1 text-sm">
                                             Items
@@ -394,7 +279,7 @@ export default function MobileOrders() {
                                                         </p>
                                                         <p className="text-xs text-gray-500">
                                                             {formatRupiah(
-                                                                item.unitPrice
+                                                                item.unitPrice,
                                                             )}{" "}
                                                             each
                                                         </p>
@@ -405,7 +290,7 @@ export default function MobileOrders() {
                                                         </p>
                                                         <p className="text-xs text-gray-600">
                                                             {formatRupiah(
-                                                                item.totalPrice
+                                                                item.totalPrice,
                                                             )}
                                                         </p>
                                                     </div>

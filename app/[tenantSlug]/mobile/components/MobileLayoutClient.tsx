@@ -1,15 +1,24 @@
-// app/mobile/MobileLayoutClient.tsx
 "use client";
-import { useEffect, ReactNode, useMemo, useState } from "react";
-import { User, ShoppingCart, Clock, BarChart3, Bell } from "lucide-react";
+import { useEffect, ReactNode, useMemo, useState, useRef } from "react";
+import {
+    User,
+    ShoppingCart,
+    Clock,
+    BarChart3,
+    Bell,
+    ArrowLeft,
+    ChevronsUpDown,
+} from "lucide-react";
 import { useStores } from "@/lib/hooks/stores/useStores";
-import { format } from "date-fns";
 import Image from "next/image";
 import { hasManagerRole, hasSellerRole } from "@/lib/utils/roleUtils";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/context/AuthContext";
 import VersionInfo from "@/components/shared/VersionInfo";
 import { useTenantSlug } from "@/lib/tenant-url";
+import { useStore } from "@/lib/context/StoreContext";
+import { StorePickerDrawer } from "./StorePickerDrawer";
+import { useFastOrderMode } from "@/lib/context/FastOrderModeContext";
 
 export interface Assignment {
     user_id: string;
@@ -32,8 +41,10 @@ export default function MobileLayoutClient({
     const pathname = usePathname();
     const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
     const [authRetryCount, setAuthRetryCount] = useState(0);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     const { url } = useTenantSlug();
+    const { fastOrderMode } = useFastOrderMode();
 
     const {
         profile,
@@ -52,53 +63,60 @@ export default function MobileLayoutClient({
         [storesData?.assignments],
     );
 
+    const { selectedStore, setIsPickerOpen, isPickerOpen } = useStore();
+
+    // Accent color helpers
+    const accent = fastOrderMode ? "text-rose-600" : "text-blue-600";
+    const accentBg = fastOrderMode ? "bg-rose-600" : "bg-blue-600";
+    const accentBgLight = fastOrderMode ? "bg-rose-50" : "bg-blue-50";
+    const accentHover = fastOrderMode
+        ? "hover:text-rose-500"
+        : "hover:text-blue-500";
+
+    // Restore scroll position when drawer closes
+    useEffect(() => {
+        const el = scrollContainerRef.current;
+        if (!el) return;
+        if (isPickerOpen) {
+            el.dataset.scrollY = String(el.scrollTop);
+        } else {
+            const saved = el.dataset.scrollY;
+            if (saved !== undefined) {
+                requestAnimationFrame(() => {
+                    el.scrollTo(0, Number(saved));
+                });
+            }
+        }
+    }, [isPickerOpen]);
+
     // Auth state synchronization and recovery
     useEffect(() => {
         let mounted = true;
-
         const checkAuthState = async () => {
-            // If we're stuck loading for too long, try to refresh auth state
             if ((profileLoading || !profile) && authRetryCount < 3) {
                 const timer = setTimeout(async () => {
                     if (mounted && (profileLoading || !profile)) {
-                        console.log(
-                            `🔄 Force refreshing auth state (attempt ${
-                                authRetryCount + 1
-                            })...`,
-                        );
                         await refreshProfile();
                         setAuthRetryCount((prev) => prev + 1);
                     }
                 }, 3000);
-
                 return () => clearTimeout(timer);
             }
         };
-
         checkAuthState();
-
         return () => {
             mounted = false;
         };
     }, [profileLoading, profile, refreshProfile, authRetryCount]);
 
-    // Reset retry count when we successfully get a profile
     useEffect(() => {
-        if (profile) {
-            setAuthRetryCount(0);
-        }
+        if (profile) setAuthRetryCount(0);
     }, [profile]);
 
     const isLoading = useMemo(() => {
-        if (authRetryCount >= 3) {
-            console.warn("⚠️ Auth retries exhausted - allowing UI to render");
-            return false;
-        }
-
+        if (authRetryCount >= 3) return false;
         if (profileLoading || !profile) return true;
-
         if (storesLoading) return true;
-
         return false;
     }, [profile, profileLoading, storesLoading, authRetryCount]);
 
@@ -153,34 +171,8 @@ export default function MobileLayoutClient({
         [canSell, canManage, url],
     );
 
-    // Enhanced debug effect
     useEffect(() => {
-        console.log("🔍 MobileLayoutClient Debug:", {
-            profileLoading,
-            storesLoading,
-            profile: !!profile,
-            profileData: profile
-                ? { id: profile.id, name: profile.fullName }
-                : null,
-            isLoading,
-            assignments: !!assignments,
-            authRetryCount,
-            pathname,
-        });
-    }, [
-        profileLoading,
-        storesLoading,
-        profile,
-        isLoading,
-        assignments,
-        authRetryCount,
-        pathname,
-    ]);
-
-    useEffect(() => {
-        tabs.forEach((tab) => {
-            router.prefetch(tab.path);
-        });
+        tabs.forEach((tab) => router.prefetch(tab.path));
     }, [tabs, router]);
 
     useEffect(() => {
@@ -202,15 +194,12 @@ export default function MobileLayoutClient({
                             className="rounded-xl shadow-2xl mx-auto"
                         />
                     </div>
-
                     <div className="w-64 h-1.5 loading-track rounded-full">
                         <div className="loading-bar" />
                     </div>
-
                     <div className="mt-4 text-xs text-gray-600 text-center">
                         <VersionInfo />
                     </div>
-
                     {authRetryCount > 0 && (
                         <div className="mt-2 text-xs text-blue-600">
                             Connecting... ({authRetryCount}/3)
@@ -221,7 +210,6 @@ export default function MobileLayoutClient({
         );
     }
 
-    // Safety check - if no profile after loading, show error state
     if (!profile) {
         return (
             <div className="h-dvh overflow-hidden bg-white flex flex-col items-center justify-center p-4">
@@ -265,15 +253,15 @@ export default function MobileLayoutClient({
     }
 
     const currentPath = optimisticPath || pathname;
+    const isProfilePage = currentPath.endsWith("/mobile/profile");
 
     const getCurrentPageTitle = (path: string) => {
         if (path.endsWith("/mobile/pos")) return "POS";
         if (path.endsWith("/mobile/orders")) return "Orders";
-        if (path.endsWith("/mobile/orders/chart")) return "Daily Chart";
+        if (path.endsWith("/mobile/orders/chart")) return "Daily";
         if (path.endsWith("/mobile/analytics")) return "Analytics";
-        if (path.endsWith("/mobile/analytics/chart")) return "Monthly Chart";
+        if (path.endsWith("/mobile/analytics/chart")) return "Monthly";
         if (path.endsWith("/mobile/profile")) return "Profile";
-
         return "Mobile";
     };
 
@@ -283,56 +271,70 @@ export default function MobileLayoutClient({
         router.push(path);
     };
 
-    const handleLogoClick = () => {
-        const targetPath = canSell
-            ? url("/mobile/pos")
-            : url("/mobile/profile");
-
-        if (targetPath === pathname) return;
-
-        setOptimisticPath(targetPath);
-        router.push(targetPath);
+    const isSubPage = (path: string) => {
+        return (
+            path.includes("/mobile/profile/") ||
+            path.endsWith("/mobile/orders/chart") ||
+            path.endsWith("/mobile/analytics/chart")
+        );
     };
 
-    // TODO: Notification state - implement later
-    // const [notificationCount, setNotificationCount] = useState(0);
-    // const handleNotificationClick = () => {
-    //     // navigate to notifications page or open a drawer
-    // };
-
     return (
-        <div className="h-dvh flex flex-col bg-gray-50 select-none">
-            <header className="fixed top-0 left-0 right-0 z-40 bg-gray-50 p-4">
+        <div className="h-dvh flex flex-col bg-gray-50 select-none overflow-hidden">
+            <header className="fixed top-0 left-0 right-0 z-40 bg-gray-50 p-4 py-3">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">
-                            {getCurrentPageTitle(currentPath)}
-                        </h1>
-                        {currentPath.endsWith("/mobile/pos") && (
-                            <p className="text-xl text-gray-600 font-bold mt-1">
-                                {format(new Date(), "dd MMMM")}
-                            </p>
+                        {isSubPage(currentPath) ? (
+                            <button
+                                onClick={() => router.back()}
+                                className="text-gray-900"
+                            >
+                                <ArrowLeft size={28} strokeWidth={2} />
+                            </button>
+                        ) : (
+                            <div className="flex items-center gap-2">
+                                <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+                                    {getCurrentPageTitle(currentPath)}
+                                </h1>
+                                {selectedStore && !isProfilePage && (
+                                    <button
+                                        onClick={() => setIsPickerOpen(true)}
+                                        className="flex items-center mt-1.5"
+                                    >
+                                        <p
+                                            className={`text-xl font-semibold ${accent}`}
+                                        >
+                                            {selectedStore.name}
+                                        </p>
+                                        <ChevronsUpDown
+                                            size={16}
+                                            strokeWidth={3}
+                                            className={accent}
+                                        />
+                                    </button>
+                                )}
+                            </div>
                         )}
                     </div>
 
-                    {/* Notification button - UI ready, disabled until logic is implemented */}
-                    <button
-                        disabled
-                        className="relative p-2 rounded-full border border-gray-200 bg-white opacity-40 cursor-not-allowed"
-                        aria-label="Notifications"
-                    >
-                        <Bell size={24} className="text-gray-800" />
-                        {/* Notification badge - uncomment and wire up count when ready */}
-                        {/* {notificationCount > 0 && (
-        <span className="absolute top-1 right-1 min-w-[16px] h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
-            {notificationCount > 99 ? "99+" : notificationCount}
-        </span>
-    )} */}
-                    </button>
+                    {!isSubPage(currentPath) && (
+                        <button
+                            disabled
+                            className="relative p-2 rounded-lg border border-gray-200 bg-white opacity-40 cursor-not-allowed"
+                            aria-label="Notifications"
+                        >
+                            <Bell size={20} className="text-gray-800" />
+                        </button>
+                    )}
                 </div>
             </header>
 
-            <div className="pt-20 p-4 pb-28 bg-gray-50">{children}</div>
+            <div
+                ref={scrollContainerRef}
+                className="flex-1 overflow-y-auto pt-18 p-4 pb-28 bg-gray-50"
+            >
+                {children}
+            </div>
 
             <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
                 <div className="flex">
@@ -346,8 +348,8 @@ export default function MobileLayoutClient({
                                 onClick={() => handleNavClick(tab.path)}
                                 className={`flex-1 py-3 px-4 flex flex-col items-center space-y-1 relative transition-all duration-75 active:scale-95 ${
                                     isActive
-                                        ? "text-blue-600 bg-blue-50"
-                                        : "text-gray-600 hover:text-blue-500"
+                                        ? `${accent} ${accentBgLight}`
+                                        : `text-gray-600 ${accentHover}`
                                 }`}
                             >
                                 <Icon
@@ -358,13 +360,17 @@ export default function MobileLayoutClient({
                                     {tab.label}
                                 </span>
                                 {isActive && (
-                                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-blue-600 rounded-b-full transition-all duration-200"></div>
+                                    <div
+                                        className={`absolute top-0 left-1/2 transform -translate-x-1/2 w-8 h-0.5 ${accentBg} rounded-b-full transition-all duration-200`}
+                                    />
                                 )}
                             </button>
                         );
                     })}
                 </div>
             </footer>
+
+            <StorePickerDrawer />
         </div>
     );
 }

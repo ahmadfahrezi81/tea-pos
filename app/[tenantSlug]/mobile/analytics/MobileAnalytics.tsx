@@ -917,43 +917,33 @@
 //     );
 // }
 
-// components/mobile/MobileAnalytics.tsx
 "use client";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/lib/context/AuthContext";
-import useUserStores from "@/lib/hooks/shared/useUserStores";
 import { useSummaries } from "@/lib/hooks/summaries/useDailySummaries";
 import {
     DailySummary,
     DailySummaryListResponse,
 } from "@/lib/schemas/daily-summaries";
 import { Expense } from "@/lib/schemas/expenses";
-
 import { formatRupiah } from "@/lib/utils/formatCurrency";
-// import { hasManagerRoleInStore } from "@/lib/utils/roleUtils";
 import { toIndonesiaMonthYear } from "@/lib/timezone";
-
 import {
     Calendar,
-    StoreIcon,
     CalendarDays,
     AlertTriangle,
     CheckCircle,
     Receipt,
     BarChart4,
 } from "lucide-react";
-
-import { SetBalanceModal } from "./components/SetBalanceModal";
-import { SetExpenseModal } from "./components/SetExpenseModal";
-import { CloseDayModal } from "./components/CloseDayModal";
-import {
-    // DailySummaryWithExpenses,
-    DetailsModal,
-} from "./components/DetailsModal";
-
+import { SetBalanceModal } from "./_components/SetBalanceModal";
+import { SetExpenseModal } from "./_components/SetExpenseModal";
+import { CloseDayModal } from "./_components/CloseDayModal";
+import { DetailsModal } from "./_components/DetailsModal";
 import { ConfirmationPopup } from "@/components/mobile/shared/ConfirmationPopup";
 import { useRouter } from "next/navigation";
 import { useTenantSlug } from "@/lib/tenant-url";
+import { useStore } from "@/lib/context/StoreContext";
 
 // ============================================================================
 // TYPES
@@ -965,12 +955,11 @@ type DailySummaryWithExtras = DailySummary & {
 };
 
 // ============================================================================
-// UTILITY FUNCTIONS - Outside component to prevent recreation
+// UTILITY FUNCTIONS
 // ============================================================================
 
 const isCurrentMonthSelected = (selectedMonth: string): boolean => {
-    const currentMonth = new Date().toISOString().slice(0, 7);
-    return selectedMonth === currentMonth;
+    return selectedMonth === new Date().toISOString().slice(0, 7);
 };
 
 const formatDate = (dateStr: string) => {
@@ -993,35 +982,29 @@ const formatDate = (dateStr: string) => {
 
 const getProductBreakdownForDate = (
     summariesData: DailySummaryListResponse | undefined,
-    date: string
-) => {
-    return summariesData?.productBreakdown?.[date] || {};
-};
+    date: string,
+) => summariesData?.productBreakdown?.[date] || {};
 
 const getCupsCountForDate = (
     summariesData: DailySummaryListResponse | undefined,
-    date: string
+    date: string,
 ) => {
     const breakdown = getProductBreakdownForDate(summariesData, date);
     return Object.values(breakdown).reduce(
         (total, product) => total + product.quantity,
-        0
+        0,
     );
 };
 
 const getOrdersCountForDate = (
     summariesData: DailySummaryListResponse | undefined,
-    date: string
-) => {
-    return summariesData?.ordersByDate?.[date]?.length || 0;
-};
+    date: string,
+) => summariesData?.ordersByDate?.[date]?.length || 0;
 
 const getExpensesForDate = (
     summariesData: DailySummaryListResponse | undefined,
-    date: string
-) => {
-    return summariesData?.expensesByDate?.[date] || [];
-};
+    date: string,
+) => summariesData?.expensesByDate?.[date] || [];
 
 // ============================================================================
 // MAIN COMPONENT
@@ -1029,24 +1012,16 @@ const getExpensesForDate = (
 
 export default function MobileAnalytics() {
     const { profile } = useAuth();
-
+    const { selectedStoreId, selectedStore } = useStore();
     const router = useRouter();
     const { url } = useTenantSlug();
 
-    // const [selectedStore, setSelectedStore] = useState<string>("");
-    // const [selectedMonth, setSelectedMonth] = useState<string>(
-    //     new Date().toISOString().slice(0, 7)
-    // );
-
-    const [selectedStore, setSelectedStore] = useState<string>("");
     const [selectedMonth, setSelectedMonth] = useState<string>(
-        new Date().toISOString().slice(0, 7)
+        new Date().toISOString().slice(0, 7),
     );
-
     const [selectedSummary, setSelectedSummary] =
         useState<DailySummaryWithExtras | null>(null);
 
-    // Popup states
     const [showOpenStorePopup, setShowOpenStorePopup] = useState(false);
     const [showCloseReminder, setShowCloseReminder] = useState(false);
     const [showExpenseForm, setShowExpenseForm] = useState(false);
@@ -1056,42 +1031,11 @@ export default function MobileAnalytics() {
     const [hasSeenPopup, setHasSeenPopup] = useState(false);
     const [hasSeenCloseReminder, setHasSeenCloseReminder] = useState(false);
 
-    // Toast state
     const [toast, setToast] = useState<{
         message: string;
         type: "success" | "error";
     } | null>(null);
 
-    // Fetch user stores
-    const {
-        data: storesData,
-        isLoading: storesLoading,
-        error: storesError,
-    } = useUserStores(profile?.id || null);
-
-    const stores = useMemo(
-        () => storesData?.stores ?? [],
-        [storesData?.stores]
-    );
-
-    const defaultStore = storesData?.defaultStore;
-
-    // Memoized manager stores - filter stores where user has manager role
-    const managerStores = useMemo(() => {
-        if (!profile?.id || !storesData) return [];
-
-        // For the new useUserStores, all stores returned are already
-        // stores the user has access to. We need to check assignments
-        // from the API response to determine which ones they're a manager of.
-
-        // Since the new hook doesn't return assignments, we'll need to
-        // fetch that separately OR modify this logic.
-        // For now, returning all stores as manager stores since the hook
-        // only returns stores the user has access to.
-        return stores;
-    }, [stores, profile?.id, storesData]);
-
-    // Fetch summaries
     const {
         data: summariesData,
         isLoading: summariesLoading,
@@ -1099,55 +1043,39 @@ export default function MobileAnalytics() {
         createSummary,
         updateSummary,
         createExpenses,
-    } = useSummaries(selectedStore, selectedMonth);
+    } = useSummaries(selectedStoreId, selectedMonth);
 
-    // Memoized computed values
     const todaysSummary = useMemo(() => {
         const todayStr = new Date().toISOString().split("T")[0];
         return summariesData?.summaries.find((s) => s.date === todayStr);
     }, [summariesData?.summaries]);
 
-    const unclosedSummaries = useMemo(() => {
-        return summariesData?.summaries.filter((s) => !s.closedAt) || [];
-    }, [summariesData?.summaries]);
+    const unclosedSummaries = useMemo(
+        () => summariesData?.summaries.filter((s) => !s.closedAt) || [],
+        [summariesData?.summaries],
+    );
 
-    // Memoized callbacks
     const showToast = useCallback(
         (message: string, type: "success" | "error") => {
             setToast({ message, type });
             setTimeout(() => setToast(null), 3000);
         },
-        []
+        [],
     );
 
-    const getStoreName = useCallback(() => {
-        return (
-            stores.find((s) => s.id === selectedStore)?.name || "Unknown Store"
-        );
-    }, [stores, selectedStore]);
-
-    // Auto-select default store (only if it's a manager store)
-    useEffect(() => {
-        if (defaultStore && !selectedStore && managerStores.length > 0) {
-            const isDefaultManager = managerStores.some(
-                (s) => s.id === defaultStore.id
-            );
-            if (isDefaultManager) {
-                setSelectedStore(defaultStore.id);
-            } else if (managerStores.length > 0) {
-                setSelectedStore(managerStores[0].id);
-            }
-        }
-    }, [defaultStore, selectedStore, managerStores]);
+    const getStoreName = useCallback(
+        () => selectedStore?.name || "Unknown Store",
+        [selectedStore],
+    );
 
     // Open store reminder
     useEffect(() => {
-        if (!selectedStore || !summariesData?.summaries || hasSeenPopup) return;
+        if (!selectedStoreId || !summariesData?.summaries || hasSeenPopup)
+            return;
         if (!isCurrentMonthSelected(selectedMonth)) {
             setShowOpenStorePopup(false);
             return;
         }
-
         if (!todaysSummary) {
             setShowOpenStorePopup(true);
             setHasSeenPopup(true);
@@ -1155,21 +1083,23 @@ export default function MobileAnalytics() {
             setShowOpenStorePopup(false);
         }
     }, [
-        selectedStore,
+        selectedStoreId,
         summariesData?.summaries,
         selectedMonth,
         hasSeenPopup,
         todaysSummary,
     ]);
 
-    // Close day reminder (after 10 PM)
+    // Close day reminder after 10 PM
     useEffect(() => {
-        if (!summariesData?.summaries || !selectedStore || hasSeenCloseReminder)
+        if (
+            !summariesData?.summaries ||
+            !selectedStoreId ||
+            hasSeenCloseReminder
+        )
             return;
-
         if (todaysSummary && unclosedSummaries.length > 0) {
-            const now = new Date();
-            const hour = now.getHours();
+            const hour = new Date().getHours();
             if (hour >= 22 || hour < 6) {
                 setShowCloseReminder(true);
                 setHasSeenCloseReminder(true);
@@ -1177,7 +1107,7 @@ export default function MobileAnalytics() {
         }
     }, [
         summariesData?.summaries,
-        selectedStore,
+        selectedStoreId,
         todaysSummary,
         unclosedSummaries,
         hasSeenCloseReminder,
@@ -1188,15 +1118,13 @@ export default function MobileAnalytics() {
     // ============================================================================
 
     const handleOpenStoreToday = async () => {
-        if (!selectedStore || !profile) return;
-
+        if (!selectedStoreId || !profile) return;
         try {
-            const todayStr = new Date().toISOString().split("T")[0];
             await createSummary({
-                storeId: selectedStore,
+                storeId: selectedStoreId,
                 sellerId: profile.id,
                 managerId: profile.id,
-                date: todayStr,
+                date: new Date().toISOString().split("T")[0],
                 openingBalance: 0,
             });
             setShowOpenStorePopup(false);
@@ -1204,20 +1132,23 @@ export default function MobileAnalytics() {
         } catch (error) {
             showToast(
                 error instanceof Error ? error.message : "Failed to open store",
-                "error"
+                "error",
             );
         }
     };
 
     const handleExpenseSubmit = async (
-        expenses: Array<{ label: string; customLabel?: string; amount: string }>
+        expenses: Array<{
+            label: string;
+            customLabel?: string;
+            amount: string;
+        }>,
     ) => {
-        if (!selectedSummary || !selectedStore) return;
-
+        if (!selectedSummary || !selectedStoreId) return;
         try {
             await createExpenses({
                 dailySummaryId: selectedSummary.id,
-                storeId: selectedStore,
+                storeId: selectedStoreId,
                 expenses,
             });
             setShowExpenseForm(false);
@@ -1228,18 +1159,15 @@ export default function MobileAnalytics() {
                 error instanceof Error
                     ? error.message
                     : "Failed to save expenses",
-                "error"
+                "error",
             );
         }
     };
 
     const handleBalanceSubmit = async (openingBalance: number) => {
         if (!selectedSummary) return;
-
         try {
-            await updateSummary(selectedSummary.id, {
-                openingBalance,
-            });
+            await updateSummary(selectedSummary.id, { openingBalance });
             setShowEditForm(false);
             setSelectedSummary(null);
             showToast("Opening balance updated successfully", "success");
@@ -1248,18 +1176,16 @@ export default function MobileAnalytics() {
                 error instanceof Error
                     ? error.message
                     : "Failed to update balance",
-                "error"
+                "error",
             );
         }
     };
 
     const handleCloseDaySubmit = async (
         actualCash: number,
-        notes: string | null
-        // variance: number
+        notes: string | null,
     ) => {
         if (!selectedSummary) return;
-
         try {
             await updateSummary(selectedSummary.id, {
                 actualCash,
@@ -1268,24 +1194,21 @@ export default function MobileAnalytics() {
             });
             setShowCloseForm(false);
             setSelectedSummary(null);
-            showToast("Day closed successfully", "success");
             setShowCloseReminder(false);
+            showToast("Day closed successfully", "success");
         } catch (error) {
             showToast(
                 error instanceof Error ? error.message : "Failed to close day",
-                "error"
+                "error",
             );
         }
     };
 
     // ============================================================================
-    // LOADING STATES
+    // LOADING / ERROR
     // ============================================================================
 
-    const isLoading = storesLoading || summariesLoading;
-    const error = storesError || summariesError;
-
-    if (isLoading) {
+    if (summariesLoading) {
         return (
             <div
                 className="flex flex-col items-center justify-center"
@@ -1299,11 +1222,11 @@ export default function MobileAnalytics() {
         );
     }
 
-    if (error) {
+    if (summariesError) {
         return (
             <div className="text-center py-8">
                 <p className="text-red-600">
-                    Error loading analytics: {error.message}
+                    Error loading analytics: {summariesError.message}
                 </p>
             </div>
         );
@@ -1329,19 +1252,15 @@ export default function MobileAnalytics() {
                             onClick={() => {
                                 const params = new URLSearchParams();
                                 params.set("month", selectedMonth);
-                                params.set("storeId", selectedStore);
+                                params.set("storeId", selectedStoreId);
                                 router.push(
-                                    `${url(
-                                        "/mobile/analytics/chart"
-                                    )}?${params.toString()}`
+                                    `${url("/mobile/analytics/chart")}?${params.toString()}`,
                                 );
                             }}
                             className="flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-md gap-1 text-xs font-medium cursor-pointer"
                         >
                             <BarChart4 size={14} />
-                            <span>
-                                <span>Monthly Chart</span>
-                            </span>
+                            <span>Monthly Chart</span>
                         </button>
                     </div>
                     <div className="grid grid-cols-4 gap-2">
@@ -1361,7 +1280,7 @@ export default function MobileAnalytics() {
                             <p className="text-sm text-gray-600">Total Sales</p>
                             <p className="text-xl font-bold text-green-600">
                                 {formatRupiah(
-                                    summariesData.monthlyTotals.totalSales
+                                    summariesData.monthlyTotals.totalSales,
                                 )}
                             </p>
                         </div>
@@ -1386,7 +1305,7 @@ export default function MobileAnalytics() {
                 </div>
             )}
 
-            {/* Open Store Today Button */}
+            {/* Open Store Today */}
             {!todaysSummary && isCurrentMonthSelected(selectedMonth) && (
                 <div className="bg-green-50 border border-green-200 p-3.5 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
@@ -1413,40 +1332,18 @@ export default function MobileAnalytics() {
                 </div>
             )}
 
-            {/* Filters */}
-            <div className="bg-white p-4 rounded-lg shadow-sm space-y-4">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        <CalendarDays size={16} className="inline mr-1" />
-                        Select Month
-                    </label>
-                    <input
-                        type="month"
-                        value={selectedMonth}
-                        onChange={(e) => setSelectedMonth(e.target.value)}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    />
-                </div>
-
-                {managerStores.length > 1 && (
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            <StoreIcon size={16} className="inline mr-1" />
-                            Select Store
-                        </label>
-                        <select
-                            value={selectedStore}
-                            onChange={(e) => setSelectedStore(e.target.value)}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                        >
-                            {managerStores.map((store) => (
-                                <option key={store.id} value={store.id}>
-                                    {store.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                )}
+            {/* Month Filter */}
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <CalendarDays size={16} className="inline mr-1" />
+                    Select Month
+                </label>
+                <input
+                    type="month"
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
             </div>
 
             {/* Summaries Header */}
@@ -1463,7 +1360,7 @@ export default function MobileAnalytics() {
             </div>
 
             {/* Daily Summaries */}
-            {selectedStore && (
+            {selectedStoreId && (
                 <div className="space-y-3">
                     {!summariesData?.summaries ||
                     summariesData.summaries.length === 0 ? (
@@ -1480,15 +1377,15 @@ export default function MobileAnalytics() {
                         summariesData.summaries.map((summary) => {
                             const dailyCups = getCupsCountForDate(
                                 summariesData,
-                                summary.date
+                                summary.date,
                             );
                             const dailyOrders = getOrdersCountForDate(
                                 summariesData,
-                                summary.date
+                                summary.date,
                             );
                             const dailyExpenses = getExpensesForDate(
                                 summariesData,
-                                summary.date
+                                summary.date,
                             );
 
                             const summaryWithExtras: DailySummaryWithExtras = {
@@ -1498,7 +1395,7 @@ export default function MobileAnalytics() {
                                     summary.totalExpenses ??
                                     dailyExpenses.reduce(
                                         (sum, exp) => sum + exp.amount,
-                                        0
+                                        0,
                                     ),
                             };
 
@@ -1513,17 +1410,17 @@ export default function MobileAnalytics() {
                                                 <button
                                                     onClick={() => {
                                                         setSelectedSummary(
-                                                            summaryWithExtras
+                                                            summaryWithExtras,
                                                         );
                                                         setShowDetailsModal(
-                                                            true
+                                                            true,
                                                         );
                                                     }}
                                                     className="text-left hover:text-blue-600 transition-colors"
                                                 >
                                                     <h3 className="text-lg font-semibold text-gray-800 hover:text-blue-600">
                                                         {formatDate(
-                                                            summary.date
+                                                            summary.date,
                                                         )}
                                                     </h3>
                                                     <p className="text-sm text-blue-600 underline">
@@ -1555,7 +1452,7 @@ export default function MobileAnalytics() {
                                                 </p>
                                                 <p className="text-lg font-semibold text-blue-600">
                                                     {formatRupiah(
-                                                        summary.openingBalance
+                                                        summary.openingBalance,
                                                     )}
                                                 </p>
                                             </div>
@@ -1565,7 +1462,7 @@ export default function MobileAnalytics() {
                                                 </p>
                                                 <p className="text-lg font-bold text-green-600">
                                                     {formatRupiah(
-                                                        summary.totalSales
+                                                        summary.totalSales,
                                                     )}
                                                 </p>
                                             </div>
@@ -1576,7 +1473,7 @@ export default function MobileAnalytics() {
                                                 <p className="text-lg font-semibold text-purple-600">
                                                     {formatRupiah(
                                                         summary.openingBalance +
-                                                            summary.totalSales
+                                                            summary.totalSales,
                                                     )}
                                                 </p>
                                             </div>
@@ -1605,7 +1502,7 @@ export default function MobileAnalytics() {
                                                 </p>
                                                 <p className="text-lg font-semibold text-purple-600">
                                                     {formatRupiah(
-                                                        summary.expectedCash
+                                                        summary.expectedCash,
                                                     )}
                                                 </p>
                                             </div>
@@ -1616,7 +1513,7 @@ export default function MobileAnalytics() {
                                                 <p className="text-lg font-semibold text-orange-600">
                                                     {summary.actualCash !== null
                                                         ? formatRupiah(
-                                                              summary.actualCash
+                                                              summary.actualCash,
                                                           )
                                                         : "Not counted"}
                                                 </p>
@@ -1643,11 +1540,11 @@ export default function MobileAnalytics() {
                                                                 <span className="font-medium text-red-800">
                                                                     -
                                                                     {formatRupiah(
-                                                                        expense.amount
+                                                                        expense.amount,
                                                                     )}
                                                                 </span>
                                                             </div>
-                                                        )
+                                                        ),
                                                     )}
                                                     <div className="border-t border-red-300 mt-1 pt-1 flex justify-between font-medium">
                                                         <span className="text-red-700">
@@ -1659,12 +1556,12 @@ export default function MobileAnalytics() {
                                                                 dailyExpenses.reduce(
                                                                     (
                                                                         sum,
-                                                                        exp
+                                                                        exp,
                                                                     ) =>
                                                                         sum +
                                                                         exp.amount,
-                                                                    0
-                                                                )
+                                                                    0,
+                                                                ),
                                                             )}
                                                         </span>
                                                     </div>
@@ -1688,7 +1585,7 @@ export default function MobileAnalytics() {
                                                         ? "+"
                                                         : ""}
                                                     {formatRupiah(
-                                                        summary.variance
+                                                        summary.variance,
                                                     )}
                                                 </p>
                                             </div>
@@ -1712,7 +1609,7 @@ export default function MobileAnalytics() {
                                                 <button
                                                     onClick={() => {
                                                         setSelectedSummary(
-                                                            summaryWithExtras
+                                                            summaryWithExtras,
                                                         );
                                                         setShowEditForm(true);
                                                     }}
@@ -1723,10 +1620,10 @@ export default function MobileAnalytics() {
                                                 <button
                                                     onClick={() => {
                                                         setSelectedSummary(
-                                                            summaryWithExtras
+                                                            summaryWithExtras,
                                                         );
                                                         setShowExpenseForm(
-                                                            true
+                                                            true,
                                                         );
                                                     }}
                                                     className="flex-1 bg-white text-green-500 border border-green-500 py-2 px-3 rounded-lg text-sm font-medium hover:bg-green-100"
@@ -1736,7 +1633,7 @@ export default function MobileAnalytics() {
                                                 <button
                                                     onClick={() => {
                                                         setSelectedSummary(
-                                                            summaryWithExtras
+                                                            summaryWithExtras,
                                                         );
                                                         setShowCloseForm(true);
                                                     }}
@@ -1765,7 +1662,7 @@ export default function MobileAnalytics() {
                         year: "numeric",
                         month: "short",
                         day: "numeric",
-                    }
+                    },
                 )}? This will create a new daily summary.`}
                 confirmText="Open Store"
                 onConfirm={handleOpenStoreToday}
@@ -1778,18 +1675,17 @@ export default function MobileAnalytics() {
             <ConfirmationPopup
                 isOpen={showCloseReminder}
                 title="Close Day Reminder"
-                message="Don't forget to close the day and count the cash before ending your shift. This ensures accurate financial records."
+                message="Don't forget to close the day and count the cash before ending your shift."
                 confirmText="Close Now"
                 cancelText="Remind Later"
                 type="warning"
                 onConfirm={() => {
                     if (todaysSummary) {
-                        const todayWithExtras: DailySummaryWithExtras = {
+                        setSelectedSummary({
                             ...todaysSummary,
                             expenses: todaysSummary.expenses || [],
                             totalExpenses: todaysSummary.totalExpenses ?? 0,
-                        };
-                        setSelectedSummary(todayWithExtras);
+                        });
                         setShowCloseForm(true);
                         setShowCloseReminder(false);
                     }
@@ -1802,11 +1698,6 @@ export default function MobileAnalytics() {
 
             {selectedSummary && (
                 <>
-                    {/* TODO: These modals need refactoring to accept camelCase props
-                        Currently they expect snake_case properties.
-                        For now, commenting them out until they're updated. */}
-
-                    {/* DetailsModal - needs refactoring */}
                     <DetailsModal
                         isOpen={showDetailsModal}
                         summary={selectedSummary}
@@ -1816,16 +1707,14 @@ export default function MobileAnalytics() {
                         }}
                         productBreakdown={getProductBreakdownForDate(
                             summariesData,
-                            selectedSummary.date
+                            selectedSummary.date,
                         )}
                         dailyOrders={getOrdersCountForDate(
                             summariesData,
-                            selectedSummary.date
+                            selectedSummary.date,
                         )}
                         storeName={getStoreName()}
                     />
-
-                    {/* SetBalanceModal - needs refactoring */}
                     <SetBalanceModal
                         isOpen={showEditForm}
                         summary={selectedSummary}
@@ -1837,8 +1726,6 @@ export default function MobileAnalytics() {
                         formatDate={formatDate}
                         getStoreName={getStoreName}
                     />
-
-                    {/* SetExpenseModal - needs refactoring */}
                     <SetExpenseModal
                         isOpen={showExpenseForm}
                         summary={selectedSummary}
@@ -1850,8 +1737,6 @@ export default function MobileAnalytics() {
                         formatDate={formatDate}
                         getStoreName={getStoreName}
                     />
-
-                    {/* CloseDayModal - needs refactoring */}
                     <CloseDayModal
                         isOpen={showCloseForm}
                         summary={selectedSummary}
