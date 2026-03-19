@@ -110,11 +110,16 @@ export default function MiniDailySalesChart({ storeId, month }: Props) {
     if (isLoading) {
         return (
             <div
-                className="mt-3 border-t border-gray-100 bg-gray-200 rounded-xl animate-pulse"
+                className="mt-3 border-t border-gray-100 bg-gray-200 rounded-xl animate-pulse relative"
                 style={{ height: 170 }}
-            />
+            >
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-6 h-6 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                </div>
+            </div>
         );
     }
+
     if (chartData.length === 0) return null;
 
     return (
