@@ -944,6 +944,7 @@ import { ConfirmationPopup } from "@/components/mobile/shared/ConfirmationPopup"
 import { useRouter } from "next/navigation";
 import { useTenantSlug } from "@/lib/tenant-url";
 import { useStore } from "@/lib/context/StoreContext";
+import MiniDailySalesChart from "./_components/MiniDailySalesChart";
 
 // ============================================================================
 // TYPES
@@ -1345,6 +1346,11 @@ export default function MobileAnalytics() {
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 />
             </div>
+
+            <MiniDailySalesChart
+                storeId={selectedStoreId}
+                month={selectedMonth}
+            />
 
             {/* Summaries Header */}
             <div className="flex items-center justify-between">
