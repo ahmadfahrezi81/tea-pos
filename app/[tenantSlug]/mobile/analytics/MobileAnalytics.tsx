@@ -944,6 +944,7 @@ import { ConfirmationPopup } from "@/components/mobile/shared/ConfirmationPopup"
 import { useRouter } from "next/navigation";
 import { useTenantSlug } from "@/lib/tenant-url";
 import { useStore } from "@/lib/context/StoreContext";
+import MiniDailySalesChart from "./_components/MiniDailySalesChart";
 
 // ============================================================================
 // TYPES
@@ -1248,20 +1249,6 @@ export default function MobileAnalytics() {
                                 Monthly Summary
                             </h3>
                         </div>
-                        <button
-                            onClick={() => {
-                                const params = new URLSearchParams();
-                                params.set("month", selectedMonth);
-                                params.set("storeId", selectedStoreId);
-                                router.push(
-                                    `${url("/mobile/analytics/chart")}?${params.toString()}`,
-                                );
-                            }}
-                            className="flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-md gap-1 text-xs font-medium cursor-pointer"
-                        >
-                            <BarChart4 size={14} />
-                            <span>Monthly Chart</span>
-                        </button>
                     </div>
                     <div className="grid grid-cols-4 gap-2">
                         <div className="text-center">
@@ -1345,6 +1332,11 @@ export default function MobileAnalytics() {
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 />
             </div>
+
+            <MiniDailySalesChart
+                storeId={selectedStoreId}
+                month={selectedMonth}
+            />
 
             {/* Summaries Header */}
             <div className="flex items-center justify-between">

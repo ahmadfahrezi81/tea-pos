@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
 
         // ✅ Validate query parameters
         const queryResult = HourlySalesQuery.safeParse(
-            Object.fromEntries(searchParams)
+            Object.fromEntries(searchParams),
         );
         if (!queryResult.success) {
             return NextResponse.json(
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
                     error: "Invalid query parameters",
                     details: queryResult.error.format(),
                 },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -30,10 +30,10 @@ export async function GET(request: NextRequest) {
         // ✅ Build start & end time (local timezone, UTC+7 by default)
         const TIMEZONE_OFFSET = Number(process.env.TIMEZONE_OFFSET ?? 7);
         const start = new Date(
-            `${date}T00:00:00+${String(TIMEZONE_OFFSET).padStart(2, "0")}:00`
+            `${date}T00:00:00+${String(TIMEZONE_OFFSET).padStart(2, "0")}:00`,
         ).toISOString();
         const end = new Date(
-            `${date}T23:59:59+${String(TIMEZONE_OFFSET).padStart(2, "0")}:00`
+            `${date}T23:59:59+${String(TIMEZONE_OFFSET).padStart(2, "0")}:00`,
         ).toISOString();
 
         // ✅ Fetch orders for store + tenant within date
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
                 id,
                 created_at,
                 order_items(quantity)
-            `
+            `,
             )
             .eq("tenant_id", currentTenantId)
             .eq("store_id", storeId)
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
             console.error("Error fetching orders:", ordersError);
             return NextResponse.json(
                 { error: "Failed to fetch orders" },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
 
             // Convert UTC → local time (based on TIMEZONE_OFFSET)
             const localTime = new Date(
-                utcDate.getTime() + TIMEZONE_OFFSET * 60 * 60 * 1000
+                utcDate.getTime() + TIMEZONE_OFFSET * 60 * 60 * 1000,
             );
 
             const hourKey = `${localTime
@@ -85,30 +85,48 @@ export async function GET(request: NextRequest) {
                 order.order_items?.reduce(
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     (sum: number, item: any) => sum + (item.quantity || 0),
-                    0
+                    0,
                 ) ?? 0;
 
             hourlyData[hourKey] += totalCups;
         }
 
-        // ✅ Convert to chart-friendly array
-        const chartData = Object.entries(hourlyData)
+        // ✅ Build all 24 hourly slots
+        const allSlots: Record<string, number> = {};
+        for (let h = 0; h < 24; h++) {
+            const slot = `${h.toString().padStart(2, "0")}:00`;
+            allSlots[slot] = hourlyData[slot] ?? 0;
+        }
+
+        const allChartData = Object.entries(allSlots)
             .map(([hour, cups]) => ({ hour, cups }))
             .sort((a, b) => a.hour.localeCompare(b.hour));
+
+        // ✅ Trim to first/last non-zero with 1 slot buffer on each side
+        const firstNonZero = allChartData.findIndex((d) => d.cups > 0);
+        const lastNonZero = allChartData.findLastIndex((d) => d.cups > 0);
+
+        const chartData =
+            firstNonZero === -1
+                ? [] // no data at all
+                : allChartData.slice(
+                      Math.max(0, firstNonZero - 1), // 1 zero before
+                      Math.min(23, lastNonZero + 1) + 1, // 1 zero after
+                  );
 
         // ✅ Validate with your Zod response schema
         const parsed = HourlySalesResponse.safeParse({ data: chartData });
         if (!parsed.success) {
             console.error(
                 "HourlySalesResponse validation failed:",
-                parsed.error
+                parsed.error,
             );
             return NextResponse.json(
                 {
                     error: "Invalid response shape",
                     details: parsed.error.format(),
                 },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
@@ -117,7 +135,7 @@ export async function GET(request: NextRequest) {
         console.error("Hourly sales error:", error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

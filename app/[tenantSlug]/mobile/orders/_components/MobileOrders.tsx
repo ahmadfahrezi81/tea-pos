@@ -7,6 +7,7 @@ import CopyableField from "@/components/mobile/shared/CopyableField";
 import { useRouter } from "next/navigation";
 import { useTenantSlug } from "@/lib/tenant-url";
 import { useStore } from "@/lib/context/StoreContext";
+import MiniHourlySalesChart from "./MiniHourlySalesChart";
 
 const formatMobileDate = (dateString: string) => {
     const date = new Date(dateString + "T00:00:00");
@@ -101,20 +102,6 @@ export default function MobileOrders() {
                             Daily Summary
                         </h3>
                     </div>
-                    <button
-                        onClick={() => {
-                            const params = new URLSearchParams();
-                            params.set("date", selectedDate);
-                            params.set("storeId", selectedStoreId);
-                            router.push(
-                                `${url("/mobile/orders/chart")}?${params.toString()}`,
-                            );
-                        }}
-                        className="flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-md gap-1 text-xs font-medium cursor-pointer"
-                    >
-                        <BarChart4 size={14} />
-                        <span>Daily Chart</span>
-                    </button>
                 </div>
 
                 <div className="grid grid-cols-4 gap-2">
@@ -159,6 +146,11 @@ export default function MobileOrders() {
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 />
             </div>
+
+            <MiniHourlySalesChart
+                storeId={selectedStoreId}
+                date={selectedDate}
+            />
 
             {/* Orders List */}
             {ordersWithNumbers.length === 0 ? (
