@@ -1,35 +1,16 @@
 "use client";
-import { useState, useMemo } from "react";
-import {
-    CalendarDays,
-    TrendingUp,
-    ChevronLeft,
-    ChevronsUpDown,
-} from "lucide-react";
+import { useState, useMemo, useRef, useEffect } from "react";
+import { CalendarDays, ChevronsUpDown } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
     Area,
     AreaChart,
-    CartesianGrid,
     XAxis,
-    YAxis,
     ReferenceLine,
-    Dot,
+    Tooltip,
+    LabelList,
 } from "recharts";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
-import {
-    ChartConfig,
-    ChartContainer,
-    ChartTooltip,
-    ChartTooltipContent,
-} from "@/components/ui/chart";
+import { ChartConfig, ChartContainer } from "@/components/ui/chart";
 import useHourlySales from "@/lib/hooks/analytics/useHourlySales";
 import { useTenantSlug } from "@/lib/tenant-url";
 import { useStore } from "@/lib/context/StoreContext";
@@ -44,28 +25,43 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const CustomDot = (props: any) => {
-    const { cx, cy, payload, peakHour } = props;
-    const isPeak = payload.hour === peakHour;
+const CustomLabel = (props: any) => {
+    const { x, y, value, payload, peakHour } = props;
+    if (!value || value === 0) return null;
+
+    const hour: string = payload?.hour ?? "";
+    const isPeak = hour === peakHour;
+
     return (
-        <Dot
-            cx={cx}
-            cy={cy}
-            r={4}
-            fill={isPeak ? "#ef4444" : "#175EFA"}
-            stroke={isPeak ? "#fff" : "none"}
-            strokeWidth={isPeak ? 2 : 0}
-        />
+        <text
+            x={x}
+            y={y - 12}
+            textAnchor="middle"
+            fontSize={12}
+            fontWeight={isPeak ? 700 : 400}
+        >
+            {value}
+        </text>
+    );
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const CustomTooltip = ({ active, payload }: any) => {
+    if (!active || !payload?.length) return null;
+    const { hour, cups } = payload[0].payload;
+    return (
+        <div className="bg-white border border-gray-100 rounded-lg shadow-md px-3 py-2 text-xs">
+            <p className="font-semibold text-gray-700">{hour}</p>
+            <p className="text-blue-600 font-bold">{cups} cups</p>
+        </div>
     );
 };
 
 export default function MobileHourlySales() {
-    // const { selectedStoreId } = useStore();
-    const router = useRouter();
+    const { selectedStoreId, selectedStore, setIsPickerOpen } = useStore();
     const searchParams = useSearchParams();
     const { url } = useTenantSlug();
-
-    const { selectedStoreId, selectedStore, setIsPickerOpen } = useStore();
+    const scrollRef = useRef<HTMLDivElement>(null);
 
     const [selectedDate, setSelectedDate] = useState(
         searchParams.get("date") || formatDateForInput(new Date()),
@@ -76,14 +72,37 @@ export default function MobileHourlySales() {
         selectedDate,
     );
 
-    const summaryStats = useMemo(() => {
-        const totalCups = hourlySales.reduce((sum, item) => sum + item.cups, 0);
-        const peakHour = hourlySales.reduce(
+    const peakHour = useMemo(() => {
+        return hourlySales.reduce(
             (max, item) => (item.cups > max.cups ? item : max),
             { hour: "N/A", cups: 0 },
         );
-        return { totalCups, peakHour };
     }, [hourlySales]);
+
+    const totalCups = useMemo(() => {
+        return hourlySales.reduce((sum, item) => sum + item.cups, 0);
+    }, [hourlySales]);
+
+    const peakIndex = useMemo(() => {
+        return hourlySales.findIndex((d) => d.hour === peakHour.hour);
+    }, [hourlySales, peakHour]);
+
+    const slotWidth = 80;
+    const chartWidth = Math.max(hourlySales.length * slotWidth, 300);
+
+    // ✅ Auto-scroll to center the peak whenever data changes
+    useEffect(() => {
+        if (!scrollRef.current || peakIndex === -1) return;
+
+        const containerWidth = scrollRef.current.clientWidth;
+        const peakPixel = peakIndex * slotWidth + slotWidth / 2;
+        const scrollTo = peakPixel - containerWidth / 2;
+
+        scrollRef.current.scrollTo({
+            left: Math.max(0, scrollTo),
+            behavior: "smooth",
+        });
+    }, [peakIndex, hourlySales]);
 
     if (salesLoading) {
         return (
@@ -99,6 +118,7 @@ export default function MobileHourlySales() {
 
     return (
         <div className="space-y-4">
+            {/* Header */}
             <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-semibold tracking-tight text-gray-900">
                     Daily Chart
@@ -106,7 +126,7 @@ export default function MobileHourlySales() {
                 {selectedStore && (
                     <button
                         onClick={() => setIsPickerOpen(true)}
-                        className="flex items-center mt-1 gap-0.5"
+                        className="flex items-center mt-1 gap-0.5 active:scale-95"
                     >
                         <p className="text-lg text-blue-600/90 font-bold">
                             {selectedStore.name}
@@ -142,112 +162,123 @@ export default function MobileHourlySales() {
             </div>
 
             {/* Chart */}
-            <Card className="py-4 gap-4 [&>*]:px-4">
-                <CardHeader>
-                    <CardTitle>Hourly Sales</CardTitle>
-                    <CardDescription>
-                        Cup sales throughout the day
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="px-0! ml-[-10px]">
-                    {hourlySales.length === 0 ? (
-                        <div className="h-[300px] flex items-center justify-center text-gray-500">
-                            No sales data for this date
-                        </div>
-                    ) : (
-                        <ChartContainer config={chartConfig}>
-                            <AreaChart
-                                accessibilityLayer
-                                data={hourlySales}
-                                margin={{
-                                    top: 20,
-                                    right: 20,
-                                    bottom: 20,
-                                    left: 0,
-                                }}
+            <div className="bg-white rounded-xl shadow-sm p-4">
+                <div className="flex items-start justify-between mb-3">
+                    <div>
+                        <h3 className="font-semibold text-gray-800 text-lg">
+                            Hourly Sales
+                        </h3>
+                        <p className="text-sm text-gray-400">
+                            Cup sales throughout the day
+                        </p>
+                    </div>
+                    <div className="text-right">
+                        <p className="text-xs text-gray-800">Total</p>
+                        <p className="text-2xl font-bold text-blue-600">
+                            {totalCups}
+                        </p>
+                    </div>
+                </div>
+                {hourlySales.length === 0 ? (
+                    <div className="h-[200px] flex items-center justify-center text-gray-500 text-sm">
+                        No sales data for this date
+                    </div>
+                ) : (
+                    <div
+                        ref={scrollRef}
+                        className="overflow-x-auto no-scrollbar"
+                        style={{
+                            scrollbarWidth: "none",
+                            msOverflowStyle: "none",
+                        }}
+                    >
+                        <div style={{ width: chartWidth }}>
+                            <ChartContainer
+                                config={chartConfig}
+                                style={{ height: 200, width: chartWidth }}
                             >
-                                <defs>
-                                    <linearGradient
-                                        id="fillCups"
-                                        x1="0"
-                                        y1="0"
-                                        x2="0"
-                                        y2="1"
-                                    >
-                                        <stop
-                                            offset="5%"
-                                            stopColor="var(--color-cups)"
-                                            stopOpacity={0.8}
-                                        />
-                                        <stop
-                                            offset="95%"
-                                            stopColor="var(--color-cups)"
-                                            stopOpacity={0.1}
-                                        />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid vertical={false} />
-                                <XAxis
-                                    dataKey="hour"
-                                    tickLine={false}
-                                    tickMargin={10}
-                                    axisLine={false}
-                                />
-                                <YAxis
-                                    allowDecimals={false}
-                                    tickLine={false}
-                                    axisLine={false}
-                                    tickMargin={10}
-                                />
-                                {summaryStats.peakHour.hour !== "N/A" && (
-                                    <ReferenceLine
-                                        x={summaryStats.peakHour.hour}
-                                        stroke="#ef4444"
-                                        strokeDasharray="3 3"
-                                        strokeWidth={1.5}
-                                    />
-                                )}
-                                <ChartTooltip
-                                    cursor={false}
-                                    content={<ChartTooltipContent />}
-                                />
-                                <Area
-                                    dataKey="cups"
-                                    type="linear"
-                                    fill="url(#fillCups)"
-                                    fillOpacity={0.4}
-                                    stroke="var(--color-cups)"
-                                    strokeWidth={2}
-                                    dot={(props) => {
-                                        const { key, ...dotProps } = props;
-                                        return (
-                                            <CustomDot
-                                                key={key}
-                                                {...dotProps}
-                                                peakHour={
-                                                    summaryStats.peakHour.hour
-                                                }
-                                            />
-                                        );
+                                <AreaChart
+                                    width={chartWidth}
+                                    height={200}
+                                    data={hourlySales}
+                                    margin={{
+                                        top: 20,
+                                        right: 16,
+                                        bottom: 0,
+                                        left: 16,
                                     }}
-                                />
-                            </AreaChart>
-                        </ChartContainer>
-                    )}
-                </CardContent>
-                {hourlySales.length > 0 && (
-                    <CardFooter className="flex-col items-start gap-2 text-sm">
-                        <div className="flex gap-2 leading-none font-medium">
-                            Peak hour: {summaryStats.peakHour.hour} (
-                            {summaryStats.peakHour.cups} cups)
-                            <TrendingUp className="h-4 w-4" />
+                                >
+                                    <defs>
+                                        <linearGradient
+                                            id="fillCupsHourly"
+                                            x1="0"
+                                            y1="0"
+                                            x2="0"
+                                            y2="1"
+                                        >
+                                            <stop
+                                                offset="5%"
+                                                stopColor="#175EFA"
+                                                stopOpacity={0.5}
+                                            />
+                                            <stop
+                                                offset="95%"
+                                                stopColor="#175EFA"
+                                                stopOpacity={0}
+                                            />
+                                        </linearGradient>
+                                    </defs>
+                                    {hourlySales.map((entry) => (
+                                        <ReferenceLine
+                                            key={entry.hour}
+                                            x={entry.hour}
+                                            stroke="#e5e7eb"
+                                            strokeDasharray="3 3"
+                                            strokeWidth={1}
+                                        />
+                                    ))}
+                                    <XAxis
+                                        dataKey="hour"
+                                        tickLine={false}
+                                        axisLine={false}
+                                        tick={{ fontSize: 12, fill: "#9ca3af" }}
+                                        tickMargin={6}
+                                        interval={0}
+                                    />
+                                    <Tooltip
+                                        content={<CustomTooltip />}
+                                        cursor={{
+                                            stroke: "#175EFA",
+                                            strokeWidth: 1,
+                                            strokeDasharray: "3 3",
+                                        }}
+                                    />
+                                    <Area
+                                        dataKey="cups"
+                                        type="step"
+                                        fill="url(#fillCupsHourly)"
+                                        fillOpacity={1}
+                                        stroke="#175EFA"
+                                        strokeWidth={3}
+                                        dot={false}
+                                    >
+                                        <LabelList
+                                            dataKey="cups"
+                                            position="top"
+                                            content={(props) => (
+                                                <CustomLabel
+                                                    {...props}
+                                                    peakHour={peakHour.hour}
+                                                />
+                                            )}
+                                        />
+                                    </Area>
+                                </AreaChart>
+                            </ChartContainer>
                         </div>
-                        <div className="text-muted-foreground leading-none">
-                            Total cups sold today: {summaryStats.totalCups}
-                        </div>
-                    </CardFooter>
+                    </div>
                 )}
-            </Card>
+            </div>
         </div>
     );
 }

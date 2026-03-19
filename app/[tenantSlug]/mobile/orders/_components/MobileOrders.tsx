@@ -102,20 +102,6 @@ export default function MobileOrders() {
                             Daily Summary
                         </h3>
                     </div>
-                    <button
-                        onClick={() => {
-                            const params = new URLSearchParams();
-                            params.set("date", selectedDate);
-                            params.set("storeId", selectedStoreId);
-                            router.push(
-                                `${url("/mobile/orders/chart")}?${params.toString()}`,
-                            );
-                        }}
-                        className="flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-md gap-1 text-xs font-medium cursor-pointer"
-                    >
-                        <BarChart4 size={14} />
-                        <span>Daily Chart</span>
-                    </button>
                 </div>
 
                 <div className="grid grid-cols-4 gap-2">

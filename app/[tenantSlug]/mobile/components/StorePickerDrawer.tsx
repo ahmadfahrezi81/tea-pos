@@ -48,7 +48,7 @@ export function StorePickerDrawer() {
 
             <Drawer.Portal>
                 <Drawer.Overlay className="fixed inset-0 bg-black/60 z-50" />
-                <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl px-6 pt-8 pb-10 focus:outline-none">
+                <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl px-6 py-8 focus:outline-none">
                     {/* <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-2" /> */}
 
                     <Drawer.Title className="text-xl font-bold text-gray-900  mb-4">
@@ -78,7 +78,7 @@ export function StorePickerDrawer() {
                                         {store.name}
                                     </span>
                                     <span
-                                        className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                                        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
                                             isSelected
                                                 ? "border-blue-500 bg-blue-500"
                                                 : "border-gray-300"

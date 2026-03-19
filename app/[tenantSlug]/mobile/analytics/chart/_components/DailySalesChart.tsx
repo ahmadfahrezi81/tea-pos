@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useRef, useEffect } from "react";
+import { useMemo, useRef, useEffect, useState } from "react";
 import useDailySales from "@/lib/hooks/analytics/useDailySales";
 import {
     Area,
@@ -10,7 +10,6 @@ import {
     LabelList,
 } from "recharts";
 import { ChartConfig, ChartContainer } from "@/components/ui/chart";
-import { SquareArrowOutUpRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTenantSlug } from "@/lib/tenant-url";
 
@@ -25,6 +24,7 @@ interface Props {
     storeId: string;
     month: string; // YYYY-MM
 }
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomLabel = (props: any) => {
     const { x, y, value, payload, peakDate } = props;
@@ -38,7 +38,7 @@ const CustomLabel = (props: any) => {
             x={x}
             y={y - 12}
             textAnchor="middle"
-            fontSize={10}
+            fontSize={12}
             fontWeight={isPeak ? 700 : 400}
         >
             {value}
@@ -58,13 +58,14 @@ const CustomTooltip = ({ active, payload }: any) => {
     );
 };
 
-export default function MiniDailySalesChart({ storeId, month }: Props) {
+export default function DailySalesChart({ storeId, month }: Props) {
     const { data: dailySales = [], isLoading } = useDailySales(storeId, month);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const router = useRouter();
     const { url } = useTenantSlug();
+    const [isScrolling, setIsScrolling] = useState(false);
 
-    // Map to chart-friendly format
     const chartData = useMemo(() => {
         return dailySales.map((item) => ({
             date: new Date(item.date + "T00:00:00").toLocaleDateString(
@@ -79,6 +80,16 @@ export default function MiniDailySalesChart({ storeId, month }: Props) {
         }));
     }, [dailySales]);
 
+    const totalCups = useMemo(() => {
+        return dailySales.reduce((sum, item) => sum + item.cups, 0);
+    }, [dailySales]);
+
+    const avgCups = useMemo(() => {
+        return dailySales.length > 0
+            ? Math.round(totalCups / dailySales.length)
+            : 0;
+    }, [dailySales, totalCups]);
+
     const peakDate = useMemo(() => {
         return dailySales.reduce(
             (max, item) => (item.cups > max.cups ? item : max),
@@ -90,10 +101,10 @@ export default function MiniDailySalesChart({ storeId, month }: Props) {
         return chartData.findIndex((d) => d.dateRaw === peakDate);
     }, [chartData, peakDate]);
 
-    const slotWidth = 75;
+    const slotWidth = 80;
     const chartWidth = Math.max(chartData.length * slotWidth, 300);
 
-    // ✅ Auto-scroll to center the peak whenever data changes
+    // ✅ Auto-scroll to peak on data change
     useEffect(() => {
         if (!scrollRef.current || peakIndex === -1) return;
 
@@ -107,14 +118,39 @@ export default function MiniDailySalesChart({ storeId, month }: Props) {
         });
     }, [peakIndex, chartData]);
 
+    // ✅ Detect scrolling — switch label, reset after 800ms of no scrolling
+    useEffect(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+
+        const handleScroll = () => {
+            setIsScrolling(true);
+
+            if (scrollTimeoutRef.current) {
+                clearTimeout(scrollTimeoutRef.current);
+            }
+
+            scrollTimeoutRef.current = setTimeout(() => {
+                setIsScrolling(false);
+            }, 800);
+        };
+
+        el.addEventListener("scroll", handleScroll);
+        return () => {
+            el.removeEventListener("scroll", handleScroll);
+            if (scrollTimeoutRef.current)
+                clearTimeout(scrollTimeoutRef.current);
+        };
+    }, []);
+
     if (isLoading) {
         return (
             <div
-                className="mt-3 border-t border-gray-100 bg-gray-200 rounded-xl animate-pulse relative"
-                style={{ height: 170 }}
+                className="bg-gray-200 rounded-xl animate-pulse relative"
+                style={{ height: 220 }}
             >
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-6 h-6 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
                 </div>
             </div>
         );
@@ -123,21 +159,28 @@ export default function MiniDailySalesChart({ storeId, month }: Props) {
     if (chartData.length === 0) return null;
 
     return (
-        <div className="mt-3 border-t border-gray-100 bg-white rounded-xl shadow-sm p-2 pb-1">
-            <div className="flex justify-end mb-1">
-                <button
-                    onClick={() => {
-                        const params = new URLSearchParams();
-                        params.set("month", month);
-                        params.set("storeId", storeId);
-                        router.push(
-                            `${url("/mobile/analytics/chart")}?${params.toString()}`,
-                        );
-                    }}
-                    className="bg-blue-600 transition-colors p-1 rounded active:scale-90"
+        <div className="bg-white rounded-xl shadow-sm p-4">
+            <div className="flex items-start justify-between mb-3">
+                <div>
+                    <h3 className="font-semibold text-gray-800 text-lg">
+                        Daily Sales
+                    </h3>
+                    <p className="text-sm text-gray-400">
+                        Cup sales throughout the month
+                    </p>
+                </div>
+                {/* ✅ Toggles between Total and Avg while scrolling */}
+                <div
+                    className="text-right transition-all duration-300"
+                    key={isScrolling ? "avg" : "total"}
                 >
-                    <SquareArrowOutUpRight size={18} className="text-white" />
-                </button>
+                    <p className="text-xs text-gray-800">
+                        {isScrolling ? "Avg / day" : "Total"}
+                    </p>
+                    <p className="text-2xl font-bold text-blue-600">
+                        {isScrolling ? avgCups : totalCups}
+                    </p>
+                </div>
             </div>
             <div
                 ref={scrollRef}
@@ -150,17 +193,17 @@ export default function MiniDailySalesChart({ storeId, month }: Props) {
                 <div style={{ width: chartWidth }}>
                     <ChartContainer
                         config={chartConfig}
-                        style={{ height: 130, width: chartWidth }}
+                        style={{ height: 220, width: chartWidth }}
                     >
                         <AreaChart
                             width={chartWidth}
-                            height={130}
+                            height={220}
                             data={chartData}
                             margin={{ top: 20, right: 16, bottom: 0, left: 16 }}
                         >
                             <defs>
                                 <linearGradient
-                                    id="fillCupsMiniDaily"
+                                    id="fillCupsMiniDailyV2"
                                     x1="0"
                                     y1="0"
                                     x2="0"
@@ -191,7 +234,7 @@ export default function MiniDailySalesChart({ storeId, month }: Props) {
                                 dataKey="date"
                                 tickLine={false}
                                 axisLine={false}
-                                tick={{ fontSize: 9, fill: "#9ca3af" }}
+                                tick={{ fontSize: 12, fill: "#9ca3af" }}
                                 tickMargin={6}
                                 interval={0}
                             />
@@ -206,10 +249,10 @@ export default function MiniDailySalesChart({ storeId, month }: Props) {
                             <Area
                                 dataKey="cups"
                                 type="step"
-                                fill="url(#fillCupsMiniDaily)"
+                                fill="url(#fillCupsMiniDailyV2)"
                                 fillOpacity={1}
                                 stroke="#175EFA"
-                                strokeWidth={2.5}
+                                strokeWidth={3}
                                 dot={false}
                             >
                                 <LabelList

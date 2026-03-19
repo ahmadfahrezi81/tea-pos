@@ -1249,20 +1249,6 @@ export default function MobileAnalytics() {
                                 Monthly Summary
                             </h3>
                         </div>
-                        <button
-                            onClick={() => {
-                                const params = new URLSearchParams();
-                                params.set("month", selectedMonth);
-                                params.set("storeId", selectedStoreId);
-                                router.push(
-                                    `${url("/mobile/analytics/chart")}?${params.toString()}`,
-                                );
-                            }}
-                            className="flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-md gap-1 text-xs font-medium cursor-pointer"
-                        >
-                            <BarChart4 size={14} />
-                            <span>Monthly Chart</span>
-                        </button>
                     </div>
                     <div className="grid grid-cols-4 gap-2">
                         <div className="text-center">

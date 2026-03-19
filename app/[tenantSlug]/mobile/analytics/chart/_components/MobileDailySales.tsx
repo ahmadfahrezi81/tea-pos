@@ -37,6 +37,7 @@ import useDailySales from "@/lib/hooks/analytics/useDailySales";
 import useProductSales from "@/lib/hooks/analytics/useProductSales";
 import useDayOfWeekSales from "@/lib/hooks/analytics/useDayOfWeekSales";
 import { useStore } from "@/lib/context/StoreContext";
+import DailySalesChart from "./DailySalesChart";
 
 const formatMonthForInput = (date: Date) => {
     const year = date.getFullYear();
@@ -229,120 +230,7 @@ export default function MobileDailySales() {
                 />
             </div>
 
-            {/* Daily Sales Chart */}
-            <Card className="py-4 gap-4 [&>*]:px-4">
-                <CardHeader>
-                    <CardTitle>Daily Sales</CardTitle>
-                    <CardDescription>
-                        Cup sales throughout the month
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="px-0! ml-[-5px] mb-[-40px]">
-                    {dailyChartData.length === 0 ? (
-                        <div className="h-[300px] flex items-center justify-center text-gray-500">
-                            No sales data for this month
-                        </div>
-                    ) : (
-                        <ChartContainer config={dailySalesChartConfig}>
-                            <AreaChart
-                                accessibilityLayer
-                                data={dailyChartData}
-                                margin={{
-                                    top: 20,
-                                    right: 20,
-                                    bottom: 20,
-                                    left: 0,
-                                }}
-                            >
-                                <defs>
-                                    <linearGradient
-                                        id="fillCups"
-                                        x1="0"
-                                        y1="0"
-                                        x2="0"
-                                        y2="1"
-                                    >
-                                        <stop
-                                            offset="5%"
-                                            stopColor="var(--color-cups)"
-                                            stopOpacity={0.8}
-                                        />
-                                        <stop
-                                            offset="95%"
-                                            stopColor="var(--color-cups)"
-                                            stopOpacity={0.1}
-                                        />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid vertical={false} />
-                                <XAxis
-                                    dataKey="date"
-                                    tickLine={false}
-                                    tickMargin={10}
-                                    axisLine={false}
-                                    angle={-45}
-                                    textAnchor="end"
-                                    height={80}
-                                />
-                                <YAxis
-                                    tickLine={false}
-                                    axisLine={false}
-                                    tickMargin={10}
-                                />
-                                {dailySummaryStats.peakDay.date !== "N/A" && (
-                                    <ReferenceLine
-                                        x={
-                                            dailySummaryStats.peakDay
-                                                .dateFormatted
-                                        }
-                                        stroke="#ef4444"
-                                        strokeDasharray="3 3"
-                                        strokeWidth={1.5}
-                                    />
-                                )}
-                                <ChartTooltip
-                                    cursor={false}
-                                    content={<ChartTooltipContent />}
-                                />
-                                <Area
-                                    dataKey="cups"
-                                    type="linear"
-                                    fill="url(#fillCups)"
-                                    fillOpacity={0.4}
-                                    stroke="var(--color-cups)"
-                                    strokeWidth={2}
-                                    dot={(props) => {
-                                        const { key, ...dotProps } = props;
-                                        return (
-                                            <CustomDot
-                                                key={key}
-                                                {...dotProps}
-                                                peakDate={
-                                                    dailySummaryStats.peakDay
-                                                        .date
-                                                }
-                                            />
-                                        );
-                                    }}
-                                />
-                            </AreaChart>
-                        </ChartContainer>
-                    )}
-                </CardContent>
-                {dailyChartData.length > 0 && (
-                    <CardFooter className="flex-col items-start gap-2 text-sm">
-                        <div className="flex gap-2 leading-none font-medium">
-                            Peak day: {dailySummaryStats.peakDay.dateFormatted}{" "}
-                            ({dailySummaryStats.peakDay.cups} cups)
-                            <TrendingUp className="h-4 w-4" />
-                        </div>
-                        <div className="text-muted-foreground leading-none">
-                            Total: {dailySummaryStats.totalCups} cups | Avg:{" "}
-                            {dailySummaryStats.avgCups} cups/day
-                        </div>
-                    </CardFooter>
-                )}
-            </Card>
+            <DailySalesChart storeId={selectedStoreId} month={selectedMonth} />
 
             {/* Day of Week Chart */}
             <Card className="py-4 gap-4 [&>*]:px-4">
