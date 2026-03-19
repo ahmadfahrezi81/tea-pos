@@ -7,6 +7,7 @@ import CopyableField from "@/components/mobile/shared/CopyableField";
 import { useRouter } from "next/navigation";
 import { useTenantSlug } from "@/lib/tenant-url";
 import { useStore } from "@/lib/context/StoreContext";
+import MiniHourlySalesChart from "./MiniHourlySalesChart";
 
 const formatMobileDate = (dateString: string) => {
     const date = new Date(dateString + "T00:00:00");
@@ -159,6 +160,11 @@ export default function MobileOrders() {
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 />
             </div>
+
+            <MiniHourlySalesChart
+                storeId={selectedStoreId}
+                date={selectedDate}
+            />
 
             {/* Orders List */}
             {ordersWithNumbers.length === 0 ? (

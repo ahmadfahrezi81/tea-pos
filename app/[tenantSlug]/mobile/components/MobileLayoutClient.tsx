@@ -299,7 +299,7 @@ export default function MobileLayoutClient({
                                 {selectedStore && !isProfilePage && (
                                     <button
                                         onClick={() => setIsPickerOpen(true)}
-                                        className="flex items-center mt-1.5"
+                                        className="flex items-center mt-1.5 active:scale-98"
                                     >
                                         <p
                                             className={`text-xl font-semibold ${accent}`}
