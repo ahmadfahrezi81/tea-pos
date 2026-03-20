@@ -13,18 +13,13 @@ import { ChartConfig, ChartContainer } from "@/components/ui/chart";
 import { SquareArrowOutUpRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTenantSlug } from "@/lib/tenant-url";
-
-const chartConfig = {
-    cups: {
-        label: "Cups Sold",
-        color: "#175EFA",
-    },
-} satisfies ChartConfig;
+import { useBrandColor } from "@/lib/hooks/useBrandColor";
 
 interface Props {
     storeId: string;
     month: string; // YYYY-MM
 }
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomLabel = (props: any) => {
     const { x, y, value, payload, peakDate } = props;
@@ -53,7 +48,7 @@ const CustomTooltip = ({ active, payload }: any) => {
     return (
         <div className="bg-white border border-gray-100 rounded-lg shadow-md px-3 py-2 text-xs">
             <p className="font-semibold text-gray-700">{date}</p>
-            <p className="text-blue-600 font-bold">{cups} cups</p>
+            <p className="text-brand font-bold">{cups} cups</p>
         </div>
     );
 };
@@ -63,8 +58,19 @@ export default function MiniDailySalesChart({ storeId, month }: Props) {
     const scrollRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
     const { url } = useTenantSlug();
+    const brandColor = useBrandColor();
 
-    // Map to chart-friendly format
+    const chartConfig = useMemo(
+        () =>
+            ({
+                cups: {
+                    label: "Cups Sold",
+                    color: brandColor,
+                },
+            }) satisfies ChartConfig,
+        [brandColor],
+    );
+
     const chartData = useMemo(() => {
         return dailySales.map((item) => ({
             date: new Date(item.date + "T00:00:00").toLocaleDateString(
@@ -93,7 +99,6 @@ export default function MiniDailySalesChart({ storeId, month }: Props) {
     const slotWidth = 75;
     const chartWidth = Math.max(chartData.length * slotWidth, 300);
 
-    // ✅ Auto-scroll to center the peak whenever data changes
     useEffect(() => {
         if (!scrollRef.current || peakIndex === -1) return;
 
@@ -114,7 +119,7 @@ export default function MiniDailySalesChart({ storeId, month }: Props) {
                 style={{ height: 170 }}
             >
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-6 h-6 border-2 border-brand border-t-transparent rounded-full animate-spin" />
                 </div>
             </div>
         );
@@ -134,7 +139,7 @@ export default function MiniDailySalesChart({ storeId, month }: Props) {
                             `${url("/mobile/analytics/chart")}?${params.toString()}`,
                         );
                     }}
-                    className="bg-blue-600 transition-colors p-1 rounded active:scale-90"
+                    className="bg-brand transition-colors p-1 rounded active:scale-90"
                 >
                     <SquareArrowOutUpRight size={18} className="text-white" />
                 </button>
@@ -168,12 +173,12 @@ export default function MiniDailySalesChart({ storeId, month }: Props) {
                                 >
                                     <stop
                                         offset="5%"
-                                        stopColor="#175EFA"
+                                        stopColor={brandColor}
                                         stopOpacity={0.5}
                                     />
                                     <stop
                                         offset="95%"
-                                        stopColor="#175EFA"
+                                        stopColor={brandColor}
                                         stopOpacity={0}
                                     />
                                 </linearGradient>
@@ -198,7 +203,7 @@ export default function MiniDailySalesChart({ storeId, month }: Props) {
                             <Tooltip
                                 content={<CustomTooltip />}
                                 cursor={{
-                                    stroke: "#175EFA",
+                                    stroke: brandColor,
                                     strokeWidth: 1,
                                     strokeDasharray: "3 3",
                                 }}
@@ -208,7 +213,7 @@ export default function MiniDailySalesChart({ storeId, month }: Props) {
                                 type="step"
                                 fill="url(#fillCupsMiniDaily)"
                                 fillOpacity={1}
-                                stroke="#175EFA"
+                                stroke={brandColor}
                                 strokeWidth={2.5}
                                 dot={false}
                             >

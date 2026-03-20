@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 
 type FastOrderModeContextType = {
     fastOrderMode: boolean;
@@ -19,6 +19,10 @@ export function FastOrderModeProvider({
         if (typeof window === "undefined") return false;
         return localStorage.getItem("fastOrderMode") === "true";
     });
+
+    useEffect(() => {
+        document.documentElement.dataset.fastOrder = String(fastOrderMode);
+    }, [fastOrderMode]);
 
     const toggleFastOrderMode = () => {
         setFastOrderMode((prev) => {

@@ -190,7 +190,7 @@ export default function MobilePOS() {
                             </div>
                         </div>
                     )}
-                    <div className="text-center text-blue-500 text-xs font-medium py-1.5 rounded-lg border-blue-500 border-1">
+                    <div className="text-center text-brand text-xs font-medium py-1.5 rounded-lg border-brand border">
                         Tap to add
                     </div>
                 </div>
@@ -204,7 +204,7 @@ export default function MobilePOS() {
                 className="flex flex-col items-center justify-center"
                 style={{ minHeight: "calc(100vh - 200px)" }}
             >
-                <div className="w-10 h-10 border-3 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                <div className="w-10 h-10 border-3 border-brand border-t-transparent rounded-full animate-spin" />
                 <p className="mt-4 text-gray-600 text-sm">Loading POS...</p>
             </div>
         );

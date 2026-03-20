@@ -13,13 +13,7 @@ import { ChartConfig, ChartContainer } from "@/components/ui/chart";
 import { SquareArrowOutUpRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTenantSlug } from "@/lib/tenant-url";
-
-const chartConfig = {
-    cups: {
-        label: "Cups Sold",
-        color: "#175EFA",
-    },
-} satisfies ChartConfig;
+import { useBrandColor } from "@/lib/hooks/useBrandColor";
 
 interface Props {
     storeId: string;
@@ -54,7 +48,7 @@ const CustomTooltip = ({ active, payload }: any) => {
     return (
         <div className="bg-white border border-gray-100 rounded-lg shadow-md px-3 py-2 text-xs">
             <p className="font-semibold text-gray-700">{hour}</p>
-            <p className="text-blue-600 font-bold">{cups} cups</p>
+            <p className="text-brand font-bold">{cups} cups</p>
         </div>
     );
 };
@@ -62,9 +56,21 @@ const CustomTooltip = ({ active, payload }: any) => {
 export default function MiniHourlySalesChart({ storeId, date }: Props) {
     const { data: hourlySales = [], isLoading } = useHourlySales(storeId, date);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const brandColor = useBrandColor();
 
     const router = useRouter();
     const { url } = useTenantSlug();
+
+    const chartConfig = useMemo(
+        () =>
+            ({
+                cups: {
+                    label: "Cups Sold",
+                    color: brandColor,
+                },
+            }) satisfies ChartConfig,
+        [brandColor],
+    );
 
     const peakHour = useMemo(() => {
         return hourlySales.reduce(
@@ -80,7 +86,6 @@ export default function MiniHourlySalesChart({ storeId, date }: Props) {
     const slotWidth = 75;
     const chartWidth = Math.max(hourlySales.length * slotWidth, 300);
 
-    // ✅ Auto-scroll to center the peak whenever data changes
     useEffect(() => {
         if (!scrollRef.current || peakIndex === -1) return;
 
@@ -101,7 +106,7 @@ export default function MiniHourlySalesChart({ storeId, date }: Props) {
                 style={{ height: 170 }}
             >
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-6 h-6 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-6 h-6 border-3 border-brand border-t-transparent rounded-full animate-spin" />
                 </div>
             </div>
         );
@@ -121,12 +126,11 @@ export default function MiniHourlySalesChart({ storeId, date }: Props) {
                             `${url("/mobile/orders/chart")}?${params.toString()}`,
                         );
                     }}
-                    className="bg-blue-600 transition-colors p-1 rounded active:scale-90"
+                    className="bg-brand transition-colors p-1 rounded active:scale-90"
                 >
                     <SquareArrowOutUpRight size={18} className="text-white" />
                 </button>
             </div>
-            {/* ref goes on the scrollable container */}
             <div
                 ref={scrollRef}
                 className="overflow-x-auto no-scrollbar"
@@ -156,12 +160,12 @@ export default function MiniHourlySalesChart({ storeId, date }: Props) {
                                 >
                                     <stop
                                         offset="5%"
-                                        stopColor="#175EFA"
+                                        stopColor={brandColor}
                                         stopOpacity={0.5}
                                     />
                                     <stop
                                         offset="95%"
-                                        stopColor="#175EFA"
+                                        stopColor={brandColor}
                                         stopOpacity={0}
                                     />
                                 </linearGradient>
@@ -186,7 +190,7 @@ export default function MiniHourlySalesChart({ storeId, date }: Props) {
                             <Tooltip
                                 content={<CustomTooltip />}
                                 cursor={{
-                                    stroke: "#175EFA",
+                                    stroke: brandColor,
                                     strokeWidth: 1,
                                     strokeDasharray: "3 3",
                                 }}
@@ -196,7 +200,7 @@ export default function MiniHourlySalesChart({ storeId, date }: Props) {
                                 type="step"
                                 fill="url(#fillCupsMini)"
                                 fillOpacity={1}
-                                stroke="#175EFA"
+                                stroke={brandColor}
                                 strokeWidth={2.5}
                                 dot={false}
                             >

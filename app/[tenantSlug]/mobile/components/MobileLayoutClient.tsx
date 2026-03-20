@@ -18,7 +18,6 @@ import VersionInfo from "@/components/shared/VersionInfo";
 import { useTenantSlug } from "@/lib/tenant-url";
 import { useStore } from "@/lib/context/StoreContext";
 import { StorePickerDrawer } from "./StorePickerDrawer";
-import { useFastOrderMode } from "@/lib/context/FastOrderModeContext";
 
 export interface Assignment {
     user_id: string;
@@ -44,7 +43,6 @@ export default function MobileLayoutClient({
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     const { url } = useTenantSlug();
-    const { fastOrderMode } = useFastOrderMode();
 
     const {
         profile,
@@ -64,14 +62,6 @@ export default function MobileLayoutClient({
     );
 
     const { selectedStore, setIsPickerOpen, isPickerOpen } = useStore();
-
-    // Accent color helpers
-    const accent = fastOrderMode ? "text-rose-600" : "text-blue-600";
-    const accentBg = fastOrderMode ? "bg-rose-600" : "bg-blue-600";
-    const accentBgLight = fastOrderMode ? "bg-rose-50" : "bg-blue-50";
-    const accentHover = fastOrderMode
-        ? "hover:text-rose-500"
-        : "hover:text-blue-500";
 
     // Restore scroll position when drawer closes
     useEffect(() => {
@@ -201,7 +191,7 @@ export default function MobileLayoutClient({
                         <VersionInfo />
                     </div>
                     {authRetryCount > 0 && (
-                        <div className="mt-2 text-xs text-blue-600">
+                        <div className="mt-2 text-xs text-brand">
                             Connecting... ({authRetryCount}/3)
                         </div>
                     )}
@@ -233,7 +223,7 @@ export default function MobileLayoutClient({
                     <div className="flex gap-3 justify-center">
                         <button
                             onClick={() => window.location.reload()}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium"
+                            className="px-4 py-2 bg-brand text-white rounded-lg text-sm font-medium"
                         >
                             Refresh Page
                         </button>
@@ -301,15 +291,13 @@ export default function MobileLayoutClient({
                                         onClick={() => setIsPickerOpen(true)}
                                         className="flex items-center mt-1.5 active:scale-98"
                                     >
-                                        <p
-                                            className={`text-xl font-semibold ${accent}`}
-                                        >
+                                        <p className="text-xl font-semibold text-brand">
                                             {selectedStore.name}
                                         </p>
                                         <ChevronsUpDown
                                             size={16}
                                             strokeWidth={3}
-                                            className={accent}
+                                            className="text-brand"
                                         />
                                     </button>
                                 )}
@@ -348,8 +336,8 @@ export default function MobileLayoutClient({
                                 onClick={() => handleNavClick(tab.path)}
                                 className={`flex-1 py-3 px-4 flex flex-col items-center space-y-1 relative transition-all duration-75 active:scale-95 ${
                                     isActive
-                                        ? `${accent} ${accentBgLight}`
-                                        : `text-gray-600 ${accentHover}`
+                                        ? "text-brand bg-brand/5"
+                                        : "text-gray-600 hover:text-brand"
                                 }`}
                             >
                                 <Icon
@@ -360,9 +348,7 @@ export default function MobileLayoutClient({
                                     {tab.label}
                                 </span>
                                 {isActive && (
-                                    <div
-                                        className={`absolute top-0 left-1/2 transform -translate-x-1/2 w-8 h-0.5 ${accentBg} rounded-b-full transition-all duration-200`}
-                                    />
+                                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-brand rounded-b-full transition-all duration-200" />
                                 )}
                             </button>
                         );

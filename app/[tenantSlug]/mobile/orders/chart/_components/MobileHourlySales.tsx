@@ -1,7 +1,7 @@
 "use client";
 import { useState, useMemo, useRef, useEffect } from "react";
 import { CalendarDays, ChevronsUpDown } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import {
     Area,
     AreaChart,
@@ -14,15 +14,9 @@ import { ChartConfig, ChartContainer } from "@/components/ui/chart";
 import useHourlySales from "@/lib/hooks/analytics/useHourlySales";
 import { useTenantSlug } from "@/lib/tenant-url";
 import { useStore } from "@/lib/context/StoreContext";
+import { useBrandColor } from "@/lib/hooks/useBrandColor";
 
 const formatDateForInput = (date: Date) => date.toISOString().split("T")[0];
-
-const chartConfig = {
-    cups: {
-        label: "Cups Sold",
-        color: "#175EFA",
-    },
-} satisfies ChartConfig;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomLabel = (props: any) => {
@@ -52,7 +46,7 @@ const CustomTooltip = ({ active, payload }: any) => {
     return (
         <div className="bg-white border border-gray-100 rounded-lg shadow-md px-3 py-2 text-xs">
             <p className="font-semibold text-gray-700">{hour}</p>
-            <p className="text-blue-600 font-bold">{cups} cups</p>
+            <p className="text-brand font-bold">{cups} cups</p>
         </div>
     );
 };
@@ -62,9 +56,21 @@ export default function MobileHourlySales() {
     const searchParams = useSearchParams();
     const { url } = useTenantSlug();
     const scrollRef = useRef<HTMLDivElement>(null);
+    const brandColor = useBrandColor();
 
     const [selectedDate, setSelectedDate] = useState(
         searchParams.get("date") || formatDateForInput(new Date()),
+    );
+
+    const chartConfig = useMemo(
+        () =>
+            ({
+                cups: {
+                    label: "Cups Sold",
+                    color: brandColor,
+                },
+            }) satisfies ChartConfig,
+        [brandColor],
     );
 
     const { data: hourlySales = [], isLoading: salesLoading } = useHourlySales(
@@ -90,7 +96,6 @@ export default function MobileHourlySales() {
     const slotWidth = 80;
     const chartWidth = Math.max(hourlySales.length * slotWidth, 300);
 
-    // ✅ Auto-scroll to center the peak whenever data changes
     useEffect(() => {
         if (!scrollRef.current || peakIndex === -1) return;
 
@@ -110,7 +115,7 @@ export default function MobileHourlySales() {
                 className="flex flex-col items-center justify-center"
                 style={{ minHeight: "calc(100vh - 200px)" }}
             >
-                <div className="w-10 h-10 border-3 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                <div className="w-10 h-10 border-3 border-brand border-t-transparent rounded-full animate-spin" />
                 <p className="mt-4 text-gray-600 text-sm">Loading Chart...</p>
             </div>
         );
@@ -128,13 +133,13 @@ export default function MobileHourlySales() {
                         onClick={() => setIsPickerOpen(true)}
                         className="flex items-center mt-1 gap-0.5 active:scale-95"
                     >
-                        <p className="text-lg text-blue-600/90 font-bold">
+                        <p className="text-lg text-brand font-bold">
                             {selectedStore.name}
                         </p>
                         <ChevronsUpDown
                             size={14}
                             strokeWidth={3}
-                            className="text-blue-600/90"
+                            className="text-brand"
                         />
                     </button>
                 )}
@@ -157,7 +162,7 @@ export default function MobileHourlySales() {
                                 : newValue,
                         );
                     }}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand/90 focus:outline-none"
                 />
             </div>
 
@@ -174,7 +179,7 @@ export default function MobileHourlySales() {
                     </div>
                     <div className="text-right">
                         <p className="text-xs text-gray-800">Total</p>
-                        <p className="text-2xl font-bold text-blue-600">
+                        <p className="text-2xl font-bold text-brand">
                             {totalCups}
                         </p>
                     </div>
@@ -218,12 +223,12 @@ export default function MobileHourlySales() {
                                         >
                                             <stop
                                                 offset="5%"
-                                                stopColor="#175EFA"
+                                                stopColor={brandColor}
                                                 stopOpacity={0.5}
                                             />
                                             <stop
                                                 offset="95%"
-                                                stopColor="#175EFA"
+                                                stopColor={brandColor}
                                                 stopOpacity={0}
                                             />
                                         </linearGradient>
@@ -248,7 +253,7 @@ export default function MobileHourlySales() {
                                     <Tooltip
                                         content={<CustomTooltip />}
                                         cursor={{
-                                            stroke: "#175EFA",
+                                            stroke: brandColor,
                                             strokeWidth: 1,
                                             strokeDasharray: "3 3",
                                         }}
@@ -258,7 +263,7 @@ export default function MobileHourlySales() {
                                         type="step"
                                         fill="url(#fillCupsHourly)"
                                         fillOpacity={1}
-                                        stroke="#175EFA"
+                                        stroke={brandColor}
                                         strokeWidth={3}
                                         dot={false}
                                     >

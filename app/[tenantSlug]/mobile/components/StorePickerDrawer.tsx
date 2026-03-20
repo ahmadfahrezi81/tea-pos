@@ -80,7 +80,7 @@ export function StorePickerDrawer() {
                                     <span
                                         className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
                                             isSelected
-                                                ? "border-blue-500 bg-blue-500"
+                                                ? "border-brand/90 bg-brand/90"
                                                 : "border-gray-300"
                                         }`}
                                     >

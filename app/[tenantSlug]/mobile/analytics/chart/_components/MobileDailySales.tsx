@@ -32,13 +32,13 @@ export default function MobileDailySales() {
                         onClick={() => setIsPickerOpen(true)}
                         className="flex items-center mt-1 gap-0.5"
                     >
-                        <p className="text-lg text-blue-600/90 font-bold">
+                        <p className="text-lg text-brand/90 font-bold">
                             {selectedStore.name}
                         </p>
                         <ChevronsUpDown
                             size={14}
                             strokeWidth={3}
-                            className="text-blue-600/90"
+                            className="text-brand/90"
                         />
                     </button>
                 )}
@@ -61,7 +61,7 @@ export default function MobileDailySales() {
                                 : newValue,
                         );
                     }}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand/90 focus:outline-none"
                 />
             </div>
 
