@@ -1,6 +1,6 @@
 "use client";
 import { Drawer } from "vaul";
-import { Check, ChevronsUpDown, Store } from "lucide-react";
+import { Check, Store } from "lucide-react";
 import { useStore } from "@/lib/context/StoreContext";
 
 export function StorePickerDrawer() {
@@ -21,7 +21,6 @@ export function StorePickerDrawer() {
             open={isPickerOpen}
             onOpenChange={(open) => {
                 setIsPickerOpen(open);
-                // Fix scroll jump on close
                 if (!open) {
                     const scrollY = window.scrollY;
                     requestAnimationFrame(() => {
@@ -30,28 +29,10 @@ export function StorePickerDrawer() {
                 }
             }}
         >
-            <Drawer.Trigger asChild>
-                <button
-                    className={`w-full p-3 border rounded-lg text-left flex items-center justify-between ${
-                        assignedStores.length === 1
-                            ? "bg-gray-100 text-gray-500 cursor-not-allowed border-gray-200"
-                            : "border-gray-300 bg-white"
-                    }`}
-                    disabled={assignedStores.length === 1}
-                >
-                    <span>{selectedStore?.name ?? "Select Store"}</span>
-                    {assignedStores.length > 1 && (
-                        <ChevronsUpDown size={18} className="text-blue-500" />
-                    )}
-                </button>
-            </Drawer.Trigger>
-
             <Drawer.Portal>
                 <Drawer.Overlay className="fixed inset-0 bg-black/60 z-50" />
                 <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl px-6 py-8 focus:outline-none">
-                    {/* <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-2" /> */}
-
-                    <Drawer.Title className="text-xl font-bold text-gray-900  mb-4">
+                    <Drawer.Title className="text-xl font-bold text-gray-900 mb-4">
                         <Store
                             size={18}
                             className="inline text-gray-700 mb-1"

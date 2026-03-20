@@ -324,38 +324,40 @@ export default function MobileLayoutClient({
                 {children}
             </div>
 
-            <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
-                <div className="flex">
-                    {tabs.map((tab) => {
-                        const Icon = tab.icon;
-                        const isActive = tab.matchPaths.includes(currentPath);
+            {!isSubPage(currentPath) && (
+                <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
+                    <div className="flex">
+                        {tabs.map((tab) => {
+                            const Icon = tab.icon;
+                            const isActive =
+                                tab.matchPaths.includes(currentPath);
 
-                        return (
-                            <button
-                                key={tab.path}
-                                onClick={() => handleNavClick(tab.path)}
-                                className={`flex-1 py-3 px-4 flex flex-col items-center space-y-1 relative transition-all duration-75 active:scale-95 ${
-                                    isActive
-                                        ? "text-brand bg-brand/5"
-                                        : "text-gray-600 hover:text-brand"
-                                }`}
-                            >
-                                <Icon
-                                    size={20}
-                                    className="transition-transform duration-75"
-                                />
-                                <span className="text-xs font-medium transition-transform duration-75">
-                                    {tab.label}
-                                </span>
-                                {isActive && (
-                                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-brand rounded-b-full transition-all duration-200" />
-                                )}
-                            </button>
-                        );
-                    })}
-                </div>
-            </footer>
-
+                            return (
+                                <button
+                                    key={tab.path}
+                                    onClick={() => handleNavClick(tab.path)}
+                                    className={`flex-1 py-3 px-4 flex flex-col items-center space-y-1 relative transition-all duration-75 active:scale-95 ${
+                                        isActive
+                                            ? "text-brand bg-brand/5"
+                                            : "text-gray-600 hover:text-brand"
+                                    }`}
+                                >
+                                    <Icon
+                                        size={20}
+                                        className="transition-transform duration-75"
+                                    />
+                                    <span className="text-xs font-medium transition-transform duration-75">
+                                        {tab.label}
+                                    </span>
+                                    {isActive && (
+                                        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-brand rounded-b-full transition-all duration-200" />
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </footer>
+            )}
             <StorePickerDrawer />
         </div>
     );
