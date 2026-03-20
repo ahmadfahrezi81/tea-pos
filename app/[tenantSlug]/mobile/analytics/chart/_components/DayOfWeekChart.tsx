@@ -11,16 +11,7 @@ import {
     CartesianGrid,
 } from "recharts";
 import { ChartConfig, ChartContainer } from "@/components/ui/chart";
-
-const chartConfig = {
-    averageCups: {
-        label: "Avg Cups",
-        color: "#175EFA",
-    },
-    label: {
-        color: "var(--background)",
-    },
-} satisfies ChartConfig;
+import { useBrandColor } from "@/lib/hooks/useBrandColor";
 
 interface Props {
     storeId: string;
@@ -31,6 +22,21 @@ export default function DayOfWeekChart({ storeId, month }: Props) {
     const { data: dayOfWeekData, isLoading } = useDayOfWeekSales(
         storeId,
         month,
+    );
+    const brandColor = useBrandColor();
+
+    const chartConfig = useMemo(
+        () =>
+            ({
+                averageCups: {
+                    label: "Avg Cups",
+                    color: brandColor,
+                },
+                label: {
+                    color: "var(--background)",
+                },
+            }) satisfies ChartConfig,
+        [brandColor],
     );
 
     const dayOrder = [
@@ -52,6 +58,7 @@ export default function DayOfWeekChart({ storeId, month }: Props) {
             ),
         [dayOfWeekData],
     );
+
     const bestDay = useMemo(() => {
         return dayOfWeekChartData.reduce(
             (max, day) => (day.averageCups > max.averageCups ? day : max),
@@ -66,7 +73,7 @@ export default function DayOfWeekChart({ storeId, month }: Props) {
                 style={{ height: 372 }}
             >
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-6 h-6 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-6 h-6 border-3 border-brand border-t-transparent rounded-full animate-spin" />
                 </div>
             </div>
         );
@@ -85,7 +92,7 @@ export default function DayOfWeekChart({ storeId, month }: Props) {
                 </div>
                 <div className="text-right">
                     <p className="text-xs text-gray-800">Best day</p>
-                    <p className="text-2xl font-bold text-blue-600">
+                    <p className="text-2xl font-bold text-brand">
                         {bestDay?.dayOfWeek}
                     </p>
                 </div>
@@ -96,7 +103,7 @@ export default function DayOfWeekChart({ storeId, month }: Props) {
                     data={dayOfWeekChartData}
                     layout="vertical"
                     margin={{ right: 48 }}
-                    barSize={60} // increase this number for fatter bars
+                    barSize={60}
                 >
                     <CartesianGrid
                         horizontal={false}
@@ -121,12 +128,12 @@ export default function DayOfWeekChart({ storeId, month }: Props) {
                         >
                             <stop
                                 offset="5%"
-                                stopColor="#175EFA"
+                                stopColor={brandColor}
                                 stopOpacity={0.8}
                             />
                             <stop
                                 offset="95%"
-                                stopColor="#175EFA"
+                                stopColor={brandColor}
                                 stopOpacity={1}
                             />
                         </linearGradient>

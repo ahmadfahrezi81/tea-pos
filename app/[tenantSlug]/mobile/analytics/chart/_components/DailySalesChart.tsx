@@ -10,15 +10,7 @@ import {
     LabelList,
 } from "recharts";
 import { ChartConfig, ChartContainer } from "@/components/ui/chart";
-import { useRouter } from "next/navigation";
-import { useTenantSlug } from "@/lib/tenant-url";
-
-const chartConfig = {
-    cups: {
-        label: "Cups Sold",
-        color: "#175EFA",
-    },
-} satisfies ChartConfig;
+import { useBrandColor } from "@/lib/hooks/useBrandColor";
 
 interface Props {
     storeId: string;
@@ -53,7 +45,7 @@ const CustomTooltip = ({ active, payload }: any) => {
     return (
         <div className="bg-white border border-gray-100 rounded-lg shadow-md px-3 py-2 text-xs">
             <p className="font-semibold text-gray-700">{date}</p>
-            <p className="text-blue-600 font-bold">{cups} cups</p>
+            <p className="text-brand font-bold">{cups} cups</p>
         </div>
     );
 };
@@ -62,9 +54,19 @@ export default function DailySalesChart({ storeId, month }: Props) {
     const { data: dailySales = [], isLoading } = useDailySales(storeId, month);
     const scrollRef = useRef<HTMLDivElement>(null);
     const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const router = useRouter();
-    const { url } = useTenantSlug();
+    const brandColor = useBrandColor();
     const [isScrolling, setIsScrolling] = useState(false);
+
+    const chartConfig = useMemo(
+        () =>
+            ({
+                cups: {
+                    label: "Cups Sold",
+                    color: brandColor,
+                },
+            }) satisfies ChartConfig,
+        [brandColor],
+    );
 
     const chartData = useMemo(() => {
         return dailySales.map((item) => ({
@@ -104,7 +106,6 @@ export default function DailySalesChart({ storeId, month }: Props) {
     const slotWidth = 80;
     const chartWidth = Math.max(chartData.length * slotWidth, 300);
 
-    // ✅ Auto-scroll to peak on data change
     useEffect(() => {
         if (!scrollRef.current || peakIndex === -1) return;
 
@@ -118,7 +119,6 @@ export default function DailySalesChart({ storeId, month }: Props) {
         });
     }, [peakIndex, chartData]);
 
-    // ✅ Detect scrolling — switch label, reset after 800ms of no scrolling
     useEffect(() => {
         const el = scrollRef.current;
         if (!el) return;
@@ -150,7 +150,7 @@ export default function DailySalesChart({ storeId, month }: Props) {
                 style={{ height: 220 }}
             >
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-6 h-6 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-6 h-6 border-3 border-brand border-t-transparent rounded-full animate-spin" />
                 </div>
             </div>
         );
@@ -169,7 +169,6 @@ export default function DailySalesChart({ storeId, month }: Props) {
                         Cup sales throughout the month
                     </p>
                 </div>
-                {/* ✅ Toggles between Total and Avg while scrolling */}
                 <div
                     className="text-right transition-all duration-300"
                     key={isScrolling ? "avg" : "total"}
@@ -177,7 +176,7 @@ export default function DailySalesChart({ storeId, month }: Props) {
                     <p className="text-xs text-gray-800">
                         {isScrolling ? "Avg / day" : "Total"}
                     </p>
-                    <p className="text-2xl font-bold text-blue-600">
+                    <p className="text-2xl font-bold text-brand">
                         {isScrolling ? avgCups : totalCups}
                     </p>
                 </div>
@@ -211,12 +210,12 @@ export default function DailySalesChart({ storeId, month }: Props) {
                                 >
                                     <stop
                                         offset="5%"
-                                        stopColor="#175EFA"
+                                        stopColor={brandColor}
                                         stopOpacity={0.5}
                                     />
                                     <stop
                                         offset="95%"
-                                        stopColor="#175EFA"
+                                        stopColor={brandColor}
                                         stopOpacity={0}
                                     />
                                 </linearGradient>
@@ -241,7 +240,7 @@ export default function DailySalesChart({ storeId, month }: Props) {
                             <Tooltip
                                 content={<CustomTooltip />}
                                 cursor={{
-                                    stroke: "#175EFA",
+                                    stroke: brandColor,
                                     strokeWidth: 1,
                                     strokeDasharray: "3 3",
                                 }}
@@ -251,7 +250,7 @@ export default function DailySalesChart({ storeId, month }: Props) {
                                 type="step"
                                 fill="url(#fillCupsMiniDailyV2)"
                                 fillOpacity={1}
-                                stroke="#175EFA"
+                                stroke={brandColor}
                                 strokeWidth={3}
                                 dot={false}
                             >

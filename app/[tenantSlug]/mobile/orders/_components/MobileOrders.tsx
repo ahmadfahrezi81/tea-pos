@@ -85,7 +85,7 @@ export default function MobileOrders() {
                 className="flex flex-col items-center justify-center"
                 style={{ minHeight: "calc(100vh - 200px)" }}
             >
-                <div className="w-10 h-10 border-3 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                <div className="w-10 h-10 border-3 border-brand border-t-transparent rounded-full animate-spin" />
                 <p className="mt-4 text-gray-600 text-sm">Loading Orders...</p>
             </div>
         );
@@ -143,7 +143,7 @@ export default function MobileOrders() {
                                 : newValue,
                         );
                     }}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand/90 focus:outline-none"
                 />
             </div>
 

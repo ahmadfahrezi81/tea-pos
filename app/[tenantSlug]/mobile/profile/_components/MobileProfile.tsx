@@ -51,7 +51,7 @@ const SettingsRow = ({
             <ChevronRight
                 size={20}
                 strokeWidth={2.5}
-                className="text-blue-500"
+                className="text-brand/90"
             />
         )}
     </button>
@@ -101,7 +101,7 @@ export default function MobileProfile() {
             <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
                 {/* Profile Header */}
                 <div className="flex items-center gap-3">
-                    <div className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center shrink-0">
+                    <div className="w-14 h-14 rounded-2xl bg-brand/90 flex items-center justify-center shrink-0">
                         <Annoyed size={26} className="text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -127,7 +127,7 @@ export default function MobileProfile() {
                             Fast Order Mode
                         </p>
                         <p className="text-xs text-gray-500">
-                            Faster POS experience, skip cart confirmations.
+                            Faster POS experience (No Cart)
                         </p>
                     </div>
                     <button
