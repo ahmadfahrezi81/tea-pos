@@ -46,7 +46,7 @@ export default function ProductSalesChart({ storeId, month }: Props) {
         return (
             <div
                 className="bg-gray-200 rounded-xl animate-pulse relative"
-                style={{ height: 150 }}
+                style={{ height: 300 }}
             >
                 <div className="absolute inset-0 flex items-center justify-center">
                     <div className="w-6 h-6 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />

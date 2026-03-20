@@ -287,7 +287,7 @@ export default function MobileLayoutClient({
                         {isSubPage(currentPath) ? (
                             <button
                                 onClick={() => router.back()}
-                                className="text-gray-900 active:scale-90"
+                                className="text-gray-900 active:scale-80"
                             >
                                 <ArrowLeft size={28} strokeWidth={2} />
                             </button>
