@@ -1,4 +1,6 @@
 "use client";
+
+import { Drawer } from "vaul";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Plus, Minus, ShoppingCart, X, Trash2, Zap } from "lucide-react";
@@ -314,7 +316,7 @@ export default function MobilePOS() {
                 </div>
             )}
 
-            {/* Cart Modal — only in normal mode */}
+            {/* Cart Modal — only in normal mode
             {!fastOrderMode && showCart && (
                 <div
                     className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end"
@@ -455,6 +457,181 @@ export default function MobilePOS() {
                         </div>
                     </div>
                 </div>
+            )} */}
+            {/* Cart Drawer — only in normal mode */}
+            {!fastOrderMode && (
+                <Drawer.Root
+                    open={showCart}
+                    onOpenChange={(open) => {
+                        setShowCart(open);
+                        if (!open) {
+                            const scrollY = window.scrollY;
+                            requestAnimationFrame(() => {
+                                window.scrollTo(0, scrollY);
+                            });
+                        }
+                    }}
+                >
+                    <Drawer.Portal>
+                        <Drawer.Overlay className="fixed inset-0 bg-black/60 z-50" />
+                        <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl focus:outline-none max-h-[80vh] flex flex-col">
+                            {/* Pull tab */}
+                            <div className="absolute top-2 left-0 right-0 flex justify-center">
+                                <div className="w-10 h-1 rounded-full bg-gray-400" />
+                            </div>
+
+                            {/* Header */}
+                            <div className="flex-shrink-0 px-4 pt-5 pb-4">
+                                <div className="flex items-center justify-between mb-4">
+                                    <Drawer.Title className="text-xl font-bold text-gray-900">
+                                        Cart
+                                    </Drawer.Title>
+                                    <button
+                                        onClick={() => setShowCart(false)}
+                                        className="p-1.5 rounded-full text-gray-900 hover:bg-gray-100 -mr-2"
+                                    >
+                                        <X size={26} />
+                                    </button>
+                                </div>
+                                <div className="h-px bg-gray-200 -mx-6" />
+                            </div>
+
+                            {/* Scrollable content */}
+                            <div className="flex-1 overflow-y-auto">
+                                <div className="px-4 pt-2">
+                                    <h4 className="text-lg font-bold text-gray-800 mb-4 flex items-center justify-between">
+                                        Current Order
+                                        {cart.length > 0 && (
+                                            <button
+                                                onClick={() => setCart([])}
+                                                className="text-red-500 p-1 px-2 hover:bg-red-50 text-sm border border-red-200 rounded-full transition-colors"
+                                            >
+                                                Clear All
+                                            </button>
+                                        )}
+                                    </h4>
+                                    {cart.length === 0 ? (
+                                        <div className="text-center text-gray-500 my-20">
+                                            <ShoppingCart className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                                            <p>No items in cart</p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4 pb-4">
+                                            {cart.map((item) => (
+                                                <div
+                                                    key={item.product.id}
+                                                    className="border-b border-gray-100 pb-4 last:border-b-0"
+                                                >
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <div className="flex-1">
+                                                            <h5 className="font-medium text-lg text-gray-900">
+                                                                {
+                                                                    item.product
+                                                                        .name
+                                                                }
+                                                            </h5>
+                                                            <p className="text-sm text-gray-600">
+                                                                {item.quantity}{" "}
+                                                                x{" "}
+                                                                {formatRupiah(
+                                                                    item.product
+                                                                        .price,
+                                                                )}{" "}
+                                                                / Pcs
+                                                            </p>
+                                                        </div>
+                                                        <p className="text-lg font-bold text-gray-900">
+                                                            {formatRupiah(
+                                                                item.product
+                                                                    .price *
+                                                                    item.quantity,
+                                                            )}
+                                                        </p>
+                                                    </div>
+                                                    <div className="flex items-center justify-between">
+                                                        <button
+                                                            onClick={() =>
+                                                                removeFromCart(
+                                                                    item.product
+                                                                        .id,
+                                                                )
+                                                            }
+                                                            className="w-8 h-8 text-red-500 rounded-full flex items-center justify-center border border-red-200 hover:bg-red-50 transition-colors"
+                                                        >
+                                                            <Trash2 size={18} />
+                                                        </button>
+                                                        <div className="flex items-center gap-3">
+                                                            <button
+                                                                onClick={() =>
+                                                                    updateQuantity(
+                                                                        item
+                                                                            .product
+                                                                            .id,
+                                                                        item.quantity -
+                                                                            1,
+                                                                    )
+                                                                }
+                                                                className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors"
+                                                            >
+                                                                <Minus
+                                                                    size={18}
+                                                                />
+                                                            </button>
+                                                            <span className="font-semibold text-lg w-8 text-center">
+                                                                {item.quantity}
+                                                            </span>
+                                                            <button
+                                                                onClick={() =>
+                                                                    updateQuantity(
+                                                                        item
+                                                                            .product
+                                                                            .id,
+                                                                        item.quantity +
+                                                                            1,
+                                                                    )
+                                                                }
+                                                                className="w-8 h-8 bg-green-500 text-white rounded-lg flex items-center justify-center hover:bg-green-600 transition-colors"
+                                                            >
+                                                                <Plus
+                                                                    size={18}
+                                                                />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="flex-shrink-0 bg-white px-4 pt-4 pb-8 border-t border-gray-100">
+                                <div className="flex justify-between items-center mb-4">
+                                    <span className="text-xl font-bold text-gray-900">
+                                        Total Transaction
+                                    </span>
+                                    <span className="text-xl font-bold text-gray-900">
+                                        {formatRupiah(calculateTotal())}
+                                    </span>
+                                </div>
+                                <button
+                                    onClick={processOrder}
+                                    disabled={
+                                        processing ||
+                                        !selectedStoreId ||
+                                        cart.length === 0
+                                    }
+                                    className="w-full bg-green-500 text-white py-4 rounded-xl text-lg font-semibold hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    {processing
+                                        ? "Processing..."
+                                        : "Confirm Order"}
+                                </button>
+                            </div>
+                        </Drawer.Content>
+                    </Drawer.Portal>
+                </Drawer.Root>
             )}
 
             {/* Toast */}
