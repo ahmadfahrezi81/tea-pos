@@ -31,7 +31,7 @@ export function StorePickerDrawer() {
         >
             <Drawer.Portal>
                 <Drawer.Overlay className="fixed inset-0 bg-black/60 z-50" />
-                <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl px-4 pt-5 pb-8 focus:outline-none">
+                <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl px-4 pt-6 pb-8 focus:outline-none">
                     {/* Pull tab */}
                     <div className="absolute top-2 left-0 right-0 flex justify-center">
                         <div className="w-10 h-1 rounded-full bg-gray-400" />

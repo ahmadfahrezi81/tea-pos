@@ -474,14 +474,14 @@ export default function MobilePOS() {
                 >
                     <Drawer.Portal>
                         <Drawer.Overlay className="fixed inset-0 bg-black/60 z-50" />
-                        <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl focus:outline-none max-h-[80vh] flex flex-col">
+                        <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl focus:outline-none max-h-[80vh] flex flex-col">
                             {/* Pull tab */}
                             <div className="absolute top-2 left-0 right-0 flex justify-center">
                                 <div className="w-10 h-1 rounded-full bg-gray-400" />
                             </div>
 
                             {/* Header */}
-                            <div className="flex-shrink-0 px-4 pt-5 pb-4">
+                            <div className="flex-shrink-0 px-4 pt-6 pb-4">
                                 <div className="flex items-center justify-between mb-4">
                                     <Drawer.Title className="text-xl font-bold text-gray-900">
                                         Cart
@@ -493,7 +493,7 @@ export default function MobilePOS() {
                                         <X size={26} />
                                     </button>
                                 </div>
-                                <div className="h-px bg-gray-200 -mx-6" />
+                                <div className="h-px bg-gray-200 -mx-4" />
                             </div>
 
                             {/* Scrollable content */}
@@ -606,7 +606,7 @@ export default function MobilePOS() {
                             </div>
 
                             {/* Footer */}
-                            <div className="flex-shrink-0 bg-white px-4 pt-4 pb-8 border-t border-gray-100">
+                            <div className="flex-shrink-0 bg-white px-4 pt-4 pb-8 border-t border-gray-200">
                                 <div className="flex justify-between items-center mb-4">
                                     <span className="text-xl font-bold text-gray-900">
                                         Total Transaction
