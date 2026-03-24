@@ -252,6 +252,7 @@ export default function MobileLayoutClient({
         if (path.endsWith("/mobile/analytics")) return "Analytics";
         if (path.endsWith("/mobile/analytics/chart")) return "Monthly";
         if (path.endsWith("/mobile/profile")) return "Profile";
+        if (path.endsWith("/mobile/notifications")) return "Notifications";
         return "Mobile";
     };
 
@@ -265,7 +266,8 @@ export default function MobileLayoutClient({
         return (
             path.includes("/mobile/profile/") ||
             path.endsWith("/mobile/orders/chart") ||
-            path.endsWith("/mobile/analytics/chart")
+            path.endsWith("/mobile/analytics/chart") ||
+            path.endsWith("/mobile/notifications")
         );
     };
 
@@ -307,11 +309,13 @@ export default function MobileLayoutClient({
 
                     {!isSubPage(currentPath) && (
                         <button
-                            disabled
-                            className="relative p-2 rounded-lg border border-gray-200 bg-white opacity-40 cursor-not-allowed"
+                            onClick={() =>
+                                router.push(url("/mobile/notifications"))
+                            }
+                            className="relative p-2 rounded-lg active:scale-95 shadow-xs bg-white"
                             aria-label="Notifications"
                         >
-                            <Bell size={20} className="text-gray-800" />
+                            <Bell size={22} className="text-gray-800" />
                         </button>
                     )}
                 </div>
@@ -319,7 +323,7 @@ export default function MobileLayoutClient({
 
             <div
                 ref={scrollContainerRef}
-                className="flex-1 overflow-y-auto pt-18 p-4 pb-28 bg-gray-50"
+                className={`flex-1 overflow-y-auto ${isSubPage(currentPath) ? "pt-14" : "pt-18"} p-4 pb-28 bg-gray-50`}
             >
                 {children}
             </div>
