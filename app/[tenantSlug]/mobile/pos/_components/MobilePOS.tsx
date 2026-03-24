@@ -458,10 +458,12 @@ export default function MobilePOS() {
                     </div>
                 </div>
             )} */}
+
             {/* Cart Drawer — only in normal mode */}
             {!fastOrderMode && (
                 <Drawer.Root
                     open={showCart}
+                    dismissible={false} // 👈 no accidental drag close
                     onOpenChange={(open) => {
                         setShowCart(open);
                         if (!open) {
@@ -476,12 +478,12 @@ export default function MobilePOS() {
                         <Drawer.Overlay className="fixed inset-0 bg-black/60 z-50" />
                         <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl focus:outline-none max-h-[80vh] flex flex-col">
                             {/* Pull tab */}
-                            <div className="absolute top-2 left-0 right-0 flex justify-center">
+                            {/* <div className="absolute top-2 left-0 right-0 flex justify-center">
                                 <div className="w-10 h-1 rounded-full bg-gray-400" />
-                            </div>
+                            </div> */}
 
                             {/* Header */}
-                            <div className="flex-shrink-0 px-4 pt-6 pb-4">
+                            <div className="flex-shrink-0 px-4 pt-4 pb-4">
                                 <div className="flex items-center justify-between mb-4">
                                     <Drawer.Title className="text-xl font-bold text-gray-900">
                                         Cart
