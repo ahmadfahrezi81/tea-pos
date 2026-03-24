@@ -127,7 +127,7 @@ export default function MobileProfile() {
                             Fast Order Mode
                         </p>
                         <p className="text-xs text-gray-500">
-                            Faster POS experience (No Cart)
+                            Faster POS experience
                         </p>
                     </div>
                     <button
