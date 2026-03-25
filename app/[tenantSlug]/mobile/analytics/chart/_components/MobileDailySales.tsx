@@ -23,27 +23,6 @@ export default function MobileDailySales() {
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-semibold tracking-tight text-gray-900">
-                    Monthly Chart
-                </h1>
-                {selectedStore && (
-                    <button
-                        onClick={() => setIsPickerOpen(true)}
-                        className="flex items-center mt-1 gap-0.5"
-                    >
-                        <p className="text-lg text-brand/90 font-bold">
-                            {selectedStore.name}
-                        </p>
-                        <ChevronsUpDown
-                            size={14}
-                            strokeWidth={3}
-                            className="text-brand/90"
-                        />
-                    </button>
-                )}
-            </div>
-
             {/* Month Filter */}
             <div className="bg-white p-4 rounded-lg shadow-sm">
                 <label className="block text-sm font-medium text-gray-700 mb-2">

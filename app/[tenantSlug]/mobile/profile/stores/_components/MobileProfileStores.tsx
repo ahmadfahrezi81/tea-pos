@@ -8,9 +8,6 @@ export default function MobileProfileStores() {
 
     return (
         <div className="space-y-4">
-            <p className="text-2xl font-semibold tracking-tight text-gray-900">
-                Assigned Stores
-            </p>
             <div className="bg-white rounded-xl p-5 shadow-sm">
                 <div className="bg-gray-50 py-1 px-2 rounded-lg border border-gray-200 text-gray-800">
                     {isLoading && (
