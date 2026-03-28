@@ -8,7 +8,7 @@
         "build": "next build",
         "start": "next start",
         "lint": "next lint",
-        "types:db": "dotenv -e .env -- npx supabase gen types typescript --project-id urzoiliisayupuvmaris --schema public > lib/db.types.ts"
+        "types:db": "dotenv -e .env -- pnpm dlx supabase gen types typescript --project-id urzoiliisayupuvmaris --schema public > lib/db.types.ts"
     },
     "dependencies": {
         "@asteasolutions/zod-to-openapi": "^8.1.0",

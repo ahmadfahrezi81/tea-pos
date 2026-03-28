@@ -35,5 +35,8 @@ export * from "./tenantInvites";
 // Analytics
 export * from "./analytics";
 
+// Notifications
+export * from "./notifications";
+
 // Type exports for frontend
 export type { z } from "zod";

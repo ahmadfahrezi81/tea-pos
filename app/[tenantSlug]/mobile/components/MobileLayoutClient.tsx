@@ -623,6 +623,11 @@ export default function MobileLayoutClient({
         if (path.endsWith("/mobile/profile")) return "Profile";
         if (path.endsWith("/mobile/profile/stores")) return "Assigned Stores";
         if (path.endsWith("/mobile/notifications")) return "Notifications";
+        if (
+            path.includes("/mobile/notifications/") &&
+            path.endsWith("/weather")
+        )
+            return "Weather Forecast";
         return "Mobile";
     };
 
@@ -637,7 +642,8 @@ export default function MobileLayoutClient({
             path.includes("/mobile/profile/") ||
             path.endsWith("/mobile/orders/chart") ||
             path.endsWith("/mobile/analytics/chart") ||
-            path.endsWith("/mobile/notifications")
+            path.endsWith("/mobile/notifications") ||
+            path.includes("/mobile/notifications/")
         );
     };
 
