@@ -11,7 +11,7 @@ const typeStyles: Record<string, { bg: string; dot: string; label: string }> = {
     weather_forecast: {
         bg: "bg-blue-100",
         dot: "bg-blue-500",
-        label: "Weather",
+        label: "Weather Forecast",
     },
     store_opened: {
         bg: "bg-green-100",

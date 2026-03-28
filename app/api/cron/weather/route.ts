@@ -1,5 +1,6 @@
 // app/api/cron/weather/route.ts
 import { NextRequest, NextResponse } from "next/server";
+import { format } from "date-fns";
 import { createNotification } from "@/lib/services/notifications";
 import { createRouteHandlerClient } from "@/lib/supabase/server";
 
@@ -7,9 +8,9 @@ import { createRouteHandlerClient } from "@/lib/supabase/server";
 // Time windows per slot (SGT = UTC+7, capped at 22:00)
 // ============================================================================
 const SLOT_WINDOWS = {
-    morning: { label: "Morning", from: 6, to: 22 },
-    midday: { label: "Midday", from: 12, to: 22 },
-    afternoon: { label: "Afternoon", from: 17, to: 22 },
+    morning: { label: "Morning", from: 6, to: 16 },
+    midday: { label: "Midday", from: 10, to: 20 },
+    afternoon: { label: "Afternoon", from: 14, to: 24 },
 } as const;
 
 type WeatherSlot = keyof typeof SLOT_WINDOWS;
@@ -20,6 +21,16 @@ interface HourlyWeather {
     precipitationProbability: number;
     weatherCode: number;
 }
+
+// ============================================================================
+// Location config — swap for dynamic lookup later if needed
+// ============================================================================
+const LOCATION = {
+    lat: -6.602113395775711,
+    lng: 106.76555869284739,
+    city: "Ciomas",
+    region: "Bogor",
+} as const;
 
 // ============================================================================
 // GET /api/cron/weather?slot=morning|midday|afternoon
@@ -60,7 +71,7 @@ export async function GET(request: NextRequest) {
 
         // Fetch hourly forecast from tomorrow.io
         const weatherRes = await fetch(
-            `https://api.tomorrow.io/v4/weather/forecast?location=3.1390,101.6869&timesteps=1h&apikey=${apiKey}`,
+            `https://api.tomorrow.io/v4/weather/forecast?location=${LOCATION.lat},${LOCATION.lng}&timesteps=1h&apikey=${apiKey}`,
         );
 
         if (!weatherRes.ok) {
@@ -80,12 +91,12 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // Filter to SGT hours within the slot window
-        // tomorrow.io returns UTC — SGT is UTC+7
-        const todaySGT = new Date();
+        // Filter to local hours within the slot window
+        // tomorrow.io returns UTC — offset from env
+        const todayLocal = new Date();
         const tzOffset = parseInt(process.env.TIMEZONE_OFFSET ?? "7");
         const todayDateStr = new Date(
-            todaySGT.getTime() + tzOffset * 60 * 60 * 1000,
+            todayLocal.getTime() + tzOffset * 60 * 60 * 1000,
         )
             .toISOString()
             .split("T")[0];
@@ -93,16 +104,16 @@ export async function GET(request: NextRequest) {
         const filtered: HourlyWeather[] = hourlyData
             .filter((hour: { time: string }) => {
                 const utcDate = new Date(hour.time);
-                const sgtHour = (utcDate.getUTCHours() + tzOffset) % 24;
-                const sgtDateStr = new Date(
+                const localHour = (utcDate.getUTCHours() + tzOffset) % 24;
+                const localDateStr = new Date(
                     utcDate.getTime() + tzOffset * 60 * 60 * 1000,
                 )
                     .toISOString()
                     .split("T")[0];
                 return (
-                    sgtDateStr === todayDateStr &&
-                    sgtHour >= window.from &&
-                    sgtHour <= window.to
+                    localDateStr === todayDateStr &&
+                    localHour >= window.from &&
+                    localHour <= window.to
                 );
             })
             .map((hour: { time: string; values: Record<string, number> }) => ({
@@ -128,12 +139,24 @@ export async function GET(request: NextRequest) {
         const maxRain = Math.max(
             ...filtered.map((h) => h.precipitationProbability),
         );
-        const forecastDate = new Date(filtered[0].time)
-            .toISOString()
-            .split("T")[0];
 
-        const title = `${window.label} Forecast — ${forecastDate}`;
-        const body = `High ${tempMax}°C · Low ${tempMin}°C · Up to ${maxRain}% chance of rain`;
+        const localDate = new Date(
+            new Date(filtered[0].time).getTime() + tzOffset * 60 * 60 * 1000,
+        );
+        const forecastDate = format(localDate, "yyyy-MM-dd");
+        const prettyDate = format(localDate, "EEE, MMM d");
+
+        const rainLine =
+            maxRain === 0
+                ? `0% chance of rain — all clear. Tap to view the full forecast.`
+                : maxRain <= 20
+                  ? `Up to ${maxRain}% chance of rain — conditions looking good. Tap to view the full forecast.`
+                  : maxRain <= 50
+                    ? `Up to ${maxRain}% chance of rain — expect some showers. Tap to view the full forecast.`
+                    : `Up to ${maxRain}% chance of rain — heavy rain likely. Tap to view the full forecast.`;
+
+        const title = `${window.label} · ${prettyDate}`;
+        const body = rainLine;
 
         // Fetch all tenants
         const supabase = await createRouteHandlerClient();
@@ -164,6 +187,12 @@ export async function GET(request: NextRequest) {
                         max_rain_probability: maxRain,
                         window_from: window.from,
                         window_to: window.to,
+                        location: {
+                            lat: LOCATION.lat,
+                            lng: LOCATION.lng,
+                            city: LOCATION.city,
+                            region: LOCATION.region,
+                        },
                         hourly: filtered,
                     },
                 }),
@@ -179,6 +208,7 @@ export async function GET(request: NextRequest) {
             success: true,
             slot,
             hoursIncluded: filtered.length,
+            location: `${LOCATION.city}, ${LOCATION.region}`,
             summary: `${succeeded} tenant(s) notified, ${failed} failed`,
         });
     } catch (error) {

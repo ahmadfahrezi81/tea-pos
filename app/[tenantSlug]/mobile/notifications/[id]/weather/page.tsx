@@ -1,16 +1,42 @@
+// app/[tenantSlug]/mobile/notifications/[id]/weather/page.tsx
 "use client";
 
 import { useParams } from "next/navigation";
 import useNotifications from "@/lib/hooks/notifications/useNotifications";
 import { getWeatherMeta } from "@/lib/utils/weatherCode";
-import { formatTimeAgo } from "@/lib/utils/formatTimeAgo";
-import { Cloud, Droplets } from "lucide-react";
+import { Cloud } from "lucide-react";
+import { Bebas_Neue } from "next/font/google";
+
+const bebas = Bebas_Neue({
+    weight: "400",
+    subsets: ["latin"],
+    variable: "--font-bebas",
+});
 
 interface HourlyWeather {
     time: string;
     temperature: number;
     precipitationProbability: number;
     weatherCode: number;
+}
+
+interface WeatherLocation {
+    lat: number;
+    lng: number;
+    city: string;
+    region: string;
+}
+
+interface WeatherMetadata {
+    slot: string;
+    hourly: HourlyWeather[];
+    location: WeatherLocation;
+    tempMax: number;
+    tempMin: number;
+    windowTo: number;
+    windowFrom: number;
+    forecastDate: string;
+    maxRainProbability: number;
 }
 
 function formatHour(utcTime: string): string {
@@ -22,13 +48,28 @@ function formatHour(utcTime: string): string {
     return `${hour12} ${period}`;
 }
 
+function getCurrentHourTemp(hourly: HourlyWeather[]): HourlyWeather | null {
+    const now = new Date();
+    const tzOffset = parseInt(process.env.NEXT_PUBLIC_TIMEZONE_OFFSET ?? "7");
+    const localNowHour = (now.getUTCHours() + tzOffset) % 24;
+
+    return (
+        hourly.find((h) => {
+            const localHour = (new Date(h.time).getUTCHours() + tzOffset) % 24;
+            return localHour === localNowHour;
+        }) ?? hourly[0]
+    );
+}
+
 export default function WeatherNotificationPage() {
     const { id } = useParams<{ id: string }>();
     const { data, isLoading } = useNotifications();
 
     const notification = data?.notifications.find((n) => n.id === id);
-    const metadata = notification?.metadata as Record<string, unknown> | null;
-    const hourly = (metadata?.hourly as HourlyWeather[]) ?? [];
+    const metadata = notification?.metadata as WeatherMetadata | null;
+    const hourly = metadata?.hourly ?? [];
+    const location = metadata?.location;
+    const currentHour = getCurrentHourTemp(hourly);
 
     if (isLoading) {
         return (
@@ -51,55 +92,81 @@ export default function WeatherNotificationPage() {
 
     return (
         <div className="space-y-4">
-            {/* Summary card */}
-            <div className="p-4 rounded-2xl border border-gray-100 bg-white space-y-1">
-                <p className="text-base font-bold text-gray-900">
-                    {notification.title}
-                </p>
-                <p className="text-sm text-gray-500">{notification.body}</p>
-                <p className="text-xs text-gray-400 pt-1">
-                    {formatTimeAgo(notification.createdAt)}
-                </p>
-            </div>
+            {currentHour && (
+                <div className="rounded-2xl">
+                    <div className="flex items-center justify-between -mb-6 -mt-2">
+                        {/* Left */}
+                        <div
+                            className={`flex items-center gap-1 ${bebas.variable}`}
+                        >
+                            <p className="font-bebas text-8xl text-gray-900 tracking-tight">
+                                {currentHour.temperature}
+                            </p>
+                            <div className="items-start self-start pt-2 font-bebas">
+                                <div className="-space-y-2.5">
+                                    {location && (
+                                        <p className="text-xl text-gray-600 uppercase">
+                                            {location.city}
+                                        </p>
+                                    )}
+                                    <p className="text-3xl font-semibold text-gray-900 uppercase">
+                                        {
+                                            getWeatherMeta(
+                                                currentHour.weatherCode,
+                                            ).label
+                                        }
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Right — big fluent icon */}
+                        {(() => {
+                            const { fluentIcon: WeatherIcon } = getWeatherMeta(
+                                currentHour.weatherCode,
+                            );
+                            return <WeatherIcon width={120} height={120} />;
+                        })()}
+                    </div>
+                </div>
+            )}
 
             {/* Hourly forecast */}
             {hourly.length > 0 ? (
-                <div className="p-4 rounded-2xl border border-gray-100 bg-white">
-                    <div className="space-y-3">
-                        {hourly.map((hour, i) => {
-                            const { icon: WeatherIcon, label } = getWeatherMeta(
-                                hour.weatherCode,
-                            );
-                            return (
-                                <div
-                                    key={i}
-                                    className="flex items-center justify-between"
-                                >
-                                    <p className="text-sm font-bold text-gray-800 w-20">
-                                        {formatHour(hour.time)}
+                <div className="space-y-1">
+                    {hourly.map((hour, i) => {
+                        const { lucideIcon: WeatherIcon, label } =
+                            getWeatherMeta(hour.weatherCode);
+                        return (
+                            <div
+                                key={i}
+                                className="flex items-center justify-between px-4 py-3 rounded-xl bg-white"
+                            >
+                                <p className="text-sm font-semibold text-gray-800 w-16">
+                                    {formatHour(hour.time)}
+                                </p>
+                                <div className="flex items-center gap-1.5 flex-1">
+                                    <WeatherIcon
+                                        size={20}
+                                        className="text-gray-900"
+                                    />
+                                    <p className="text-sm text-gray-600">
+                                        {label}
                                     </p>
-                                    <div className="flex items-center gap-1.5 flex-1">
-                                        <WeatherIcon
-                                            size={24}
-                                            className="text-gray-600 mb-1"
-                                        />
-                                        <p className="text-sm text-gray-600">
-                                            {label}
-                                        </p>
-                                    </div>
-                                    <p className="text-base font-semibold text-gray-900 w-12 text-right">
-                                        {hour.temperature}°C
-                                    </p>
-                                    <div className="flex items-center gap-1 w-14 justify-end text-base">
-                                        <Droplets className="w-3 h-3 text-blue-500" />
-                                        <p className="text-blue-500">
+                                </div>
+                                {hour.precipitationProbability > 0 && (
+                                    <div className="flex items-center gap-1 w-14 justify-end">
+                                        <p className="text-sm font-bold text-cyan-400">
                                             {hour.precipitationProbability}%
                                         </p>
                                     </div>
-                                </div>
-                            );
-                        })}
-                    </div>
+                                )}
+                                <p className="text-sm font-semibold text-gray-900 w-12 text-right">
+                                    {hour.temperature}°C
+                                </p>
+                            </div>
+                        );
+                    })}
                 </div>
             ) : (
                 <div className="flex flex-col items-center justify-center py-10 text-gray-400">

@@ -409,6 +409,8 @@ export default function MobileLayoutClient({
     const pathname = usePathname();
     const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
     const [authRetryCount, setAuthRetryCount] = useState(0);
+    const [isTransitioning, setIsTransitioning] = useState(false);
+
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     const { url } = useTenantSlug();
@@ -532,11 +534,17 @@ export default function MobileLayoutClient({
 
     useEffect(() => {
         tabs.forEach((tab) => router.prefetch(tab.path));
-    }, [tabs, router]);
+        // Prefetch sub-page parents too
+        router.prefetch(url("/mobile/notifications"));
+        router.prefetch(url("/mobile/orders"));
+        router.prefetch(url("/mobile/analytics"));
+        router.prefetch(url("/mobile/profile"));
+    }, [tabs, router, url]);
 
     useEffect(() => {
         if (optimisticPath && pathname === optimisticPath) {
             setOptimisticPath(null);
+            setIsTransitioning(false);
         }
     }, [pathname, optimisticPath]);
 
@@ -634,6 +642,7 @@ export default function MobileLayoutClient({
     const handleNavClick = (path: string) => {
         if (path === pathname) return;
         setOptimisticPath(path);
+        setIsTransitioning(true);
         router.push(path);
     };
 
@@ -654,6 +663,17 @@ export default function MobileLayoutClient({
         );
     };
 
+    const getParentPath = (path: string) => {
+        if (path.includes("/mobile/profile/")) return url("/mobile/profile");
+        if (path.endsWith("/mobile/orders/chart")) return url("/mobile/orders");
+        if (path.endsWith("/mobile/analytics/chart"))
+            return url("/mobile/analytics");
+        if (path.endsWith("/mobile/notifications")) return url("/mobile/pos");
+        if (path.includes("/mobile/notifications/"))
+            return url("/mobile/notifications");
+        return url("/mobile");
+    };
+
     return (
         <div className="h-dvh flex flex-col bg-gray-50 select-none overflow-hidden">
             <header className="fixed top-0 left-0 right-0 z-40 bg-gray-50 p-4 py-3">
@@ -661,9 +681,20 @@ export default function MobileLayoutClient({
                     <div className="flex items-center gap-2">
                         {isSubPage(currentPath) ? (
                             <div className="flex flex-col gap-2">
-                                <button
+                                {/* <button
                                     onClick={() => router.back()}
-                                    className="text-gray-900 active:scale-80 self-start"
+                                    className="text-gray-900 active:scale-95 self-start"
+                                >
+                                    <ArrowLeft size={28} strokeWidth={2} />
+                                </button> */}
+                                <button
+                                    onClick={() => {
+                                        const parent =
+                                            getParentPath(currentPath);
+                                        setOptimisticPath(parent);
+                                        router.push(parent);
+                                    }}
+                                    className="text-gray-900 active:scale-95 self-start"
                                 >
                                     <ArrowLeft size={28} strokeWidth={2} />
                                 </button>
@@ -734,12 +765,32 @@ export default function MobileLayoutClient({
                 </div>
             </header>
 
+            {/* <div
+                ref={scrollContainerRef}
+                className={`flex-1 overflow-y-auto ${isSubPage(currentPath) ? "pt-24" : "pt-18"} p-4 pb-28 ${isTransitioning ? "bg-gray-50" : "bg-gray-50"}`}
+            >
+                {isTransitioning ? null : children}
+            </div> */}
+
             <div
+                ref={scrollContainerRef}
+                className={`flex-1 overflow-y-auto ${isSubPage(currentPath) ? "pt-24" : "pt-18"} p-4 pb-28 ${isTransitioning ? "bg-gray-50" : "bg-gray-50"}`}
+            >
+                {isTransitioning ? (
+                    <div className="flex justify-center items-center h-full">
+                        <div className="border-t-4 border-blue-500 border-solid w-16 h-16 rounded-full animate-spin"></div>
+                    </div>
+                ) : (
+                    children
+                )}
+            </div>
+
+            {/* <div
                 ref={scrollContainerRef}
                 className={`flex-1 overflow-y-auto ${isSubPage(currentPath) ? "pt-24" : "pt-18"} p-4 pb-28 bg-gray-50`}
             >
                 {children}
-            </div>
+            </div> */}
 
             {!isSubPage(currentPath) && (
                 <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
