@@ -25,7 +25,11 @@ interface WeatherMeta {
 }
 
 function makeIcon(name: string): FluentIcon {
-    return (props) => createElement(Icon, { icon: name, ...props });
+    function Component(props: Omit<IconProps, "icon">) {
+        return createElement(Icon, { ...props, icon: name });
+    }
+    Component.displayName = `FluentIcon(${name})`;
+    return Component;
 }
 
 export function getWeatherMeta(code: number): WeatherMeta {
