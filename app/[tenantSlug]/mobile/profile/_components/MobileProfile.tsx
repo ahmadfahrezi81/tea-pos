@@ -19,6 +19,7 @@ import {
 import { Icon } from "@iconify/react";
 import { useStore } from "@/lib/context/StoreContext";
 import { useFastOrderMode } from "@/lib/context/FastOrderModeContext";
+import { navigation } from "@/lib/utils/navigation";
 
 const SettingsRow = ({
     icon,
@@ -82,8 +83,8 @@ export default function MobileProfile() {
     }, [url]);
 
     const handleAssignedStores = useCallback(() => {
-        router.push(url("/mobile/profile/stores"));
-    }, [router, url]);
+        navigation.push(url("/mobile/profile/stores"));
+    }, [url]);
 
     if (!profile) return null;
 

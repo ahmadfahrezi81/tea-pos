@@ -366,9 +366,15 @@
 //         </div>
 //     );
 // }
-
 "use client";
-import { useEffect, ReactNode, useMemo, useState, useRef } from "react";
+import {
+    useEffect,
+    ReactNode,
+    useMemo,
+    useState,
+    useRef,
+    useCallback,
+} from "react";
 import {
     User,
     ShoppingCart,
@@ -387,6 +393,8 @@ import VersionInfo from "@/components/shared/VersionInfo";
 import { useTenantSlug } from "@/lib/tenant-url";
 import { useStore } from "@/lib/context/StoreContext";
 import { StorePickerDrawer } from "./StorePickerDrawer";
+import { navigation } from "@/lib/utils/navigation";
+import useNotifications from "@/lib/hooks/notifications/useNotifications";
 
 export interface Assignment {
     user_id: string;
@@ -405,74 +413,49 @@ interface MobileLayoutClientProps {
 export default function MobileLayoutClient({
     children,
 }: MobileLayoutClientProps) {
+    // ─── Router & path ───────────────────────────────────────────────
     const router = useRouter();
     const pathname = usePathname();
-    const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
-    const [authRetryCount, setAuthRetryCount] = useState(0);
-    const [isTransitioning, setIsTransitioning] = useState(false);
-
-    const scrollContainerRef = useRef<HTMLDivElement>(null);
-
     const { url } = useTenantSlug();
 
+    // ─── UI state ────────────────────────────────────────────────────
+    const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
+    const [isTransitioning, setIsTransitioning] = useState(false);
+    const [authRetryCount, setAuthRetryCount] = useState(0);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+    // ─── Auth ────────────────────────────────────────────────────────
     const {
         profile,
         isLoading: profileLoading,
         mutate: refreshProfile,
     } = useAuth();
+
+    // ─── Stores & permissions ─────────────────────────────────────────
     const { data: storesData, isLoading: storesLoading } = useStores();
+    const { selectedStore, setIsPickerOpen, isPickerOpen } = useStore();
 
     const user = useMemo(
         () => (profile ? { id: profile.id } : null),
         [profile],
     );
-
     const assignments = useMemo(
         () => storesData?.assignments ?? {},
         [storesData?.assignments],
     );
 
-    const { selectedStore, setIsPickerOpen, isPickerOpen } = useStore();
+    const canSell = useMemo(
+        () => !!user && hasSellerRole(user.id, assignments),
+        [user, assignments],
+    );
+    const canManage = useMemo(
+        () => !!user && hasManagerRole(user.id, assignments),
+        [user, assignments],
+    );
 
-    // Restore scroll position when drawer closes
-    useEffect(() => {
-        const el = scrollContainerRef.current;
-        if (!el) return;
-        if (isPickerOpen) {
-            el.dataset.scrollY = String(el.scrollTop);
-        } else {
-            const saved = el.dataset.scrollY;
-            if (saved !== undefined) {
-                requestAnimationFrame(() => {
-                    el.scrollTo(0, Number(saved));
-                });
-            }
-        }
-    }, [isPickerOpen]);
-
-    // Auth state synchronization and recovery
-    useEffect(() => {
-        let mounted = true;
-        const checkAuthState = async () => {
-            if ((profileLoading || !profile) && authRetryCount < 3) {
-                const timer = setTimeout(async () => {
-                    if (mounted && (profileLoading || !profile)) {
-                        await refreshProfile();
-                        setAuthRetryCount((prev) => prev + 1);
-                    }
-                }, 3000);
-                return () => clearTimeout(timer);
-            }
-        };
-        checkAuthState();
-        return () => {
-            mounted = false;
-        };
-    }, [profileLoading, profile, refreshProfile, authRetryCount]);
-
-    useEffect(() => {
-        if (profile) setAuthRetryCount(0);
-    }, [profile]);
+    const { data: notificationsData } = useNotifications();
+    const unreadCount = notificationsData?.unreadCount ?? 0;
+    const badgeCount = unreadCount > 99 ? "99+" : unreadCount;
 
     const isLoading = useMemo(() => {
         if (authRetryCount >= 3) return false;
@@ -481,16 +464,7 @@ export default function MobileLayoutClient({
         return false;
     }, [profile, profileLoading, storesLoading, authRetryCount]);
 
-    const canSell = useMemo(
-        () => !!user && hasSellerRole(user.id, assignments),
-        [user, assignments],
-    );
-
-    const canManage = useMemo(
-        () => !!user && hasManagerRole(user.id, assignments),
-        [user, assignments],
-    );
-
+    // ─── Tabs ─────────────────────────────────────────────────────────
     const tabs = useMemo(
         () =>
             [
@@ -532,15 +506,35 @@ export default function MobileLayoutClient({
         [canSell, canManage, url],
     );
 
-    useEffect(() => {
-        tabs.forEach((tab) => router.prefetch(tab.path));
-        // Prefetch sub-page parents too
-        router.prefetch(url("/mobile/notifications"));
-        router.prefetch(url("/mobile/orders"));
-        router.prefetch(url("/mobile/analytics"));
-        router.prefetch(url("/mobile/profile"));
-    }, [tabs, router, url]);
+    // ─── Navigation ───────────────────────────────────────────────────
+    // const handleNavClick = useCallback(
+    //     (path: string) => {
+    //         if (path === pathname) return;
+    //         setOptimisticPath(path);
+    //         setIsTransitioning(true);
+    //         router.push(path);
+    //     },
+    //     [pathname, router],
+    // );
 
+    const handleNavClick = useCallback(
+        (path: string) => {
+            if (path === pathname) return;
+            setOptimisticPath(path.split("?")[0]);
+            setIsTransitioning(true);
+            router.push(path);
+        },
+        [pathname, router],
+    );
+
+    // ─── Effects ──────────────────────────────────────────────────────
+
+    // Register nav handler into singleton so child pages can trigger transitions
+    useEffect(() => {
+        navigation.register(handleNavClick);
+    }, [handleNavClick]);
+
+    // Clear transition state once the new route commits
     useEffect(() => {
         if (optimisticPath && pathname === optimisticPath) {
             setOptimisticPath(null);
@@ -548,6 +542,97 @@ export default function MobileLayoutClient({
         }
     }, [pathname, optimisticPath]);
 
+    // Prefetch all known routes
+    useEffect(() => {
+        tabs.forEach((tab) => router.prefetch(tab.path));
+        router.prefetch(url("/mobile/notifications"));
+        router.prefetch(url("/mobile/orders"));
+        router.prefetch(url("/mobile/analytics"));
+        router.prefetch(url("/mobile/profile"));
+    }, [tabs, router, url]);
+
+    // Auth retry recovery
+    useEffect(() => {
+        let mounted = true;
+        const checkAuthState = async () => {
+            if ((profileLoading || !profile) && authRetryCount < 3) {
+                const timer = setTimeout(async () => {
+                    if (mounted && (profileLoading || !profile)) {
+                        await refreshProfile();
+                        setAuthRetryCount((prev) => prev + 1);
+                    }
+                }, 3000);
+                return () => clearTimeout(timer);
+            }
+        };
+        checkAuthState();
+        return () => {
+            mounted = false;
+        };
+    }, [profileLoading, profile, refreshProfile, authRetryCount]);
+
+    useEffect(() => {
+        if (profile) setAuthRetryCount(0);
+    }, [profile]);
+
+    // Preserve scroll position when store picker drawer opens/closes
+    useEffect(() => {
+        const el = scrollContainerRef.current;
+        if (!el) return;
+        if (isPickerOpen) {
+            el.dataset.scrollY = String(el.scrollTop);
+        } else {
+            const saved = el.dataset.scrollY;
+            if (saved !== undefined) {
+                requestAnimationFrame(() => el.scrollTo(0, Number(saved)));
+            }
+        }
+    }, [isPickerOpen]);
+
+    // ─── Path helpers ─────────────────────────────────────────────────
+    const currentPath = optimisticPath || pathname;
+    const isProfilePage = currentPath.endsWith("/mobile/profile");
+
+    const getCurrentPageTitle = (path: string) => {
+        if (path.endsWith("/mobile/pos")) return "POS";
+        if (path.endsWith("/mobile/orders")) return "Orders";
+        if (path.endsWith("/mobile/orders/chart")) return "Daily Chart";
+        if (path.endsWith("/mobile/analytics")) return "Analytics";
+        if (path.endsWith("/mobile/analytics/chart")) return "Monthly Chart";
+        if (path.endsWith("/mobile/profile")) return "Profile";
+        if (path.endsWith("/mobile/profile/stores")) return "Assigned Stores";
+        if (path.endsWith("/mobile/notifications")) return "Notifications";
+        if (
+            path.includes("/mobile/notifications/") &&
+            path.endsWith("/weather")
+        )
+            return "Weather Forecast";
+        return "Mobile";
+    };
+
+    const isSubPage = (path: string) =>
+        path.includes("/mobile/profile/") ||
+        path.endsWith("/mobile/orders/chart") ||
+        path.endsWith("/mobile/analytics/chart") ||
+        path.endsWith("/mobile/notifications") ||
+        path.includes("/mobile/notifications/");
+
+    const isChartPage = (path: string) =>
+        path.endsWith("/mobile/orders/chart") ||
+        path.endsWith("/mobile/analytics/chart");
+
+    const getParentPath = (path: string) => {
+        if (path.includes("/mobile/profile/")) return url("/mobile/profile");
+        if (path.endsWith("/mobile/orders/chart")) return url("/mobile/orders");
+        if (path.endsWith("/mobile/analytics/chart"))
+            return url("/mobile/analytics");
+        if (path.endsWith("/mobile/notifications")) return url("/mobile/pos");
+        if (path.includes("/mobile/notifications/"))
+            return url("/mobile/notifications");
+        return url("/mobile");
+    };
+
+    // ─── Early returns (after all hooks) ─────────────────────────────
     if (isLoading) {
         return (
             <div className="h-dvh overflow-hidden bg-white flex flex-col items-center justify-center">
@@ -619,61 +704,7 @@ export default function MobileLayoutClient({
         );
     }
 
-    const currentPath = optimisticPath || pathname;
-    const isProfilePage = currentPath.endsWith("/mobile/profile");
-
-    const getCurrentPageTitle = (path: string) => {
-        if (path.endsWith("/mobile/pos")) return "POS";
-        if (path.endsWith("/mobile/orders")) return "Orders";
-        if (path.endsWith("/mobile/orders/chart")) return "Daily Chart";
-        if (path.endsWith("/mobile/analytics")) return "Analytics";
-        if (path.endsWith("/mobile/analytics/chart")) return "Monthly Chart";
-        if (path.endsWith("/mobile/profile")) return "Profile";
-        if (path.endsWith("/mobile/profile/stores")) return "Assigned Stores";
-        if (path.endsWith("/mobile/notifications")) return "Notifications";
-        if (
-            path.includes("/mobile/notifications/") &&
-            path.endsWith("/weather")
-        )
-            return "Weather Forecast";
-        return "Mobile";
-    };
-
-    const handleNavClick = (path: string) => {
-        if (path === pathname) return;
-        setOptimisticPath(path);
-        setIsTransitioning(true);
-        router.push(path);
-    };
-
-    const isSubPage = (path: string) => {
-        return (
-            path.includes("/mobile/profile/") ||
-            path.endsWith("/mobile/orders/chart") ||
-            path.endsWith("/mobile/analytics/chart") ||
-            path.endsWith("/mobile/notifications") ||
-            path.includes("/mobile/notifications/")
-        );
-    };
-
-    const isChartPage = (path: string) => {
-        return (
-            path.endsWith("/mobile/orders/chart") ||
-            path.endsWith("/mobile/analytics/chart")
-        );
-    };
-
-    const getParentPath = (path: string) => {
-        if (path.includes("/mobile/profile/")) return url("/mobile/profile");
-        if (path.endsWith("/mobile/orders/chart")) return url("/mobile/orders");
-        if (path.endsWith("/mobile/analytics/chart"))
-            return url("/mobile/analytics");
-        if (path.endsWith("/mobile/notifications")) return url("/mobile/pos");
-        if (path.includes("/mobile/notifications/"))
-            return url("/mobile/notifications");
-        return url("/mobile");
-    };
-
+    // ─── Render ───────────────────────────────────────────────────────
     return (
         <div className="h-dvh flex flex-col bg-gray-50 select-none overflow-hidden">
             <header className="fixed top-0 left-0 right-0 z-40 bg-gray-50 p-4 py-3">
@@ -681,19 +712,12 @@ export default function MobileLayoutClient({
                     <div className="flex items-center gap-2">
                         {isSubPage(currentPath) ? (
                             <div className="flex flex-col gap-2">
-                                {/* <button
-                                    onClick={() => router.back()}
-                                    className="text-gray-900 active:scale-95 self-start"
-                                >
-                                    <ArrowLeft size={28} strokeWidth={2} />
-                                </button> */}
                                 <button
-                                    onClick={() => {
-                                        const parent =
-                                            getParentPath(currentPath);
-                                        setOptimisticPath(parent);
-                                        router.push(parent);
-                                    }}
+                                    onClick={() =>
+                                        handleNavClick(
+                                            getParentPath(currentPath),
+                                        )
+                                    }
                                     className="text-gray-900 active:scale-95 self-start"
                                 >
                                     <ArrowLeft size={28} strokeWidth={2} />
@@ -754,12 +778,17 @@ export default function MobileLayoutClient({
                     {!isSubPage(currentPath) && (
                         <button
                             onClick={() =>
-                                router.push(url("/mobile/notifications"))
+                                handleNavClick(url("/mobile/notifications"))
                             }
                             className="relative p-2 rounded-lg active:scale-95 shadow-xs bg-white"
                             aria-label="Notifications"
                         >
                             <Bell size={22} className="text-gray-800" />
+                            {unreadCount > 0 && (
+                                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1">
+                                    {badgeCount}
+                                </span>
+                            )}
                         </button>
                     )}
                 </div>
@@ -767,30 +796,23 @@ export default function MobileLayoutClient({
 
             {/* <div
                 ref={scrollContainerRef}
-                className={`flex-1 overflow-y-auto ${isSubPage(currentPath) ? "pt-24" : "pt-18"} p-4 pb-28 ${isTransitioning ? "bg-gray-50" : "bg-gray-50"}`}
+                className={`flex-1 overflow-y-auto ${isSubPage(currentPath) ? "pt-24" : "pt-18"} p-4 pb-28 ${isTransitioning ? "bg-blue-300" : "bg-gray-50"}`}
             >
                 {isTransitioning ? null : children}
             </div> */}
 
             <div
                 ref={scrollContainerRef}
-                className={`flex-1 overflow-y-auto ${isSubPage(currentPath) ? "pt-24" : "pt-18"} p-4 pb-28 ${isTransitioning ? "bg-gray-50" : "bg-gray-50"}`}
+                className={`flex-1 overflow-y-auto ${isSubPage(currentPath) ? "pt-24" : "pt-18"} p-4 pb-28 bg-gray-50`}
             >
                 {isTransitioning ? (
-                    <div className="flex justify-center items-center h-full">
-                        <div className="border-t-4 border-blue-500 border-solid w-16 h-16 rounded-full animate-spin"></div>
+                    <div className="flex items-center justify-center h-full">
+                        <div className="w-10 h-10 rounded-full border-2 border-gray-200 border-t-brand animate-spin" />
                     </div>
                 ) : (
                     children
                 )}
             </div>
-
-            {/* <div
-                ref={scrollContainerRef}
-                className={`flex-1 overflow-y-auto ${isSubPage(currentPath) ? "pt-24" : "pt-18"} p-4 pb-28 bg-gray-50`}
-            >
-                {children}
-            </div> */}
 
             {!isSubPage(currentPath) && (
                 <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
@@ -799,7 +821,6 @@ export default function MobileLayoutClient({
                             const Icon = tab.icon;
                             const isActive =
                                 tab.matchPaths.includes(currentPath);
-
                             return (
                                 <button
                                     key={tab.path}
@@ -826,6 +847,7 @@ export default function MobileLayoutClient({
                     </div>
                 </footer>
             )}
+
             <StorePickerDrawer />
         </div>
     );

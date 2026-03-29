@@ -1,11 +1,11 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import useNotifications from "@/lib/hooks/notifications/useNotifications";
 import { NotificationResponse } from "@/lib/schemas/notifications";
 import { Cloud, CloudSun, Store } from "lucide-react";
 import { useTenantSlug } from "@/lib/tenant-url";
 import { formatTimeAgo } from "@/lib/utils/formatTimeAgo";
+import { navigation } from "@/lib/utils/navigation";
 
 const typeStyles: Record<string, { bg: string; dot: string; label: string }> = {
     weather_forecast: {
@@ -43,10 +43,8 @@ function NotificationIcon({ type }: { type: string }) {
 }
 
 export default function NotificationsPage() {
-    const router = useRouter();
     const { data, isLoading } = useNotifications();
     const { url } = useTenantSlug();
-    // and
 
     const notifications = data?.notifications ?? [];
 
@@ -55,10 +53,12 @@ export default function NotificationsPage() {
 
         switch (notif.type) {
             case "weather_forecast":
-                router.push(url(`/mobile/notifications/${notif.id}/weather`));
+                navigation.push(
+                    url(`/mobile/notifications/${notif.id}/weather`),
+                );
                 break;
             case "store_opened":
-                router.push(url(`/mobile/notifications/${notif.id}/store`));
+                navigation.push(url(`/mobile/notifications/${notif.id}/store`));
                 break;
         }
     }
@@ -119,7 +119,7 @@ export default function NotificationsPage() {
                                         </p>
                                     </div>
                                 </div>
-                                <p className="text-sm text-gray-600 mt-0.5 pr-8">
+                                <p className="text-sm text-gray-600 mt-0.5 pr-4">
                                     {notif.body}
                                 </p>
                             </div>

@@ -14,6 +14,7 @@ import { SquareArrowOutUpRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTenantSlug } from "@/lib/tenant-url";
 import { useBrandColor } from "@/lib/hooks/useBrandColor";
+import { navigation } from "@/lib/utils/navigation";
 
 interface Props {
     storeId: string;
@@ -135,7 +136,7 @@ export default function MiniDailySalesChart({ storeId, month }: Props) {
                         const params = new URLSearchParams();
                         params.set("month", month);
                         params.set("storeId", storeId);
-                        router.push(
+                        navigation.push(
                             `${url("/mobile/analytics/chart")}?${params.toString()}`,
                         );
                     }}
