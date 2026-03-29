@@ -14,6 +14,7 @@ import { SquareArrowOutUpRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTenantSlug } from "@/lib/tenant-url";
 import { useBrandColor } from "@/lib/hooks/useBrandColor";
+import { navigation } from "@/lib/utils/navigation";
 
 interface Props {
     storeId: string;
@@ -122,7 +123,10 @@ export default function MiniHourlySalesChart({ storeId, date }: Props) {
                         const params = new URLSearchParams();
                         params.set("date", date);
                         params.set("storeId", storeId);
-                        router.push(
+                        // router.push(
+                        //     `${url("/mobile/orders/chart")}?${params.toString()}`,
+                        // );
+                        navigation.push(
                             `${url("/mobile/orders/chart")}?${params.toString()}`,
                         );
                     }}

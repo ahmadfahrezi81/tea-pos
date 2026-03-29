@@ -123,28 +123,6 @@ export default function MobileHourlySales() {
 
     return (
         <div className="space-y-4">
-            {/* Header */}
-            <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-semibold tracking-tight text-gray-900">
-                    Daily Chart
-                </h1>
-                {selectedStore && (
-                    <button
-                        onClick={() => setIsPickerOpen(true)}
-                        className="flex items-center mt-1 gap-0.5 active:scale-95"
-                    >
-                        <p className="text-lg text-brand font-bold">
-                            {selectedStore.name}
-                        </p>
-                        <ChevronsUpDown
-                            size={14}
-                            strokeWidth={3}
-                            className="text-brand"
-                        />
-                    </button>
-                )}
-            </div>
-
             {/* Date Filter */}
             <div className="bg-white p-4 rounded-lg shadow-sm">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
