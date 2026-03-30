@@ -7,10 +7,19 @@ import { createRouteHandlerClient } from "@/lib/supabase/server";
 // ============================================================================
 // Time windows per slot (SGT = UTC+7, capped at 22:00)
 // ============================================================================
+// const SLOT_WINDOWS = {
+//     morning: { label: "Morning", from: 6, to: 14 },
+//     midday: { label: "Midday", from: 10, to: 18 },
+//     afternoon: { label: "Afternoon", from: 14, to: 22 },
+//     night: { label: "Night", from: 18, to: 23 },
+// } as const;
+
 const SLOT_WINDOWS = {
-    morning: { label: "Morning", from: 6, to: 16 },
-    midday: { label: "Midday", from: 10, to: 20 },
-    afternoon: { label: "Afternoon", from: 14, to: 24 },
+    dawn: { label: "Early Morning", from: 5, to: 14 },
+    morning: { label: "Morning", from: 8, to: 14 },
+    midday: { label: "Midday", from: 11, to: 17 },
+    afternoon: { label: "Afternoon", from: 14, to: 20 },
+    evening: { label: "Evening", from: 17, to: 23 },
 } as const;
 
 type WeatherSlot = keyof typeof SLOT_WINDOWS;
@@ -26,8 +35,8 @@ interface HourlyWeather {
 // Location config — swap for dynamic lookup later if needed
 // ============================================================================
 const LOCATION = {
-    lat: -6.602113395775711,
-    lng: 106.76555869284739,
+    lat: -6.590049642741057,
+    lng: 106.75922097982183,
     city: "Ciomas",
     region: "Bogor",
 } as const;
