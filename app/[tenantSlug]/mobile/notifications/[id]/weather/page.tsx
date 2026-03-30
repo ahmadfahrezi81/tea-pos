@@ -170,9 +170,12 @@ export default function WeatherNotificationPage() {
                                     )}
                                 </div>
 
-                                <p className="text-sm font-semibold text-gray-800 w-16">
-                                    {formatHour(hour.time)}
+                                <p
+                                    className={`font-semibold w-16 text-gray-800 ${isCurrent ? "text-md" : "text-sm "}`}
+                                >
+                                    {isCurrent ? "Now" : formatHour(hour.time)}
                                 </p>
+
                                 <div className="flex items-center gap-1.5 flex-1">
                                     <WeatherIcon
                                         size={26}

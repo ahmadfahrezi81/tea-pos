@@ -718,7 +718,7 @@ export default function MobileLayoutClient({
                                             getParentPath(currentPath),
                                         )
                                     }
-                                    className="text-gray-900 active:scale-95 self-start"
+                                    className="text-gray-900 active:scale-95 self-startpr-2 pl-0 py-1"
                                 >
                                     <ArrowLeft size={28} strokeWidth={2} />
                                 </button>
@@ -780,7 +780,7 @@ export default function MobileLayoutClient({
                             onClick={() =>
                                 handleNavClick(url("/mobile/notifications"))
                             }
-                            className="relative p-2 rounded-lg active:scale-95 shadow-xs bg-white"
+                            className="relative p-2 rounded-md active:scale-95 shadow-xs bg-white"
                             aria-label="Notifications"
                         >
                             <Bell size={22} className="text-gray-800" />
@@ -806,8 +806,8 @@ export default function MobileLayoutClient({
                 className={`flex-1 overflow-y-auto ${isSubPage(currentPath) ? "pt-24" : "pt-18"} p-4 pb-28 bg-gray-50`}
             >
                 {isTransitioning ? (
-                    <div className="flex items-center justify-center h-full">
-                        <div className="w-10 h-10 rounded-full border-2 border-gray-200 border-t-brand animate-spin" />
+                    <div className="absolute inset-0 flex items-center justify-center animate-pulse">
+                        <div className="w-7 h-7 border-3 border-brand border-t-transparent rounded-full animate-spin" />
                     </div>
                 ) : (
                     children
