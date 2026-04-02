@@ -366,6 +366,7 @@
 //         </div>
 //     );
 // }
+
 "use client";
 import {
     useEffect,
@@ -775,15 +776,15 @@ export default function MobileLayoutClient({
                         )}
                     </div>
 
-                    {!isSubPage(currentPath) && (
+                    {currentPath.endsWith("/mobile/profile") && (
                         <button
                             onClick={() =>
                                 handleNavClick(url("/mobile/notifications"))
                             }
-                            className="relative p-2 rounded-md active:scale-95 shadow-xs bg-white"
+                            className="relative p-2 rounded-full bg-white shadow-xs border border-gray-100 active:scale-95"
                             aria-label="Notifications"
                         >
-                            <Bell size={22} className="text-gray-800" />
+                            <Bell size={24} className="text-gray-900" />
                             {unreadCount > 0 && (
                                 <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1">
                                     {badgeCount}

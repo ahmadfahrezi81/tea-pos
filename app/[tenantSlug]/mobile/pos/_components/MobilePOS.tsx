@@ -533,6 +533,7 @@ import type { Product } from "@/lib/schemas/products";
 import { format } from "date-fns";
 import { Icon } from "@iconify/react";
 import { WeatherDrawer } from "./WeatherDrawer";
+import { WeatherButton } from "./WeatherButton";
 
 export interface CartItem {
     product: ProductResponse;
@@ -735,7 +736,7 @@ export default function MobilePOS() {
     return (
         <div className="space-y-4 pb-24">
             {/* Greeting */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between ">
                 <div>
                     <p className="text-xl font-bold text-gray-900">
                         {getGreeting()}
@@ -745,26 +746,7 @@ export default function MobilePOS() {
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <button
-                        onClick={() => setIsWeatherOpen(true)}
-                        className="p-1 pr-0 active:scale-95"
-                    >
-                        <Icon
-                            icon="fluent-emoji:sun-behind-cloud"
-                            width={55}
-                            height={55}
-                        />
-                    </button>
-                    {/* {fastOrderMode && cart.length > 0 && (
-                        <button
-                            onClick={() => setCart([])}
-                            className="flex items-center gap-1 bg-red-500 px-2 py-1 rounded-full"
-                        >
-                            <span className="text-sm font-bold text-white">
-                                Clear All
-                            </span>
-                        </button>
-                    )} */}
+                    <WeatherButton onClick={() => setIsWeatherOpen(true)} />
                 </div>
             </div>
 
