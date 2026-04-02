@@ -100,7 +100,7 @@ export default function WeatherNotificationPage() {
         <div className="space-y-4">
             {currentHour && (
                 <div className="rounded-2xl">
-                    <div className="flex items-center justify-between -mb-6 -mt-2">
+                    <div className="flex items-center justify-between -mb-4">
                         {/* Left */}
                         <div
                             className={`flex items-center gap-2 ${bebas.variable}`}
@@ -140,7 +140,7 @@ export default function WeatherNotificationPage() {
                             const { fluentIcon: WeatherIcon } = getWeatherMeta(
                                 currentHour.weatherCode,
                             );
-                            return <WeatherIcon width={120} height={120} />;
+                            return <WeatherIcon width={110} height={110} />;
                         })()}
                     </div>
                 </div>

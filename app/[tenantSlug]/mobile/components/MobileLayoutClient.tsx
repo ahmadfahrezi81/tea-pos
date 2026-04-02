@@ -718,7 +718,7 @@ export default function MobileLayoutClient({
                                             getParentPath(currentPath),
                                         )
                                     }
-                                    className="text-gray-900 active:scale-95 self-startpr-2 pl-0 py-1"
+                                    className="text-gray-900 active:scale-95 self-start pr-2 pl-0 py-1"
                                 >
                                     <ArrowLeft size={28} strokeWidth={2} />
                                 </button>
