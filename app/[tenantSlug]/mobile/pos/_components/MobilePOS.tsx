@@ -862,7 +862,7 @@ export default function MobilePOS() {
                         />
                         <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl focus:outline-none max-h-[80vh] flex flex-col">
                             {/* Header */}
-                            <div className="flex-shrink-0 px-4 pt-4 pb-4">
+                            <div className="shrink-0 px-4 pt-4 pb-4">
                                 <div className="flex items-center justify-between mb-4">
                                     <Drawer.Title className="text-xl font-bold text-gray-900">
                                         Cart
@@ -874,7 +874,7 @@ export default function MobilePOS() {
                                         <X size={26} />
                                     </button>
                                 </div>
-                                <div className="h-px bg-gray-200 -mx-4" />
+                                {/* <div className="h-px bg-gray-200 -mx-4" /> */}
                             </div>
 
                             {/* Scrollable content */}

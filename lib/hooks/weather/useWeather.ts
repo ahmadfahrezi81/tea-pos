@@ -32,5 +32,8 @@ export default function useWeather(date?: string) {
     return useSWR<WeatherHourlyResponse>(key, fetchWeather, {
         revalidateOnFocus: true,
         dedupingInterval: 60_000,
+        refreshInterval: 15 * 60 * 1000, // poll every 15 min
+        revalidateIfStale: false, // don't refetch on mount if we already have fresh data
+        revalidateOnReconnect: true, // refresh if user loses and regains connection
     });
 }
