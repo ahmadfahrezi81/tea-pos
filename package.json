@@ -1,6 +1,6 @@
 {
     "name": "tea-pos",
-    "version": "3.8.3",
+    "version": "3.8.4",
     "backendVersionDate": "3.4.26",
     "private": true,
     "scripts": {
