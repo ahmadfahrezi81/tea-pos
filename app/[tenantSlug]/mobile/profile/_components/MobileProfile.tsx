@@ -107,9 +107,9 @@ export default function MobileProfile() {
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => setShowIconPicker(true)}
-                        className="w-14 h-14 rounded-2xl bg-brand/90 flex items-center justify-center shrink-0 active:scale-95 transition-transform"
+                        className="w-14 h-14 rounded-lg bg-brand/10 flex items-center justify-center shrink-0 active:scale-95 transition-transform"
                     >
-                        <ProfileIcon size={26} className="text-white" />
+                        <ProfileIcon size={30} className="text-brand" />
                     </button>
                     <div className="flex-1 min-w-0">
                         <p className="text-xl font-semibold text-gray-900 leading-tight truncate">
