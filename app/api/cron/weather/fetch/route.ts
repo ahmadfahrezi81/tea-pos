@@ -14,15 +14,8 @@ const LOCATION = {
     region: "Bogor",
 } as const;
 
-// ============================================================================
-// GET /api/cron/weather/fetch
-// Runs every hour at :30 (e.g. 5:30, 6:30 ... 21:30 local time)
-// Fetches full day forecast from Tomorrow.io and upserts future hours only.
-// Past hours are skipped to preserve immutability for ML/analytics.
-// ============================================================================
 export async function GET(request: NextRequest) {
     try {
-        // ─── Auth ─────────────────────────────────────────────────────
         const authHeader = request.headers.get("authorization");
         if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
             return NextResponse.json(
@@ -39,7 +32,6 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // ─── Fetch from Tomorrow.io ────────────────────────────────────
         const weatherRes = await fetch(
             `https://api.tomorrow.io/v4/weather/forecast?location=${LOCATION.lat},${LOCATION.lng}&timesteps=1h&apikey=${apiKey}`,
         );
@@ -61,9 +53,9 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // ─── Filter to today's hours >= currentHour ────────────────────
         const todayDateStr = getTodayLocalDateStr();
         const currentLocalHour = getCurrentLocalHour();
+        const cutoffTime = new Date(Date.now() + 24 * 60 * 60 * 1000); // now + 24h
 
         const toUpsert = hourlyData
             .map((hour: { time: string; values: Record<string, number> }) => {
@@ -76,6 +68,7 @@ export async function GET(request: NextRequest) {
                     .split("T")[0];
 
                 return {
+                    utcDate,
                     localDateStr,
                     localHour,
                     temperature: Math.round(hour.values?.temperature ?? 0),
@@ -87,34 +80,54 @@ export async function GET(request: NextRequest) {
             })
             .filter(
                 ({
+                    utcDate,
                     localDateStr,
                     localHour,
                 }: {
+                    utcDate: Date;
                     localDateStr: string;
                     localHour: number;
-                }) =>
-                    localDateStr === todayDateStr &&
-                    localHour >= currentLocalHour,
+                }) => {
+                    if (utcDate > cutoffTime) return false; // beyond 24h, skip
+                    if (localDateStr === todayDateStr) {
+                        return localHour >= currentLocalHour; // today: skip past hours
+                    }
+                    return true; // tomorrow's overflow: upsert all
+                },
             );
 
-        const skipped = hourlyData.length - toUpsert.length;
+        const skippedPast = hourlyData.filter((hour: { time: string }) => {
+            const utcDate = new Date(hour.time);
+            const localHour = (utcDate.getUTCHours() + TZ_OFFSET) % 24;
+            const localDateStr = new Date(
+                utcDate.getTime() + TZ_OFFSET * 60 * 60 * 1000,
+            )
+                .toISOString()
+                .split("T")[0];
+            return (
+                localDateStr === todayDateStr && localHour < currentLocalHour
+            );
+        }).length;
 
-        // ─── Upsert future hours ───────────────────────────────────────
+        const skippedFuture = hourlyData.length - toUpsert.length - skippedPast;
+
         const results = await Promise.allSettled(
             toUpsert.map(
                 ({
                     localHour,
+                    localDateStr,
                     temperature,
                     precipitationProbability,
                     weatherCode,
                 }: {
                     localHour: number;
+                    localDateStr: string;
                     temperature: number;
                     precipitationProbability: number;
                     weatherCode: number;
                 }) =>
                     upsertWeatherHour({
-                        date: todayDateStr,
+                        date: localDateStr,
                         hour: localHour,
                         temperature,
                         precipitationProbability,
@@ -140,8 +153,9 @@ export async function GET(request: NextRequest) {
             success: true,
             date: todayDateStr,
             hoursUpserted: succeeded,
-            hoursSkipped: skipped,
-            hoursFailed: failed,
+            skippedPast,
+            skippedFuture,
+            hoursFailed: failed.length, // fixed: was leaking rejected promise objects
         });
     } catch (error) {
         console.error("[cron/weather/fetch]", error);

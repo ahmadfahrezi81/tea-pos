@@ -16,7 +16,6 @@ const fetchWeather = async (url: string): Promise<WeatherHourlyResponse> => {
     }
 
     const json = await res.json();
-
     const parsed = WeatherHourlyResponse.safeParse(json);
     if (!parsed.success) {
         console.error("Invalid weather response:", parsed.error.format());
@@ -26,14 +25,18 @@ const fetchWeather = async (url: string): Promise<WeatherHourlyResponse> => {
     return parsed.data;
 };
 
-export default function useWeather(date?: string) {
-    const key = `/api/weather${date ? `?date=${date}` : ""}`;
+const swrOptions = {
+    revalidateOnFocus: true,
+    dedupingInterval: 60_000,
+    refreshInterval: 15 * 60 * 1000,
+    revalidateIfStale: false,
+    revalidateOnReconnect: true,
+};
 
-    return useSWR<WeatherHourlyResponse>(key, fetchWeather, {
-        revalidateOnFocus: true,
-        dedupingInterval: 60_000,
-        refreshInterval: 15 * 60 * 1000, // poll every 15 min
-        revalidateIfStale: false, // don't refetch on mount if we already have fresh data
-        revalidateOnReconnect: true, // refresh if user loses and regains connection
-    });
+export default function useWeather() {
+    return useSWR<WeatherHourlyResponse>(
+        "/api/weather?hours=24",
+        fetchWeather,
+        swrOptions,
+    );
 }

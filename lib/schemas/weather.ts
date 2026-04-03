@@ -1,4 +1,5 @@
 import { z } from "zod";
+import "@/lib/schemas/common";
 
 /**
  * NAMING CONVENTION FOR SCHEMAS
