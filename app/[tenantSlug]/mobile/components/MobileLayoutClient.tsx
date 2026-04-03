@@ -826,14 +826,14 @@ export default function MobileLayoutClient({
                                 <button
                                     key={tab.path}
                                     onClick={() => handleNavClick(tab.path)}
-                                    className={`flex-1 py-3 px-4 flex flex-col items-center space-y-1 relative transition-all duration-75 active:scale-95 ${
+                                    className={`flex-1 py-3 px-4 pb-2 flex flex-col items-center space-y-1 relative transition-all duration-75 active:scale-98 ${
                                         isActive
                                             ? "text-brand bg-brand/5"
                                             : "text-gray-600 hover:text-brand"
                                     }`}
                                 >
                                     <Icon
-                                        size={20}
+                                        size={22}
                                         className="transition-transform duration-75"
                                     />
                                     <span className="text-xs font-medium transition-transform duration-75">
