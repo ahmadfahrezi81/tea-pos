@@ -31,10 +31,10 @@ export function StorePickerDrawer() {
         >
             <Drawer.Portal>
                 <Drawer.Overlay className="fixed inset-0 bg-black/60 z-50" />
-                <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl px-4 pt-6 pb-8 focus:outline-none">
+                <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl px-4 pt-5 pb-8 focus:outline-none">
                     {/* Pull tab */}
                     <div className="absolute top-2 left-0 right-0 flex justify-center">
-                        <div className="w-10 h-1 rounded-full bg-gray-400" />
+                        <div className="w-8 h-1 rounded-full bg-gray-300" />
                     </div>
 
                     <div className="flex items-center justify-between mb-4">
@@ -49,7 +49,7 @@ export function StorePickerDrawer() {
                         </button>
                     </div>
 
-                    <div className="h-px bg-gray-200 -mx-6 mb-3" />
+                    {/* <div className="h-px bg-gray-200 -mx-6 mb-3" /> */}
 
                     <div className="space-y-3">
                         {assignedStores.map((store, index) => {
