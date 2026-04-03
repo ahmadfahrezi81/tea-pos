@@ -66,8 +66,8 @@ export function WeatherDrawer({ isOpen, onClose }: WeatherDrawerProps) {
     const visibleHours = useMemo(() => {
         if (!data?.hourly) return [];
 
-        const spillsTomorrow = currentLocalHour + 8 > 23;
-        const cutoffHour = (currentLocalHour + 8) % 24;
+        const spillsTomorrow = currentLocalHour + 7 > 23;
+        const cutoffHour = (currentLocalHour + 7) % 24;
 
         return data.hourly.filter((h) => {
             if (spillsTomorrow) {
@@ -79,7 +79,7 @@ export function WeatherDrawer({ isOpen, onClose }: WeatherDrawerProps) {
             return (
                 h.date === todayDateStr &&
                 h.hour >= currentLocalHour - 1 &&
-                h.hour <= currentLocalHour + 6
+                h.hour <= currentLocalHour + 7
             );
         });
     }, [data?.hourly, currentLocalHour, todayDateStr, tomorrowDateStr]);
