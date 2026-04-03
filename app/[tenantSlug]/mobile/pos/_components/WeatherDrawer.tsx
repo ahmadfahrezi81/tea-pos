@@ -5,6 +5,7 @@ import { Drawer } from "vaul";
 import { Cloud, X } from "lucide-react";
 import { getWeatherMeta } from "@/lib/utils/weatherCode";
 import useWeather from "@/lib/hooks/weather/useWeather";
+import { getCurrentLocalHour } from "@/lib/utils/time";
 
 import { Bebas_Neue } from "next/font/google";
 
@@ -15,10 +16,6 @@ const bebas = Bebas_Neue({
 });
 
 const TZ_OFFSET = parseInt(process.env.NEXT_PUBLIC_TIMEZONE_OFFSET ?? "7");
-
-function getCurrentLocalHour(): number {
-    return (new Date().getUTCHours() + TZ_OFFSET) % 24;
-}
 
 function formatHour(hour: number): string {
     const period = hour >= 12 ? "PM" : "AM";
@@ -43,16 +40,22 @@ interface WeatherDrawerProps {
 export function WeatherDrawer({ isOpen, onClose }: WeatherDrawerProps) {
     const { data, isLoading } = useWeather();
 
-    const currentLocalHour = useMemo(() => getCurrentLocalHour(), []);
+    // Not memoized — cheap call, and needs to be fresh on every render
+    const currentLocalHour = getCurrentLocalHour();
 
     const visibleHours = useMemo(() => {
         if (!data?.hourly) return [];
         return data.hourly.filter(
             (h) =>
                 h.hour >= currentLocalHour - 1 &&
-                h.hour <= currentLocalHour + 6,
+                h.hour <= currentLocalHour + 7,
         );
     }, [data?.hourly, currentLocalHour]);
+
+    // "As of" time — use current hour's fetchedAt, not the first in the array
+    const currentHourData = data?.hourly?.find(
+        (h) => h.hour === currentLocalHour,
+    );
 
     return (
         <Drawer.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -66,17 +69,17 @@ export function WeatherDrawer({ isOpen, onClose }: WeatherDrawerProps) {
 
                     {/* Header */}
                     <div
-                        className={`flex items-center justify-between mb-4 ${bebas.variable}`}
+                        className={`flex items-center justify-between mb-3 ${bebas.variable}`}
                     >
                         <div>
                             <Drawer.Title className="font-bebas text-2xl font-light text-gray-900">
                                 {data?.city ?? "Ciomas"},{" "}
                                 {data?.region ?? "Bogor"}
                             </Drawer.Title>
-                            <p className="font-bebas text-lg text-gray-400">
+                            <p className="font-bebas text-lg text-gray-500 -mt-2">
                                 As of{" "}
-                                {data?.hourly[0]?.fetchedAt
-                                    ? formatFetchedAt(data.hourly[0].fetchedAt)
+                                {currentHourData?.fetchedAt
+                                    ? formatFetchedAt(currentHourData.fetchedAt)
                                     : "—"}
                             </p>
                         </div>
@@ -108,7 +111,7 @@ export function WeatherDrawer({ isOpen, onClose }: WeatherDrawerProps) {
                     {!isLoading && data && (
                         <div className="space-y-4">
                             <div className="space-y-1">
-                                {visibleHours.map((hour, i) => {
+                                {visibleHours.map((hour) => {
                                     const isCurrent =
                                         hour.hour === currentLocalHour;
                                     const isPast = hour.hour < currentLocalHour;
@@ -117,15 +120,17 @@ export function WeatherDrawer({ isOpen, onClose }: WeatherDrawerProps) {
 
                                     return (
                                         <div
-                                            key={i}
-                                            className={`flex items-center justify-between px-4 py-3 pl-3 rounded-xl bg-gray-50 transition-opacity ${
+                                            key={hour.hour}
+                                            className={`flex items-center justify-between px-4 py-3 pl-3 rounded-xl transition-opacity ${
                                                 isPast
-                                                    ? "opacity-30"
-                                                    : "opacity-100"
+                                                    ? "opacity-30 bg-gray-50"
+                                                    : isCurrent
+                                                      ? "bg-blue-50"
+                                                      : "bg-gray-50"
                                             }`}
                                         >
                                             <p
-                                                className={`font-semibold w-16 ${isCurrent ? "text-md text-gray-800" : "text-sm text-gray-800"}`}
+                                                className={`font-semibold w-16 ${isCurrent ? "text-base text-blue-500" : "text-sm text-gray-800"}`}
                                             >
                                                 {isCurrent
                                                     ? "Now"

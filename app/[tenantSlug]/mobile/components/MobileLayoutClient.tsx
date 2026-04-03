@@ -804,7 +804,7 @@ export default function MobileLayoutClient({
 
             <div
                 ref={scrollContainerRef}
-                className={`flex-1 overflow-y-auto ${isSubPage(currentPath) ? "pt-24" : "pt-18"} p-4 pb-28 bg-gray-50`}
+                className={`flex-1 overflow-y-auto ${isSubPage(currentPath) ? "pt-24" : "pt-16"} p-4 pb-28 bg-gray-50`}
             >
                 {isTransitioning ? (
                     <div className="absolute inset-0 flex items-center justify-center animate-pulse">

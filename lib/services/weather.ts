@@ -1,5 +1,4 @@
 import { createRouteHandlerClient } from "@/lib/supabase/server";
-import { format } from "date-fns";
 
 const TZ_OFFSET = parseInt(process.env.TIMEZONE_OFFSET ?? "7");
 

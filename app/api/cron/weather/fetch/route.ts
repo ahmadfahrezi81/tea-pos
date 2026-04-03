@@ -127,10 +127,14 @@ export async function GET(request: NextRequest) {
             ),
         );
 
-        const failed = results.filter((r) => r.status === "rejected").length;
-        const succeeded = results.filter(
-            (r) => r.status === "fulfilled",
-        ).length;
+        const failed = results.filter((r) => r.status === "rejected");
+        failed.forEach((r) =>
+            console.error(
+                "[cron] upsert failed:",
+                (r as PromiseRejectedResult).reason,
+            ),
+        );
+        const succeeded = results.length - failed.length;
 
         return NextResponse.json({
             success: true,

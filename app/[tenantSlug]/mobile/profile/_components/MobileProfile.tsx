@@ -99,7 +99,7 @@ export default function MobileProfile() {
 
     return (
         <div className="min-h-screen space-y-4">
-            <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
+            <div className="bg-white rounded-2xl p-3 shadow-sm space-y-4">
                 {/* Profile Header */}
                 <div className="flex items-center gap-3">
                     <div className="w-14 h-14 rounded-2xl bg-brand/90 flex items-center justify-center shrink-0">
@@ -121,7 +121,7 @@ export default function MobileProfile() {
                 </div>
 
                 {/* Fast Order Mode Toggle */}
-                <div className="rounded-lg p-4 flex items-center gap-3 bg-gray-50">
+                <div className="rounded-lg p-3 px-2 flex items-center gap-3 bg-gray-50">
                     <Icon icon="fluent-emoji:rocket" width="40" height="40" />
                     <div className="flex-1">
                         <p className="text-base font-semibold text-gray-800">

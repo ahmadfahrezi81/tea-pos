@@ -1,11 +1,8 @@
 import useSWR from "swr";
 import { WeatherHourlyResponse } from "@/lib/schemas/weather";
 
-const fetchWeather = async (date?: string): Promise<WeatherHourlyResponse> => {
-    const params = new URLSearchParams();
-    if (date) params.set("date", date);
-
-    const res = await fetch(`/api/weather?${params.toString()}`);
+const fetchWeather = async (url: string): Promise<WeatherHourlyResponse> => {
+    const res = await fetch(url);
 
     if (!res.ok) {
         let errMsg = `Failed to fetch weather: ${res.status}`;
@@ -30,10 +27,10 @@ const fetchWeather = async (date?: string): Promise<WeatherHourlyResponse> => {
 };
 
 export default function useWeather(date?: string) {
-    const key = `weather-${date ?? "today"}`;
+    const key = `/api/weather${date ? `?date=${date}` : ""}`;
 
-    return useSWR<WeatherHourlyResponse>(key, () => fetchWeather(date), {
+    return useSWR<WeatherHourlyResponse>(key, fetchWeather, {
         revalidateOnFocus: true,
-        dedupingInterval: 60_000, // 1 min — data only changes each cron run
+        dedupingInterval: 60_000,
     });
 }

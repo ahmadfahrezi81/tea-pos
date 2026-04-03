@@ -3,12 +3,7 @@
 import { useMemo } from "react";
 import useWeather from "@/lib/hooks/weather/useWeather";
 import { getWeatherMeta } from "@/lib/utils/weatherCode";
-
-const TZ_OFFSET = parseInt(process.env.NEXT_PUBLIC_TIMEZONE_OFFSET ?? "7");
-
-function getCurrentLocalHour(): number {
-    return (new Date().getUTCHours() + TZ_OFFSET) % 24;
-}
+import { getCurrentLocalHour } from "@/lib/utils/time";
 
 interface WeatherButtonProps {
     onClick: () => void;
@@ -17,7 +12,7 @@ interface WeatherButtonProps {
 export function WeatherButton({ onClick }: WeatherButtonProps) {
     const { data, isLoading } = useWeather();
 
-    const currentLocalHour = useMemo(() => getCurrentLocalHour(), []);
+    const currentLocalHour = getCurrentLocalHour();
 
     const WeatherIcon = useMemo(() => {
         if (!data?.hourly) return null;
@@ -30,14 +25,14 @@ export function WeatherButton({ onClick }: WeatherButtonProps) {
     return (
         <button
             onClick={onClick}
-            className="p-1 pr-0 active:scale-95 flex items-center justify-center w-16 h-16"
+            className=" pr-0 active:scale-95 flex items-center justify-center w-17.5 h-17.5"
         >
             {isLoading || !WeatherIcon ? (
                 <div className="flex items-center justify-center animate-pulse">
                     <div className="w-4 h-4 border-2 border-brand border-t-transparent rounded-full animate-spin" />
                 </div>
             ) : (
-                <WeatherIcon width={65} height={65} />
+                <WeatherIcon width={70} height={70} />
             )}
         </button>
     );
