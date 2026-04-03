@@ -6,7 +6,6 @@ import { Cloud, X } from "lucide-react";
 import { getWeatherMeta } from "@/lib/utils/weatherCode";
 import useWeather from "@/lib/hooks/weather/useWeather";
 import { getCurrentLocalHour } from "@/lib/utils/time";
-
 import { Bebas_Neue } from "next/font/google";
 
 const bebas = Bebas_Neue({
@@ -16,6 +15,20 @@ const bebas = Bebas_Neue({
 });
 
 const TZ_OFFSET = parseInt(process.env.NEXT_PUBLIC_TIMEZONE_OFFSET ?? "7");
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function getLocalDateStrings(): {
+    todayDateStr: string;
+    tomorrowDateStr: string;
+} {
+    const nowLocal = new Date(Date.now() + TZ_OFFSET * 60 * 60 * 1000);
+    const todayDateStr = nowLocal.toISOString().split("T")[0];
+    const tomorrowDateStr = new Date(nowLocal.getTime() + 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0];
+    return { todayDateStr, tomorrowDateStr };
+}
 
 function formatHour(hour: number): string {
     const period = hour >= 12 ? "PM" : "AM";
@@ -32,29 +45,48 @@ function formatFetchedAt(utcTime: string): string {
     return `${hour12}:${minutes}${period}`;
 }
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+
 interface WeatherDrawerProps {
     isOpen: boolean;
     onClose: () => void;
 }
 
+// ─── Component ────────────────────────────────────────────────────────────────
+
 export function WeatherDrawer({ isOpen, onClose }: WeatherDrawerProps) {
     const { data, isLoading } = useWeather();
 
-    // Not memoized — cheap call, and needs to be fresh on every render
+    // Not memoized — cheap call, needs to be fresh on every render
     const currentLocalHour = getCurrentLocalHour();
+    const { todayDateStr, tomorrowDateStr } = getLocalDateStrings();
 
+    // Filter to a ~8h window starting from currentHour - 1,
+    // correctly spanning across midnight when needed.
     const visibleHours = useMemo(() => {
         if (!data?.hourly) return [];
-        return data.hourly.filter(
-            (h) =>
-                h.hour >= currentLocalHour - 1 &&
-                h.hour <= currentLocalHour + 7,
-        );
-    }, [data?.hourly, currentLocalHour]);
 
-    // "As of" time — use current hour's fetchedAt, not the first in the array
+        const spillsTomorrow = currentLocalHour + 8 > 23;
+        const cutoffHour = (currentLocalHour + 8) % 24;
+
+        return data.hourly.filter((h) => {
+            if (spillsTomorrow) {
+                if (h.date === todayDateStr)
+                    return h.hour >= currentLocalHour - 1;
+                if (h.date === tomorrowDateStr) return h.hour < cutoffHour;
+                return false;
+            }
+            return (
+                h.date === todayDateStr &&
+                h.hour >= currentLocalHour - 1 &&
+                h.hour <= currentLocalHour + 6
+            );
+        });
+    }, [data?.hourly, currentLocalHour, todayDateStr, tomorrowDateStr]);
+
+    // Use current hour's fetchedAt for the "As of" timestamp
     const currentHourData = data?.hourly?.find(
-        (h) => h.hour === currentLocalHour,
+        (h) => h.date === todayDateStr && h.hour === currentLocalHour,
     );
 
     return (
@@ -91,7 +123,7 @@ export function WeatherDrawer({ isOpen, onClose }: WeatherDrawerProps) {
                         </button>
                     </div>
 
-                    {/* Loading */}
+                    {/* Loading skeleton */}
                     {isLoading && (
                         <div className="space-y-3">
                             <div className="h-24 rounded-2xl bg-gray-200 animate-pulse" />
@@ -99,7 +131,7 @@ export function WeatherDrawer({ isOpen, onClose }: WeatherDrawerProps) {
                         </div>
                     )}
 
-                    {/* Empty */}
+                    {/* Empty state */}
                     {!isLoading && !data && (
                         <div className="flex flex-col items-center justify-center py-16 text-gray-400">
                             <Cloud className="w-10 h-10 mb-3" />
@@ -107,65 +139,69 @@ export function WeatherDrawer({ isOpen, onClose }: WeatherDrawerProps) {
                         </div>
                     )}
 
-                    {/* Content */}
+                    {/* Hour rows */}
                     {!isLoading && data && (
-                        <div className="space-y-4">
-                            <div className="space-y-1">
-                                {visibleHours.map((hour) => {
-                                    const isCurrent =
-                                        hour.hour === currentLocalHour;
-                                    const isPast = hour.hour < currentLocalHour;
-                                    const { lucideIcon: WeatherIcon, label } =
-                                        getWeatherMeta(hour.weatherCode);
+                        <div className="space-y-1">
+                            {visibleHours.map((hour) => {
+                                const isCurrent =
+                                    hour.date === todayDateStr &&
+                                    hour.hour === currentLocalHour;
+                                const isPast =
+                                    hour.date === todayDateStr &&
+                                    hour.hour < currentLocalHour;
+                                const { lucideIcon: WeatherIcon, label } =
+                                    getWeatherMeta(hour.weatherCode);
 
-                                    return (
-                                        <div
-                                            key={hour.hour}
-                                            className={`flex items-center justify-between px-4 py-3 pl-3 rounded-xl transition-opacity ${
-                                                isPast
-                                                    ? "opacity-30 bg-gray-50"
-                                                    : isCurrent
-                                                      ? "bg-blue-50"
-                                                      : "bg-gray-50"
+                                return (
+                                    <div
+                                        key={`${hour.date}-${hour.hour}`}
+                                        className={`flex items-center justify-between px-4 py-3 pl-3 rounded-xl transition-opacity ${
+                                            isPast
+                                                ? "opacity-30 bg-gray-50"
+                                                : isCurrent
+                                                  ? "bg-blue-50"
+                                                  : "bg-gray-50"
+                                        }`}
+                                    >
+                                        <p
+                                            className={`font-semibold w-16 ${
+                                                isCurrent
+                                                    ? "text-base text-blue-500"
+                                                    : "text-sm text-gray-800"
                                             }`}
                                         >
-                                            <p
-                                                className={`font-semibold w-16 ${isCurrent ? "text-base text-blue-500" : "text-sm text-gray-800"}`}
-                                            >
-                                                {isCurrent
-                                                    ? "Now"
-                                                    : formatHour(hour.hour)}
-                                            </p>
+                                            {isCurrent
+                                                ? "Now"
+                                                : formatHour(hour.hour)}
+                                        </p>
 
-                                            <div className="flex items-center gap-1.5 flex-1">
-                                                <WeatherIcon
-                                                    size={26}
-                                                    className="text-gray-900"
-                                                />
-                                                <p className="text-md text-gray-600 font-medium">
-                                                    {label}
-                                                </p>
-                                            </div>
-
-                                            {hour.precipitationProbability >
-                                                0 && (
-                                                <div className="flex items-center gap-1 w-14 justify-end">
-                                                    <p className="text-xs font-bold text-white bg-cyan-400 rounded-sm px-1 py-0.5">
-                                                        {
-                                                            hour.precipitationProbability
-                                                        }
-                                                        %
-                                                    </p>
-                                                </div>
-                                            )}
-
-                                            <p className="text-sm font-semibold text-gray-900 w-11 text-right">
-                                                {hour.temperature}°C
+                                        <div className="flex items-center gap-1.5 flex-1">
+                                            <WeatherIcon
+                                                size={26}
+                                                className="text-gray-900"
+                                            />
+                                            <p className="text-md text-gray-600 font-medium">
+                                                {label}
                                             </p>
                                         </div>
-                                    );
-                                })}
-                            </div>
+
+                                        {hour.precipitationProbability > 0 && (
+                                            <div className="flex items-center gap-1 w-14 justify-end">
+                                                <p className="text-xs font-bold text-white bg-cyan-400 rounded-sm px-1 py-0.5">
+                                                    {
+                                                        hour.precipitationProbability
+                                                    }
+                                                    %
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        <p className="text-sm font-semibold text-gray-900 w-11 text-right">
+                                            {hour.temperature}°C
+                                        </p>
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
                 </Drawer.Content>

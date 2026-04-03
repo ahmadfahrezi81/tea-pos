@@ -145,3 +145,70 @@ export function buildRainLine(
         body,
     };
 }
+
+/**
+ * Fetch hourly weather rows for the next N hours, spanning today and tomorrow.
+ * Returns rows ordered by date + hour ascending.
+ */
+export async function getWeatherNextHours(hours: number = 24): Promise<{
+    data: WeatherHourlyRow[] | null;
+    error?: string;
+}> {
+    try {
+        const supabase = await createRouteHandlerClient();
+
+        const now = new Date();
+        const localNow = new Date(now.getTime() + TZ_OFFSET * 60 * 60 * 1000);
+        const currentLocalHour = localNow.getUTCHours();
+        const todayDateStr = localNow.toISOString().split("T")[0];
+        const tomorrowDateStr = new Date(
+            localNow.getTime() + 24 * 60 * 60 * 1000,
+        )
+            .toISOString()
+            .split("T")[0];
+
+        const { data, error } = await supabase
+            .from("weather_hourly")
+            .select("*")
+            .in("date", [todayDateStr, tomorrowDateStr])
+            .order("date", { ascending: true })
+            .order("hour", { ascending: true });
+
+        if (error) {
+            console.error("[getWeatherNextHours] Supabase error:", error);
+            return { data: null, error: error.message };
+        }
+
+        const cutoffHour = (currentLocalHour + hours) % 24;
+        const spillsIntoTomorrow = currentLocalHour + hours > 24;
+
+        const filtered = (data ?? []).filter((row) => {
+            if (row.date === todayDateStr) {
+                return row.hour >= currentLocalHour - 1; // include 1 past hour
+            }
+            if (row.date === tomorrowDateStr && spillsIntoTomorrow) {
+                return row.hour < cutoffHour;
+            }
+            return false;
+        });
+        const mapped: WeatherHourlyRow[] = filtered.map((row) => ({
+            id: row.id,
+            date: row.date,
+            hour: row.hour,
+            temperature: row.temperature,
+            precipitationProbability: row.precipitation_probability,
+            weatherCode: row.weather_code,
+            lat: row.lat,
+            lng: row.lng,
+            city: row.city,
+            region: row.region,
+            fetchedAt: row.fetched_at,
+            createdAt: row.created_at,
+        }));
+
+        return { data: mapped };
+    } catch (err) {
+        console.error("[getWeatherNextHours] Unexpected error:", err);
+        return { data: null, error: "Unexpected error fetching weather" };
+    }
+}
