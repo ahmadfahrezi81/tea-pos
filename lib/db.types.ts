@@ -28,6 +28,9 @@ export type Database = {
           seller_id: string
           store_id: string
           tenant_id: string | null
+          total_cups: number
+          total_expenses: number
+          total_orders: number
           total_sales: number
           variance: number | null
         }
@@ -44,6 +47,9 @@ export type Database = {
           seller_id: string
           store_id: string
           tenant_id?: string | null
+          total_cups?: number
+          total_expenses?: number
+          total_orders?: number
           total_sales?: number
           variance?: number | null
         }
@@ -60,6 +66,9 @@ export type Database = {
           seller_id?: string
           store_id?: string
           tenant_id?: string | null
+          total_cups?: number
+          total_expenses?: number
+          total_orders?: number
           total_sales?: number
           variance?: number | null
         }
