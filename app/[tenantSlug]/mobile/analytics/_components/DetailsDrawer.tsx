@@ -318,7 +318,6 @@
 // };
 
 // components/mobile/components/DetailsDrawer.tsx
-import { useEffect } from "react";
 import { Drawer } from "vaul";
 import { X } from "lucide-react";
 import { formatRupiah } from "@/lib/utils/formatCurrency";

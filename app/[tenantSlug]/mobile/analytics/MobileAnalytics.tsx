@@ -531,7 +531,7 @@ export default function MobileAnalytics() {
                                                 </h4>
                                                 <div className="bg-red-50 border border-red-200 p-2 rounded-lg">
                                                     {dailyExpenses.map(
-                                                        (expense: any) => (
+                                                        (expense) => (
                                                             <div
                                                                 key={expense.id}
                                                                 className="flex justify-between text-sm"

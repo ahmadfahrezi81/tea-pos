@@ -1,4 +1,4 @@
-// // app/api/summaries/route.ts
+// app/api/summaries/route.ts
 import { createRouteHandlerClient } from "@/lib/supabase/server";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { NextRequest, NextResponse } from "next/server";
@@ -12,7 +12,44 @@ import {
 } from "@/lib/schemas/daily-summaries";
 import { toCamelKeys, toSnakeKeys } from "@/lib/utils/schemas";
 
-const TZ_OFFSET_HOURS = 7; // WIB (UTC+7)
+// ============================================================================
+// TYPES
+// ============================================================================
+
+interface OrderItem {
+    quantity: number;
+    total_price: number;
+    products?: { name: string };
+}
+
+interface OrderRow {
+    id: string;
+    total_amount: number;
+    created_at: string;
+    order_items?: OrderItem[];
+}
+
+interface ExpenseRow {
+    daily_summary_id: string;
+    amount: number;
+    [key: string]: unknown;
+}
+
+interface SummaryRow {
+    id: string;
+    date: string;
+    store_id: string;
+    opening_balance: number;
+    total_sales: number;
+    total_orders: number;
+    total_cups: number;
+    total_expenses: number;
+    expected_cash: number;
+    closed_at: string | null;
+    [key: string]: unknown;
+}
+
+const TZ_OFFSET_HOURS = 7;
 
 function toLocalDateStr(utcDateStr: string): string {
     const utcDate = new Date(utcDateStr);
@@ -28,13 +65,13 @@ function getTodayLocalDateStr(): string {
 // ============================================================================
 // HELPER: Fetch today's orders live (only used for the open/current day)
 // ============================================================================
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function fetchTodayOrders(
-    supabase: any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    supabase: Record<string, any>,
     storeId: string,
     tenantId: string,
     todayStr: string,
-) {
+): Promise<OrderRow[]> {
     const { data, error } = await supabase
         .from("orders")
         .select(
@@ -56,7 +93,7 @@ async function fetchTodayOrders(
         .order("created_at", { ascending: true });
 
     if (error) throw error;
-    return data ?? [];
+    return (data ?? []) as OrderRow[];
 }
 
 // ============================================================================
@@ -121,12 +158,12 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        const summaryList = summaries ?? [];
+        const summaryList = (summaries ?? []) as SummaryRow[];
 
         // ─── Fetch expenses for all summaries ──────────────────────────
         const summaryIds = summaryList.map((s) => s.id);
-        const expensesByDate: Record<string, any[]> = {};
-        const expensesBySummaryId: Record<string, any[]> = {};
+        const expensesByDate: Record<string, ExpenseRow[]> = {};
+        const expensesBySummaryId: Record<string, ExpenseRow[]> = {};
 
         if (summaryIds.length > 0) {
             const { data: expenses, error: expensesError } = await supabase
@@ -142,7 +179,7 @@ export async function GET(request: NextRequest) {
                 );
             }
 
-            expenses?.forEach((expense) => {
+            (expenses as ExpenseRow[])?.forEach((expense) => {
                 if (!expensesBySummaryId[expense.daily_summary_id]) {
                     expensesBySummaryId[expense.daily_summary_id] = [];
                 }
@@ -163,7 +200,7 @@ export async function GET(request: NextRequest) {
         const todaySummary = summaryList.find(
             (s) => s.date === todayStr && !s.closed_at,
         );
-        let productBreakdown: Record<
+        const productBreakdown: Record<
             string,
             Record<string, { quantity: number; revenue: number }>
         > = {};
@@ -179,12 +216,12 @@ export async function GET(request: NextRequest) {
                 todayStr,
             );
 
-            todayOrders.forEach((order: any) => {
+            todayOrders.forEach((order) => {
                 todayLiveSales += order.total_amount;
                 todayLiveOrders += 1;
 
                 productBreakdown[todayStr] ??= {};
-                order.order_items?.forEach((item: any) => {
+                order.order_items?.forEach((item) => {
                     const name = item.products?.name ?? "Unknown Product";
                     productBreakdown[todayStr][name] ??= {
                         quantity: 0,
@@ -197,10 +234,9 @@ export async function GET(request: NextRequest) {
                 });
             });
 
-            // Update today's summary in DB if sales have changed — only for open day
             const todayExpenses = expensesBySummaryId[todaySummary.id] ?? [];
             const todayTotalExpenses = todayExpenses.reduce(
-                (sum: number, e: any) => sum + e.amount,
+                (sum, e) => sum + e.amount,
                 0,
             );
             const newExpectedCash =
@@ -227,7 +263,6 @@ export async function GET(request: NextRequest) {
                     .eq("id", todaySummary.id)
                     .eq("tenant_id", currentTenantId);
 
-                // Patch in-memory so response is accurate without a re-fetch
                 todaySummary.total_sales = todayLiveSales;
                 todaySummary.total_orders = todayLiveOrders;
                 todaySummary.total_cups = todayLiveCups;
@@ -309,7 +344,6 @@ export async function POST(request: NextRequest) {
         const { storeId, sellerId, managerId, date, openingBalance } =
             result.data;
 
-        // Verify store belongs to tenant
         const { data: store, error: storeError } = await supabase
             .from("stores")
             .select("id, tenant_id")
@@ -324,7 +358,6 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Check for duplicate
         const { count, error: existsError } = await supabase
             .from("daily_summaries")
             .select("id", { count: "exact", head: true })
@@ -345,7 +378,6 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Fetch today's orders to initialize totals
         const { data: existingOrders, error: ordersError } = await supabase
             .from("orders")
             .select("total_amount, order_items(quantity)")
@@ -361,19 +393,21 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const totalSales =
-            existingOrders?.reduce((sum, o) => sum + o.total_amount, 0) ?? 0;
-        const totalOrders = existingOrders?.length ?? 0;
-        const totalCups =
-            existingOrders?.reduce(
-                (sum, o) =>
-                    sum +
-                    (o.order_items?.reduce(
-                        (s: number, i: any) => s + i.quantity,
-                        0,
-                    ) ?? 0),
-                0,
-            ) ?? 0;
+        const typedOrders = (existingOrders ?? []) as Array<{
+            total_amount: number;
+            order_items?: Array<{ quantity: number }>;
+        }>;
+
+        const totalSales = typedOrders.reduce(
+            (sum, o) => sum + o.total_amount,
+            0,
+        );
+        const totalOrders = typedOrders.length;
+        const totalCups = typedOrders.reduce(
+            (sum, o) =>
+                sum + (o.order_items?.reduce((s, i) => s + i.quantity, 0) ?? 0),
+            0,
+        );
         const opening = openingBalance ?? 0;
 
         const summaryPayload = toSnakeKeys({
@@ -447,7 +481,6 @@ export async function PUT(request: NextRequest) {
 
         const { id, openingBalance, actualCash, notes, closedAt } = result.data;
 
-        // Fetch current summary once — used for variance + expectedCash recalc
         const { data: currentSummary, error: fetchError } = await supabase
             .from("daily_summaries")
             .select(
@@ -471,12 +504,10 @@ export async function PUT(request: NextRequest) {
         if (notes !== undefined) updates.notes = notes;
         if (closedAt !== undefined) updates.closed_at = closedAt;
 
-        // Recalculate variance if actualCash provided
         if (actualCash !== null && actualCash !== undefined) {
             updates.variance = actualCash - currentSummary.expected_cash;
         }
 
-        // Recalculate expected_cash if opening balance changed
         if (openingBalance !== undefined) {
             updates.expected_cash =
                 openingBalance +
@@ -485,18 +516,20 @@ export async function PUT(request: NextRequest) {
         }
 
         // ── Lock in final totals on close ──────────────────────────────
-        // If this is a closeDay call, fetch live orders one last time and
-        // permanently write total_orders, total_cups, total_sales into the row.
         if (closedAt && !currentSummary.closed_at) {
-            const summaryRow = await supabase
+            const { data: summaryRow } = await supabase
                 .from("daily_summaries")
-                .select("date, store_id, tenant_id, opening_balance")
+                .select("date, store_id, opening_balance")
                 .eq("id", id)
                 .eq("tenant_id", currentTenantId)
                 .single();
 
-            if (summaryRow.data) {
-                const { date, store_id, opening_balance } = summaryRow.data;
+            if (summaryRow) {
+                const { date, store_id, opening_balance } = summaryRow as {
+                    date: string;
+                    store_id: string;
+                    opening_balance: number;
+                };
 
                 const liveOrders = await fetchTodayOrders(
                     supabase,
@@ -506,32 +539,27 @@ export async function PUT(request: NextRequest) {
                 );
 
                 const finalSales = liveOrders.reduce(
-                    (sum: number, o: any) => sum + o.total_amount,
+                    (sum, o) => sum + o.total_amount,
                     0,
                 );
                 const finalOrders = liveOrders.length;
                 const finalCups = liveOrders.reduce(
-                    (sum: number, o: any) =>
+                    (sum, o) =>
                         sum +
-                        (o.order_items?.reduce(
-                            (s: number, i: any) => s + i.quantity,
-                            0,
-                        ) ?? 0),
+                        (o.order_items?.reduce((s, i) => s + i.quantity, 0) ??
+                            0),
                     0,
                 );
 
-                // Get final expenses
                 const { data: expenseRows } = await supabase
                     .from("expenses")
                     .select("amount")
                     .eq("daily_summary_id", id)
                     .eq("tenant_id", currentTenantId);
 
-                const finalExpenses =
-                    expenseRows?.reduce(
-                        (sum: number, e: any) => sum + e.amount,
-                        0,
-                    ) ?? 0;
+                const finalExpenses = (
+                    (expenseRows as Array<{ amount: number }>) ?? []
+                ).reduce((sum, e) => sum + e.amount, 0);
                 const finalExpectedCash =
                     opening_balance + finalSales - finalExpenses;
 
@@ -541,7 +569,6 @@ export async function PUT(request: NextRequest) {
                 updates.total_expenses = finalExpenses;
                 updates.expected_cash = finalExpectedCash;
 
-                // Recalculate variance with final expected cash
                 if (actualCash !== null && actualCash !== undefined) {
                     updates.variance = actualCash - finalExpectedCash;
                 }
