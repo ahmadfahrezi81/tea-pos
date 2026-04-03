@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { Drawer } from "vaul";
-import { X, Check } from "lucide-react";
+import { X, Check, Panda, Shrimp, Origami } from "lucide-react";
 import {
     Bird,
     Cat,
@@ -25,6 +25,8 @@ import type { LucideIcon } from "lucide-react";
 // ============================================================================
 
 export const ICON_OPTIONS: { id: string; icon: LucideIcon; label: string }[] = [
+    { id: "origami", icon: Origami, label: "Origami" },
+    { id: "panda", icon: Panda, label: "Panda" },
     { id: "bird", icon: Bird, label: "Bird" },
     { id: "cat", icon: Cat, label: "Cat" },
     { id: "dog", icon: Dog, label: "Dog" },
@@ -34,8 +36,7 @@ export const ICON_OPTIONS: { id: string; icon: LucideIcon; label: string }[] = [
     { id: "turtle", icon: Turtle, label: "Turtle" },
     { id: "snail", icon: Snail, label: "Snail" },
     { id: "bug", icon: Bug, label: "Bug" },
-    { id: "shell", icon: Shell, label: "Shell" },
-    { id: "egg", icon: Egg, label: "Egg" },
+    { id: "shrimp", icon: Shrimp, label: "Shrimp" },
 ];
 
 export const DEFAULT_ICON_ID = "bird";
