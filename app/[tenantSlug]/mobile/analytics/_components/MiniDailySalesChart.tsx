@@ -1,6 +1,6 @@
 "use client";
 import { useMemo, useRef, useEffect } from "react";
-import useDailySales from "@/lib/hooks/analytics/useDailySales";
+import { DailySummary } from "@/lib/schemas/daily-summaries";
 import {
     Area,
     AreaChart,
@@ -11,24 +11,21 @@ import {
 } from "recharts";
 import { ChartConfig, ChartContainer } from "@/components/ui/chart";
 import { SquareArrowOutUpRight } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useTenantSlug } from "@/lib/tenant-url";
 import { useBrandColor } from "@/lib/hooks/useBrandColor";
 import { navigation } from "@/lib/utils/navigation";
 
 interface Props {
+    summaries: DailySummary[];
     storeId: string;
-    month: string; // YYYY-MM
+    month: string;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomLabel = (props: any) => {
     const { x, y, value, payload, peakDate } = props;
     if (!value || value === 0) return null;
-
-    const date: string = payload?.dateRaw ?? "";
-    const isPeak = date === peakDate;
-
+    const isPeak = (payload?.dateRaw ?? "") === peakDate;
     return (
         <text
             x={x}
@@ -54,77 +51,64 @@ const CustomTooltip = ({ active, payload }: any) => {
     );
 };
 
-export default function MiniDailySalesChart({ storeId, month }: Props) {
-    const { data: dailySales = [], isLoading } = useDailySales(storeId, month);
+export default function MiniDailySalesChart({
+    summaries,
+    storeId,
+    month,
+}: Props) {
     const scrollRef = useRef<HTMLDivElement>(null);
-    const router = useRouter();
     const { url } = useTenantSlug();
     const brandColor = useBrandColor();
 
     const chartConfig = useMemo(
         () =>
             ({
-                cups: {
-                    label: "Cups Sold",
-                    color: brandColor,
-                },
+                cups: { label: "Cups Sold", color: brandColor },
             }) satisfies ChartConfig,
         [brandColor],
     );
 
+    // Derive chart data directly from summaries — no extra fetch needed
     const chartData = useMemo(() => {
-        return dailySales.map((item) => ({
-            date: new Date(item.date + "T00:00:00").toLocaleDateString(
-                "en-US",
-                {
-                    month: "short",
-                    day: "numeric",
-                },
-            ),
-            dateRaw: item.date,
-            cups: item.cups,
-        }));
-    }, [dailySales]);
+        return [...summaries]
+            .sort((a, b) => a.date.localeCompare(b.date))
+            .map((s) => ({
+                date: new Date(s.date + "T00:00:00").toLocaleDateString(
+                    "en-US",
+                    {
+                        month: "short",
+                        day: "numeric",
+                    },
+                ),
+                dateRaw: s.date,
+                cups: s.totalCups,
+            }));
+    }, [summaries]);
 
     const peakDate = useMemo(() => {
-        return dailySales.reduce(
+        return chartData.reduce(
             (max, item) => (item.cups > max.cups ? item : max),
-            { date: "N/A", cups: 0 },
-        ).date;
-    }, [dailySales]);
+            { dateRaw: "N/A", cups: 0 },
+        ).dateRaw;
+    }, [chartData]);
 
-    const peakIndex = useMemo(() => {
-        return chartData.findIndex((d) => d.dateRaw === peakDate);
-    }, [chartData, peakDate]);
+    const peakIndex = useMemo(
+        () => chartData.findIndex((d) => d.dateRaw === peakDate),
+        [chartData, peakDate],
+    );
 
     const slotWidth = 75;
     const chartWidth = Math.max(chartData.length * slotWidth, 300);
 
     useEffect(() => {
         if (!scrollRef.current || peakIndex === -1) return;
-
         const containerWidth = scrollRef.current.clientWidth;
         const peakPixel = peakIndex * slotWidth + slotWidth / 2;
-        const scrollTo = peakPixel - containerWidth / 2;
-
         scrollRef.current.scrollTo({
-            left: Math.max(0, scrollTo),
+            left: Math.max(0, peakPixel - containerWidth / 2),
             behavior: "smooth",
         });
-    }, [peakIndex, chartData]);
-
-    if (isLoading) {
-        return (
-            <div
-                className="mt-3 border-t border-gray-100 bg-gray-200 rounded-xl animate-pulse relative"
-                style={{ height: 170 }}
-            >
-                <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-6 h-6 border-2 border-brand border-t-transparent rounded-full animate-spin" />
-                </div>
-            </div>
-        );
-    }
+    }, [peakIndex]);
 
     if (chartData.length === 0) return null;
 
@@ -145,14 +129,7 @@ export default function MiniDailySalesChart({ storeId, month }: Props) {
                     <SquareArrowOutUpRight size={18} className="text-white" />
                 </button>
             </div>
-            <div
-                ref={scrollRef}
-                className="overflow-x-auto no-scrollbar"
-                style={{
-                    scrollbarWidth: "none",
-                    msOverflowStyle: "none",
-                }}
-            >
+            <div ref={scrollRef} className="overflow-x-auto no-scrollbar">
                 <div style={{ width: chartWidth }}>
                     <ChartContainer
                         config={chartConfig}

@@ -874,7 +874,7 @@ export default function MobilePOS() {
                                         <X size={26} />
                                     </button>
                                 </div>
-                                {/* <div className="h-px bg-gray-200 -mx-4" /> */}
+                                <div className="h-px bg-gray-200 -mx-4" />
                             </div>
 
                             {/* Scrollable content */}

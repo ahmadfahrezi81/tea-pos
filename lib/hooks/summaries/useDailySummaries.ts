@@ -1,118 +1,88 @@
 //lib/hooks/summaries/useDailySummaries.ts
 import useSWR from "swr";
 import {
-    DailySummary,
     DailySummaryListResponse,
     CreateDailySummaryInput,
     UpdateDailySummaryInput,
 } from "@/lib/schemas/daily-summaries";
-import { Expense, CreateExpenseInput } from "@/lib/schemas/expenses";
+import { CreateExpenseInput } from "@/lib/schemas/expenses";
 
-interface FetchSummariesParams {
-    storeId: string;
-    month: string;
-}
-
-const fetchSummaries = async ({
-    storeId,
-    month,
-}: FetchSummariesParams): Promise<DailySummaryListResponse> => {
-    const params = new URLSearchParams();
-    params.append("storeId", storeId);
-    params.append("month", month);
-
-    const res = await fetch(`/api/summaries?${params.toString()}`);
+const fetchSummaries = async (
+    url: string,
+): Promise<DailySummaryListResponse> => {
+    const res = await fetch(url);
     if (!res.ok) {
         let errMsg = `Failed to fetch summaries: ${res.status}`;
         try {
             const body = await res.json();
             if (body?.error) errMsg += ` - ${body.error}`;
         } catch {
-            // ignore JSON parse error
+            // ignore
         }
         throw new Error(errMsg);
     }
 
     const json = await res.json();
 
-    // ✅ validate client-side (optional, since backend already validates)
     const parsed = DailySummaryListResponse.safeParse(json);
     if (!parsed.success) {
         console.error(
-            "Invalid summaries response on client:",
-            parsed.error.format()
+            "[useSummaries] Invalid response:",
+            parsed.error.format(),
         );
-        return {
-            summaries: [],
-            productBreakdown: {},
-            ordersByDate: {},
-            expensesByDate: {},
-            monthlyTotals: {
-                totalSales: 0,
-                totalOrders: 0,
-                totalCups: 0,
-                totalExpenses: 0,
-            },
-        };
+        throw new Error("Invalid summaries response shape");
     }
 
     return parsed.data;
 };
 
 export const useSummaries = (storeId?: string, month?: string) => {
-    const key = storeId && month ? `summaries-${storeId}-${month}` : null;
+    // Use URL as SWR key — unambiguous and passes directly to fetcher
+    const key =
+        storeId && month
+            ? `/api/summaries?storeId=${storeId}&month=${month}`
+            : null;
 
     const { data, error, mutate } = useSWR<DailySummaryListResponse>(
         key,
-        () => fetchSummaries({ storeId: storeId!, month: month! }),
+        fetchSummaries,
         {
             revalidateOnFocus: true,
             revalidateOnMount: true,
-            dedupingInterval: 5000,
-        }
+            revalidateIfStale: false,
+            dedupingInterval: 5_000,
+        },
     );
 
-    // Process data to ensure consistency
+    // Minimal processing — totals now come precomputed from the DB.
+    // We only ensure expenses array is always present on each summary.
     const processedData = data
         ? {
               ...data,
-              summaries:
-                  data.summaries?.map((summary) => {
-                      const expenses =
-                          summary.expenses ||
-                          data.expensesByDate?.[summary.date] ||
-                          [];
-                      const totalExpenses =
-                          summary.totalExpenses ??
-                          expenses.reduce((sum, exp) => sum + exp.amount, 0);
-
-                      return {
-                          ...summary,
-                          expenses,
-                          totalExpenses,
-                          expectedCash:
-                              summary.openingBalance +
-                              summary.totalSales -
-                              totalExpenses,
-                      };
-                  }) || [],
+              summaries: data.summaries.map((summary) => ({
+                  ...summary,
+                  expenses:
+                      summary.expenses ??
+                      data.expensesByDate?.[summary.date] ??
+                      [],
+              })),
           }
         : undefined;
 
+    // ─── Mutations ─────────────────────────────────────────────────────────
+
     const createSummary = async (
-        summaryData: Omit<CreateDailySummaryInput, "tenantId">
+        summaryData: Omit<CreateDailySummaryInput, "tenantId">,
     ) => {
         const res = await fetch("/api/summaries", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(summaryData),
         });
 
         if (!res.ok) {
             const errorData = await res.json();
-            throw new Error(errorData.error || "Failed to create summary");
+            throw new Error(errorData.error ?? "Failed to create summary");
         }
 
         await mutate();
@@ -121,19 +91,17 @@ export const useSummaries = (storeId?: string, month?: string) => {
 
     const updateSummary = async (
         id: string,
-        updates: Omit<Partial<UpdateDailySummaryInput>, "id">
+        updates: Omit<Partial<UpdateDailySummaryInput>, "id">,
     ) => {
         const res = await fetch("/api/summaries", {
             method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id, ...updates }),
         });
 
         if (!res.ok) {
             const errorData = await res.json();
-            throw new Error(errorData.error || "Failed to update summary");
+            throw new Error(errorData.error ?? "Failed to update summary");
         }
 
         await mutate();
@@ -149,56 +117,52 @@ export const useSummaries = (storeId?: string, month?: string) => {
             amount: string;
         }>;
     }) => {
-        // Transform expenses array to match CreateExpenseInput schema
-        const expensePromises = expenseData.expenses.map((expense) => {
-            const payload: Omit<CreateExpenseInput, "tenantId"> = {
+        const payloads: Omit<CreateExpenseInput, "tenantId">[] =
+            expenseData.expenses.map((expense) => ({
                 dailySummaryId: expenseData.dailySummaryId,
                 storeId: expenseData.storeId,
                 expenseType:
                     expense.label === "Custom"
-                        ? expense.customLabel || "Other"
+                        ? (expense.customLabel ?? "Other")
                         : expense.label,
                 amount: parseFloat(expense.amount),
-            };
+            }));
 
-            return fetch("/api/expenses", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(payload),
-            });
-        });
+        const responses = await Promise.all(
+            payloads.map((payload) =>
+                fetch("/api/expenses", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
+                }),
+            ),
+        );
 
-        const responses = await Promise.all(expensePromises);
-
-        // Check if any failed
         for (const res of responses) {
             if (!res.ok) {
                 const errorData = await res.json();
-                throw new Error(errorData.error || "Failed to create expenses");
+                throw new Error(errorData.error ?? "Failed to create expenses");
             }
         }
 
-        setTimeout(() => mutate(), 500);
+        // await directly — no setTimeout race condition
+        await mutate();
         return { success: true };
     };
 
     const updateExpense = async (
         id: string,
-        updates: { expenseType?: string; amount?: number }
+        updates: { expenseType?: string; amount?: number },
     ) => {
         const res = await fetch("/api/expenses", {
             method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id, ...updates }),
         });
 
         if (!res.ok) {
             const errorData = await res.json();
-            throw new Error(errorData.error || "Failed to update expense");
+            throw new Error(errorData.error ?? "Failed to update expense");
         }
 
         await mutate();
@@ -212,7 +176,7 @@ export const useSummaries = (storeId?: string, month?: string) => {
 
         if (!res.ok) {
             const errorData = await res.json();
-            throw new Error(errorData.error || "Failed to delete expense");
+            throw new Error(errorData.error ?? "Failed to delete expense");
         }
 
         await mutate();
