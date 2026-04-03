@@ -1,5 +1,5 @@
 "use client";
-import { useCallback } from "react";
+import { useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/context/AuthContext";
 import VersionInfo from "@/components/shared/VersionInfo";
@@ -11,15 +11,19 @@ import {
     Globe,
     Wrench,
     StoreIcon,
-    Leaf,
     ChevronRight,
     Building2,
-    Annoyed,
 } from "lucide-react";
 import { Icon } from "@iconify/react";
 import { useStore } from "@/lib/context/StoreContext";
 import { useFastOrderMode } from "@/lib/context/FastOrderModeContext";
 import { navigation } from "@/lib/utils/navigation";
+import { IconPickerDrawer } from "./IconPickerDrawer";
+import { useProfileIcon } from "@/lib/context/ProfileIconContext";
+
+// ============================================================================
+// SETTINGS ROW
+// ============================================================================
 
 const SettingsRow = ({
     icon,
@@ -58,6 +62,10 @@ const SettingsRow = ({
     </button>
 );
 
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
+
 export default function MobileProfile() {
     const supabase = createClient();
     const router = useRouter();
@@ -65,8 +73,10 @@ export default function MobileProfile() {
     const { profile } = useAuth();
     const { selectedStore, assignedStores, stores, setIsPickerOpen } =
         useStore();
-
     const { fastOrderMode, toggleFastOrderMode } = useFastOrderMode();
+    const { iconId, setIconId, ProfileIcon } = useProfileIcon();
+
+    const [showIconPicker, setShowIconPicker] = useState(false);
 
     const handleLogout = useCallback(async () => {
         const shouldLogout = window.confirm(
@@ -90,21 +100,17 @@ export default function MobileProfile() {
 
     const isAdmin = profile.role === "ADMIN";
 
-    const memberSince = profile.createdAt
-        ? new Date(profile.createdAt).toLocaleDateString("en-US", {
-              month: "long",
-              year: "numeric",
-          })
-        : null;
-
     return (
         <div className="min-h-screen space-y-4">
             <div className="bg-white rounded-2xl p-3 shadow-sm space-y-4">
                 {/* Profile Header */}
                 <div className="flex items-center gap-3">
-                    <div className="w-14 h-14 rounded-2xl bg-brand/90 flex items-center justify-center shrink-0">
-                        <Annoyed size={26} className="text-white" />
-                    </div>
+                    <button
+                        onClick={() => setShowIconPicker(true)}
+                        className="w-14 h-14 rounded-2xl bg-brand/90 flex items-center justify-center shrink-0 active:scale-95 transition-transform"
+                    >
+                        <ProfileIcon size={26} className="text-white" />
+                    </button>
                     <div className="flex-1 min-w-0">
                         <p className="text-xl font-semibold text-gray-900 leading-tight truncate">
                             {profile.fullName}
@@ -112,11 +118,6 @@ export default function MobileProfile() {
                         <p className="text-sm text-gray-900 truncate">
                             {profile.email}
                         </p>
-                        {/* {memberSince && (
-                            <p className="text-xs text-gray-500">
-                                Member since {memberSince}
-                            </p>
-                        )} */}
                     </div>
                 </div>
 
@@ -192,7 +193,7 @@ export default function MobileProfile() {
                         icon={<Wrench size={20} className="text-gray-900" />}
                         label="Admin Dashboard"
                         onClick={handleAdminDashboard}
-                        sublabel={"Manage your store and settings"}
+                        sublabel="Manage your store and settings"
                     />
                 )}
             </div>
@@ -209,6 +210,14 @@ export default function MobileProfile() {
                     Log Out
                 </button>
             </div>
+
+            {/* Icon Picker Drawer */}
+            <IconPickerDrawer
+                isOpen={showIconPicker}
+                onClose={() => setShowIconPicker(false)}
+                currentIconId={iconId}
+                onConfirm={(id) => setIconId(id)}
+            />
         </div>
     );
 }

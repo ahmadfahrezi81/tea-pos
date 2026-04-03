@@ -396,6 +396,7 @@ import { useStore } from "@/lib/context/StoreContext";
 import { StorePickerDrawer } from "./StorePickerDrawer";
 import { navigation } from "@/lib/utils/navigation";
 import useNotifications from "@/lib/hooks/notifications/useNotifications";
+import { useProfileIcon } from "@/lib/context/ProfileIconContext";
 
 export interface Assignment {
     user_id: string;
@@ -435,6 +436,7 @@ export default function MobileLayoutClient({
     // ─── Stores & permissions ─────────────────────────────────────────
     const { data: storesData, isLoading: storesLoading } = useStores();
     const { selectedStore, setIsPickerOpen, isPickerOpen } = useStore();
+    const { ProfileIcon } = useProfileIcon();
 
     const user = useMemo(
         () => (profile ? { id: profile.id } : null),
@@ -498,7 +500,7 @@ export default function MobileLayoutClient({
                 },
                 {
                     path: url("/mobile/profile"),
-                    label: "Profile",
+                    label: "You",
                     icon: User,
                     show: true,
                     matchPaths: [url("/mobile/profile")],
@@ -822,6 +824,9 @@ export default function MobileLayoutClient({
                             const Icon = tab.icon;
                             const isActive =
                                 tab.matchPaths.includes(currentPath);
+                            const isProfileTab =
+                                tab.path === url("/mobile/profile");
+
                             return (
                                 <button
                                     key={tab.path}
@@ -832,10 +837,17 @@ export default function MobileLayoutClient({
                                             : "text-gray-600 hover:text-brand"
                                     }`}
                                 >
-                                    <Icon
-                                        size={22}
-                                        className="transition-transform duration-75"
-                                    />
+                                    {isProfileTab ? (
+                                        <ProfileIcon
+                                            size={22}
+                                            className="transition-transform duration-75"
+                                        />
+                                    ) : (
+                                        <Icon
+                                            size={22}
+                                            className="transition-transform duration-75"
+                                        />
+                                    )}
                                     <span className="text-xs font-medium transition-transform duration-75">
                                         {tab.label}
                                     </span>
