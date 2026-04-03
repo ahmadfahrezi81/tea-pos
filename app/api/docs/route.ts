@@ -15,6 +15,8 @@ import { registerExpenseRoutes } from "@/lib/openapi/expenses";
 import { registerDailySummaryRoutes } from "@/lib/openapi/summaries";
 import { registerAssignmentRoutes } from "@/lib/openapi/userStoreAssignments";
 import { registerProfileRoutes } from "@/lib/openapi/profiles";
+import { registerWeatherRoutes } from "@/lib/openapi/weather";
+import { registerNotificationRoutes } from "@/lib/openapi/notifications";
 
 const registry = new OpenAPIRegistry();
 
@@ -26,6 +28,8 @@ registerAssignmentRoutes(registry);
 registerExpenseRoutes(registry);
 registerDailySummaryRoutes(registry);
 registerProfileRoutes(registry);
+registerWeatherRoutes(registry);
+registerNotificationRoutes(registry);
 
 registerTenantRoutes(registry);
 registerUserTenantAssignmentRoutes(registry);

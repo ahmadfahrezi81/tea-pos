@@ -366,6 +366,7 @@
 //         </div>
 //     );
 // }
+
 "use client";
 import {
     useEffect,
@@ -718,7 +719,7 @@ export default function MobileLayoutClient({
                                             getParentPath(currentPath),
                                         )
                                     }
-                                    className="text-gray-900 active:scale-95 self-startpr-2 pl-0 py-1"
+                                    className="text-gray-900 active:scale-95 self-start pr-2 pl-0 py-1"
                                 >
                                     <ArrowLeft size={28} strokeWidth={2} />
                                 </button>
@@ -775,15 +776,15 @@ export default function MobileLayoutClient({
                         )}
                     </div>
 
-                    {!isSubPage(currentPath) && (
+                    {currentPath.endsWith("/mobile/profile") && (
                         <button
                             onClick={() =>
                                 handleNavClick(url("/mobile/notifications"))
                             }
-                            className="relative p-2 rounded-md active:scale-95 shadow-xs bg-white"
+                            className="relative p-2 rounded-full bg-white shadow-xs border border-gray-100 active:scale-95"
                             aria-label="Notifications"
                         >
-                            <Bell size={22} className="text-gray-800" />
+                            <Bell size={24} className="text-gray-900" />
                             {unreadCount > 0 && (
                                 <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1">
                                     {badgeCount}
@@ -803,7 +804,7 @@ export default function MobileLayoutClient({
 
             <div
                 ref={scrollContainerRef}
-                className={`flex-1 overflow-y-auto ${isSubPage(currentPath) ? "pt-24" : "pt-18"} p-4 pb-28 bg-gray-50`}
+                className={`flex-1 overflow-y-auto ${isSubPage(currentPath) ? "pt-24" : "pt-16"} p-4 pb-28 bg-gray-50`}
             >
                 {isTransitioning ? (
                     <div className="absolute inset-0 flex items-center justify-center animate-pulse">

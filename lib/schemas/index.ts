@@ -38,5 +38,8 @@ export * from "./analytics";
 // Notifications
 export * from "./notifications";
 
+// Weather
+export * from "./weather";
+
 // Type exports for frontend
 export type { z } from "zod";

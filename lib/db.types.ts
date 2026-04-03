@@ -657,6 +657,51 @@ export type Database = {
           },
         ]
       }
+      weather_hourly: {
+        Row: {
+          city: string
+          created_at: string
+          date: string
+          fetched_at: string
+          hour: number
+          id: string
+          lat: number
+          lng: number
+          precipitation_probability: number
+          region: string
+          temperature: number
+          weather_code: number
+        }
+        Insert: {
+          city: string
+          created_at?: string
+          date: string
+          fetched_at?: string
+          hour: number
+          id?: string
+          lat: number
+          lng: number
+          precipitation_probability: number
+          region: string
+          temperature: number
+          weather_code: number
+        }
+        Update: {
+          city?: string
+          created_at?: string
+          date?: string
+          fetched_at?: string
+          hour?: number
+          id?: string
+          lat?: number
+          lng?: number
+          precipitation_probability?: number
+          region?: string
+          temperature?: number
+          weather_code?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
