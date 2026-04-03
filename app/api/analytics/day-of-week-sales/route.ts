@@ -7,6 +7,8 @@ import {
 } from "@/lib/schemas/analytics";
 import { getCurrentTenantId } from "@/lib/tenant";
 
+const TZ_OFFSET_HOURS = 7; // WIB (UTC+7)
+
 const DAY_NAMES = [
     "Sunday",
     "Monday",
@@ -22,7 +24,7 @@ async function fetchAllOrderItems(
     storeId: string,
     tenantId: string,
     startDate: string,
-    endDate: string
+    endDate: string,
 ) {
     const pageSize = 1000;
     let from = 0;
@@ -38,7 +40,7 @@ async function fetchAllOrderItems(
                 quantity,
                 order_id,
                 orders!inner(store_id, created_at)
-            `
+            `,
             )
             .eq("tenant_id", tenantId)
             .eq("orders.store_id", storeId)
@@ -63,7 +65,6 @@ export async function GET(request: NextRequest) {
         const currentTenantId = await getCurrentTenantId();
         const searchParams = request.nextUrl.searchParams;
 
-        // Validate query parameters
         const queryValidation = DayOfWeekSalesQuery.safeParse({
             storeId: searchParams.get("storeId"),
             month: searchParams.get("month"),
@@ -75,50 +76,55 @@ export async function GET(request: NextRequest) {
                     error: "Invalid query parameters",
                     details: queryValidation.error.format(),
                 },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
         const { storeId, month } = queryValidation.data;
 
-        // Parse year & month
         const [year, monthNum] = month.split("-");
         const parsedYear = parseInt(year, 10);
         const parsedMonth = parseInt(monthNum, 10);
 
-        // Calculate first and last day of month
+        // Start of month in UTC (00:00 WIB = 17:00 UTC previous day,
+        // but first order can't be before 00:00 WIB so UTC start is fine)
         const startDate = new Date(Date.UTC(parsedYear, parsedMonth - 1, 1));
+
+        // End of month — cover until 23:59:59 WIB of last day
+        // Last WIB day ends at 23:59:59 WIB = 16:59:59 UTC next day
         const endDate = new Date(
-            Date.UTC(parsedYear, parsedMonth, 0, 23, 59, 59)
+            Date.UTC(parsedYear, parsedMonth, 1, 16, 59, 59),
         );
 
-        // Fetch order items
         const orderItems = await fetchAllOrderItems(
             supabase,
             storeId,
             currentTenantId,
             startDate.toISOString(),
-            endDate.toISOString()
+            endDate.toISOString(),
         );
 
-        // Aggregate by day of week
+        // Initialize all days
         const dayOfWeekData: Record<
             number,
             { totalCups: number; dates: Set<string> }
         > = {};
-
-        // Initialize all days
         for (let i = 0; i < 7; i++) {
             dayOfWeekData[i] = { totalCups: 0, dates: new Set() };
         }
 
-        // Process each order item
+        // Aggregate by local (WIB) day of week
         for (const item of orderItems) {
             if (!item.orders?.created_at) continue;
 
-            const orderDate = new Date(item.orders.created_at);
-            const dayIndex = orderDate.getUTCDay(); // 0 = Sunday, 6 = Saturday
-            const dateKey = orderDate.toISOString().split("T")[0];
+            const utcDate = new Date(item.orders.created_at);
+
+            // Shift to WIB before extracting day and date
+            const localDate = new Date(
+                utcDate.getTime() + TZ_OFFSET_HOURS * 60 * 60 * 1000,
+            );
+            const dayIndex = localDate.getUTCDay(); // correct local day
+            const dateKey = localDate.toISOString().split("T")[0]; // correct local date
             const quantity = item.quantity || 0;
 
             dayOfWeekData[dayIndex].totalCups += quantity;
@@ -136,17 +142,15 @@ export async function GET(request: NextRequest) {
                 return {
                     dayOfWeek: DAY_NAMES[index],
                     dayIndex: index,
-                    averageCups: Math.round(averageCups * 10) / 10, // Round to 1 decimal
+                    averageCups: Math.round(averageCups * 10) / 10,
                     totalCups: data.totalCups,
                     occurrences,
                 };
-            }
+            },
         );
 
-        // Sort by day index (Sunday to Saturday)
         chartData.sort((a, b) => a.dayIndex - b.dayIndex);
 
-        // Validate response
         const parsedResponse = DayOfWeekSalesResponse.safeParse({
             data: chartData,
         });
@@ -154,14 +158,14 @@ export async function GET(request: NextRequest) {
         if (!parsedResponse.success) {
             console.error(
                 "DayOfWeekSalesResponse validation failed:",
-                parsedResponse.error
+                parsedResponse.error,
             );
             return NextResponse.json(
                 {
                     error: "Invalid response shape",
                     details: parsedResponse.error.format(),
                 },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
@@ -170,7 +174,7 @@ export async function GET(request: NextRequest) {
         console.error("Day of week sales error:", error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }
