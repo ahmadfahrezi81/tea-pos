@@ -14,6 +14,7 @@ import {
     AlertTriangle,
     CheckCircle,
     Receipt,
+    Camera,
 } from "lucide-react";
 import { SetBalanceModal } from "./_components/SetBalanceModal";
 import { SetExpenseModal } from "./_components/SetExpenseModal";
@@ -27,6 +28,8 @@ import {
     formatDate,
     getExpensesForDate,
 } from "../analytics/utils/summariesHelpers";
+import { navigation } from "@/lib/utils/navigation";
+import { useTenantSlug } from "@/lib/tenant-url";
 
 // ============================================================================
 // TYPES
@@ -43,6 +46,7 @@ type DailySummaryWithExtras = DailySummary & {
 export default function MobileAnalytics() {
     const { profile } = useAuth();
     const { selectedStoreId, selectedStore } = useStore();
+    const { url } = useTenantSlug();
 
     const storeName = selectedStore?.name ?? "Unknown Store";
 
@@ -597,6 +601,32 @@ export default function MobileAnalytics() {
                                                 </p>
                                             </div>
                                         )}
+
+                                        {summary.photos &&
+                                            summary.photos.length > 0 && (
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedSummary(
+                                                            summaryWithExtras,
+                                                        );
+                                                        setShowDetailsModal(
+                                                            true,
+                                                        );
+                                                    }}
+                                                    className="flex items-center gap-2 text-sm text-gray-500 hover:text-brand transition-colors"
+                                                >
+                                                    <Camera size={18} />
+                                                    <span>
+                                                        {summary.photos.length}{" "}
+                                                        closing photo
+                                                        {summary.photos.length >
+                                                        1
+                                                            ? "s"
+                                                            : ""}{" "}
+                                                        — tap to view
+                                                    </span>
+                                                </button>
+                                            )}
                                     </div>
 
                                     {!summary.closedAt && (
@@ -627,11 +657,18 @@ export default function MobileAnalytics() {
                                                     Expenses
                                                 </button>
                                                 <button
+                                                    // onClick={() => {
+                                                    //     setSelectedSummary(
+                                                    //         summaryWithExtras,
+                                                    //     );
+                                                    //     setShowCloseForm(true);
+                                                    // }}
                                                     onClick={() => {
-                                                        setSelectedSummary(
-                                                            summaryWithExtras,
+                                                        navigation.push(
+                                                            url(
+                                                                `/mobile/analytics/daily/close?summaryId=${summary.id}`,
+                                                            ),
                                                         );
-                                                        setShowCloseForm(true);
                                                     }}
                                                     className="flex-1 bg-red-500 text-white border border-red-500 py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-600"
                                                 >

@@ -115,6 +115,7 @@ export type Database = {
           daily_summary_id: string | null
           expense_id: string | null
           id: string
+          notes: string | null
           store_id: string
           tenant_id: string | null
           type: string
@@ -125,6 +126,7 @@ export type Database = {
           daily_summary_id?: string | null
           expense_id?: string | null
           id?: string
+          notes?: string | null
           store_id: string
           tenant_id?: string | null
           type: string
@@ -135,6 +137,7 @@ export type Database = {
           daily_summary_id?: string | null
           expense_id?: string | null
           id?: string
+          notes?: string | null
           store_id?: string
           tenant_id?: string | null
           type?: string

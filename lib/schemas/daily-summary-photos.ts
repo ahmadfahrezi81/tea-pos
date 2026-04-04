@@ -6,7 +6,16 @@ import { UUIDSchema } from "./common";
 // CONSTANTS
 // ============================================================================
 
-export const PHOTO_TYPES = ["opening", "closing", "expense"] as const;
+export const PHOTO_TYPES = [
+    "opening",
+    "closing",
+    "closing:ice",
+    "closing:syrup",
+    "closing:bags",
+    "closing:cups",
+    "closing:tea",
+    "expense",
+] as const;
 export type PhotoType = (typeof PHOTO_TYPES)[number];
 
 // ============================================================================
@@ -26,6 +35,10 @@ export const UploadSummaryPhotoInput = z
         }),
         expenseId: UUIDSchema.nullable().optional().openapi({
             description: "ID of the expense (required when type is expense)",
+        }),
+        notes: z.string().max(500).nullable().optional().openapi({
+            description:
+                "Optional notes for this photo — e.g. quantity or condition",
         }),
     })
     .openapi({ title: "UploadSummaryPhotoInput" });
@@ -55,6 +68,7 @@ export const SummaryPhotoResponse = z
         tenantId: UUIDSchema.nullable(),
         type: z.enum(PHOTO_TYPES),
         url: z.string(),
+        notes: z.string().nullable().optional(),
         createdAt: z.string(),
     })
     .openapi({ title: "SummaryPhotoResponse" });

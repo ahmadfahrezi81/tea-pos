@@ -2,6 +2,7 @@
 import { z } from "zod";
 import { UUIDSchema } from "./common";
 import { ExpenseResponse } from "./expenses";
+import { PHOTO_TYPES } from "./daily-summary-photos";
 
 // ============================================================================
 // CASH BREAKDOWN SCHEMA
@@ -133,8 +134,9 @@ export const DailySummaryResponse = z
             .array(
                 z.object({
                     id: UUIDSchema,
-                    type: z.enum(["opening", "closing", "expense"]),
+                    type: z.enum(PHOTO_TYPES),
                     url: z.string(),
+                    notes: z.string().nullable().optional(), // ← add this
                     createdAt: z.string(),
                 }),
             )
