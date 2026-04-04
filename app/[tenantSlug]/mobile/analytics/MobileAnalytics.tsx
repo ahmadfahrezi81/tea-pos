@@ -714,12 +714,12 @@ export default function MobileAnalytics() {
                 type="warning"
                 onConfirm={() => {
                     if (todaysSummary) {
-                        setSelectedSummary({
-                            ...todaysSummary,
-                            expenses: todaysSummary.expenses ?? [],
-                        });
-                        setShowCloseForm(true);
                         setShowCloseReminder(false);
+                        navigation.push(
+                            url(
+                                `/mobile/analytics/daily/close?summaryId=${todaysSummary.id}`,
+                            ),
+                        );
                     }
                 }}
                 onCancel={() => {

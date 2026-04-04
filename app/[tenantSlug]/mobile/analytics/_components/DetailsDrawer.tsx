@@ -1,13 +1,13 @@
 // components/mobile/components/DetailsDrawer.tsx
 import { Drawer } from "vaul";
-import { X, Camera } from "lucide-react";
-import { formatRupiah } from "@/lib/utils/formatCurrency";
+import { X } from "lucide-react";
 import { formatFullIndonesiaTimestamp } from "@/lib/timezone";
 import CopyableField from "@/components/mobile/shared/CopyableField";
 import { DailySummary } from "@/lib/schemas/daily-summaries";
 import { Expense } from "@/lib/schemas/expenses";
 import { SummaryPhotoThumbnail } from "@/app/[tenantSlug]/mobile/analytics/daily/_components/SummaryPhotoThumbnail";
 import { PHOTO_SLOTS } from "@/app/[tenantSlug]/mobile/analytics/daily/_components/PhotoStep";
+import { formatRupiah } from "@/lib/utils/formatCurrency";
 
 export type DailySummaryWithExpenses = DailySummary & {
     expenses: Expense[];
@@ -30,7 +30,6 @@ export const DetailsDrawer = ({
 }: DetailsDrawerProps) => {
     if (!isOpen || !summary) return null;
 
-    // Group photos by type
     const closingPhotos =
         summary.photos?.filter((p) => p.type.startsWith("closing:")) ?? [];
 
@@ -131,83 +130,7 @@ export const DetailsDrawer = ({
                                 )}
                             </div>
 
-                            {/* Financial Summary */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-blue-50 p-4 rounded-lg">
-                                    <p className="text-xs text-blue-600 uppercase tracking-wide">
-                                        Opening Balance
-                                    </p>
-                                    <p className="text-lg font-bold text-blue-800">
-                                        {formatRupiah(summary.openingBalance)}
-                                    </p>
-                                </div>
-                                <div className="bg-green-50 p-4 rounded-lg">
-                                    <p className="text-xs text-green-600 uppercase tracking-wide">
-                                        Total Sales
-                                    </p>
-                                    <p className="text-lg font-bold text-green-800">
-                                        {formatRupiah(summary.totalSales)}
-                                    </p>
-                                </div>
-                                <div className="bg-purple-50 p-4 rounded-lg">
-                                    <p className="text-xs text-purple-600 uppercase tracking-wide">
-                                        Opening + Sales
-                                    </p>
-                                    <p className="text-lg font-bold text-purple-800">
-                                        {formatRupiah(
-                                            summary.openingBalance +
-                                                summary.totalSales,
-                                        )}
-                                    </p>
-                                </div>
-                                <div className="bg-red-50 p-4 rounded-lg">
-                                    <p className="text-xs text-red-600 uppercase tracking-wide">
-                                        Expenses
-                                    </p>
-                                    <p className="text-lg font-bold text-red-800">
-                                        {formatRupiah(summary.totalExpenses)}
-                                    </p>
-                                </div>
-                                <div className="bg-purple-50 p-4 rounded-lg">
-                                    <p className="text-xs text-purple-600 uppercase tracking-wide">
-                                        Expected Cash
-                                    </p>
-                                    <p className="text-lg font-bold text-purple-800">
-                                        {formatRupiah(summary.expectedCash)}
-                                    </p>
-                                </div>
-                                <div className="bg-orange-50 p-4 rounded-lg">
-                                    <p className="text-xs text-orange-600 uppercase tracking-wide">
-                                        Actual Cash
-                                    </p>
-                                    <p className="text-lg font-bold text-orange-800">
-                                        {summary.actualCash !== null
-                                            ? formatRupiah(summary.actualCash)
-                                            : "Not counted"}
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* Variance */}
-                            {summary.variance !== null && (
-                                <div
-                                    className={`p-4 rounded-lg ${summary.variance >= 0 ? "bg-green-50" : "bg-red-50"}`}
-                                >
-                                    <p
-                                        className={`text-xs uppercase tracking-wide ${summary.variance >= 0 ? "text-green-600" : "text-red-600"}`}
-                                    >
-                                        Cash Variance
-                                    </p>
-                                    <p
-                                        className={`text-lg font-bold ${summary.variance >= 0 ? "text-green-800" : "text-red-800"}`}
-                                    >
-                                        {summary.variance >= 0 ? "+" : ""}
-                                        {formatRupiah(summary.variance)}
-                                    </p>
-                                </div>
-                            )}
-
-                            {/* Sales Statistics */}
+                            {/* Sales Stats */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="text-center p-4 bg-gray-50 rounded-lg">
                                     <p className="text-2xl font-bold text-blue-600">
@@ -227,14 +150,12 @@ export const DetailsDrawer = ({
                                 </div>
                             </div>
 
-                            {/* Closing Photos — grouped by slot */}
+                            {/* Closing Photos */}
                             {closingPhotos.length > 0 && (
                                 <div className="space-y-3">
-                                    <div className="flex items-center gap-2">
-                                        <h4 className="font-medium text-gray-800">
-                                            Closing Photos
-                                        </h4>
-                                    </div>
+                                    <h4 className="font-medium text-gray-800">
+                                        Closing Photos
+                                    </h4>
                                     <div className="space-y-3">
                                         {PHOTO_SLOTS.map((slot) => {
                                             const photo = closingPhotos.find(
@@ -244,17 +165,15 @@ export const DetailsDrawer = ({
                                             return (
                                                 <div
                                                     key={slot.type}
-                                                    className="flex items-start gap-3 bg-gray-50 p-3 rounded-xl"
+                                                    className="flex items-start gap-3 bg-gray-50 p-2 rounded-xl"
                                                 >
-                                                    {/* Square thumbnail */}
-                                                    <div className="w-20 h-20 shrink-0">
+                                                    <div className="w-32 h-32 shrink-0">
                                                         <SummaryPhotoThumbnail
                                                             url={photo.url}
                                                             alt={slot.label}
                                                             className="w-full h-full"
                                                         />
                                                     </div>
-                                                    {/* Label + notes */}
                                                     <div className="flex-1 min-w-0">
                                                         <p className="text-sm font-semibold text-gray-800">
                                                             {slot.label}
@@ -308,20 +227,6 @@ export const DetailsDrawer = ({
                                                     </div>
                                                 </div>
                                             ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Notes */}
-                            {summary.notes && (
-                                <div className="space-y-2">
-                                    <h4 className="font-medium text-gray-800">
-                                        Notes
-                                    </h4>
-                                    <div className="bg-gray-50 p-3 rounded-lg">
-                                        <p className="text-sm text-gray-700">
-                                            {summary.notes}
-                                        </p>
                                     </div>
                                 </div>
                             )}

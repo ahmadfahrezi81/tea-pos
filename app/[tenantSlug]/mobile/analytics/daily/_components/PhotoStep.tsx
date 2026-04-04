@@ -273,11 +273,11 @@ export function PhotoStep({
                                                 url={savedPhoto.url}
                                                 alt={slot.label}
                                                 className="w-full h-full"
-                                                onDelete={() =>
-                                                    onSavedPhotoDelete?.(
+                                                onDelete={async () => {
+                                                    await onSavedPhotoDelete?.(
                                                         savedPhoto.id,
-                                                    )
-                                                }
+                                                    );
+                                                }}
                                             />
                                             <div className="absolute top-2 left-2 w-2 h-2 rounded-full bg-green-400 shadow-sm" />
                                         </div>

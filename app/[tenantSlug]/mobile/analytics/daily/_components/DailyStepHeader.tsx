@@ -2,6 +2,7 @@
 "use client";
 
 import { Check } from "lucide-react";
+import { useRef, useEffect } from "react";
 
 interface Step {
     label: string;
@@ -10,7 +11,7 @@ interface Step {
 interface DailyStepHeaderProps {
     steps: Step[];
     currentStep: number;
-    onStepClick?: (index: number) => void; // only navigates to completed steps
+    onStepClick?: (index: number) => void;
 }
 
 export function DailyStepHeader({
@@ -18,17 +19,44 @@ export function DailyStepHeader({
     currentStep,
     onStepClick,
 }: DailyStepHeaderProps) {
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+    // Auto-scroll to current step on mount and step change
+    useEffect(() => {
+        const container = scrollRef.current;
+        const currentEl = stepRefs.current[currentStep];
+        if (!container || !currentEl) return;
+
+        const containerWidth = container.offsetWidth;
+        const elLeft = currentEl.offsetLeft;
+        const elWidth = currentEl.offsetWidth;
+
+        // Center the current step in the scroll container
+        const scrollTo = elLeft - containerWidth / 2 + elWidth / 2;
+        container.scrollTo({ left: scrollTo, behavior: "smooth" });
+    }, [currentStep]);
+
     return (
         <div className="sticky top-0 z-10 bg-gray-50 border-b border-gray-100 w-full py-3">
-            <div className="overflow-x-auto no-scrollbar">
-                <div className="flex items-center min-w-max">
+            <div
+                ref={scrollRef}
+                className="overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full"
+            >
+                <div className="flex items-center min-w-max pb-3">
                     {steps.map((step, index) => {
                         const isCompleted = index < currentStep;
                         const isCurrent = index === currentStep;
                         const isClickable = isCompleted && onStepClick;
 
                         return (
-                            <div key={index} className="flex items-center">
+                            <div
+                                key={index}
+                                ref={(el) => {
+                                    stepRefs.current[index] = el;
+                                }}
+                                className="flex items-center"
+                            >
                                 {/* Step circle + label */}
                                 <div className="flex flex-col items-center gap-1">
                                     <button
@@ -36,26 +64,26 @@ export function DailyStepHeader({
                                             isClickable && onStepClick(index)
                                         }
                                         disabled={!isClickable}
-                                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
+                                        className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
                                             isCompleted
                                                 ? "bg-brand text-white active:scale-95"
                                                 : isCurrent
-                                                  ? "bg-brand/20 text-brand border-2 border-brand"
+                                                  ? "bg-brand/10 text-brand border-2 border-brand"
                                                   : "bg-gray-100 text-gray-400"
                                         } ${isClickable ? "cursor-pointer" : "cursor-default"}`}
                                     >
                                         {isCompleted ? (
-                                            <Check size={16} />
+                                            <Check size={26} />
                                         ) : (
                                             index + 1
                                         )}
                                     </button>
                                     <p
-                                        className={`text-xs font-medium whitespace-nowrap ${
+                                        className={`text-sm font-medium whitespace-nowrap ${
                                             isCurrent
                                                 ? "text-brand"
                                                 : isCompleted
-                                                  ? "text-brand/70"
+                                                  ? "text-brand/80"
                                                   : "text-gray-400"
                                         }`}
                                     >

@@ -140,17 +140,65 @@ export default function MobileLayoutClient({
         [canSell, canManage, url],
     );
 
-    // ─── Navigation ───────────────────────────────────────────────────
-    // const handleNavClick = useCallback(
-    //     (path: string) => {
-    //         if (path === pathname) return;
-    //         setOptimisticPath(path);
-    //         setIsTransitioning(true);
-    //         router.push(path);
-    //     },
-    //     [pathname, router],
-    // );
+    // ─── Path helpers ─────────────────────────────────────────────────
+    const getCurrentPageTitle = useCallback((path: string): string | null => {
+        if (path.endsWith("/mobile/pos")) return "POS";
+        if (path.endsWith("/mobile/orders")) return "Orders";
+        if (path.endsWith("/mobile/orders/chart")) return "Daily Chart";
+        if (path.endsWith("/mobile/analytics")) return "Analytics";
+        if (path.endsWith("/mobile/analytics/chart")) return "Monthly Chart";
+        if (path.endsWith("/mobile/profile")) return "Profile";
+        if (path.endsWith("/mobile/profile/stores")) return "Assigned Stores";
+        if (path.endsWith("/mobile/notifications")) return "Notifications";
+        if (
+            path.includes("/mobile/notifications/") &&
+            path.endsWith("/weather")
+        )
+            return "Weather Forecast";
+        if (path.endsWith("/mobile/analytics/daily/close")) return null;
+        if (path.endsWith("/mobile/analytics/daily/open")) return "Open Store";
+        return "Mobile";
+    }, []);
 
+    const isSubPage = useCallback(
+        (path: string) =>
+            path.includes("/mobile/profile/") ||
+            path.endsWith("/mobile/orders/chart") ||
+            path.endsWith("/mobile/analytics/chart") ||
+            path.endsWith("/mobile/notifications") ||
+            path.includes("/mobile/notifications/") ||
+            path.endsWith("/mobile/analytics/daily/close") ||
+            path.endsWith("/mobile/analytics/daily/open"),
+        [],
+    );
+
+    const isChartPage = useCallback(
+        (path: string) =>
+            path.endsWith("/mobile/orders/chart") ||
+            path.endsWith("/mobile/analytics/chart"),
+        [],
+    );
+
+    const getParentPath = useCallback(
+        (path: string) => {
+            if (path.includes("/mobile/profile/"))
+                return url("/mobile/profile");
+            if (path.endsWith("/mobile/orders/chart"))
+                return url("/mobile/orders");
+            if (path.endsWith("/mobile/analytics/chart"))
+                return url("/mobile/analytics");
+            if (path.endsWith("/mobile/notifications"))
+                return url("/mobile/pos");
+            if (path.includes("/mobile/notifications/"))
+                return url("/mobile/notifications");
+            if (path.includes("/mobile/analytics/daily/"))
+                return url("/mobile/analytics");
+            return url("/mobile");
+        },
+        [url],
+    );
+
+    // ─── Navigation ───────────────────────────────────────────────────
     const handleNavClick = useCallback(
         (path: string) => {
             if (path === pathname) return;
@@ -162,13 +210,10 @@ export default function MobileLayoutClient({
     );
 
     // ─── Effects ──────────────────────────────────────────────────────
-
-    // Register nav handler into singleton so child pages can trigger transitions
     useEffect(() => {
         navigation.register(handleNavClick);
     }, [handleNavClick]);
 
-    // Clear transition state once the new route commits
     useEffect(() => {
         if (optimisticPath && pathname === optimisticPath) {
             setOptimisticPath(null);
@@ -176,7 +221,6 @@ export default function MobileLayoutClient({
         }
     }, [pathname, optimisticPath]);
 
-    // Prefetch all known routes
     useEffect(() => {
         tabs.forEach((tab) => router.prefetch(tab.path));
         router.prefetch(url("/mobile/notifications"));
@@ -185,7 +229,6 @@ export default function MobileLayoutClient({
         router.prefetch(url("/mobile/profile"));
     }, [tabs, router, url]);
 
-    // Auth retry recovery
     useEffect(() => {
         let mounted = true;
         const checkAuthState = async () => {
@@ -209,7 +252,6 @@ export default function MobileLayoutClient({
         if (profile) setAuthRetryCount(0);
     }, [profile]);
 
-    // Preserve scroll position when store picker drawer opens/closes
     useEffect(() => {
         const el = scrollContainerRef.current;
         if (!el) return;
@@ -223,57 +265,14 @@ export default function MobileLayoutClient({
         }
     }, [isPickerOpen]);
 
-    // ─── Path helpers ─────────────────────────────────────────────────
+    // ─── Derived state ────────────────────────────────────────────────
     const currentPath = optimisticPath || pathname;
     const isProfilePage = currentPath.endsWith("/mobile/profile");
+    const currentTitle = getCurrentPageTitle(currentPath);
+    const currentIsSubPage = isSubPage(currentPath);
+    const isMinimalHeader = currentIsSubPage && currentTitle === null;
 
-    const getCurrentPageTitle = (path: string) => {
-        if (path.endsWith("/mobile/pos")) return "POS";
-        if (path.endsWith("/mobile/orders")) return "Orders";
-        if (path.endsWith("/mobile/orders/chart")) return "Daily Chart";
-        if (path.endsWith("/mobile/analytics")) return "Analytics";
-        if (path.endsWith("/mobile/analytics/chart")) return "Monthly Chart";
-        if (path.endsWith("/mobile/profile")) return "Profile";
-        if (path.endsWith("/mobile/profile/stores")) return "Assigned Stores";
-        if (path.endsWith("/mobile/notifications")) return "Notifications";
-        if (
-            path.includes("/mobile/notifications/") &&
-            path.endsWith("/weather")
-        )
-            return "Weather Forecast";
-        if (path.endsWith("/mobile/analytics/daily/close"))
-            return "Close Store";
-        if (path.endsWith("/mobile/analytics/daily/open")) return "Open Store";
-        return "Mobile";
-    };
-
-    const isSubPage = (path: string) =>
-        path.includes("/mobile/profile/") ||
-        path.endsWith("/mobile/orders/chart") ||
-        path.endsWith("/mobile/analytics/chart") ||
-        path.endsWith("/mobile/notifications") ||
-        path.includes("/mobile/notifications/") ||
-        path.endsWith("/mobile/analytics/daily/close") ||
-        path.endsWith("/mobile/analytics/daily/open");
-
-    const isChartPage = (path: string) =>
-        path.endsWith("/mobile/orders/chart") ||
-        path.endsWith("/mobile/analytics/chart");
-
-    const getParentPath = (path: string) => {
-        if (path.includes("/mobile/profile/")) return url("/mobile/profile");
-        if (path.endsWith("/mobile/orders/chart")) return url("/mobile/orders");
-        if (path.endsWith("/mobile/analytics/chart"))
-            return url("/mobile/analytics");
-        if (path.endsWith("/mobile/notifications")) return url("/mobile/pos");
-        if (path.includes("/mobile/notifications/"))
-            return url("/mobile/notifications");
-        if (path.includes("/mobile/analytics/daily/"))
-            return url("/mobile/analytics");
-        return url("/mobile");
-    };
-
-    // ─── Early returns (after all hooks) ─────────────────────────────
+    // ─── Early returns ────────────────────────────────────────────────
     if (isLoading) {
         return (
             <div className="h-dvh overflow-hidden bg-white flex flex-col items-center justify-center">
@@ -351,51 +350,67 @@ export default function MobileLayoutClient({
             <header className="fixed top-0 left-0 right-0 z-40 bg-gray-50 p-4 py-3">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        {isSubPage(currentPath) ? (
-                            <div className="flex flex-col gap-2">
+                        {currentIsSubPage ? (
+                            isMinimalHeader ? (
+                                // Minimal header — back button only, no title
                                 <button
                                     onClick={() =>
                                         handleNavClick(
                                             getParentPath(currentPath),
                                         )
                                     }
-                                    className="text-gray-900 active:scale-95 self-start pr-2 pl-0 py-1"
+                                    className="text-gray-900 active:scale-95 pr-2 pl-0 py-1"
                                 >
                                     <ArrowLeft size={28} strokeWidth={2} />
                                 </button>
-                                {isChartPage(currentPath) ? (
-                                    <div className="flex items-center gap-2">
+                            ) : (
+                                // Full subpage header — back button + title
+                                <div className="flex flex-col gap-2">
+                                    <button
+                                        onClick={() =>
+                                            handleNavClick(
+                                                getParentPath(currentPath),
+                                            )
+                                        }
+                                        className="text-gray-900 active:scale-95 self-start pr-2 pl-0 py-1"
+                                    >
+                                        <ArrowLeft size={28} strokeWidth={2} />
+                                    </button>
+                                    {isChartPage(currentPath) ? (
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-2xl font-semibold tracking-tight text-gray-900">
+                                                {currentTitle}
+                                            </p>
+                                            {selectedStore && (
+                                                <button
+                                                    onClick={() =>
+                                                        setIsPickerOpen(true)
+                                                    }
+                                                    className="flex items-center mt-1 gap-0.5 active:scale-95"
+                                                >
+                                                    <p className="text-lg text-brand font-bold">
+                                                        {selectedStore.name}
+                                                    </p>
+                                                    <ChevronsUpDown
+                                                        size={14}
+                                                        strokeWidth={3}
+                                                        className="text-brand"
+                                                    />
+                                                </button>
+                                            )}
+                                        </div>
+                                    ) : (
                                         <p className="text-2xl font-semibold tracking-tight text-gray-900">
-                                            {getCurrentPageTitle(currentPath)}
+                                            {currentTitle}
                                         </p>
-                                        {selectedStore && (
-                                            <button
-                                                onClick={() =>
-                                                    setIsPickerOpen(true)
-                                                }
-                                                className="flex items-center mt-1 gap-0.5 active:scale-95"
-                                            >
-                                                <p className="text-lg text-brand font-bold">
-                                                    {selectedStore.name}
-                                                </p>
-                                                <ChevronsUpDown
-                                                    size={14}
-                                                    strokeWidth={3}
-                                                    className="text-brand"
-                                                />
-                                            </button>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <p className="text-2xl font-semibold tracking-tight text-gray-900">
-                                        {getCurrentPageTitle(currentPath)}
-                                    </p>
-                                )}
-                            </div>
+                                    )}
+                                </div>
+                            )
                         ) : (
+                            // Main tab header
                             <div className="flex items-center gap-2">
                                 <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-                                    {getCurrentPageTitle(currentPath)}
+                                    {currentTitle}
                                 </h1>
                                 {selectedStore && !isProfilePage && (
                                     <button
@@ -435,16 +450,15 @@ export default function MobileLayoutClient({
                 </div>
             </header>
 
-            {/* <div
-                ref={scrollContainerRef}
-                className={`flex-1 overflow-y-auto ${isSubPage(currentPath) ? "pt-24" : "pt-18"} p-4 pb-28 ${isTransitioning ? "bg-blue-300" : "bg-gray-50"}`}
-            >
-                {isTransitioning ? null : children}
-            </div> */}
-
             <div
                 ref={scrollContainerRef}
-                className={`flex-1 overflow-y-auto ${isSubPage(currentPath) ? "pt-24" : "pt-16"} p-4 pb-28 bg-gray-50`}
+                className={`flex-1 overflow-y-auto p-4 pb-28 bg-gray-50 ${
+                    isMinimalHeader
+                        ? "pt-14"
+                        : currentIsSubPage
+                          ? "pt-24"
+                          : "pt-16"
+                }`}
             >
                 {isTransitioning ? (
                     <div className="absolute inset-0 flex items-center justify-center animate-pulse">
@@ -455,7 +469,7 @@ export default function MobileLayoutClient({
                 )}
             </div>
 
-            {!isSubPage(currentPath) && (
+            {!currentIsSubPage && (
                 <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
                     <div className="flex">
                         {tabs.map((tab) => {
