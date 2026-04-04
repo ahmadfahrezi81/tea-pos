@@ -12,11 +12,12 @@ import { registerTenantInviteRoutes } from "@/lib/openapi/tenantInvites";
 import { registerProductRoutes } from "@/lib/openapi/products";
 import { registerStoreRoutes } from "@/lib/openapi/stores";
 import { registerExpenseRoutes } from "@/lib/openapi/expenses";
-import { registerDailySummaryRoutes } from "@/lib/openapi/summaries";
+import { registerDailySummaryRoutes } from "@/lib/openapi/daily-summaries";
 import { registerAssignmentRoutes } from "@/lib/openapi/userStoreAssignments";
 import { registerProfileRoutes } from "@/lib/openapi/profiles";
 import { registerWeatherRoutes } from "@/lib/openapi/weather";
 import { registerNotificationRoutes } from "@/lib/openapi/notifications";
+import { registerDailySummaryPhotoRoutes } from "@/lib/openapi/daily-summary-photos";
 
 const registry = new OpenAPIRegistry();
 
@@ -30,6 +31,7 @@ registerDailySummaryRoutes(registry);
 registerProfileRoutes(registry);
 registerWeatherRoutes(registry);
 registerNotificationRoutes(registry);
+registerDailySummaryPhotoRoutes(registry);
 
 registerTenantRoutes(registry);
 registerUserTenantAssignmentRoutes(registry);

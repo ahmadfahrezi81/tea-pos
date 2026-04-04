@@ -18,7 +18,8 @@ export function registerExpenseRoutes(registry: OpenAPIRegistry) {
         method: "get",
         path: "/api/expenses",
         description: "Get expenses",
-        summary: "Retrieve expenses with optional filtering",
+        summary:
+            "Retrieve expenses with optional filtering. Each expense includes attached photos if any.",
         tags: ["Expenses"],
         request: {
             query: ListExpensesQuery,

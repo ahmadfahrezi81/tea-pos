@@ -89,8 +89,20 @@ export const ExpenseResponse = z
         storeId: UUIDSchema,
         expenseType: z.string(),
         amount: z.number(),
-        tenantId: UUIDSchema, // ← Added for response
+        tenantId: UUIDSchema,
         createdAt: z.string(),
+        photos: z
+            .array(
+                z.object({
+                    id: UUIDSchema,
+                    url: z.string(),
+                    createdAt: z.string(),
+                }),
+            )
+            .optional()
+            .openapi({
+                description: "Photos attached to this expense",
+            }),
     })
     .openapi({ title: "ExpenseResponse" });
 

@@ -1,4 +1,4 @@
-// lib/openapi/summaries.ts
+// lib/openapi/daily-summaries.ts
 import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 import {
     CreateDailySummaryInput,
@@ -11,12 +11,12 @@ import {
 } from "../schemas/index";
 
 export function registerDailySummaryRoutes(registry: OpenAPIRegistry) {
-    // Register GET /api/summaries
+    // GET /api/summaries
     registry.registerPath({
         method: "get",
         path: "/api/summaries",
         description: "Get daily summaries",
-        summary: "Retrieve daily summaries with expenses and analytics",
+        summary: "Retrieve daily summaries with expenses, photos and analytics",
         tags: ["Daily Summaries"],
         request: {
             query: ListDailySummariesQuery,
@@ -43,12 +43,13 @@ export function registerDailySummaryRoutes(registry: OpenAPIRegistry) {
         },
     });
 
-    // Register POST /api/summaries
+    // POST /api/summaries
     registry.registerPath({
         method: "post",
         path: "/api/summaries",
         description: "Create daily summary",
-        summary: "Create a new daily summary for a store",
+        summary:
+            "Create a new daily summary for a store with optional opening cash breakdown",
         tags: ["Daily Summaries"],
         request: {
             body: {
@@ -58,7 +59,7 @@ export function registerDailySummaryRoutes(registry: OpenAPIRegistry) {
             },
         },
         responses: {
-            200: {
+            201: {
                 description: "Created",
                 content: {
                     "application/json": { schema: CreateDailySummaryResponse },
@@ -71,7 +72,7 @@ export function registerDailySummaryRoutes(registry: OpenAPIRegistry) {
                 },
             },
             409: {
-                description: "Conflict - Summary already exists",
+                description: "Conflict - Summary already exists for this date",
                 content: {
                     "application/json": { schema: ErrorResponseSchema },
                 },
@@ -85,12 +86,13 @@ export function registerDailySummaryRoutes(registry: OpenAPIRegistry) {
         },
     });
 
-    // Register PUT /api/summaries
+    // PUT /api/summaries
     registry.registerPath({
         method: "put",
         path: "/api/summaries",
         description: "Update daily summary",
-        summary: "Update an existing daily summary",
+        summary:
+            "Update an existing daily summary — supports opening/closing cash breakdown and close day",
         tags: ["Daily Summaries"],
         request: {
             body: {
@@ -108,6 +110,12 @@ export function registerDailySummaryRoutes(registry: OpenAPIRegistry) {
             },
             400: {
                 description: "Bad Request",
+                content: {
+                    "application/json": { schema: ErrorResponseSchema },
+                },
+            },
+            404: {
+                description: "Not Found",
                 content: {
                     "application/json": { schema: ErrorResponseSchema },
                 },
