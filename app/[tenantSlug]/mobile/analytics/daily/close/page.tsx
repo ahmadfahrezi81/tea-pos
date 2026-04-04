@@ -320,7 +320,7 @@
 // app/[tenantSlug]/mobile/analytics/daily/close/page.tsx
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useStore } from "@/lib/context/StoreContext";
 import { useSummaries } from "@/lib/hooks/summaries/useDailySummaries";
@@ -350,13 +350,12 @@ const STEPS = [
     { label: "Syrup" },
     { label: "Bags" },
     { label: "Cups" },
-    { label: "Tea Waste" },
+    { label: "Waste" },
     { label: "Cash" },
     { label: "Notes" },
     { label: "Review" },
 ];
 
-// Photo steps are 0-4
 const PHOTO_STEP_COUNT = 5;
 const STEP_CASH = 5;
 const STEP_NOTES = 6;
@@ -391,12 +390,13 @@ export default function CloseDayPage() {
         data: summariesData,
         updateSummary,
         mutate,
+        isLoading: summariesLoading,
     } = useSummaries(selectedStoreId, new Date().toISOString().slice(0, 7));
+
     const { uploadPhoto, deletePhoto } = useSummaryPhotos();
 
     const summary = summariesData?.summaries.find((s) => s.id === summaryId);
 
-    // Already uploaded photos from DB
     const savedPhotos: SavedSlottedPhoto[] = (summary?.photos ?? [])
         .filter((p) => p.type.startsWith("closing:"))
         .map((p) => ({
@@ -420,6 +420,15 @@ export default function CloseDayPage() {
     const [photos, setPhotos] = useState<SlottedPhoto[]>([]);
     const [breakdown, setBreakdown] = useState<CashBreakdown>(EMPTY_BREAKDOWN);
     const [notes, setNotes] = useState("");
+    const [confirmed, setConfirmed] = useState(false);
+
+    // ─── Seed breakdown and notes from summary once loaded ─────────────
+    useEffect(() => {
+        if (!summary) return;
+        if (summary.closingCashBreakdown)
+            setBreakdown(summary.closingCashBreakdown);
+        if (summary.notes) setNotes(summary.notes);
+    }, [summary?.id]);
 
     // ─── Helpers ───────────────────────────────────────────────────────
     const getSlotPhoto = (type: PhotoType) =>
@@ -454,13 +463,14 @@ export default function CloseDayPage() {
     );
 
     const handleBack = useCallback(() => {
+        if (currentStep === STEP_REVIEW) setConfirmed(false);
         goToStep(currentStep - 1);
     }, [currentStep, goToStep]);
 
     const handleNext = useCallback(async () => {
         setError(null);
 
-        // For each photo step (0-4), upload that slot's photo on Next
+        // ─── Photo steps 0-4 ───────────────────────────────────────────
         if (currentStep < PHOTO_STEP_COUNT && summaryId && selectedStoreId) {
             const slot = PHOTO_SLOTS[currentStep];
             const localPhoto = getSlotPhoto(slot.type);
@@ -468,6 +478,9 @@ export default function CloseDayPage() {
             if (localPhoto) {
                 setIsUploading(true);
                 try {
+                    const existingSaved = getSavedSlotPhoto(slot.type);
+                    if (existingSaved) await deletePhoto(existingSaved.id);
+
                     await uploadPhoto({
                         file: localPhoto.file,
                         dailySummaryId: summaryId,
@@ -475,6 +488,8 @@ export default function CloseDayPage() {
                         type: localPhoto.type,
                         notes: localPhoto.notes ?? null,
                     });
+
+                    await mutate();
                     setPhotos((prev) =>
                         prev.filter((p) => p.type !== slot.type),
                     );
@@ -491,13 +506,58 @@ export default function CloseDayPage() {
             }
         }
 
+        // ─── Cash step ─────────────────────────────────────────────────
+        if (currentStep === STEP_CASH && summaryId) {
+            setIsUploading(true);
+            try {
+                const actualCash = Object.entries(breakdown).reduce(
+                    (sum, [denom, count]) =>
+                        sum + parseInt(denom) * (count ?? 0),
+                    0,
+                );
+                await updateSummary(summaryId, {
+                    actualCash,
+                    closingCashBreakdown: breakdown,
+                });
+                await mutate();
+            } catch (err) {
+                setError(
+                    err instanceof Error ? err.message : "Failed to save cash",
+                );
+                setIsUploading(false);
+                return;
+            }
+            setIsUploading(false);
+        }
+
+        // ─── Notes step ────────────────────────────────────────────────
+        if (currentStep === STEP_NOTES && summaryId) {
+            setIsUploading(true);
+            try {
+                await updateSummary(summaryId, { notes: notes || null });
+                await mutate();
+            } catch (err) {
+                setError(
+                    err instanceof Error ? err.message : "Failed to save notes",
+                );
+                setIsUploading(false);
+                return;
+            }
+            setIsUploading(false);
+        }
+
         goToStep(currentStep + 1);
     }, [
         currentStep,
         photos,
+        breakdown,
+        notes,
         summaryId,
         selectedStoreId,
         uploadPhoto,
+        deletePhoto,
+        updateSummary,
+        mutate,
         goToStep,
     ]);
 
@@ -534,17 +594,21 @@ export default function CloseDayPage() {
     // ─── Delete saved photo ────────────────────────────────────────────
     const handleSavedPhotoDelete = useCallback(
         async (id: string) => {
-            try {
-                await deletePhoto(id);
-                await mutate();
-            } catch (err) {
-                console.error("Failed to delete photo:", err);
-            }
+            await deletePhoto(id);
+            await mutate();
         },
         [deletePhoto, mutate],
     );
 
     // ─── Guards ────────────────────────────────────────────────────────
+    if (summariesLoading) {
+        return (
+            <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-7 h-7 border-3 border-brand border-t-transparent rounded-full animate-spin" />
+            </div>
+        );
+    }
+
     if (!summaryId || !summary) {
         return (
             <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
@@ -566,26 +630,33 @@ export default function CloseDayPage() {
     const isLastStep = currentStep === STEPS.length - 1;
     const isBusy = isUploading || isSubmitting;
 
-    // Next is disabled if current photo step has no photo (local or saved)
     const currentSlot =
         currentStep < PHOTO_STEP_COUNT ? PHOTO_SLOTS[currentStep] : null;
     const currentStepHasPhoto = currentSlot
         ? !!getSlotPhoto(currentSlot.type) ||
           !!getSavedSlotPhoto(currentSlot.type)
         : true;
-    const nextDisabled = isBusy || !currentStepHasPhoto;
+
+    const cashTotal = Object.entries(breakdown).reduce(
+        (sum, [denom, count]) => sum + parseInt(denom) * (count ?? 0),
+        0,
+    );
+
+    const nextDisabled =
+        isBusy ||
+        (currentStep < PHOTO_STEP_COUNT && !currentStepHasPhoto) ||
+        (currentStep === STEP_CASH && cashTotal === 0) ||
+        (currentStep === STEP_REVIEW && !confirmed); // ← new
 
     // ─── Render ────────────────────────────────────────────────────────
     return (
-        <div className="flex flex-col min-h-screen bg-gray-50">
+        <div className="flex flex-col bg-gray-50">
             <DailyStepHeader
                 steps={STEPS}
                 currentStep={currentStep}
                 onStepClick={goToStep}
             />
-
             <div className="flex-1 overflow-y-auto pt-2">
-                {/* Photo steps 0-4 */}
                 {currentStep < PHOTO_STEP_COUNT &&
                     (() => {
                         const slot = PHOTO_SLOTS[currentStep];
@@ -600,9 +671,10 @@ export default function CloseDayPage() {
                                 onPhotoChange={(p) =>
                                     handlePhotoChange(p, slot.type)
                                 }
-                                onSavedPhotoDelete={() => {
+                                onSavedPhotoDelete={async () => {
                                     const saved = getSavedSlotPhoto(slot.type);
-                                    if (saved) handleSavedPhotoDelete(saved.id);
+                                    if (saved)
+                                        await handleSavedPhotoDelete(saved.id);
                                 }}
                                 onNotesChange={(n) =>
                                     handleNotesChange(slot.type, n)
@@ -629,6 +701,7 @@ export default function CloseDayPage() {
                         breakdown={breakdown}
                         notes={notes}
                         storeName={storeName}
+                        onConfirmChange={setConfirmed} // ← new
                     />
                 )}
             </div>
@@ -639,13 +712,12 @@ export default function CloseDayPage() {
                 </div>
             )}
 
-            {/* Bottom navigation */}
-            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 pb-6 flex gap-3">
+            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-3 px-4 pb-6 flex gap-3">
                 {!isFirstStep && (
                     <button
                         onClick={handleBack}
                         disabled={isBusy}
-                        className="flex items-center justify-center gap-1 px-5 py-3.5 rounded-xl bg-gray-100 border border-gray-200 text-gray-900 font-medium text-md active:scale-95 transition-transform disabled:opacity-60"
+                        className="flex items-center justify-center gap-1 px-5 py-3 rounded-xl bg-gray-100 border border-gray-200 text-gray-900 font-medium text-md active:scale-95 transition-transform disabled:opacity-60"
                     >
                         Previous
                     </button>
@@ -654,8 +726,8 @@ export default function CloseDayPage() {
                 {isLastStep ? (
                     <button
                         onClick={handleConfirm}
-                        disabled={isBusy}
-                        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-red-500 text-white font-semibold text-base active:scale-95 transition-transform disabled:opacity-60"
+                        disabled={isBusy || !confirmed}
+                        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-red-500 text-white font-semibold text-base active:scale-95 transition-transform disabled:opacity-30 disabled:bg-gray-300 disabled:text-gray-400"
                     >
                         {isSubmitting ? (
                             <>
@@ -670,7 +742,7 @@ export default function CloseDayPage() {
                     <button
                         onClick={handleNext}
                         disabled={nextDisabled}
-                        className="flex-1 flex items-center justify-center gap-1 py-3.5 rounded-xl bg-brand text-white font-semibold text-md active:scale-95 transition-transform disabled:opacity-30 disabled:bg-gray-300 disabled:text-gray-400"
+                        className="flex-1 flex items-center justify-center gap-1 py-3 rounded-xl bg-brand text-white font-semibold text-md active:scale-95 transition-transform disabled:opacity-30 disabled:bg-gray-300 disabled:text-gray-400"
                     >
                         {isUploading ? (
                             <>

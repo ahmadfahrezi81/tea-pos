@@ -7,12 +7,14 @@ import {
     FileText,
     CheckCircle,
     AlertCircle,
+    Check,
 } from "lucide-react";
 import { formatRupiah } from "@/lib/utils/formatCurrency";
 import { CashBreakdown } from "@/lib/schemas/daily-summaries";
 import { DailySummary } from "@/lib/schemas/daily-summaries";
 import { SummaryPhotoThumbnail } from "./SummaryPhotoThumbnail";
 import { SavedSlottedPhoto, SlottedPhoto } from "./PhotoStep";
+import { useState } from "react";
 
 const DENOMINATIONS: { value: keyof CashBreakdown; label: string }[] = [
     { value: 100000, label: "Rp 100.000" },
@@ -35,11 +37,12 @@ function calculateTotal(breakdown: CashBreakdown): number {
 
 interface ReviewStepProps {
     summary: DailySummary;
-    photos: SlottedPhoto[]; // ← was File[]
-    savedPhotos: SavedSlottedPhoto[]; // ← was savedPhotoUrls: string[]
+    photos: SlottedPhoto[];
+    savedPhotos: SavedSlottedPhoto[];
     breakdown: CashBreakdown;
     notes: string;
     storeName: string;
+    onConfirmChange: (confirmed: boolean) => void; // ← new
 }
 
 export function ReviewStep({
@@ -49,7 +52,10 @@ export function ReviewStep({
     breakdown,
     notes,
     storeName,
+    onConfirmChange, // ← new
 }: ReviewStepProps) {
+    const [confirmed, setConfirmed] = useState(false);
+
     const actualCash = calculateTotal(breakdown);
     const variance = actualCash - summary.expectedCash;
     const isExact = variance === 0;
@@ -88,13 +94,13 @@ export function ReviewStep({
                     />
                 ) : (
                     <AlertCircle
-                        size={24}
+                        size={30}
                         className={`shrink-0 ${isOver ? "text-blue-500" : "text-red-500"}`}
                     />
                 )}
                 <div className="flex-1">
                     <p
-                        className={`text-sm font-semibold ${
+                        className={`text-md font-semibold ${
                             isExact
                                 ? "text-green-700"
                                 : isOver
@@ -109,7 +115,7 @@ export function ReviewStep({
                               : `Cash is short by ${formatRupiah(Math.abs(variance))}`}
                     </p>
                     <p
-                        className={`text-xs mt-0.5 ${
+                        className={`text-sm mt-0.5 ${
                             isExact
                                 ? "text-green-600"
                                 : isOver
@@ -166,27 +172,18 @@ export function ReviewStep({
 
             {/* Photos */}
             <div className="bg-white rounded-2xl border border-gray-100 p-4 space-y-3">
-                <div className="flex items-center gap-2">
-                    <Camera size={16} className="text-gray-400" />
-                    <p className="text-sm font-semibold text-gray-700">
+                <div className="flex items-center gap-0">
+                    <Camera size={22} className="text-gray-900 mb-1" />
+                    <p className="text-sm font-semibold text-gray-900 tracking-wide px-1">
                         Photos
                     </p>
                 </div>
                 {savedPhotos.length > 0 || photos.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
                         {savedPhotos.map((p) => (
-                            <div key={p.id} className="aspect-square w-20">
+                            <div key={p.id} className="aspect-square w-24">
                                 <SummaryPhotoThumbnail
                                     url={p.url}
-                                    alt={p.type}
-                                    className="w-full h-full"
-                                />
-                            </div>
-                        ))}
-                        {photos.map((p, index) => (
-                            <div key={index} className="aspect-square w-20">
-                                <SummaryPhotoThumbnail
-                                    url={p.preview}
                                     alt={p.type}
                                     className="w-full h-full"
                                 />
@@ -201,9 +198,9 @@ export function ReviewStep({
             {/* Cash breakdown */}
             <div className="bg-white rounded-2xl border border-gray-100 p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <Banknote size={16} className="text-gray-400" />
-                        <p className="text-sm font-semibold text-gray-700">
+                    <div className="flex items-center gap-0">
+                        <Banknote size={22} className="text-gray-900" />
+                        <p className="text-sm font-semibold text-gray-900 tracking-wide px-1">
                             Cash Count
                         </p>
                     </div>
@@ -249,6 +246,28 @@ export function ReviewStep({
                     </p>
                 </div>
             )}
+
+            {/* Confirmation checkbox */}
+            <button
+                onClick={() => {
+                    const next = !confirmed;
+                    setConfirmed(next);
+                    onConfirmChange(next);
+                }}
+                className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-gray-100 w-full text-left"
+            >
+                <div
+                    className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
+                        confirmed ? "bg-brand border-brand" : "border-gray-300"
+                    }`}
+                >
+                    {confirmed && <Check size={12} className="text-white" />}
+                </div>
+                <p className="text-sm text-gray-700 font-medium">
+                    I confirm all the information above is correct and ready to
+                    close.
+                </p>
+            </button>
 
             <div className="h-4" />
         </div>
