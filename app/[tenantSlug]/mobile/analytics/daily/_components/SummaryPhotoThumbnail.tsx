@@ -9,6 +9,7 @@ import {
     Check,
     CloudCheck,
 } from "lucide-react";
+import { createPortal } from "react-dom";
 
 interface SummaryPhotoThumbnailProps {
     url: string;
@@ -104,26 +105,28 @@ export function SummaryPhotoThumbnail({
                 )}
             </div>
 
-            {isOpen && (
-                <div
-                    className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
-                    onClick={() => setIsOpen(false)}
-                >
-                    <button
+            {isOpen &&
+                createPortal(
+                    <div
+                        className="fixed inset-0 z-[999] bg-black/90 flex items-center justify-center"
                         onClick={() => setIsOpen(false)}
-                        className="absolute top-6 right-6 w-11 h-11 rounded-full bg-black flex items-center justify-center active:scale-95 transition-transform"
                     >
-                        <X size={30} className="text-white" />
-                    </button>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                        src={url}
-                        alt={alt}
-                        className="max-w-full max-h-full object-contain px-4"
-                        onClick={(e) => e.stopPropagation()}
-                    />
-                </div>
-            )}
+                        <button
+                            onClick={() => setIsOpen(false)}
+                            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center active:scale-95 transition-transform"
+                        >
+                            <X size={30} className="text-white" />
+                        </button>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                            src={url}
+                            alt={alt}
+                            className="max-w-full max-h-full object-contain px-4"
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                    </div>,
+                    document.body,
+                )}
         </>
     );
 }
