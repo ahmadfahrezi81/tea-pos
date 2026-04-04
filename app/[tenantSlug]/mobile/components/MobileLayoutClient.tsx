@@ -241,6 +241,9 @@ export default function MobileLayoutClient({
             path.endsWith("/weather")
         )
             return "Weather Forecast";
+        if (path.endsWith("/mobile/analytics/daily/close"))
+            return "Close Store";
+        if (path.endsWith("/mobile/analytics/daily/open")) return "Open Store";
         return "Mobile";
     };
 
@@ -249,7 +252,9 @@ export default function MobileLayoutClient({
         path.endsWith("/mobile/orders/chart") ||
         path.endsWith("/mobile/analytics/chart") ||
         path.endsWith("/mobile/notifications") ||
-        path.includes("/mobile/notifications/");
+        path.includes("/mobile/notifications/") ||
+        path.endsWith("/mobile/analytics/daily/close") ||
+        path.endsWith("/mobile/analytics/daily/open");
 
     const isChartPage = (path: string) =>
         path.endsWith("/mobile/orders/chart") ||
@@ -263,6 +268,8 @@ export default function MobileLayoutClient({
         if (path.endsWith("/mobile/notifications")) return url("/mobile/pos");
         if (path.includes("/mobile/notifications/"))
             return url("/mobile/notifications");
+        if (path.includes("/mobile/analytics/daily/"))
+            return url("/mobile/analytics");
         return url("/mobile");
     };
 

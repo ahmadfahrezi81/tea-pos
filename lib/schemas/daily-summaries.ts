@@ -2,6 +2,26 @@
 import { z } from "zod";
 import { UUIDSchema } from "./common";
 import { ExpenseResponse } from "./expenses";
+import { PHOTO_TYPES } from "./daily-summary-photos";
+
+// ============================================================================
+// CASH BREAKDOWN SCHEMA
+// ============================================================================
+
+export const CashBreakdown = z
+    .object({
+        100000: z.number().int().min(0).optional(),
+        50000: z.number().int().min(0).optional(),
+        20000: z.number().int().min(0).optional(),
+        10000: z.number().int().min(0).optional(),
+        5000: z.number().int().min(0).optional(),
+        2000: z.number().int().min(0).optional(),
+        1000: z.number().int().min(0).optional(),
+        500: z.number().int().min(0).optional(),
+        200: z.number().int().min(0).optional(),
+        100: z.number().int().min(0).optional(),
+    })
+    .openapi({ title: "CashBreakdown" });
 
 // ============================================================================
 // INPUT SCHEMAS
@@ -29,6 +49,9 @@ export const CreateDailySummaryInput = z
             description: "Opening cash balance for the day",
             example: 100000,
         }),
+        openingCashBreakdown: CashBreakdown.nullable().optional().openapi({
+            description: "Per denomination cash count at opening",
+        }),
     })
     .openapi({ title: "CreateDailySummaryInput" });
 
@@ -38,8 +61,14 @@ export const UpdateDailySummaryInput = z
         openingBalance: z.number().min(0).optional().openapi({
             description: "Opening cash balance",
         }),
+        openingCashBreakdown: CashBreakdown.nullable().optional().openapi({
+            description: "Per denomination cash count at opening",
+        }),
         actualCash: z.number().min(0).nullable().optional().openapi({
             description: "Actual cash counted at end of day",
+        }),
+        closingCashBreakdown: CashBreakdown.nullable().optional().openapi({
+            description: "Per denomination cash count at closing",
         }),
         notes: z.string().max(1000).nullable().optional().openapi({
             description: "Additional notes",
@@ -82,10 +111,12 @@ export const DailySummaryResponse = z
         managerId: UUIDSchema.nullable(),
         date: z.string(),
         openingBalance: z.number(),
+        openingCashBreakdown: CashBreakdown.nullable().optional(),
+        closingCashBreakdown: CashBreakdown.nullable().optional(),
         totalSales: z.number(),
-        totalOrders: z.number(), // ← new
-        totalCups: z.number(), // ← new
-        totalExpenses: z.number(), // ← new (was optional before)
+        totalOrders: z.number(),
+        totalCups: z.number(),
+        totalExpenses: z.number(),
         expectedCash: z.number(),
         actualCash: z.number().nullable(),
         variance: z.number().nullable(),
@@ -99,6 +130,20 @@ export const DailySummaryResponse = z
         expenses: z.array(ExpenseResponse).optional().openapi({
             description: "Expenses for this summary (only populated for today)",
         }),
+        photos: z
+            .array(
+                z.object({
+                    id: UUIDSchema,
+                    type: z.enum(PHOTO_TYPES),
+                    url: z.string(),
+                    notes: z.string().nullable().optional(), // ← add this
+                    createdAt: z.string(),
+                }),
+            )
+            .optional()
+            .openapi({
+                description: "Photos for this summary",
+            }),
     })
     .openapi({ title: "DailySummaryResponse" });
 
@@ -129,15 +174,13 @@ export const MonthlyTotals = z
 export const DailySummaryListResponse = z
     .object({
         summaries: z.array(DailySummaryResponse),
-        productBreakdown: ProductBreakdown.optional(), // only populated for today
+        productBreakdown: ProductBreakdown.optional(),
         expensesByDate: z
             .record(z.string(), z.array(ExpenseResponse))
             .optional(),
         monthlyTotals: MonthlyTotals.optional(),
     })
     .openapi({ title: "DailySummaryListResponse" });
-
-// ordersByDate removed — we no longer send raw orders to the client
 
 export const CreateDailySummaryResponse = DailySummaryResponse.openapi({
     title: "CreateDailySummaryResponse",
@@ -151,6 +194,7 @@ export const UpdateDailySummaryResponse = DailySummaryResponse.openapi({
 // TYPE EXPORTS
 // ============================================================================
 
+export type CashBreakdown = z.infer<typeof CashBreakdown>;
 export type CreateDailySummaryInput = z.infer<typeof CreateDailySummaryInput>;
 export type UpdateDailySummaryInput = z.infer<typeof UpdateDailySummaryInput>;
 export type ListDailySummariesQuery = z.infer<typeof ListDailySummariesQuery>;
@@ -164,5 +208,4 @@ export type CreateDailySummaryResponse = z.infer<
 export type UpdateDailySummaryResponse = z.infer<
     typeof UpdateDailySummaryResponse
 >;
-
 export type DailySummary = z.infer<typeof DailySummaryResponse>;

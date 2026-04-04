@@ -41,5 +41,8 @@ export * from "./notifications";
 // Weather
 export * from "./weather";
 
+// Daily Summary Photos
+export * from "./daily-summary-photos";
+
 // Type exports for frontend
 export type { z } from "zod";

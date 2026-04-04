@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           actual_cash: number | null
           closed_at: string | null
+          closing_cash_breakdown: Json | null
           created_at: string | null
           date: string
           expected_cash: number
@@ -25,6 +26,7 @@ export type Database = {
           manager_id: string | null
           notes: string | null
           opening_balance: number
+          opening_cash_breakdown: Json | null
           seller_id: string
           store_id: string
           tenant_id: string | null
@@ -37,6 +39,7 @@ export type Database = {
         Insert: {
           actual_cash?: number | null
           closed_at?: string | null
+          closing_cash_breakdown?: Json | null
           created_at?: string | null
           date: string
           expected_cash?: number
@@ -44,6 +47,7 @@ export type Database = {
           manager_id?: string | null
           notes?: string | null
           opening_balance?: number
+          opening_cash_breakdown?: Json | null
           seller_id: string
           store_id: string
           tenant_id?: string | null
@@ -56,6 +60,7 @@ export type Database = {
         Update: {
           actual_cash?: number | null
           closed_at?: string | null
+          closing_cash_breakdown?: Json | null
           created_at?: string | null
           date?: string
           expected_cash?: number
@@ -63,6 +68,7 @@ export type Database = {
           manager_id?: string | null
           notes?: string | null
           opening_balance?: number
+          opening_cash_breakdown?: Json | null
           seller_id?: string
           store_id?: string
           tenant_id?: string | null
@@ -96,6 +102,71 @@ export type Database = {
           },
           {
             foreignKeyName: "daily_summaries_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_summary_photos: {
+        Row: {
+          created_at: string | null
+          daily_summary_id: string | null
+          expense_id: string | null
+          id: string
+          notes: string | null
+          store_id: string
+          tenant_id: string | null
+          type: string
+          url: string
+        }
+        Insert: {
+          created_at?: string | null
+          daily_summary_id?: string | null
+          expense_id?: string | null
+          id?: string
+          notes?: string | null
+          store_id: string
+          tenant_id?: string | null
+          type: string
+          url: string
+        }
+        Update: {
+          created_at?: string | null
+          daily_summary_id?: string | null
+          expense_id?: string | null
+          id?: string
+          notes?: string | null
+          store_id?: string
+          tenant_id?: string | null
+          type?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_summary_photos_daily_summary_id_fkey"
+            columns: ["daily_summary_id"]
+            isOneToOne: false
+            referencedRelation: "daily_summaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_summary_photos_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_summary_photos_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_summary_photos_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
