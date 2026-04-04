@@ -12,7 +12,14 @@ import {
 import { toCamelKeys } from "@/lib/utils/schemas";
 
 const BUCKET = "daily-photos";
-const ALLOWED_MIME_TYPES = ["image/webp", "image/jpeg"];
+const ALLOWED_MIME_TYPES = [
+    "image/webp",
+    "image/jpeg",
+    "image/jpg",
+    "image/heic",
+    "image/heif",
+    "image/png",
+];
 const MAX_FILE_SIZE_BYTES = 1 * 1024 * 1024; // 1MB
 
 // ============================================================================

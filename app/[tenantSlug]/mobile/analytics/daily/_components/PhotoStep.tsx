@@ -116,6 +116,7 @@ export function PhotoStep({
 
         setCompressingSlot(type);
         try {
+            // First attempt — compress + convert to WebP
             const compressed = await imageCompression(
                 file,
                 COMPRESSION_OPTIONS,
@@ -134,15 +135,42 @@ export function PhotoStep({
                 },
             ]);
         } catch (err) {
-            console.error("Compression failed — using original:", err);
-            const preview = URL.createObjectURL(file);
-            const existing = getSlotPhoto(type);
-            if (existing) URL.revokeObjectURL(existing.preview);
-            const updated = photos.filter((p) => p.type !== type);
-            onPhotosChange([
-                ...updated,
-                { type, file, preview, notes: existing?.notes ?? "" },
-            ]);
+            console.error(
+                "WebP compression failed — trying without WebP:",
+                err,
+            );
+            try {
+                // Second attempt — compress without forcing WebP (iOS fallback)
+                const fallback = await imageCompression(file, {
+                    maxSizeMB: 0.8,
+                    maxWidthOrHeight: 1920,
+                    useWebWorker: true,
+                });
+                const preview = URL.createObjectURL(fallback);
+                const existing = getSlotPhoto(type);
+                if (existing) URL.revokeObjectURL(existing.preview);
+                const updated = photos.filter((p) => p.type !== type);
+                onPhotosChange([
+                    ...updated,
+                    {
+                        type,
+                        file: fallback,
+                        preview,
+                        notes: existing?.notes ?? "",
+                    },
+                ]);
+            } catch {
+                // Last resort — use original file as-is
+                console.error("All compression failed — using original");
+                const preview = URL.createObjectURL(file);
+                const existing = getSlotPhoto(type);
+                if (existing) URL.revokeObjectURL(existing.preview);
+                const updated = photos.filter((p) => p.type !== type);
+                onPhotosChange([
+                    ...updated,
+                    { type, file, preview, notes: existing?.notes ?? "" },
+                ]);
+            }
         } finally {
             setCompressingSlot(null);
             e.target.value = "";
