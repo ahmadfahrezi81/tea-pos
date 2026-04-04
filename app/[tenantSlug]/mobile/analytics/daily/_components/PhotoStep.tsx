@@ -48,7 +48,11 @@ export const PHOTO_SLOTS: {
         placeholder: "e.g. 1 pack remaining",
     },
     { type: "closing:cups", label: "Cups", placeholder: "e.g. ~50 cups left" },
-    { type: "closing:tea", label: "Tea", placeholder: "e.g. half a pack" },
+    {
+        type: "closing:tea",
+        label: "Tea Waste",
+        placeholder: "e.g. half a pack",
+    },
 ];
 
 // ============================================================================

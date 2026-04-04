@@ -350,7 +350,7 @@ const STEPS = [
     { label: "Syrup" },
     { label: "Bags" },
     { label: "Cups" },
-    { label: "Tea" },
+    { label: "Tea Waste" },
     { label: "Cash" },
     { label: "Notes" },
     { label: "Review" },
