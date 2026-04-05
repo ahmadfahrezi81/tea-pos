@@ -57,34 +57,30 @@ interface WeatherDrawerProps {
 export function WeatherDrawer({ isOpen, onClose }: WeatherDrawerProps) {
     const { data, isLoading } = useWeather();
 
-    // Not memoized — cheap call, needs to be fresh on every render
     const currentLocalHour = getCurrentLocalHour();
     const { todayDateStr, tomorrowDateStr } = getLocalDateStrings();
 
-    // Filter to a ~8h window starting from currentHour - 1,
-    // correctly spanning across midnight when needed.
     const visibleHours = useMemo(() => {
         if (!data?.hourly) return [];
 
+        const fromHour = Math.max(currentLocalHour - 1, 0); // ← permanent fix
         const spillsTomorrow = currentLocalHour + 6 > 23;
         const cutoffHour = (currentLocalHour + 6) % 24;
 
         return data.hourly.filter((h) => {
             if (spillsTomorrow) {
-                if (h.date === todayDateStr)
-                    return h.hour >= currentLocalHour - 1;
+                if (h.date === todayDateStr) return h.hour >= fromHour;
                 if (h.date === tomorrowDateStr) return h.hour < cutoffHour;
                 return false;
             }
             return (
                 h.date === todayDateStr &&
-                h.hour >= currentLocalHour - 1 &&
+                h.hour >= fromHour &&
                 h.hour <= currentLocalHour + 6
             );
         });
     }, [data?.hourly, currentLocalHour, todayDateStr, tomorrowDateStr]);
 
-    // Use current hour's fetchedAt for the "As of" timestamp
     const currentHourData = data?.hourly?.find(
         (h) => h.date === todayDateStr && h.hour === currentLocalHour,
     );
