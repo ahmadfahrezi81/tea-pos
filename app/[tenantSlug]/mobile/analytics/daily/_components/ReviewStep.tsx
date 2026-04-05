@@ -1,4 +1,3 @@
-// app/[tenantSlug]/mobile/analytics/daily/_components/ReviewStep.tsx
 "use client";
 
 import {
@@ -10,60 +9,37 @@ import {
     Check,
 } from "lucide-react";
 import { formatRupiah } from "@/lib/utils/formatCurrency";
-import { CashBreakdown } from "@/lib/schemas/daily-summaries";
 import { DailySummary } from "@/lib/schemas/daily-summaries";
 import { SummaryPhotoThumbnail } from "./SummaryPhotoThumbnail";
-import { SavedSlottedPhoto, SlottedPhoto } from "./PhotoStep";
+import {
+    SavedSlottedPhoto,
+    SlottedPhoto,
+} from "@/lib/schemas/daily-summary-photos";
 import { useState } from "react";
-
-const DENOMINATIONS: { value: keyof CashBreakdown; label: string }[] = [
-    { value: 100000, label: "Rp 100.000" },
-    { value: 50000, label: "Rp 50.000" },
-    { value: 20000, label: "Rp 20.000" },
-    { value: 10000, label: "Rp 10.000" },
-    { value: 5000, label: "Rp 5.000" },
-    { value: 2000, label: "Rp 2.000" },
-    { value: 1000, label: "Rp 1.000" },
-    { value: 500, label: "Rp 500" },
-    { value: 200, label: "Rp 200" },
-    { value: 100, label: "Rp 100" },
-];
-
-function calculateTotal(breakdown: CashBreakdown): number {
-    return Object.entries(breakdown).reduce((sum, [denom, count]) => {
-        return sum + parseInt(denom) * (count ?? 0);
-    }, 0);
-}
 
 interface ReviewStepProps {
     summary: DailySummary;
     photos: SlottedPhoto[];
     savedPhotos: SavedSlottedPhoto[];
-    breakdown: CashBreakdown;
     notes: string;
     storeName: string;
-    onConfirmChange: (confirmed: boolean) => void; // ← new
+    onConfirmChange: (confirmed: boolean) => void;
 }
 
 export function ReviewStep({
     summary,
     photos,
     savedPhotos,
-    breakdown,
     notes,
     storeName,
-    onConfirmChange, // ← new
+    onConfirmChange,
 }: ReviewStepProps) {
     const [confirmed, setConfirmed] = useState(false);
 
-    const actualCash = calculateTotal(breakdown);
-    const variance = actualCash - summary.expectedCash;
+    const actualCash = summary.actualCash ?? 0;
+    const variance = summary.variance ?? actualCash - summary.expectedCash;
     const isExact = variance === 0;
     const isOver = variance > 0;
-
-    const filledDenominations = DENOMINATIONS.filter(
-        ({ value }) => (breakdown[value] ?? 0) > 0,
-    );
 
     return (
         <div className="flex flex-col gap-4">
@@ -130,7 +106,7 @@ export function ReviewStep({
             </div>
 
             {/* Store + date */}
-            <div className="bg-gray-50 rounded-2xl p-4 space-y-1">
+            <div className="bg-white rounded-2xl border border-gray-100 p-4">
                 <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">
                     Summary
                 </p>
@@ -195,10 +171,10 @@ export function ReviewStep({
                 )}
             </div>
 
-            {/* Cash breakdown */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-4 space-y-3">
+            {/* Cash */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-4">
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-0">
+                    <div className="flex items-center gap-1">
                         <Banknote size={22} className="text-gray-900" />
                         <p className="text-sm font-semibold text-gray-900 tracking-wide px-1">
                             Cash Count
@@ -208,28 +184,6 @@ export function ReviewStep({
                         {formatRupiah(actualCash)}
                     </p>
                 </div>
-                {filledDenominations.length > 0 ? (
-                    <div className="space-y-1.5">
-                        {filledDenominations.map(({ value, label }) => {
-                            const count = breakdown[value] ?? 0;
-                            return (
-                                <div
-                                    key={value}
-                                    className="flex justify-between text-sm"
-                                >
-                                    <span className="text-gray-500">
-                                        {label} × {count}
-                                    </span>
-                                    <span className="font-medium text-gray-800">
-                                        {formatRupiah(value * count)}
-                                    </span>
-                                </div>
-                            );
-                        })}
-                    </div>
-                ) : (
-                    <p className="text-sm text-gray-400">No cash counted</p>
-                )}
             </div>
 
             {/* Notes */}
@@ -257,15 +211,14 @@ export function ReviewStep({
                 className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-gray-100 w-full text-left"
             >
                 <div
-                    className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
+                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
                         confirmed ? "bg-brand border-brand" : "border-gray-300"
                     }`}
                 >
                     {confirmed && <Check size={12} className="text-white" />}
                 </div>
                 <p className="text-sm text-gray-700 font-medium">
-                    I confirm all the information above is correct and ready to
-                    close.
+                    I confirm all the information above is correct.
                 </p>
             </button>
 

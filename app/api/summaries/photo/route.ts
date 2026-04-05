@@ -25,6 +25,9 @@ const MAX_FILE_SIZE_BYTES = 1 * 1024 * 1024; // 1MB
 // ============================================================================
 // GET /api/summaries/photo
 // ============================================================================
+// ============================================================================
+// GET /api/summaries/photo
+// ============================================================================
 export async function GET(request: NextRequest) {
     try {
         const supabase = await createRouteHandlerClient();
@@ -63,7 +66,26 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: error.message }, { status: 400 });
         }
 
-        const camelData = toCamelKeys(data ?? []);
+        // ─── Generate signed URLs ──────────────────────────────────────
+        const photosWithSignedUrls = await Promise.all(
+            (
+                (data ?? []) as Array<{ url: string; [key: string]: unknown }>
+            ).map(async (photo) => {
+                const storagePath = photo.url.split(`/${BUCKET}/`)[1];
+                if (!storagePath) return photo;
+
+                const { data: signedData } = await supabase.storage
+                    .from(BUCKET)
+                    .createSignedUrl(storagePath, 60 * 60); // 1 hour
+
+                return {
+                    ...photo,
+                    url: signedData?.signedUrl ?? photo.url,
+                };
+            }),
+        );
+
+        const camelData = toCamelKeys(photosWithSignedUrls);
         const parsed = ListSummaryPhotosResponse.safeParse({
             photos: camelData,
         });
@@ -102,7 +124,20 @@ export async function POST(request: NextRequest) {
         const expenseId = formData.get("expenseId") as string | null;
         const storeId = formData.get("storeId") as string | null;
         const type = formData.get("type") as string | null;
-        const notes = formData.get("notes") as string | null; // ← new
+        const quantityRaw = formData.get("quantity") as string | null;
+
+        // ─── Parse quantity JSON if provided ───────────────────────────
+        let quantity = null;
+        if (quantityRaw) {
+            try {
+                quantity = JSON.parse(quantityRaw);
+            } catch {
+                return NextResponse.json(
+                    { error: "Invalid quantity format" },
+                    { status: 400 },
+                );
+            }
+        }
 
         // ─── Validate input fields ─────────────────────────────────────
         const inputResult = UploadSummaryPhotoInput.safeParse({
@@ -110,7 +145,7 @@ export async function POST(request: NextRequest) {
             storeId,
             type,
             expenseId: expenseId ?? undefined,
-            notes: notes ?? undefined,
+            quantity: quantity ?? undefined,
         });
 
         if (!inputResult.success) {
@@ -199,7 +234,7 @@ export async function POST(request: NextRequest) {
                 tenant_id: currentTenantId,
                 type: inputResult.data.type,
                 url: photoUrl,
-                notes: inputResult.data.notes ?? null, // ← new
+                quantity: inputResult.data.quantity ?? null,
             })
             .select()
             .single();
@@ -240,6 +275,68 @@ export async function POST(request: NextRequest) {
 }
 
 // ============================================================================
+// PATCH /api/summaries/photo
+// ============================================================================
+export async function PATCH(request: NextRequest) {
+    try {
+        const supabase = await createRouteHandlerClient();
+        const currentTenantId = await getCurrentTenantId();
+        const body = await request.json();
+
+        const { id, quantity } = body;
+
+        if (!id) {
+            return NextResponse.json(
+                { error: "Photo ID is required" },
+                { status: 400 },
+            );
+        }
+
+        // ─── Verify photo belongs to tenant ───────────────────────────
+        const { data: photo, error: fetchError } = await supabase
+            .from("daily_summary_photos")
+            .select("id")
+            .eq("id", id)
+            .eq("tenant_id", currentTenantId)
+            .single();
+
+        if (fetchError || !photo) {
+            return NextResponse.json(
+                { error: "Photo not found or access denied" },
+                { status: 404 },
+            );
+        }
+
+        // ─── Update quantity ───────────────────────────────────────────
+        const { data: updated, error: updateError } = await supabase
+            .from("daily_summary_photos")
+            .update({ quantity: quantity ?? null })
+            .eq("id", id)
+            .eq("tenant_id", currentTenantId)
+            .select()
+            .single();
+
+        if (updateError || !updated) {
+            return NextResponse.json(
+                { error: "Failed to update photo" },
+                { status: 500 },
+            );
+        }
+
+        return NextResponse.json({
+            success: true,
+            photo: toCamelKeys(updated),
+        });
+    } catch (error) {
+        console.error("[PATCH /api/summaries/photo]", error);
+        return NextResponse.json(
+            { error: "Internal server error" },
+            { status: 500 },
+        );
+    }
+}
+
+// ============================================================================
 // DELETE /api/summaries/photo
 // ============================================================================
 export async function DELETE(request: NextRequest) {
@@ -256,7 +353,6 @@ export async function DELETE(request: NextRequest) {
             );
         }
 
-        // ─── Fetch photo to get storage path ──────────────────────────
         const { data: photo, error: fetchError } = await supabase
             .from("daily_summary_photos")
             .select("*")
@@ -271,11 +367,9 @@ export async function DELETE(request: NextRequest) {
             );
         }
 
-        // ─── Extract storage path from URL ─────────────────────────────
         const urlParts = photo.url.split(`/daily-photos/`);
         const storagePath = urlParts[1];
 
-        // ─── Delete from storage ───────────────────────────────────────
         if (storagePath) {
             const { error: storageError } = await supabase.storage
                 .from(BUCKET)
@@ -289,7 +383,6 @@ export async function DELETE(request: NextRequest) {
             }
         }
 
-        // ─── Delete from DB ────────────────────────────────────────────
         const { error: deleteError } = await supabase
             .from("daily_summary_photos")
             .delete()
@@ -303,7 +396,6 @@ export async function DELETE(request: NextRequest) {
             );
         }
 
-        // ─── Validate and return response ──────────────────────────────
         const camelPhoto = toCamelKeys(photo);
         const parsed = DeleteSummaryPhotoResponse.safeParse({
             success: true,

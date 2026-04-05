@@ -19,6 +19,19 @@ export const PHOTO_TYPES = [
 export type PhotoType = (typeof PHOTO_TYPES)[number];
 
 // ============================================================================
+// QUANTITY SCHEMA
+// ============================================================================
+
+export const PhotoQuantity = z
+    .object({
+        value: z.number().min(0),
+        unit: z.string(),
+    })
+    .openapi({ title: "PhotoQuantity" });
+
+export type PhotoQuantity = z.infer<typeof PhotoQuantity>;
+
+// ============================================================================
 // INPUT SCHEMAS
 // ============================================================================
 
@@ -36,9 +49,9 @@ export const UploadSummaryPhotoInput = z
         expenseId: UUIDSchema.nullable().optional().openapi({
             description: "ID of the expense (required when type is expense)",
         }),
-        notes: z.string().max(500).nullable().optional().openapi({
+        quantity: PhotoQuantity.nullable().optional().openapi({
             description:
-                "Optional notes for this photo — e.g. quantity or condition",
+                "Optional quantity for this photo e.g. { value: 5, unit: 'pcs' }",
         }),
     })
     .openapi({ title: "UploadSummaryPhotoInput" });
@@ -68,7 +81,7 @@ export const SummaryPhotoResponse = z
         tenantId: UUIDSchema.nullable(),
         type: z.enum(PHOTO_TYPES),
         url: z.string(),
-        notes: z.string().nullable().optional(),
+        quantity: PhotoQuantity.nullable().optional(),
         createdAt: z.string(),
     })
     .openapi({ title: "SummaryPhotoResponse" });
@@ -92,6 +105,24 @@ export const ListSummaryPhotosResponse = z
         photos: z.array(SummaryPhotoResponse),
     })
     .openapi({ title: "ListSummaryPhotosResponse" });
+
+// ============================================================================
+// FRONTEND TYPES
+// ============================================================================
+
+export interface SlottedPhoto {
+    type: PhotoType;
+    file: File;
+    preview: string;
+    quantity?: { value: number; unit: string } | null;
+}
+
+export interface SavedSlottedPhoto {
+    id: string;
+    type: PhotoType;
+    url: string;
+    quantity?: { value: number; unit: string } | null;
+}
 
 // ============================================================================
 // TYPE EXPORTS

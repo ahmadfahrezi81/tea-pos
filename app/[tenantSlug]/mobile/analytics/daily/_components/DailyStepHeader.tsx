@@ -38,12 +38,12 @@ export function DailyStepHeader({
     }, [currentStep]);
 
     return (
-        <div className="sticky top-0 z-10 bg-gray-50 border-b border-gray-100 w-full py-3">
+        <div className="sticky top-0 z-10 bg-gray-50 border-b border-gray-100 w-full py-1">
             <div
                 ref={scrollRef}
                 className="overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full"
             >
-                <div className="flex items-center min-w-max pb-3">
+                <div className="flex items-center min-w-max pb-2">
                     {steps.map((step, index) => {
                         const isCompleted = index < currentStep;
                         const isCurrent = index === currentStep;

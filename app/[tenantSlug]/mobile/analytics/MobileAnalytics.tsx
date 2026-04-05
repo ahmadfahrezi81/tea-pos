@@ -14,7 +14,6 @@ import {
     AlertTriangle,
     CheckCircle,
     Receipt,
-    Camera,
 } from "lucide-react";
 import { SetBalanceModal } from "./_components/SetBalanceModal";
 import { SetExpenseModal } from "./_components/SetExpenseModal";
@@ -601,32 +600,6 @@ export default function MobileAnalytics() {
                                                 </p>
                                             </div>
                                         )}
-
-                                        {summary.photos &&
-                                            summary.photos.length > 0 && (
-                                                <button
-                                                    onClick={() => {
-                                                        setSelectedSummary(
-                                                            summaryWithExtras,
-                                                        );
-                                                        setShowDetailsModal(
-                                                            true,
-                                                        );
-                                                    }}
-                                                    className="flex items-center gap-2 text-sm text-gray-500 hover:text-brand transition-colors"
-                                                >
-                                                    <Camera size={18} />
-                                                    <span>
-                                                        {summary.photos.length}{" "}
-                                                        closing photo
-                                                        {summary.photos.length >
-                                                        1
-                                                            ? "s"
-                                                            : ""}{" "}
-                                                        — tap to view
-                                                    </span>
-                                                </button>
-                                            )}
                                     </div>
 
                                     {!summary.closedAt && (
