@@ -6,8 +6,9 @@ import CopyableField from "@/components/mobile/shared/CopyableField";
 import { DailySummary } from "@/lib/schemas/daily-summaries";
 import { Expense } from "@/lib/schemas/expenses";
 import { SummaryPhotoThumbnail } from "@/app/[tenantSlug]/mobile/analytics/daily/_components/SummaryPhotoThumbnail";
-import { PHOTO_SLOTS } from "@/app/[tenantSlug]/mobile/analytics/daily/_components/PhotoStep";
+import { PHOTO_SLOTS } from "@/lib/frontend/constants/photo-slots";
 import { formatRupiah } from "@/lib/utils/formatCurrency";
+import { useSummaryPhotosById } from "@/lib/hooks/summaries/useSummaryPhotosById";
 
 export type DailySummaryWithExpenses = DailySummary & {
     expenses: Expense[];
@@ -28,10 +29,11 @@ export const DetailsDrawer = ({
     productBreakdown,
     storeName,
 }: DetailsDrawerProps) => {
+    const { photos } = useSummaryPhotosById(isOpen ? summary?.id : null);
+
     if (!isOpen || !summary) return null;
 
-    const closingPhotos =
-        summary.photos?.filter((p) => p.type.startsWith("closing:")) ?? [];
+    const closingPhotos = photos.filter((p) => p.type.startsWith("closing:"));
 
     return (
         <Drawer.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -178,13 +180,22 @@ export const DetailsDrawer = ({
                                                         <p className="text-sm font-semibold text-gray-800">
                                                             {slot.label}
                                                         </p>
-                                                        {photo.notes ? (
+                                                        {photo.quantity ? (
                                                             <p className="text-sm text-gray-500 mt-0.5">
-                                                                {photo.notes}
+                                                                {
+                                                                    photo
+                                                                        .quantity
+                                                                        .value
+                                                                }{" "}
+                                                                {
+                                                                    photo
+                                                                        .quantity
+                                                                        .unit
+                                                                }
                                                             </p>
                                                         ) : (
                                                             <p className="text-xs text-gray-300 mt-0.5">
-                                                                No notes
+                                                                No quantity
                                                             </p>
                                                         )}
                                                     </div>

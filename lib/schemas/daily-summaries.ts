@@ -136,7 +136,13 @@ export const DailySummaryResponse = z
                     id: UUIDSchema,
                     type: z.enum(PHOTO_TYPES),
                     url: z.string(),
-                    notes: z.string().nullable().optional(), // ← add this
+                    quantity: z
+                        .object({
+                            value: z.number(),
+                            unit: z.string(),
+                        })
+                        .nullable()
+                        .optional(),
                     createdAt: z.string(),
                 }),
             )

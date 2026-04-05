@@ -1,12 +1,14 @@
-// app/[tenantSlug]/mobile/analytics/daily/_components/SinglePhotoStep.tsx
 "use client";
 
 import { useRef, useState } from "react";
-import { X, ImagePlus, Loader2, CircleMinus, CheckCircle2 } from "lucide-react";
+import { ImagePlus, Loader2, CircleMinus } from "lucide-react";
 import imageCompression from "browser-image-compression";
 import { SummaryPhotoThumbnail } from "./SummaryPhotoThumbnail";
 import { PhotoType } from "@/lib/schemas/daily-summary-photos";
-import { SlottedPhoto, SavedSlottedPhoto } from "./PhotoStep";
+import {
+    SlottedPhoto,
+    SavedSlottedPhoto,
+} from "@/lib/schemas/daily-summary-photos";
 
 const COMPRESSION_OPTIONS = {
     maxSizeMB: 0.4,
@@ -16,31 +18,45 @@ const COMPRESSION_OPTIONS = {
     initialQuality: 0.6,
 };
 
+// Slots that have a quantity input and their fixed unit
+const QUANTITY_CONFIG: Partial<
+    Record<PhotoType, { unit: string; placeholder: string }>
+> = {
+    "closing:cups": { unit: "pcs", placeholder: "0" },
+    "closing:tea": { unit: "L", placeholder: "0" },
+};
+
 interface SinglePhotoStepProps {
     label: string;
-    placeholder: string;
     type: PhotoType;
     photo?: SlottedPhoto;
     savedPhoto?: SavedSlottedPhoto;
+    quantity?: { value: number; unit: string } | null;
     onPhotoChange: (photo: SlottedPhoto | null) => void;
-    onSavedPhotoDelete?: () => Promise<void>; // ← was () => void
-    onNotesChange: (notes: string) => void;
+    onSavedPhotoDelete?: () => Promise<void>;
+    onQuantityChange: (
+        quantity: { value: number; unit: string } | null,
+    ) => void;
 }
+
 export function SinglePhotoStep({
     label,
-    placeholder,
     type,
     photo,
     savedPhoto,
+    quantity,
     onPhotoChange,
     onSavedPhotoDelete,
-    onNotesChange,
+    onQuantityChange,
 }: SinglePhotoStepProps) {
     const inputRef = useRef<HTMLInputElement | null>(null);
     const [isCompressing, setIsCompressing] = useState(false);
 
-    const currentNotes = photo?.notes ?? savedPhoto?.notes ?? "";
-    const hasPhoto = !!photo || !!savedPhoto;
+    const quantityConfig = QUANTITY_CONFIG[type] ?? null;
+    const initialQuantity = quantity?.value ?? 0;
+    const [localQuantityValue, setLocalQuantityValue] = useState<string>(
+        initialQuantity === 0 ? "" : String(initialQuantity),
+    );
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -58,13 +74,18 @@ export function SinglePhotoStep({
                 type,
                 file: compressed,
                 preview,
-                notes: photo?.notes ?? "",
+                quantity: photo?.quantity ?? null,
             });
         } catch (err) {
             console.error("Compression failed — using original:", err);
             const preview = URL.createObjectURL(file);
             if (photo) URL.revokeObjectURL(photo.preview);
-            onPhotoChange({ type, file, preview, notes: photo?.notes ?? "" });
+            onPhotoChange({
+                type,
+                file,
+                preview,
+                quantity: photo?.quantity ?? null,
+            });
         } finally {
             setIsCompressing(false);
             e.target.value = "";
@@ -74,6 +95,22 @@ export function SinglePhotoStep({
     const handleRemove = () => {
         if (photo) URL.revokeObjectURL(photo.preview);
         onPhotoChange(null);
+    };
+
+    const handleQuantityBlur = () => {
+        if (!quantityConfig) return;
+        const val = parseFloat(localQuantityValue);
+        onQuantityChange(
+            isNaN(val) || val < 0
+                ? null
+                : { value: val, unit: quantityConfig.unit },
+        );
+    };
+
+    const handleQuantityKeyDown = (
+        e: React.KeyboardEvent<HTMLInputElement>,
+    ) => {
+        if (e.key === "Enter") e.currentTarget.blur();
     };
 
     return (
@@ -87,22 +124,34 @@ export function SinglePhotoStep({
             </div>
 
             <div className="p-3 bg-white flex flex-col gap-4 rounded-2xl border border-gray-50">
-                {/* Quantity */}
-                <div className="flex flex-col gap-1.5">
-                    <p className="text-xs font-semibold text-gray-900 uppercase tracking-wide px-1">
-                        Quantity
-                    </p>
-                    <textarea
-                        value={currentNotes}
-                        onChange={(e) => onNotesChange(e.target.value)}
-                        placeholder={placeholder}
-                        maxLength={500}
-                        rows={3}
-                        className="w-full p-3 text-sm text-gray-800 placeholder-gray-400 bg-white border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand/50"
-                    />
-                </div>
+                {/* Quantity — only for cups and tea waste */}
+                {quantityConfig && (
+                    <div className="flex flex-col gap-1.5">
+                        <p className="text-xs font-semibold text-gray-900 uppercase tracking-wide px-1">
+                            Quantity <span className="text-red-500">*</span>
+                        </p>
+                        <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl overflow-hidden">
+                            <input
+                                type="number"
+                                inputMode="decimal"
+                                min={0}
+                                value={localQuantityValue}
+                                onChange={(e) =>
+                                    setLocalQuantityValue(e.target.value)
+                                }
+                                onBlur={handleQuantityBlur}
+                                onKeyDown={handleQuantityKeyDown}
+                                placeholder={quantityConfig.placeholder}
+                                className="flex-1 p-3 text-base text-gray-800 placeholder-gray-400 border-none outline-none bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+                            <div className="px-4 py-3 bg-white border-l border-gray-200 text-sm font-semibold text-gray-500">
+                                {quantityConfig.unit}
+                            </div>
+                        </div>
+                    </div>
+                )}
 
-                {/* Photo area — large */}
+                {/* Photo area */}
                 <div className="flex flex-col gap-1.5">
                     <p className="text-xs font-semibold text-gray-900 uppercase tracking-wide px-1">
                         Attachment{" "}

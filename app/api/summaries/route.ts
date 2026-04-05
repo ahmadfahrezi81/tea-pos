@@ -744,7 +744,7 @@ interface PhotoRow {
     id: string;
     type: string;
     url: string;
-    notes: string | null; // ← add this
+    quantity: { value: number; unit: string } | null;
     created_at: string;
     daily_summary_id: string;
     expense_id: string | null;
@@ -866,7 +866,6 @@ export async function GET(request: NextRequest) {
         const summaryIds = summaryList.map((s) => s.id);
         const expensesByDate: Record<string, ExpenseRow[]> = {};
         const expensesBySummaryId: Record<string, ExpenseRow[]> = {};
-        const photosBySummaryId: Record<string, PhotoRow[]> = {};
 
         if (summaryIds.length > 0) {
             // Fetch expenses
@@ -899,180 +898,135 @@ export async function GET(request: NextRequest) {
                 }
             });
 
-            // Fetch photos
-            const { data: photos, error: photosError } = await supabase
-                .from("daily_summary_photos")
-                .select(
-                    "id, type, url, notes, created_at, daily_summary_id, expense_id",
-                )
+            // ─── Live fetch for today only ─────────────────────────────────
+            const todaySummary = summaryList.find(
+                (s) => s.date === todayStr && !s.closed_at,
+            );
+            const productBreakdown: Record<
+                string,
+                Record<string, { quantity: number; revenue: number }>
+            > = {};
+            let todayLiveSales = 0;
+            let todayLiveOrders = 0;
+            let todayLiveCups = 0;
 
-                .in("daily_summary_id", summaryIds)
-                .eq("tenant_id", currentTenantId)
-                .order("created_at", { ascending: true });
-
-            if (photosError) {
-                console.error(
-                    "[GET /api/summaries] Photos fetch error:",
-                    photosError,
+            if (todaySummary) {
+                const todayOrders = await fetchTodayOrders(
+                    supabase,
+                    storeId,
+                    currentTenantId,
+                    todayStr,
                 );
-                // non-fatal — continue without photos
-            }
 
-            // Generate signed URLs for all photos
-            const photosWithSignedUrls = await Promise.all(
-                ((photos as PhotoRow[]) ?? []).map(async (photo) => {
-                    const storagePath = photo.url.split(`/${BUCKET}/`)[1];
-                    if (!storagePath) return photo;
+                todayOrders.forEach((order) => {
+                    todayLiveSales += order.total_amount;
+                    todayLiveOrders += 1;
 
-                    const { data: signedData } = await supabase.storage
-                        .from(BUCKET)
-                        .createSignedUrl(storagePath, 60 * 60); // 1 hour
-
-                    return {
-                        ...photo,
-                        url: signedData?.signedUrl ?? photo.url,
-                    };
-                }),
-            );
-
-            photosWithSignedUrls.forEach((photo) => {
-                if (!photosBySummaryId[photo.daily_summary_id]) {
-                    photosBySummaryId[photo.daily_summary_id] = [];
-                }
-                photosBySummaryId[photo.daily_summary_id].push(photo);
-            });
-        }
-
-        // ─── Live fetch for today only ─────────────────────────────────
-        const todaySummary = summaryList.find(
-            (s) => s.date === todayStr && !s.closed_at,
-        );
-        const productBreakdown: Record<
-            string,
-            Record<string, { quantity: number; revenue: number }>
-        > = {};
-        let todayLiveSales = 0;
-        let todayLiveOrders = 0;
-        let todayLiveCups = 0;
-
-        if (todaySummary) {
-            const todayOrders = await fetchTodayOrders(
-                supabase,
-                storeId,
-                currentTenantId,
-                todayStr,
-            );
-
-            todayOrders.forEach((order) => {
-                todayLiveSales += order.total_amount;
-                todayLiveOrders += 1;
-
-                productBreakdown[todayStr] ??= {};
-                order.order_items?.forEach((item) => {
-                    const name = item.products?.name ?? "Unknown Product";
-                    productBreakdown[todayStr][name] ??= {
-                        quantity: 0,
-                        revenue: 0,
-                    };
-                    productBreakdown[todayStr][name].quantity += item.quantity;
-                    productBreakdown[todayStr][name].revenue +=
-                        item.total_price;
-                    todayLiveCups += item.quantity;
+                    productBreakdown[todayStr] ??= {};
+                    order.order_items?.forEach((item) => {
+                        const name = item.products?.name ?? "Unknown Product";
+                        productBreakdown[todayStr][name] ??= {
+                            quantity: 0,
+                            revenue: 0,
+                        };
+                        productBreakdown[todayStr][name].quantity +=
+                            item.quantity;
+                        productBreakdown[todayStr][name].revenue +=
+                            item.total_price;
+                        todayLiveCups += item.quantity;
+                    });
                 });
+
+                const todayExpenses =
+                    expensesBySummaryId[todaySummary.id] ?? [];
+                const todayTotalExpenses = todayExpenses.reduce(
+                    (sum, e) => sum + e.amount,
+                    0,
+                );
+                const newExpectedCash =
+                    todaySummary.opening_balance +
+                    todayLiveSales -
+                    todayTotalExpenses;
+
+                if (
+                    todayLiveSales !== todaySummary.total_sales ||
+                    newExpectedCash !== todaySummary.expected_cash ||
+                    todayLiveOrders !== todaySummary.total_orders ||
+                    todayLiveCups !== todaySummary.total_cups ||
+                    todayTotalExpenses !== todaySummary.total_expenses
+                ) {
+                    await supabase
+                        .from("daily_summaries")
+                        .update({
+                            total_sales: todayLiveSales,
+                            total_orders: todayLiveOrders,
+                            total_cups: todayLiveCups,
+                            total_expenses: todayTotalExpenses,
+                            expected_cash: newExpectedCash,
+                        })
+                        .eq("id", todaySummary.id)
+                        .eq("tenant_id", currentTenantId);
+
+                    todaySummary.total_sales = todayLiveSales;
+                    todaySummary.total_orders = todayLiveOrders;
+                    todaySummary.total_cups = todayLiveCups;
+                    todaySummary.total_expenses = todayTotalExpenses;
+                    todaySummary.expected_cash = newExpectedCash;
+                }
+            }
+
+            // ─── Build final summaries ─────────────────────────────────────
+            const finalSummaries = summaryList.map((summary) => {
+                return {
+                    ...summary,
+                    expenses: expensesBySummaryId[summary.id] ?? [],
+                };
             });
 
-            const todayExpenses = expensesBySummaryId[todaySummary.id] ?? [];
-            const todayTotalExpenses = todayExpenses.reduce(
-                (sum, e) => sum + e.amount,
-                0,
-            );
-            const newExpectedCash =
-                todaySummary.opening_balance +
-                todayLiveSales -
-                todayTotalExpenses;
-
-            if (
-                todayLiveSales !== todaySummary.total_sales ||
-                newExpectedCash !== todaySummary.expected_cash ||
-                todayLiveOrders !== todaySummary.total_orders ||
-                todayLiveCups !== todaySummary.total_cups ||
-                todayTotalExpenses !== todaySummary.total_expenses
-            ) {
-                await supabase
-                    .from("daily_summaries")
-                    .update({
-                        total_sales: todayLiveSales,
-                        total_orders: todayLiveOrders,
-                        total_cups: todayLiveCups,
-                        total_expenses: todayTotalExpenses,
-                        expected_cash: newExpectedCash,
-                    })
-                    .eq("id", todaySummary.id)
-                    .eq("tenant_id", currentTenantId);
-
-                todaySummary.total_sales = todayLiveSales;
-                todaySummary.total_orders = todayLiveOrders;
-                todaySummary.total_cups = todayLiveCups;
-                todaySummary.total_expenses = todayTotalExpenses;
-                todaySummary.expected_cash = newExpectedCash;
-            }
-        }
-
-        // ─── Build final summaries ─────────────────────────────────────
-        const finalSummaries = summaryList.map((summary) => {
-            const photos = (photosBySummaryId[summary.id] ?? []).map((p) => ({
-                id: p.id,
-                type: p.type,
-                url: p.url,
-                notes: p.notes ?? null, // ← add this
-                createdAt: p.created_at,
-            }));
-
-            return {
-                ...summary,
-                expenses: expensesBySummaryId[summary.id] ?? [],
-                photos,
-            };
-        });
-
-        // ─── Monthly totals ────────────────────────────────────────────
-        const monthlyTotals = summaryList.reduce(
-            (acc, s) => ({
-                totalSales: acc.totalSales + (s.total_sales ?? 0),
-                totalOrders: acc.totalOrders + (s.total_orders ?? 0),
-                totalCups: acc.totalCups + (s.total_cups ?? 0),
-                totalExpenses: acc.totalExpenses + (s.total_expenses ?? 0),
-            }),
-            { totalSales: 0, totalOrders: 0, totalCups: 0, totalExpenses: 0 },
-        );
-
-        // ─── Build and validate response ───────────────────────────────
-        const camelSummaries = toCamelKeys(finalSummaries);
-        const camelExpensesByDate = toCamelKeys(expensesByDate);
-
-        const response = {
-            summaries: camelSummaries,
-            productBreakdown,
-            expensesByDate: camelExpensesByDate,
-            monthlyTotals,
-        };
-
-        const parsed = DailySummaryListResponse.safeParse(response);
-        if (!parsed.success) {
-            console.error(
-                "[GET /api/summaries] Validation failed:",
-                parsed.error,
-            );
-            return NextResponse.json(
+            // ─── Monthly totals ────────────────────────────────────────────
+            const monthlyTotals = summaryList.reduce(
+                (acc, s) => ({
+                    totalSales: acc.totalSales + (s.total_sales ?? 0),
+                    totalOrders: acc.totalOrders + (s.total_orders ?? 0),
+                    totalCups: acc.totalCups + (s.total_cups ?? 0),
+                    totalExpenses: acc.totalExpenses + (s.total_expenses ?? 0),
+                }),
                 {
-                    error: "Invalid response shape",
-                    details: parsed.error.format(),
+                    totalSales: 0,
+                    totalOrders: 0,
+                    totalCups: 0,
+                    totalExpenses: 0,
                 },
-                { status: 500 },
             );
-        }
 
-        return NextResponse.json(parsed.data);
+            // ─── Build and validate response ───────────────────────────────
+            const camelSummaries = toCamelKeys(finalSummaries);
+            const camelExpensesByDate = toCamelKeys(expensesByDate);
+
+            const response = {
+                summaries: camelSummaries,
+                productBreakdown,
+                expensesByDate: camelExpensesByDate,
+                monthlyTotals,
+            };
+
+            const parsed = DailySummaryListResponse.safeParse(response);
+            if (!parsed.success) {
+                console.error(
+                    "[GET /api/summaries] Validation failed:",
+                    parsed.error,
+                );
+                return NextResponse.json(
+                    {
+                        error: "Invalid response shape",
+                        details: parsed.error.format(),
+                    },
+                    { status: 500 },
+                );
+            }
+
+            return NextResponse.json(parsed.data);
+        }
     } catch (error) {
         console.error("[GET /api/summaries]", error);
         return NextResponse.json(

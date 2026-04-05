@@ -2,6 +2,7 @@
 import {
     SummaryPhotoResponse,
     PhotoType,
+    PhotoQuantity,
 } from "@/lib/schemas/daily-summary-photos";
 
 interface UploadPhotoParams {
@@ -10,7 +11,7 @@ interface UploadPhotoParams {
     storeId: string;
     type: PhotoType;
     expenseId?: string;
-    notes?: string | null; // ← new
+    quantity?: PhotoQuantity | null;
 }
 
 export function useSummaryPhotos() {
@@ -21,7 +22,7 @@ export function useSummaryPhotos() {
         storeId,
         type,
         expenseId,
-        notes,
+        quantity,
     }: UploadPhotoParams): Promise<SummaryPhotoResponse> => {
         const formData = new FormData();
         formData.append("file", file);
@@ -29,7 +30,7 @@ export function useSummaryPhotos() {
         formData.append("storeId", storeId);
         formData.append("type", type);
         if (expenseId) formData.append("expenseId", expenseId);
-        if (notes) formData.append("notes", notes); // ← new
+        if (quantity) formData.append("quantity", JSON.stringify(quantity));
 
         const res = await fetch("/api/summaries/photo", {
             method: "POST",
@@ -57,8 +58,28 @@ export function useSummaryPhotos() {
         }
     };
 
+    // ─── Update quantity ───────────────────────────────────────────
+    const updatePhotoQuantity = async (
+        id: string,
+        quantity: { value: number; unit: string } | null,
+    ): Promise<void> => {
+        const res = await fetch("/api/summaries/photo", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id, quantity }),
+        });
+
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(
+                errorData.error ?? "Failed to update photo quantity",
+            );
+        }
+    };
+
     return {
         uploadPhoto,
         deletePhoto,
+        updatePhotoQuantity,
     };
 }
