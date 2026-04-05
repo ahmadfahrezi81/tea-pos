@@ -352,11 +352,21 @@ export async function getWeatherNextHours(hours: number = 24): Promise<{
         )
             .toISOString()
             .split("T")[0];
+        const yesterdayDateStr = new Date(
+            localNow.getTime() - 24 * 60 * 60 * 1000,
+        )
+            .toISOString()
+            .split("T")[0];
+
+        const datesToQuery =
+            currentLocalHour === 0
+                ? [yesterdayDateStr, todayDateStr, tomorrowDateStr]
+                : [todayDateStr, tomorrowDateStr];
 
         const { data, error } = await supabase
             .from("weather_hourly")
             .select("*")
-            .in("date", [todayDateStr, tomorrowDateStr])
+            .in("date", datesToQuery)
             .order("date", { ascending: true })
             .order("hour", { ascending: true });
 
@@ -368,9 +378,12 @@ export async function getWeatherNextHours(hours: number = 24): Promise<{
         const endHour = currentLocalHour + hours;
         const spillsIntoTomorrow = endHour >= 24;
         const cutoffHour = endHour % 24;
-        const fromHour = Math.max(currentLocalHour - 1, 0); // ← bug fix
+        const fromHour = Math.max(currentLocalHour - 1, 0);
 
         const filtered = (data ?? []).filter((row) => {
+            if (row.date === yesterdayDateStr) {
+                return currentLocalHour === 0 && row.hour === 23;
+            }
             if (row.date === todayDateStr) return row.hour >= fromHour;
             if (row.date === tomorrowDateStr && spillsIntoTomorrow) {
                 return cutoffHour === 0 || row.hour < cutoffHour;

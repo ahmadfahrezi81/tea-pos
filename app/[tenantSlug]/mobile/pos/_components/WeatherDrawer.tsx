@@ -21,13 +21,17 @@ const TZ_OFFSET = parseInt(process.env.NEXT_PUBLIC_TIMEZONE_OFFSET ?? "7");
 function getLocalDateStrings(): {
     todayDateStr: string;
     tomorrowDateStr: string;
+    yesterdayDateStr: string;
 } {
     const nowLocal = new Date(Date.now() + TZ_OFFSET * 60 * 60 * 1000);
     const todayDateStr = nowLocal.toISOString().split("T")[0];
     const tomorrowDateStr = new Date(nowLocal.getTime() + 24 * 60 * 60 * 1000)
         .toISOString()
         .split("T")[0];
-    return { todayDateStr, tomorrowDateStr };
+    const yesterdayDateStr = new Date(nowLocal.getTime() - 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0];
+    return { todayDateStr, tomorrowDateStr, yesterdayDateStr };
 }
 
 function formatHour(hour: number): string {
@@ -58,16 +62,21 @@ export function WeatherDrawer({ isOpen, onClose }: WeatherDrawerProps) {
     const { data, isLoading } = useWeather();
 
     const currentLocalHour = getCurrentLocalHour();
-    const { todayDateStr, tomorrowDateStr } = getLocalDateStrings();
+    const { todayDateStr, tomorrowDateStr, yesterdayDateStr } =
+        getLocalDateStrings();
 
     const visibleHours = useMemo(() => {
         if (!data?.hourly) return [];
 
-        const fromHour = Math.max(currentLocalHour - 1, 0); // ← permanent fix
+        const fromHour = Math.max(currentLocalHour - 1, 0);
         const spillsTomorrow = currentLocalHour + 6 > 23;
         const cutoffHour = (currentLocalHour + 6) % 24;
 
         return data.hourly.filter((h) => {
+            // at midnight, show yesterday's 11 PM as the past row
+            if (h.date === yesterdayDateStr) {
+                return currentLocalHour === 0 && h.hour === 23;
+            }
             if (spillsTomorrow) {
                 if (h.date === todayDateStr) return h.hour >= fromHour;
                 if (h.date === tomorrowDateStr) return h.hour < cutoffHour;
@@ -79,7 +88,13 @@ export function WeatherDrawer({ isOpen, onClose }: WeatherDrawerProps) {
                 h.hour <= currentLocalHour + 6
             );
         });
-    }, [data?.hourly, currentLocalHour, todayDateStr, tomorrowDateStr]);
+    }, [
+        data?.hourly,
+        currentLocalHour,
+        todayDateStr,
+        tomorrowDateStr,
+        yesterdayDateStr,
+    ]);
 
     const currentHourData = data?.hourly?.find(
         (h) => h.date === todayDateStr && h.hour === currentLocalHour,
@@ -90,12 +105,10 @@ export function WeatherDrawer({ isOpen, onClose }: WeatherDrawerProps) {
             <Drawer.Portal>
                 <Drawer.Overlay className="fixed inset-0 bg-black/60 z-50" />
                 <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-xl px-4 pt-5 pb-10 focus:outline-none max-h-[90dvh] overflow-y-auto">
-                    {/* Pull tab */}
                     <div className="absolute top-2 left-0 right-0 flex justify-center">
                         <div className="w-8 h-1 rounded-full bg-gray-300" />
                     </div>
 
-                    {/* Header */}
                     <div
                         className={`flex items-center justify-between mb-3 ${bebas.variable}`}
                     >
@@ -119,7 +132,6 @@ export function WeatherDrawer({ isOpen, onClose }: WeatherDrawerProps) {
                         </button>
                     </div>
 
-                    {/* Loading skeleton */}
                     {isLoading && (
                         <div className="space-y-3">
                             <div className="h-24 rounded-2xl bg-gray-200 animate-pulse" />
@@ -127,7 +139,6 @@ export function WeatherDrawer({ isOpen, onClose }: WeatherDrawerProps) {
                         </div>
                     )}
 
-                    {/* Empty state */}
                     {!isLoading && !data && (
                         <div className="flex flex-col items-center justify-center py-16 text-gray-400">
                             <Cloud className="w-10 h-10 mb-3" />
@@ -135,7 +146,6 @@ export function WeatherDrawer({ isOpen, onClose }: WeatherDrawerProps) {
                         </div>
                     )}
 
-                    {/* Hour rows */}
                     {!isLoading && data && (
                         <div className="space-y-1">
                             {visibleHours.map((hour) => {
@@ -143,8 +153,9 @@ export function WeatherDrawer({ isOpen, onClose }: WeatherDrawerProps) {
                                     hour.date === todayDateStr &&
                                     hour.hour === currentLocalHour;
                                 const isPast =
-                                    hour.date === todayDateStr &&
-                                    hour.hour < currentLocalHour;
+                                    hour.date === yesterdayDateStr ||
+                                    (hour.date === todayDateStr &&
+                                        hour.hour < currentLocalHour);
                                 const { lucideIcon: WeatherIcon, label } =
                                     getWeatherMeta(hour.weatherCode);
 
