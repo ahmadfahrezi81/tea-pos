@@ -9,6 +9,7 @@ import { SummaryPhotoThumbnail } from "@/app/[tenantSlug]/mobile/analytics/daily
 import { PHOTO_SLOTS } from "@/lib/frontend/constants/photo-slots";
 import { formatRupiah } from "@/lib/utils/formatCurrency";
 import { useSummaryPhotosById } from "@/lib/hooks/summaries/useSummaryPhotosById";
+import { useSummaryBreakdown } from "@/lib/hooks/summaries/useSummaryBreakdown";
 
 export type DailySummaryWithExpenses = DailySummary & {
     expenses: Expense[];
@@ -18,7 +19,6 @@ interface DetailsDrawerProps {
     isOpen: boolean;
     summary: DailySummaryWithExpenses;
     onClose: () => void;
-    productBreakdown: Record<string, { quantity: number; revenue: number }>;
     storeName: string;
 }
 
@@ -26,19 +26,31 @@ export const DetailsDrawer = ({
     isOpen,
     summary,
     onClose,
-    productBreakdown,
     storeName,
 }: DetailsDrawerProps) => {
     const { photos } = useSummaryPhotosById(isOpen ? summary?.id : null);
+    const { breakdown, isLoading: breakdownLoading } = useSummaryBreakdown(
+        isOpen ? summary?.id : null,
+    );
 
     if (!isOpen || !summary) return null;
 
     const closingPhotos = photos.filter((p) => p.type.startsWith("closing:"));
 
     return (
-        <Drawer.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <Drawer.Root
+            open={isOpen}
+            modal={false}
+            onOpenChange={(open) => !open && onClose()}
+        >
             <Drawer.Portal>
-                <Drawer.Overlay className="fixed inset-0 bg-black/60 z-50" />
+                {/* Custom overlay since modal={false} disables Drawer.Overlay */}
+                {isOpen && (
+                    <div
+                        className="fixed inset-0 bg-black/60 z-50"
+                        onClick={onClose}
+                    />
+                )}
                 <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl max-h-[90dvh] flex flex-col focus:outline-none">
                     {/* Pull tab */}
                     <div className="absolute top-2 left-0 right-0 flex justify-center flex-shrink-0">
@@ -132,24 +144,48 @@ export const DetailsDrawer = ({
                                 )}
                             </div>
 
-                            {/* Sales Stats */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                                    <p className="text-2xl font-bold text-blue-600">
-                                        {summary.totalOrders}
+                            {/* Product Breakdown */}
+                            <div className="space-y-3">
+                                <h4 className="font-medium text-gray-800">
+                                    Product Sales Breakdown
+                                </h4>
+                                {breakdownLoading ? (
+                                    <div className="flex items-center justify-center py-6">
+                                        <div className="w-5 h-5 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+                                    </div>
+                                ) : Object.keys(breakdown).length === 0 ? (
+                                    <p className="text-sm text-gray-400 text-center py-4">
+                                        No sales recorded for this day
                                     </p>
-                                    <p className="text-sm text-gray-600">
-                                        Total Orders
-                                    </p>
-                                </div>
-                                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                                    <p className="text-2xl font-bold text-orange-600">
-                                        {summary.totalCups}
-                                    </p>
-                                    <p className="text-sm text-gray-600">
-                                        Cups Sold
-                                    </p>
-                                </div>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {Object.entries(breakdown)
+                                            .sort(
+                                                ([, a], [, b]) =>
+                                                    b.quantity - a.quantity,
+                                            )
+                                            .map(([productName, data]) => (
+                                                <div
+                                                    key={productName}
+                                                    className="flex justify-between items-center bg-gray-50 p-3 rounded-lg"
+                                                >
+                                                    <span className="font-medium">
+                                                        {productName}
+                                                    </span>
+                                                    <div className="text-right">
+                                                        <p className="font-medium">
+                                                            {data.quantity} cups
+                                                        </p>
+                                                        <p className="text-sm text-gray-600">
+                                                            {formatRupiah(
+                                                                data.revenue,
+                                                            )}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                    </div>
+                                )}
                             </div>
 
                             {/* Closing Photos */}
@@ -177,7 +213,7 @@ export const DetailsDrawer = ({
                                                         />
                                                     </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="text-sm font-semibold text-gray-800">
+                                                        <p className="text-md font-semibold text-gray-800">
                                                             {slot.label}
                                                         </p>
                                                         {photo.quantity ? (
@@ -193,51 +229,11 @@ export const DetailsDrawer = ({
                                                                         .unit
                                                                 }
                                                             </p>
-                                                        ) : (
-                                                            <p className="text-xs text-gray-300 mt-0.5">
-                                                                No quantity
-                                                            </p>
-                                                        )}
+                                                        ) : null}
                                                     </div>
                                                 </div>
                                             );
                                         })}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Product Breakdown */}
-                            {Object.keys(productBreakdown).length > 0 && (
-                                <div className="space-y-3">
-                                    <h4 className="font-medium text-gray-800">
-                                        Product Sales Breakdown
-                                    </h4>
-                                    <div className="space-y-2">
-                                        {Object.entries(productBreakdown)
-                                            .sort(
-                                                ([, a], [, b]) =>
-                                                    b.quantity - a.quantity,
-                                            )
-                                            .map(([productName, data]) => (
-                                                <div
-                                                    key={productName}
-                                                    className="flex justify-between items-center bg-gray-50 p-3 rounded-lg"
-                                                >
-                                                    <span className="font-medium">
-                                                        {productName}
-                                                    </span>
-                                                    <div className="text-right">
-                                                        <p className="font-medium">
-                                                            {data.quantity} cups
-                                                        </p>
-                                                        <p className="text-sm text-gray-600">
-                                                            {formatRupiah(
-                                                                data.revenue,
-                                                            )}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            ))}
                                     </div>
                                 </div>
                             )}

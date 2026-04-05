@@ -1,14 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-    X,
-    ImageOff,
-    Loader2,
-    CircleMinus,
-    Check,
-    CloudCheck,
-} from "lucide-react";
+import { X, ImageOff, Loader2, CircleMinus, CloudCheck } from "lucide-react";
 import { createPortal } from "react-dom";
 
 interface SummaryPhotoThumbnailProps {
@@ -78,7 +71,6 @@ export function SummaryPhotoThumbnail({
                     )}
                 </button>
 
-                {/* Uploaded checkmark — top left */}
                 {!isLoading && !hasError && (
                     <div className="absolute bottom-1 left-1 bg-green-500/90 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1">
                         <CloudCheck size={16} className="text-white" />
@@ -109,10 +101,16 @@ export function SummaryPhotoThumbnail({
                 createPortal(
                     <div
                         className="fixed inset-0 z-[999] bg-black/90 flex items-center justify-center"
-                        onClick={() => setIsOpen(false)}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setIsOpen(false);
+                        }}
                     >
                         <button
-                            onClick={() => setIsOpen(false)}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setIsOpen(false);
+                            }}
                             className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center active:scale-95 transition-transform"
                         >
                             <X size={30} className="text-white" />
