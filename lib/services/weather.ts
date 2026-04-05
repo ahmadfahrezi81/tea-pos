@@ -262,20 +262,20 @@ export interface UpsertWeatherParams {
 
 // ─── Internal helpers ─────────────────────────────────────────────────────────
 
-function mapRow(row: any): WeatherHourlyRow {
+function mapRow(row: Record<string, unknown>): WeatherHourlyRow {
     return {
-        id: row.id,
-        date: row.date,
-        hour: row.hour,
-        temperature: row.temperature,
-        precipitationProbability: row.precipitation_probability,
-        weatherCode: row.weather_code,
-        lat: row.lat,
-        lng: row.lng,
-        city: row.city,
-        region: row.region,
-        fetchedAt: row.fetched_at,
-        createdAt: row.created_at,
+        id: row.id as string,
+        date: row.date as string,
+        hour: row.hour as number,
+        temperature: row.temperature as number,
+        precipitationProbability: row.precipitation_probability as number,
+        weatherCode: row.weather_code as number,
+        lat: row.lat as number,
+        lng: row.lng as number,
+        city: row.city as string,
+        region: row.region as string,
+        fetchedAt: row.fetched_at as string,
+        createdAt: row.created_at as string,
     };
 }
 
