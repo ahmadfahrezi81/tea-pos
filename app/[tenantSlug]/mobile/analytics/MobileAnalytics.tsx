@@ -710,11 +710,6 @@ export default function MobileAnalytics() {
                             setShowDetailsModal(false);
                             setSelectedSummary(null);
                         }}
-                        productBreakdown={
-                            summariesData?.productBreakdown?.[
-                                selectedSummary.date
-                            ] ?? {}
-                        }
                         storeName={storeName}
                     />
                     <SetBalanceModal
