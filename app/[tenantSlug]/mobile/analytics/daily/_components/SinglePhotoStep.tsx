@@ -10,14 +10,6 @@ import {
     SavedSlottedPhoto,
 } from "@/lib/schemas/daily-summary-photos";
 
-const COMPRESSION_OPTIONS = {
-    maxSizeMB: 0.4,
-    maxWidthOrHeight: 1080,
-    useWebWorker: true,
-    fileType: "image/webp" as const,
-    initialQuality: 0.6,
-};
-
 // Slots that have a quantity input and their fixed unit
 const QUANTITY_CONFIG: Partial<
     Record<PhotoType, { unit: string; placeholder: string }>
@@ -64,10 +56,57 @@ export function SinglePhotoStep({
 
         setIsCompressing(true);
         try {
-            const compressed = await imageCompression(
-                file,
-                COMPRESSION_OPTIONS,
-            );
+            // ─── Detect WebP encoding support ──────────────────────────────
+            const supportsWebP = await new Promise<boolean>((resolve) => {
+                const canvas = document.createElement("canvas");
+                canvas.width = 1;
+                canvas.height = 1;
+                resolve(
+                    canvas
+                        .toDataURL("image/webp")
+                        .startsWith("data:image/webp"),
+                );
+            });
+
+            // ─── Attempt primary compression ───────────────────────────────
+            const primaryOptions = {
+                maxSizeMB: 0.4,
+                maxWidthOrHeight: 1080,
+                useWebWorker: true,
+                fileType: supportsWebP
+                    ? ("image/webp" as const)
+                    : ("image/jpeg" as const),
+                initialQuality: supportsWebP ? 0.6 : 0.7,
+            };
+
+            let compressed = await imageCompression(file, primaryOptions);
+
+            // ─── Safety net: if output is PNG (iOS silent fallback), re-compress as JPEG
+            if (
+                compressed.type === "image/png" ||
+                compressed.type === "image/heic" ||
+                compressed.type === "image/heif"
+            ) {
+                compressed = await imageCompression(file, {
+                    maxSizeMB: 0.4,
+                    maxWidthOrHeight: 1080,
+                    useWebWorker: true,
+                    fileType: "image/jpeg" as const,
+                    initialQuality: 0.7,
+                });
+            }
+
+            // ─── Final safety net: if still not jpeg or webp, reject ───────
+            if (
+                !["image/webp", "image/jpeg", "image/jpg"].includes(
+                    compressed.type,
+                )
+            ) {
+                throw new Error(
+                    `Unsupported output format: ${compressed.type}`,
+                );
+            }
+
             const preview = URL.createObjectURL(compressed);
             if (photo) URL.revokeObjectURL(photo.preview);
             onPhotoChange({
@@ -77,21 +116,27 @@ export function SinglePhotoStep({
                 quantity: photo?.quantity ?? null,
             });
         } catch (err) {
-            console.error("Compression failed — using original:", err);
-            const preview = URL.createObjectURL(file);
-            if (photo) URL.revokeObjectURL(photo.preview);
-            onPhotoChange({
-                type,
-                file,
-                preview,
-                quantity: photo?.quantity ?? null,
-            });
+            console.error("Compression failed:", err);
+            // ─── Last resort: try raw file as JPEG if it's a supported type
+            if (["image/jpeg", "image/jpg", "image/webp"].includes(file.type)) {
+                const preview = URL.createObjectURL(file);
+                if (photo) URL.revokeObjectURL(photo.preview);
+                onPhotoChange({
+                    type,
+                    file,
+                    preview,
+                    quantity: photo?.quantity ?? null,
+                });
+            } else {
+                // Can't safely upload this file type — surface error to user
+                // You can wire this to a toast or error state if you want
+                console.error("Cannot upload file of type:", file.type);
+            }
         } finally {
             setIsCompressing(false);
             e.target.value = "";
         }
     };
-
     const handleRemove = () => {
         if (photo) URL.revokeObjectURL(photo.preview);
         onPhotoChange(null);

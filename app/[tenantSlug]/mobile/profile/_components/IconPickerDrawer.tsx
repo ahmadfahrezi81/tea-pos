@@ -39,16 +39,36 @@ export const ICON_OPTIONS: { id: string; icon: LucideIcon; label: string }[] = [
     { id: "shrimp", icon: Shrimp, label: "Shrimp" },
 ];
 
-export const DEFAULT_ICON_ID = "bird";
+// export const DEFAULT_ICON_ID = "bird";
+// export const PROFILE_ICON_KEY = "profile_icon_id";
+
+// export function getStoredIconId(): string {
+//     if (typeof window === "undefined") return DEFAULT_ICON_ID;
+//     return localStorage.getItem(PROFILE_ICON_KEY) ?? DEFAULT_ICON_ID;
+// }
+
+// export function getIconById(id: string): LucideIcon {
+//     return ICON_OPTIONS.find((o) => o.id === id)?.icon ?? Bird;
+// }
+
 export const PROFILE_ICON_KEY = "profile_icon_id";
+export const DEFAULT_ICON_ID = "panda";
+
+export function getDefaultIconForToday(): string {
+    const today = new Date().toISOString().slice(0, 10); // "2026-04-05"
+    const seed = today
+        .split("-")
+        .reduce((acc, part) => acc + parseInt(part), 0);
+    return ICON_OPTIONS[seed % ICON_OPTIONS.length].id;
+}
 
 export function getStoredIconId(): string {
     if (typeof window === "undefined") return DEFAULT_ICON_ID;
-    return localStorage.getItem(PROFILE_ICON_KEY) ?? DEFAULT_ICON_ID;
+    return localStorage.getItem(PROFILE_ICON_KEY) ?? getDefaultIconForToday();
 }
 
 export function getIconById(id: string): LucideIcon {
-    return ICON_OPTIONS.find((o) => o.id === id)?.icon ?? Bird;
+    return ICON_OPTIONS.find((o) => o.id === id)?.icon ?? Panda;
 }
 
 // ============================================================================

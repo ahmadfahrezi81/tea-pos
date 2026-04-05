@@ -199,6 +199,7 @@ export async function POST(request: NextRequest) {
 
         // ─── Upload to Supabase storage ────────────────────────────────
         const arrayBuffer = await file.arrayBuffer();
+
         const { error: uploadError } = await supabase.storage
             .from(BUCKET)
             .upload(storagePath, arrayBuffer, {
@@ -209,6 +210,7 @@ export async function POST(request: NextRequest) {
         if (uploadError) {
             console.error(
                 "[POST /api/summaries/photo] Upload error:",
+                uploadError.message,
                 uploadError,
             );
             return NextResponse.json(
