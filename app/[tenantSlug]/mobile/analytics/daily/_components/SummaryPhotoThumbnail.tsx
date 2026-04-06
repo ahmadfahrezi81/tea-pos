@@ -9,6 +9,8 @@ interface SummaryPhotoThumbnailProps {
     alt?: string;
     className?: string;
     onDelete?: () => Promise<void>;
+    isSaved?: boolean;
+    compact?: boolean;
 }
 
 export function SummaryPhotoThumbnail({
@@ -16,6 +18,8 @@ export function SummaryPhotoThumbnail({
     alt = "Summary photo",
     className = "w-24 h-24",
     onDelete,
+    isSaved = true,
+    compact = true,
 }: SummaryPhotoThumbnailProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -71,14 +75,17 @@ export function SummaryPhotoThumbnail({
                     )}
                 </button>
 
-                {!isLoading && !hasError && (
+                {!isLoading && !hasError && isSaved && (
                     <div className="absolute bottom-1 left-1 bg-green-500/90 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1">
                         <CloudCheck size={16} className="text-white" />
-                        <p className="text-white text-xs font-semibold">
-                            Saved
-                        </p>
+                        {!compact && (
+                            <p className="text-white text-xs font-semibold">
+                                Saved
+                            </p>
+                        )}
                     </div>
                 )}
+
                 {onDelete && (
                     <button
                         onClick={handleDelete}

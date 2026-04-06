@@ -226,6 +226,7 @@ export function SinglePhotoStep({
                                     alt={label}
                                     className="w-full h-full"
                                     onDelete={onSavedPhotoDelete}
+                                    compact={false}
                                 />
                             </div>
                         ) : photo ? (
@@ -234,6 +235,7 @@ export function SinglePhotoStep({
                                     url={photo.preview}
                                     alt={label}
                                     className="w-full h-full"
+                                    isSaved={false}
                                 />
                                 <button
                                     onClick={handleRemove}
