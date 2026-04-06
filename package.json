@@ -1,7 +1,7 @@
 {
     "name": "tea-pos",
-    "version": "3.9.3",
-    "backendVersionDate": "5.4.26",
+    "version": "3.9.4",
+    "backendVersionDate": "6.4.26",
     "private": true,
     "scripts": {
         "dev": "next dev --turbopack",

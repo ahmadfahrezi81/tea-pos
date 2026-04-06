@@ -29,6 +29,7 @@ import {
 } from "../analytics/utils/summariesHelpers";
 import { navigation } from "@/lib/utils/navigation";
 import { useTenantSlug } from "@/lib/tenant-url";
+import { useSummaryPhotoCount } from "@/lib/hooks/summaries/useSummaryPhotoCount";
 
 // ============================================================================
 // TYPES
@@ -37,6 +38,16 @@ import { useTenantSlug } from "@/lib/tenant-url";
 type DailySummaryWithExtras = DailySummary & {
     expenses: Expense[];
 };
+
+function PhotoCountLabel({ summaryId }: { summaryId: string }) {
+    const { count } = useSummaryPhotoCount(summaryId);
+    return (
+        <p className="text-sm text-blue-600">
+            {count > 0 ? `${count} photo${count > 1 ? "s" : ""} · ` : ""}Tap for
+            details
+        </p>
+    );
+}
 
 // ============================================================================
 // MAIN COMPONENT
@@ -430,11 +441,12 @@ export default function MobileAnalytics() {
                                                             summary.date,
                                                         )}
                                                     </h3>
-                                                    <p className="text-sm text-blue-600 underline">
-                                                        Tap for details
-                                                    </p>
+                                                    <PhotoCountLabel
+                                                        summaryId={summary.id}
+                                                    />
                                                 </button>
                                             </div>
+
                                             <div className="text-right">
                                                 {summary.closedAt ? (
                                                     <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
