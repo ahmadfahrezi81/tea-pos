@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { Drawer } from "vaul";
 import { Cloud, X } from "lucide-react";
-import { getWeatherMeta } from "@/lib/utils/weatherCode";
+import { getWeatherMeta, isNightHour } from "@/lib/utils/weatherCode";
 import useWeather from "@/lib/hooks/weather/useWeather";
 import { getCurrentLocalHour } from "@/lib/utils/time";
 import { Bebas_Neue } from "next/font/google";
@@ -156,8 +156,9 @@ export function WeatherDrawer({ isOpen, onClose }: WeatherDrawerProps) {
                                     hour.date === yesterdayDateStr ||
                                     (hour.date === todayDateStr &&
                                         hour.hour < currentLocalHour);
+                                const isNight = isNightHour(hour.hour);
                                 const { lucideIcon: WeatherIcon, label } =
-                                    getWeatherMeta(hour.weatherCode);
+                                    getWeatherMeta(hour.weatherCode, isNight);
 
                                 return (
                                     <div

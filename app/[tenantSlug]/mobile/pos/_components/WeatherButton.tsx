@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import useWeather from "@/lib/hooks/weather/useWeather";
-import { getWeatherMeta } from "@/lib/utils/weatherCode";
+import { getWeatherMeta, isNightHour } from "@/lib/utils/weatherCode";
 import { getCurrentLocalHour } from "@/lib/utils/time";
 
 interface WeatherButtonProps {
@@ -19,7 +19,10 @@ export function WeatherButton({ onClick }: WeatherButtonProps) {
         const current =
             data.hourly.find((h) => h.hour === currentLocalHour) ??
             data.hourly[0];
-        return getWeatherMeta(current.weatherCode).fluentIcon;
+        return getWeatherMeta(
+            current.weatherCode,
+            isNightHour(currentLocalHour),
+        ).fluentIcon;
     }, [data?.hourly, currentLocalHour]);
 
     return (
