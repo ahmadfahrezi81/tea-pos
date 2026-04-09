@@ -436,10 +436,10 @@ export default function MobileLayoutClient({
                             onClick={() =>
                                 handleNavClick(url("/mobile/notifications"))
                             }
-                            className="relative p-2 rounded-full bg-white shadow-xs border border-gray-100 active:scale-95"
+                            className="relative p-1.5 rounded-xl active:scale-95"
                             aria-label="Notifications"
                         >
-                            <Bell size={24} className="text-gray-900" />
+                            <Bell size={28} className="text-black" />
                             {unreadCount > 0 && (
                                 <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1">
                                     {badgeCount}
@@ -457,7 +457,7 @@ export default function MobileLayoutClient({
                         ? "pt-14"
                         : currentIsSubPage
                           ? "pt-24"
-                          : "pt-16"
+                          : "pt-17"
                 }`}
             >
                 {isTransitioning ? (
