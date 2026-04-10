@@ -155,7 +155,8 @@ export default function MobileLayoutClient({
             path.endsWith("/weather")
         )
             return "Weather Forecast";
-        if (path.endsWith("/mobile/analytics/daily/close")) return null;
+        if (path.endsWith("/mobile/analytics/daily/close"))
+            return "Daily Close";
         if (path.endsWith("/mobile/analytics/daily/open")) return "Open Store";
         return "Mobile";
     }, []);
@@ -270,7 +271,9 @@ export default function MobileLayoutClient({
     const isProfilePage = currentPath.endsWith("/mobile/profile");
     const currentTitle = getCurrentPageTitle(currentPath);
     const currentIsSubPage = isSubPage(currentPath);
-    const isMinimalHeader = currentIsSubPage && currentTitle === null;
+    const isInlineHeader = currentPath.endsWith(
+        "/mobile/analytics/daily/close",
+    );
 
     // ─── Early returns ────────────────────────────────────────────────
     if (isLoading) {
@@ -351,20 +354,27 @@ export default function MobileLayoutClient({
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         {currentIsSubPage ? (
-                            isMinimalHeader ? (
-                                // Minimal header — back button only, no title
-                                <button
-                                    onClick={() =>
-                                        handleNavClick(
-                                            getParentPath(currentPath),
-                                        )
-                                    }
-                                    className="text-gray-900 active:scale-95 pr-2 pl-0 py-1"
-                                >
-                                    <ArrowLeft size={28} strokeWidth={2} />
-                                </button>
-                            ) : (
-                                // Full subpage header — back button + title
+                            isInlineHeader ? (
+                                // Inline header — back button + title on same row
+                                <div className="flex items-center gap-1">
+                                    <button
+                                        onClick={() =>
+                                            handleNavClick(
+                                                getParentPath(currentPath),
+                                            )
+                                        }
+                                        className="text-gray-900 active:scale-95 pr-2 pl-0 py-1"
+                                    >
+                                        <ArrowLeft size={28} strokeWidth={2} />
+                                    </button>
+                                    {currentTitle && (
+                                        <p className="text-xl font-semibold tracking-tight text-gray-900">
+                                            {currentTitle}
+                                        </p>
+                                    )}
+                                </div>
+                            ) : isChartPage(currentPath) ? (
+                                // Chart pages — back + title + store picker stacked
                                 <div className="flex flex-col gap-2">
                                     <button
                                         onClick={() =>
@@ -376,34 +386,57 @@ export default function MobileLayoutClient({
                                     >
                                         <ArrowLeft size={28} strokeWidth={2} />
                                     </button>
-                                    {isChartPage(currentPath) ? (
-                                        <div className="flex items-center gap-2">
-                                            <p className="text-2xl font-semibold tracking-tight text-gray-900">
-                                                {currentTitle}
-                                            </p>
-                                            {selectedStore && (
-                                                <button
-                                                    onClick={() =>
-                                                        setIsPickerOpen(true)
-                                                    }
-                                                    className="flex items-center mt-1 gap-0.5 active:scale-95"
-                                                >
-                                                    <p className="text-lg text-brand font-bold">
-                                                        {selectedStore.name}
-                                                    </p>
-                                                    <ChevronsUpDown
-                                                        size={14}
-                                                        strokeWidth={3}
-                                                        className="text-brand"
-                                                    />
-                                                </button>
-                                            )}
-                                        </div>
-                                    ) : (
+                                    <div className="flex items-center gap-2">
                                         <p className="text-2xl font-semibold tracking-tight text-gray-900">
                                             {currentTitle}
                                         </p>
-                                    )}
+                                        {selectedStore && (
+                                            <button
+                                                onClick={() =>
+                                                    setIsPickerOpen(true)
+                                                }
+                                                className="flex items-center mt-1 gap-0.5 active:scale-95"
+                                            >
+                                                <p className="text-lg text-brand font-bold">
+                                                    {selectedStore.name}
+                                                </p>
+                                                <ChevronsUpDown
+                                                    size={14}
+                                                    strokeWidth={3}
+                                                    className="text-brand"
+                                                />
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            ) : currentTitle === null ? (
+                                // Minimal header — back button only
+                                <button
+                                    onClick={() =>
+                                        handleNavClick(
+                                            getParentPath(currentPath),
+                                        )
+                                    }
+                                    className="text-gray-900 active:scale-95 pr-2 pl-0 py-1"
+                                >
+                                    <ArrowLeft size={28} strokeWidth={2} />
+                                </button>
+                            ) : (
+                                // Full subpage header — back button + title below
+                                <div className="flex flex-col gap-2">
+                                    <button
+                                        onClick={() =>
+                                            handleNavClick(
+                                                getParentPath(currentPath),
+                                            )
+                                        }
+                                        className="text-gray-900 active:scale-95 self-start pr-2 pl-0 py-1"
+                                    >
+                                        <ArrowLeft size={28} strokeWidth={2} />
+                                    </button>
+                                    <p className="text-2xl font-semibold tracking-tight text-gray-900">
+                                        {currentTitle}
+                                    </p>
                                 </div>
                             )
                         ) : (
@@ -453,7 +486,7 @@ export default function MobileLayoutClient({
             <div
                 ref={scrollContainerRef}
                 className={`flex-1 overflow-y-auto p-4 pb-28 bg-gray-50 ${
-                    isMinimalHeader
+                    isInlineHeader
                         ? "pt-14"
                         : currentIsSubPage
                           ? "pt-24"
