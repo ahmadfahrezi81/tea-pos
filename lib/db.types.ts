@@ -363,6 +363,7 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
+          payment_method: string
           store_id: string
           tenant_id: string | null
           total_amount: number
@@ -371,6 +372,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           id?: string
+          payment_method?: string
           store_id: string
           tenant_id?: string | null
           total_amount: number
@@ -379,6 +381,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           id?: string
+          payment_method?: string
           store_id?: string
           tenant_id?: string | null
           total_amount?: number
@@ -401,6 +404,83 @@ export type Database = {
           },
           {
             foreignKeyName: "orders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          order_id: string | null
+          qr_string: string
+          status: string
+          store_id: string
+          tenant_id: string | null
+          updated_at: string | null
+          user_id: string
+          xendit_qr_id: string
+          xendit_reference_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          order_id?: string | null
+          qr_string: string
+          status?: string
+          store_id: string
+          tenant_id?: string | null
+          updated_at?: string | null
+          user_id: string
+          xendit_qr_id: string
+          xendit_reference_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          order_id?: string | null
+          qr_string?: string
+          status?: string
+          store_id?: string
+          tenant_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+          xendit_qr_id?: string
+          xendit_reference_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
