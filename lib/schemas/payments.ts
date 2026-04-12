@@ -57,36 +57,41 @@ export const CreateQrisPaymentInput = z
 
 export const XenditQrisWebhookPayload = z
     .object({
-        id: z.string().openapi({
-            description: "Xendit payment ID",
-            example: "qrpy_fe0123b9-7543-455e-8bcf-c7970cb9352d",
+        event: z.string().openapi({ example: "qr.payment" }),
+        created: z.string(),
+        business_id: z.string(),
+        data: z.object({
+            id: z.string().openapi({
+                description: "Xendit payment ID",
+                example: "qrpy_fe0123b9-7543-455e-8bcf-c7970cb9352d",
+            }),
+            qr_id: z.string().openapi({
+                description: "Xendit QR code ID",
+                example: "qr_b949db25-f407-4955-97bf-497e57610951",
+            }),
+            reference_id: z.string().openapi({
+                description: "Your reference ID",
+                example: "tea-pos-pay-xxx",
+            }),
+            status: z.string().openapi({
+                description: "Payment status from Xendit",
+                example: "SUCCEEDED",
+            }),
+            amount: z.number().openapi({
+                description: "Payment amount",
+                example: 10000,
+            }),
+            currency: z.string().openapi({
+                example: "IDR",
+            }),
+            payment_detail: z
+                .object({
+                    receipt_id: z.string().nullable().optional(),
+                    source: z.string().nullable().optional(),
+                })
+                .nullable()
+                .optional(),
         }),
-        qr_id: z.string().openapi({
-            description: "Xendit QR code ID",
-            example: "qr_b949db25-f407-4955-97bf-497e57610951",
-        }),
-        reference_id: z.string().openapi({
-            description: "Your reference ID",
-            example: "tea-pos-pay-xxx",
-        }),
-        status: z.string().openapi({
-            description: "Payment status from Xendit",
-            example: "SUCCEEDED",
-        }),
-        amount: z.number().openapi({
-            description: "Payment amount",
-            example: 10000,
-        }),
-        currency: z.string().openapi({
-            example: "IDR",
-        }),
-        payment_detail: z
-            .object({
-                receipt_id: z.string().nullable().optional(),
-                source: z.string().nullable().optional(),
-            })
-            .nullable()
-            .optional(),
     })
     .openapi({ title: "XenditQrisWebhookPayload" });
 

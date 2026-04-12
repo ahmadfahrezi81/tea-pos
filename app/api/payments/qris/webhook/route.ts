@@ -21,6 +21,8 @@ export async function POST(request: NextRequest) {
 
         const body = await request.json();
 
+        console.log("Webhook body:", JSON.stringify(body, null, 2)); // ← add here
+
         const result = XenditQrisWebhookPayload.safeParse(body);
         if (!result.success) {
             console.error("Webhook payload invalid:", result.error);
@@ -30,7 +32,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const { qr_id, status, amount } = result.data;
+        const { qr_id, status, amount } = result.data.data;
 
         // only process SUCCEEDED
         if (status !== "SUCCEEDED") {
