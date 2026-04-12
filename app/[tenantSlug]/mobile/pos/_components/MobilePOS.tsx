@@ -350,7 +350,7 @@ export default function MobilePOS() {
 
             {/* Sticky Bottom Bar */}
             {cart.length > 0 && (
-                <div className="fixed bottom-16 left-0 right-0 bg-white border-y border-gray-400 p-4 z-40">
+                <div className="fixed bottom-12 left-0 right-0 bg-white border-y border-gray-400 p-4 z-40">
                     <div className="flex items-center justify-between max-w-md mx-auto">
                         <div className="flex-1">
                             <p className="text-sm text-gray-600">
@@ -406,6 +406,7 @@ export default function MobilePOS() {
                     onProcessOrder={processOrder}
                     processing={processing}
                     selectedStoreId={selectedStoreId}
+                    onShowToast={showToast}
                 />
             )}
 
