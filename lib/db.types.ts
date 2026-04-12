@@ -418,6 +418,7 @@ export type Database = {
           expires_at: string | null
           id: string
           order_id: string | null
+          pending_items: Json | null
           qr_string: string
           status: string
           store_id: string
@@ -433,6 +434,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           order_id?: string | null
+          pending_items?: Json | null
           qr_string: string
           status?: string
           store_id: string
@@ -448,6 +450,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           order_id?: string | null
+          pending_items?: Json | null
           qr_string?: string
           status?: string
           store_id?: string
