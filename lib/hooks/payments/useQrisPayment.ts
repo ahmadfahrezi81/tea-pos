@@ -60,7 +60,7 @@ export function useQrisPayment({
         onSuccessRef.current = onSuccess;
     }, [onSuccess]);
 
-    const isStaging = process.env.NODE_ENV !== "production";
+    const isStaging = process.env.NEXT_PUBLIC_IS_STAGING === "true";
 
     // ── Cleanup ──────────────────────────────────────────────────────────────
     const cleanup = useCallback(() => {

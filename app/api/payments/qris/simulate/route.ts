@@ -15,7 +15,7 @@ const SimulateInput = z.object({
 // ============================================================================
 export async function POST(request: NextRequest) {
     // block in production
-    if (process.env.NODE_ENV === "production") {
+    if (process.env.NEXT_PUBLIC_IS_STAGING !== "true") {
         return NextResponse.json(
             { error: "Not available in production" },
             { status: 403 },
