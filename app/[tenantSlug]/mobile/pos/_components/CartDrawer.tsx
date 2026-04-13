@@ -36,7 +36,8 @@ export const CartDrawer = memo(function CartDrawer({
     onShowToast,
 }: CartDrawerProps) {
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
-    const [showSuccess, setShowSuccess] = useState(false); // ← added
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [simulating, setSimulating] = useState(false);
 
     const total = useMemo(
         () =>
@@ -80,7 +81,8 @@ export const CartDrawer = memo(function CartDrawer({
     useEffect(() => {
         if (!isOpen) {
             setPaymentMethod("cash");
-            setShowSuccess(false); // ← reset
+            setShowSuccess(false);
+            setSimulating(false);
         }
     }, [isOpen]);
 
@@ -91,6 +93,16 @@ export const CartDrawer = memo(function CartDrawer({
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen, paymentMethod]);
+
+    // ── Debounced simulate ───────────────────────────────────────────────────
+    const handleSimulate = useCallback(async () => {
+        if (simulating) return;
+        setSimulating(true);
+        await simulatePayment();
+        // keep disabled — realtime will fire success/fail and close the drawer
+        // if something goes wrong, reset after 5s
+        setTimeout(() => setSimulating(false), 5000);
+    }, [simulating, simulatePayment]);
 
     return (
         <Drawer.Root
@@ -335,7 +347,7 @@ export const CartDrawer = memo(function CartDrawer({
                                                         onClick={
                                                             createQrisPayment
                                                         }
-                                                        className="flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+                                                        className="flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors active:scale-95"
                                                     >
                                                         <RefreshCw size={14} />
                                                         Generate New QR
@@ -368,10 +380,13 @@ export const CartDrawer = memo(function CartDrawer({
                                         qrisStatus === "pending" &&
                                         !showSuccess && (
                                             <button
-                                                onClick={simulatePayment}
-                                                className="mt-3 px-4 py-2 bg-purple-500 text-white text-sm font-semibold rounded-lg hover:bg-purple-600 transition-colors"
+                                                onClick={handleSimulate}
+                                                disabled={simulating}
+                                                className="mt-3 px-4 py-2 bg-purple-500 text-white text-sm font-semibold rounded-lg hover:bg-purple-600 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
                                             >
-                                                Simulate Payment
+                                                {simulating
+                                                    ? "Simulating..."
+                                                    : "Simulate Payment"}
                                             </button>
                                         )}
                                 </div>
@@ -433,7 +448,7 @@ const CartItemRow = memo(function CartItemRow({
             <div className="flex items-center justify-between">
                 <button
                     onClick={() => onRemoveFromCart(item.product.id)}
-                    className="w-8 h-8 text-red-500 rounded-lg flex items-center justify-center border border-red-300"
+                    className="w-8 h-8 text-red-500 rounded-lg flex items-center justify-center border border-red-300 active:scale-95 transition-transform"
                 >
                     <Trash2 size={18} />
                 </button>
@@ -442,7 +457,7 @@ const CartItemRow = memo(function CartItemRow({
                         onClick={() =>
                             onUpdateQuantity(item.product.id, item.quantity - 1)
                         }
-                        className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors"
+                        className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 active:scale-95 transition-all"
                     >
                         <Minus size={18} />
                     </button>
@@ -453,7 +468,7 @@ const CartItemRow = memo(function CartItemRow({
                         onClick={() =>
                             onUpdateQuantity(item.product.id, item.quantity + 1)
                         }
-                        className="w-8 h-8 bg-green-500 text-white rounded-lg flex items-center justify-center hover:bg-green-600 transition-colors"
+                        className="w-8 h-8 bg-green-500 text-white rounded-lg flex items-center justify-center hover:bg-green-600 active:scale-95 transition-all"
                     >
                         <Plus size={18} />
                     </button>
