@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import { WeatherDrawer } from "./WeatherDrawer";
 import { WeatherButton } from "./WeatherButton";
 import { CartDrawer } from "./CartDrawer";
+import { useIsIPhonePWA } from "@/lib/frontend/hooks/usePWA";
 
 export interface CartItem {
     product: ProductResponse;
@@ -105,6 +106,8 @@ export default function MobilePOS() {
     const { selectedStoreId } = useStore();
     const { fastOrderMode } = useFastOrderMode();
     const { data: products = [], isLoading: productsLoading } = useProducts();
+
+    const isIPhonePWA = useIsIPhonePWA();
 
     const [cart, setCart] = useState<CartItem[]>([]);
     const [processing, setProcessing] = useState(false);
@@ -353,7 +356,9 @@ export default function MobilePOS() {
 
             {/* Sticky Bottom Bar */}
             {cart.length > 0 && (
-                <div className="fixed bottom-12 left-0 right-0 bg-white border-y border-gray-400 p-4 z-40">
+                <div
+                    className={`fixed ${isIPhonePWA ? "bottom-[82px]" : "bottom-[50px]"} left-0 right-0 bg-white border-y border-gray-400 p-4 z-40`}
+                >
                     <div className="flex items-center justify-between max-w-md mx-auto">
                         <div className="flex-1">
                             <p className="text-sm text-gray-600">
