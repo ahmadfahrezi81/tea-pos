@@ -7,7 +7,9 @@ import CopyableField from "@/components/mobile/shared/CopyableField";
 import { useRouter } from "next/navigation";
 import { useTenantSlug } from "@/lib/tenant-url";
 import { useStore } from "@/lib/context/StoreContext";
+
 import dynamic from "next/dynamic";
+
 const MiniHourlySalesChart = dynamic(() => import("./MiniHourlySalesChart"), {
     ssr: false,
     loading: () => (
@@ -98,7 +100,7 @@ export default function MobileOrders() {
     }
 
     return (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
             {/* Summary */}
             <div className="bg-white p-4 rounded-lg shadow-sm">
                 <div className="flex items-center justify-between mb-3">
@@ -185,14 +187,21 @@ export default function MobileOrders() {
                     {ordersWithNumbers.map((order) => (
                         <div
                             key={order.id}
-                            className="bg-white rounded-lg shadow-sm overflow-hidden"
+                            className="bg-white rounded-xl shadow-sm overflow-hidden"
                         >
                             <div className="p-3.5 bg-white">
                                 <div className="flex justify-between items-start">
                                     <div className="flex-1">
-                                        <p className="text-lg font-bold text-gray-800">
-                                            Order #{order.orderNumber}
-                                        </p>
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-lg font-bold text-gray-800">
+                                                Order #{order.orderNumber}
+                                            </p>
+                                            {order.paymentMethod === "qris" && (
+                                                <span className="bg-blue-600 text-white px-2.5 py-0.5 rounded-full text-xs font-bold">
+                                                    QRIS
+                                                </span>
+                                            )}
+                                        </div>
                                         <span className="text-sm text-gray-500">
                                             {formatFullTimestamp(
                                                 order.createdAt ?? "",
