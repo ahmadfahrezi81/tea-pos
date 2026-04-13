@@ -26,6 +26,7 @@ export function QrisCode({ value, size = 250 }: QrisCodeProps) {
                 <Image
                     src="/LEMONI-512x512.png"
                     alt="logo"
+                    priority
                     width={logoSize}
                     height={logoSize}
                     className="rounded-md object-contain"

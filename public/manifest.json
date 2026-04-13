@@ -4,8 +4,8 @@
     "description": "Point of Sale System",
     "start_url": "/",
     "display": "standalone",
-    "background_color": "#ffffff",
-    "theme_color": "#ffffff",
+    "background_color": "#F9FAFB",
+    "theme_color": "#F9FAFB",
     "orientation": "portrait",
     "icons": [
         {

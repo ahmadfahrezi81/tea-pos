@@ -7,7 +7,13 @@ import CopyableField from "@/components/mobile/shared/CopyableField";
 import { useRouter } from "next/navigation";
 import { useTenantSlug } from "@/lib/tenant-url";
 import { useStore } from "@/lib/context/StoreContext";
-import MiniHourlySalesChart from "./MiniHourlySalesChart";
+import dynamic from "next/dynamic";
+const MiniHourlySalesChart = dynamic(() => import("./MiniHourlySalesChart"), {
+    ssr: false,
+    loading: () => (
+        <div className="h-32 animate-pulse bg-gray-100 rounded-xl" />
+    ),
+});
 
 const formatMobileDate = (dateString: string) => {
     const date = new Date(dateString + "T00:00:00");

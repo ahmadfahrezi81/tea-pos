@@ -286,6 +286,7 @@ export default function MobileLayoutClient({
                             alt="Logo"
                             width={80}
                             height={80}
+                            priority
                             className="rounded-xl shadow-2xl mx-auto"
                         />
                     </div>
@@ -315,6 +316,7 @@ export default function MobileLayoutClient({
                             alt="Logo"
                             width={80}
                             height={80}
+                            priority
                             className="rounded-xl shadow-2xl mx-auto"
                         />
                     </div>

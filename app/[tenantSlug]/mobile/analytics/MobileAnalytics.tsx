@@ -21,7 +21,7 @@ import { CloseDayModal } from "./_components/CloseDayModal";
 import { DetailsDrawer } from "./_components/DetailsDrawer";
 import { ConfirmationPopup } from "@/components/mobile/shared/ConfirmationPopup";
 import { useStore } from "@/lib/context/StoreContext";
-import MiniDailySalesChart from "./_components/MiniDailySalesChart";
+// import MiniDailySalesChart from "./_components/MiniDailySalesChart";
 import {
     isCurrentMonthSelected,
     formatDate,
@@ -30,6 +30,17 @@ import {
 import { navigation } from "@/lib/utils/navigation";
 import { useTenantSlug } from "@/lib/tenant-url";
 import { useSummaryPhotoCount } from "@/lib/hooks/summaries/useSummaryPhotoCount";
+
+import dynamic from "next/dynamic";
+const MiniDailySalesChart = dynamic(
+    () => import("./_components/MiniDailySalesChart"),
+    {
+        ssr: false,
+        loading: () => (
+            <div className="h-32 animate-pulse bg-gray-100 rounded-xl" />
+        ),
+    },
+);
 
 // ============================================================================
 // TYPES

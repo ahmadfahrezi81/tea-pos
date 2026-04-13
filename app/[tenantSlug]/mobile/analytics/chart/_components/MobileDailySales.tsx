@@ -3,9 +3,26 @@ import { useState } from "react";
 import { CalendarDays, ChevronsUpDown } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useStore } from "@/lib/context/StoreContext";
-import DailySalesChart from "./DailySalesChart";
-import DayOfWeekChart from "./DayOfWeekChart";
-import ProductSalesChart from "./ProductSalesChart";
+
+import dynamic from "next/dynamic";
+const DailySalesChart = dynamic(() => import("./DailySalesChart"), {
+    ssr: false,
+    loading: () => (
+        <div className="h-48 animate-pulse bg-gray-100 rounded-xl" />
+    ),
+});
+const DayOfWeekChart = dynamic(() => import("./DayOfWeekChart"), {
+    ssr: false,
+    loading: () => (
+        <div className="h-48 animate-pulse bg-gray-100 rounded-xl" />
+    ),
+});
+const ProductSalesChart = dynamic(() => import("./ProductSalesChart"), {
+    ssr: false,
+    loading: () => (
+        <div className="h-48 animate-pulse bg-gray-100 rounded-xl" />
+    ),
+});
 
 const formatMonthForInput = (date: Date) => {
     const year = date.getFullYear();

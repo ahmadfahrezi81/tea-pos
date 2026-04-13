@@ -77,6 +77,14 @@ export default async function RootLayout({
                 />
                 <meta name="apple-mobile-web-app-title" content="Tea POS" />
                 <link rel="apple-touch-icon" href="/LEMONI-512x512.png" />
+                <link
+                    rel="preconnect"
+                    href="https://urzoiliisayupuvmaris.supabase.co"
+                />
+                <link
+                    rel="dns-prefetch"
+                    href="https://urzoiliisayupuvmaris.supabase.co"
+                />
             </head>
             <body>
                 <SWRConfig
