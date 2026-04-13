@@ -12,6 +12,7 @@
     },
     "dependencies": {
         "@asteasolutions/zod-to-openapi": "^8.1.0",
+        "@ducanh2912/next-pwa": "^10.2.9",
         "@hookform/resolvers": "^5.2.2",
         "@iconify-json/fluent-emoji": "^1.2.7",
         "@iconify/react": "^6.0.2",

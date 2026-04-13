@@ -231,136 +231,151 @@ export const CartDrawer = memo(function CartDrawer({
                             className="flex-1 overflow-y-auto"
                             style={{ WebkitOverflowScrolling: "touch" }}
                         >
-                            <div className="px-4 pt-4 pb-10 flex flex-col items-center">
-                                {/* Status pill */}
-                                <div className="mb-4">
-                                    {qrisStatus === "loading" && (
-                                        <span className="flex items-center gap-1 text-sm font-semibold text-gray-500 bg-gray-100 px-3 py-0.5 rounded-full">
-                                            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-pulse inline-block" />
-                                            Generating...
-                                        </span>
-                                    )}
-                                    {qrisStatus === "pending" &&
-                                        !showSuccess && (
-                                            <span className="flex items-center gap-1 text-sm font-semibold text-amber-600 bg-amber-50 px-3 py-0.5 rounded-full">
-                                                <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse inline-block" />
-                                                Waiting for payment
-                                            </span>
-                                        )}
-                                    {showSuccess && (
-                                        <span className="flex items-center gap-1 text-sm font-semibold text-green-600 bg-green-50 px-3 py-0.5 rounded-full">
-                                            <span className="w-1.5 h-1.5 bg-green-500 rounded-full inline-block" />
-                                            Paid
-                                        </span>
-                                    )}
-                                    {(qrisStatus === "expired" ||
-                                        qrisStatus === "failed") &&
-                                        !showSuccess && (
-                                            <span className="flex items-center gap-1 text-xs font-semibold text-red-500 bg-red-50 px-2 py-0.5 rounded-full">
-                                                <span className="w-1.5 h-1.5 bg-red-500 rounded-full inline-block" />
-                                                {qrisStatus === "expired"
-                                                    ? "Expired"
-                                                    : "Failed"}
-                                            </span>
-                                        )}
+                            {cart.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center gap-3 py-20">
+                                    <ShoppingCart className="w-12 h-12 text-gray-300" />
+                                    <p className="text-gray-400 font-medium text-sm">
+                                        Add items to cart first
+                                    </p>
                                 </div>
+                            ) : (
+                                <div className="px-4 pt-4 pb-10 flex flex-col items-center">
+                                    {/* Status pill */}
+                                    <div className="mb-4">
+                                        {qrisStatus === "loading" && (
+                                            <span className="flex items-center gap-1 text-sm font-semibold text-gray-500 bg-gray-100 px-3 py-0.5 rounded-full">
+                                                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-pulse inline-block" />
+                                                Generating...
+                                            </span>
+                                        )}
+                                        {qrisStatus === "pending" &&
+                                            !showSuccess && (
+                                                <span className="flex items-center gap-1 text-sm font-semibold text-amber-600 bg-amber-50 px-3 py-0.5 rounded-full">
+                                                    <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse inline-block" />
+                                                    Waiting for payment
+                                                </span>
+                                            )}
+                                        {showSuccess && (
+                                            <span className="flex items-center gap-1 text-sm font-semibold text-green-600 bg-green-50 px-3 py-0.5 rounded-full">
+                                                <span className="w-1.5 h-1.5 bg-green-500 rounded-full inline-block" />
+                                                Paid
+                                            </span>
+                                        )}
+                                        {(qrisStatus === "expired" ||
+                                            qrisStatus === "failed") &&
+                                            !showSuccess && (
+                                                <span className="flex items-center gap-1 text-xs font-semibold text-red-500 bg-red-50 px-2 py-0.5 rounded-full">
+                                                    <span className="w-1.5 h-1.5 bg-red-500 rounded-full inline-block" />
+                                                    {qrisStatus === "expired"
+                                                        ? "Expired"
+                                                        : "Failed"}
+                                                </span>
+                                            )}
+                                    </div>
 
-                                {/* QR code / states */}
-                                <div className="min-h-[220px] flex items-center justify-center">
-                                    {qrisStatus === "loading" && (
-                                        <div className="w-7 h-7 border-3 border-brand border-t-transparent rounded-full animate-spin" />
-                                    )}
+                                    {/* QR code / states */}
+                                    <div className="min-h-[220px] flex items-center justify-center">
+                                        {qrisStatus === "loading" && (
+                                            <div className="w-7 h-7 border-3 border-brand border-t-transparent rounded-full animate-spin" />
+                                        )}
 
-                                    {/* ── Success animation ── */}
-                                    {showSuccess && (
-                                        <div
-                                            className="flex flex-col items-center justify-center gap-3"
-                                            style={{
-                                                animation:
-                                                    "fadeIn 0.3s ease forwards",
-                                            }}
-                                        >
+                                        {/* ── Success animation ── */}
+                                        {showSuccess && (
                                             <div
-                                                className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center"
+                                                className="flex flex-col items-center justify-center gap-3"
                                                 style={{
                                                     animation:
-                                                        "scaleIn 0.4s ease forwards",
+                                                        "fadeIn 0.3s ease forwards",
                                                 }}
                                             >
-                                                <svg
-                                                    className="w-8 h-8 text-green-500"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    viewBox="0 0 24 24"
+                                                <div
+                                                    className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center"
+                                                    style={{
+                                                        animation:
+                                                            "scaleIn 0.4s ease forwards",
+                                                    }}
                                                 >
-                                                    <path
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        strokeWidth={2.5}
-                                                        d="M5 13l4 4L19 7"
-                                                        style={{
-                                                            strokeDasharray: 30,
-                                                            strokeDashoffset: 30,
-                                                            animation:
-                                                                "drawCheck 0.4s ease 0.2s forwards",
-                                                        }}
-                                                    />
-                                                </svg>
-                                            </div>
-                                            <p className="text-green-600 font-semibold text-lg">
-                                                Payment received!
-                                            </p>
-                                        </div>
-                                    )}
-                                    {!showSuccess &&
-                                        (qrisStatus === "pending" ||
-                                            qrisStatus === "expired" ||
-                                            qrisStatus === "failed") &&
-                                        qrString && (
-                                            <div className="flex flex-col items-center gap-5 p-5 pb-3 border border-gray-200 rounded-2xl">
-                                                <QrisCode
-                                                    value={qrString}
-                                                    size={240}
-                                                />
-                                                <button
-                                                    onClick={createQrisPayment}
-                                                    className="flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
-                                                >
-                                                    <RefreshCw size={14} />
-                                                    Generate New QR
-                                                </button>
+                                                    <svg
+                                                        className="w-8 h-8 text-green-500"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        viewBox="0 0 24 24"
+                                                    >
+                                                        <path
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                            strokeWidth={2.5}
+                                                            d="M5 13l4 4L19 7"
+                                                            style={{
+                                                                strokeDasharray: 30,
+                                                                strokeDashoffset: 30,
+                                                                animation:
+                                                                    "drawCheck 0.4s ease 0.2s forwards",
+                                                            }}
+                                                        />
+                                                    </svg>
+                                                </div>
+                                                <p className="text-green-600 font-semibold text-lg">
+                                                    Payment received!
+                                                </p>
                                             </div>
                                         )}
-                                </div>
 
-                                {/* Amount */}
-                                {qrisStatus !== "loading" && !showSuccess && (
-                                    <div className="mt-4 text-center">
-                                        <p className="text-2xl font-bold text-gray-900">
-                                            {formatRupiah(amount ?? total)}
-                                        </p>
+                                        {!showSuccess &&
+                                            (qrisStatus === "pending" ||
+                                                qrisStatus === "expired" ||
+                                                qrisStatus === "failed") &&
+                                            qrString && (
+                                                <div className="flex flex-col items-center gap-5 p-5 pb-3 border border-gray-200 rounded-2xl">
+                                                    <QrisCode
+                                                        value={qrString}
+                                                        size={240}
+                                                    />
+                                                    <button
+                                                        onClick={
+                                                            createQrisPayment
+                                                        }
+                                                        className="flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+                                                    >
+                                                        <RefreshCw size={14} />
+                                                        Generate New QR
+                                                    </button>
+                                                </div>
+                                            )}
                                     </div>
-                                )}
 
-                                {/* Reference ID */}
-                                {referenceId && !showSuccess && (
-                                    <p className="text-xs text-gray-500 mt-2">
-                                        Ref: {referenceId}
-                                    </p>
-                                )}
+                                    {/* Amount */}
+                                    {qrisStatus !== "loading" &&
+                                        !showSuccess && (
+                                            <div className="mt-4 text-center">
+                                                <p className="text-2xl font-bold text-gray-900">
+                                                    {formatRupiah(
+                                                        amount ?? total,
+                                                    )}
+                                                </p>
+                                            </div>
+                                        )}
 
-                                {/* Simulate — staging only */}
-                                {isStaging &&
-                                    qrisStatus === "pending" &&
-                                    !showSuccess && (
-                                        <button
-                                            onClick={simulatePayment}
-                                            className="mt-3 px-4 py-2 bg-purple-500 text-white text-sm font-semibold rounded-lg hover:bg-purple-600 transition-colors"
-                                        >
-                                            Simulate Payment
-                                        </button>
+                                    {/* Reference ID */}
+                                    {referenceId && !showSuccess && (
+                                        <p className="text-xs text-gray-500 mt-2">
+                                            Ref: {referenceId}
+                                        </p>
                                     )}
-                            </div>
+
+                                    {/* Simulate — staging only */}
+                                    {isStaging &&
+                                        qrisStatus === "pending" &&
+                                        !showSuccess && (
+                                            <button
+                                                onClick={simulatePayment}
+                                                className="mt-3 px-4 py-2 bg-purple-500 text-white text-sm font-semibold rounded-lg hover:bg-purple-600 transition-colors"
+                                            >
+                                                Simulate Payment
+                                            </button>
+                                        )}
+                                </div>
+                            )}
                         </div>
                     )}
                 </Drawer.Content>

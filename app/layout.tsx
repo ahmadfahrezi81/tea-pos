@@ -1,7 +1,8 @@
 // import "./globals.css";
 // import { Metadata } from "next";
-// import { Analytics } from "@vercel/analytics/next";
+// import { cookies } from "next/headers";
 // import { SWRConfig } from "swr";
+// import { Analytics } from "@vercel/analytics/next";
 // import { AuthProvider } from "@/lib/context/AuthContext";
 
 // export const metadata: Metadata = {
@@ -9,13 +10,17 @@
 //     description: "Point of Sale System",
 // };
 
-// export default function RootLayout({
+// export default async function RootLayout({
 //     children,
 // }: {
 //     children: React.ReactNode;
 // }) {
+//     const cookieStore = await cookies();
+//     const userCookie = cookieStore.get("x-user-info");
+//     const initialUser = userCookie ? JSON.parse(userCookie.value) : null;
+
 //     return (
-//         <html lang="en">
+//         <html lang="en" suppressHydrationWarning>
 //             <body>
 //                 <SWRConfig
 //                     value={{
@@ -23,7 +28,7 @@
 //                         revalidateOnFocus: true,
 //                     }}
 //                 >
-//                     <AuthProvider>
+//                     <AuthProvider initialUser={initialUser}>
 //                         {children}
 //                         <Analytics />
 //                     </AuthProvider>
@@ -41,8 +46,14 @@ import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "@/lib/context/AuthContext";
 
 export const metadata: Metadata = {
-    title: "POS System",
+    title: "Tea POS",
     description: "Point of Sale System",
+    manifest: "/manifest.json",
+    appleWebApp: {
+        capable: true,
+        statusBarStyle: "default",
+        title: "Tea POS",
+    },
 };
 
 export default async function RootLayout({
@@ -56,6 +67,17 @@ export default async function RootLayout({
 
     return (
         <html lang="en" suppressHydrationWarning>
+            <head>
+                <meta name="theme-color" content="#ffffff" />
+                <meta name="mobile-web-app-capable" content="yes" />
+                <meta name="apple-mobile-web-app-capable" content="yes" />
+                <meta
+                    name="apple-mobile-web-app-status-bar-style"
+                    content="default"
+                />
+                <meta name="apple-mobile-web-app-title" content="Tea POS" />
+                <link rel="apple-touch-icon" href="/LEMONI-512x512.png" />
+            </head>
             <body>
                 <SWRConfig
                     value={{
