@@ -41,13 +41,28 @@ const ProductCard = memo(function ProductCard({
 }: ProductCardProps) {
     return (
         <div
-            className={`bg-white rounded-xl shadow-sm overflow-hidden select-none relative cursor-pointer hover:shadow-md active:scale-[0.93] ${dimmed ? "opacity-90" : ""}`}
+            className={`bg-white rounded-xl shadow-sm overflow-hidden select-none relative cursor-pointer hover:shadow-md ${dimmed ? "opacity-90" : ""}`}
             style={{
+                transform: "translateZ(0)",
                 transition: "transform 150ms ease, box-shadow 200ms ease",
                 WebkitTapHighlightColor: "transparent",
                 willChange: "transform",
             }}
-            onClick={() => onAdd(product)}
+            onPointerDown={(e) => {
+                (e.currentTarget as HTMLDivElement).style.transform =
+                    "translateZ(0) scale(0.93)";
+            }}
+            onPointerUp={(e) => {
+                (e.currentTarget as HTMLDivElement).style.transform =
+                    "translateZ(0) scale(1)";
+            }}
+            onPointerLeave={(e) => {
+                (e.currentTarget as HTMLDivElement).style.transform =
+                    "translateZ(0) scale(1)";
+            }}
+            onClick={() => {
+                requestAnimationFrame(() => onAdd(product));
+            }}
         >
             {quantityInCart > 0 && (
                 <div className="absolute top-2 right-2 z-10 bg-red-500 text-white rounded-lg w-6 h-6 text-sm flex items-center justify-center font-medium">
