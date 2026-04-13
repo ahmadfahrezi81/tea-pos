@@ -6,7 +6,9 @@ export function useIsIPhonePWA() {
 
     useEffect(() => {
         const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-        const isStandalone = (window.navigator as any).standalone === true;
+        const isStandalone =
+            (navigator as Navigator & { standalone?: boolean }).standalone ===
+            true;
         setIsIPhonePWA(isIOS && isStandalone);
     }, []);
 
