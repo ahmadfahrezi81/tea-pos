@@ -169,6 +169,8 @@ body {
 @layer base {
     * {
         @apply border-border outline-ring/50;
+                margin-bottom: 0;
+                    /* remove default margin */
     }
 
     body {

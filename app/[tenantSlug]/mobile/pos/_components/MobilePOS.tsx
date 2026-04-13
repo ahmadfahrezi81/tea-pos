@@ -279,7 +279,7 @@ export default function MobilePOS() {
     }
 
     return (
-        <div className="space-y-4 pb-24">
+        <div className="flex flex-col gap-4 pb-24">
             {/* Greeting */}
             <div className="flex items-center justify-between">
                 <div>
@@ -294,7 +294,6 @@ export default function MobilePOS() {
                     <WeatherButton onClick={() => setIsWeatherOpen(true)} />
                 </div>
             </div>
-
             {/* Main Products Grid */}
             <div className="grid grid-cols-2 gap-3">
                 {mainProducts.map((product) => (
@@ -306,7 +305,6 @@ export default function MobilePOS() {
                     />
                 ))}
             </div>
-
             {/* Others Section */}
             {otherProducts.length > 0 && (
                 <div className="mt-6">
@@ -353,11 +351,10 @@ export default function MobilePOS() {
                     )}
                 </div>
             )}
-
             {/* Sticky Bottom Bar */}
             {cart.length > 0 && (
                 <div
-                    className={`fixed ${isIPhonePWA ? "bottom-[82px]" : "bottom-[50px]"} left-0 right-0 bg-white border-y border-gray-400 p-4 z-40`}
+                    className={`fixed ${isIPhonePWA ? "bottom-[98px]" : "bottom-[66px]"} left-0 right-0 bg-white border-y border-gray-400 p-4 z-40`}
                 >
                     <div className="flex items-center justify-between max-w-md mx-auto">
                         <div className="flex-1">
@@ -373,7 +370,7 @@ export default function MobilePOS() {
                                 <>
                                     <button
                                         onClick={clearCart}
-                                        className="flex items-center gap-1 bg-red-500 px-4 py-2 rounded-lg"
+                                        className="flex items-center gap-1 bg-red-500 px-4 py-2 rounded-lg font-medium"
                                     >
                                         <span className="font-bold text-white">
                                             Clear All
@@ -401,7 +398,6 @@ export default function MobilePOS() {
                     </div>
                 </div>
             )}
-
             {/* Cart Drawer — only in normal mode */}
             {!fastOrderMode && (
                 <CartDrawer
@@ -417,13 +413,11 @@ export default function MobilePOS() {
                     onShowToast={showToast}
                 />
             )}
-
             {/* Weather Drawer */}
             <WeatherDrawer
                 isOpen={isWeatherOpen}
                 onClose={() => setIsWeatherOpen(false)}
             />
-
             {/* Toast */}
             {toast && (
                 <div
