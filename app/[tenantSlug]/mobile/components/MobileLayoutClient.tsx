@@ -505,7 +505,7 @@ export default function MobileLayoutClient({
             </div>
 
             {!currentIsSubPage && (
-                <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
+                <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 footer-safe">
                     <div className="flex">
                         {tabs.map((tab) => {
                             const Icon = tab.icon;

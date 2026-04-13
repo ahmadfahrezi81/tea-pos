@@ -68,7 +68,7 @@ export default async function RootLayout({
     return (
         <html lang="en" suppressHydrationWarning>
             <head>
-                <meta name="theme-color" content="#ffffff" />
+                <meta name="theme-color" content="#F9FAFB" />
                 <meta name="mobile-web-app-capable" content="yes" />
                 <meta name="apple-mobile-web-app-capable" content="yes" />
                 <meta
