@@ -3,17 +3,12 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { RealtimeChannel } from "@supabase/supabase-js";
 import type {
     CreateQrisPaymentInput,
     CreateQrisPaymentResponse,
     QrisPaymentStatus,
 } from "@/lib/schemas/payments";
 import { mutate } from "swr";
-
-// ============================================================================
-// TYPES
-// ============================================================================
 
 interface UseQrisPaymentProps {
     selectedStoreId: string | null;
@@ -35,10 +30,6 @@ interface UseQrisPaymentReturn {
     isStaging: boolean;
 }
 
-// ============================================================================
-// HOOK
-// ============================================================================
-
 export function useQrisPayment({
     selectedStoreId,
     cart,
@@ -49,13 +40,11 @@ export function useQrisPayment({
     const [amount, setAmount] = useState<number | null>(null);
     const [referenceId, setReferenceId] = useState<string | null>(null);
     const [expiresAt, setExpiresAt] = useState<string | null>(null);
-    const [paymentId, setPaymentId] = useState<string | null>(null);
     const [xenditQrId, setXenditQrId] = useState<string | null>(null);
 
-    const channelRef = useRef<RealtimeChannel | null>(null);
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const onSuccessRef = useRef(onSuccess);
 
-    // keep onSuccess ref fresh without re-triggering effects
     useEffect(() => {
         onSuccessRef.current = onSuccess;
     }, [onSuccess]);
@@ -64,10 +53,9 @@ export function useQrisPayment({
 
     // ── Cleanup ──────────────────────────────────────────────────────────────
     const cleanup = useCallback(() => {
-        if (channelRef.current) {
-            const supabase = createClient();
-            supabase.removeChannel(channelRef.current);
-            channelRef.current = null;
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
         }
     }, []);
 
@@ -75,47 +63,41 @@ export function useQrisPayment({
         return () => cleanup();
     }, [cleanup]);
 
-    // ── Realtime subscription ────────────────────────────────────────────────
-    const subscribeToPayment = useCallback(
+    // ── Poll payment status ──────────────────────────────────────────────────
+    const pollPaymentStatus = useCallback(
         (pid: string, storeId: string) => {
             cleanup();
 
             const supabase = createClient();
 
-            channelRef.current = supabase
-                .channel(`payment-${pid}`)
-                .on(
-                    "postgres_changes",
-                    {
-                        event: "UPDATE",
-                        schema: "public",
-                        table: "payments",
-                        filter: `id=eq.${pid}`,
-                    },
-                    (payload) => {
-                        const updated = payload.new as {
-                            status: string;
-                        };
+            intervalRef.current = setInterval(async () => {
+                try {
+                    const { data } = await supabase
+                        .from("payments")
+                        .select("status")
+                        .eq("id", pid)
+                        .single();
 
-                        if (updated.status === "succeeded") {
-                            setStatus("succeeded");
-                            mutate(
-                                `orders-${storeId}-${new Date()
-                                    .toISOString()
-                                    .slice(0, 10)}`,
-                            );
-                            onSuccessRef.current();
-                            cleanup();
-                        } else if (
-                            updated.status === "expired" ||
-                            updated.status === "failed"
-                        ) {
-                            setStatus(updated.status as QrisPaymentStatus);
-                            cleanup();
-                        }
-                    },
-                )
-                .subscribe();
+                    if (data?.status === "succeeded") {
+                        cleanup();
+                        setStatus("succeeded");
+                        mutate(
+                            `orders-${storeId}-${new Date()
+                                .toISOString()
+                                .slice(0, 10)}`,
+                        );
+                        onSuccessRef.current();
+                    } else if (
+                        data?.status === "expired" ||
+                        data?.status === "failed"
+                    ) {
+                        cleanup();
+                        setStatus(data.status as QrisPaymentStatus);
+                    }
+                } catch (err) {
+                    console.error("Polling error:", err);
+                }
+            }, 2000);
         },
         [cleanup],
     );
@@ -129,7 +111,6 @@ export function useQrisPayment({
         setAmount(null);
         setReferenceId(null);
         setExpiresAt(null);
-        setPaymentId(null);
         setXenditQrId(null);
         cleanup();
 
@@ -160,16 +141,15 @@ export function useQrisPayment({
             setAmount(data.amount);
             setReferenceId(data.referenceId);
             setExpiresAt(data.expiresAt);
-            setPaymentId(data.paymentId);
             setXenditQrId(data.xenditQrId);
             setStatus("pending");
 
-            subscribeToPayment(data.paymentId, selectedStoreId);
+            pollPaymentStatus(data.paymentId, selectedStoreId);
         } catch (error) {
             console.error("Create QRIS payment error:", error);
             setStatus("failed");
         }
-    }, [selectedStoreId, cart, subscribeToPayment, cleanup]);
+    }, [selectedStoreId, cart, pollPaymentStatus, cleanup]);
 
     // ── Simulate payment (staging only) ─────────────────────────────────────
     const simulatePayment = useCallback(async () => {
@@ -181,8 +161,6 @@ export function useQrisPayment({
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ xenditQrId, amount }),
             });
-            // no need to handle response here
-            // Realtime fires when webhook updates payment status
         } catch (error) {
             console.error("Simulate error:", error);
         }
