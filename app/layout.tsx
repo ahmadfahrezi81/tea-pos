@@ -97,10 +97,7 @@ export default async function RootLayout({
             </head>
             <body>
                 <SWRConfig
-                    value={{
-                        dedupingInterval: 5000,
-                        revalidateOnFocus: true,
-                    }}
+                    value={{ dedupingInterval: 5000, revalidateOnFocus: false }}
                 >
                     <AuthProvider initialUser={initialUser}>
                         {children}
