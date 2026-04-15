@@ -84,6 +84,8 @@ export default function MobileProfile() {
         );
         if (shouldLogout) {
             await supabase.auth.signOut();
+            document.cookie = "x-user-info=; path=/; max-age=0";
+            document.cookie = "x-tenant-id=; path=/; max-age=0";
             router.push("/login");
         }
     }, [router, supabase]);
