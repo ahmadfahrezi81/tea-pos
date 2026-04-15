@@ -220,7 +220,9 @@ export async function middleware(request: NextRequest) {
             const cached = request.cookies.get("x-user-info")?.value;
             const cachedRole = cached ? JSON.parse(cached).role : null;
 
-            if (!cachedRole) {
+            if (cachedRole) {
+                setUserCookie(response, user.id, cachedRole); // refresh TTL, no DB call
+            } else {
                 const { data: profile } = await supabase
                     .from("profiles")
                     .select("role")
