@@ -439,14 +439,24 @@ const TENANT_COOKIE_TTL = 60 * 60 * 24; // 24h
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function setUserCookie(response: NextResponse, userId: string, role: string) {
-    response.cookies.set("x-user-info", JSON.stringify({ id: userId, role }), {
-        httpOnly: false,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: USER_COOKIE_TTL,
-        path: "/",
-    });
+function setUserCookie(
+    response: NextResponse,
+    userId: string,
+    role: string,
+    fullName = "",
+    email = "",
+) {
+    response.cookies.set(
+        "x-user-info",
+        JSON.stringify({ id: userId, role, fullName, email }),
+        {
+            httpOnly: false,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: USER_COOKIE_TTL,
+            path: "/",
+        },
+    );
 }
 
 function isOldBrowser(userAgent: string): boolean {
@@ -560,14 +570,27 @@ export async function middleware(request: NextRequest) {
         const cachedRole = cached ? JSON.parse(cached).role : null;
 
         if (cachedRole) {
-            setUserCookie(response, user.id, cachedRole); // refresh TTL, no DB call
+            const cachedData = JSON.parse(cached!);
+            setUserCookie(
+                response,
+                user.id,
+                cachedRole,
+                cachedData.fullName ?? "",
+                cachedData.email ?? "",
+            ); // refresh TTL, no DB call
         } else {
             const { data: profile } = await supabase
                 .from("profiles")
-                .select("role")
+                .select("role, full_name, email")
                 .eq("id", user.id)
                 .single();
-            setUserCookie(response, user.id, profile?.role ?? "SELLER");
+            setUserCookie(
+                response,
+                user.id,
+                profile?.role ?? "SELLER",
+                profile?.full_name ?? "",
+                profile?.email ?? "",
+            );
         }
     }
 

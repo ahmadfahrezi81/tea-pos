@@ -329,14 +329,19 @@ export function AuthProvider({
     initialUser,
 }: {
     children: React.ReactNode;
-    initialUser?: { id: string; role: string } | null;
+    initialUser?: {
+        id: string;
+        role: string;
+        email?: string;
+        fullName?: string;
+    } | null;
 }) {
     const fallbackData: Profile | null = initialUser
         ? {
               id: initialUser.id,
               role: initialUser.role,
-              email: "",
-              fullName: "",
+              email: initialUser.email ?? "",
+              fullName: initialUser.fullName ?? "",
               phoneNumber: null,
               status: "active",
               createdAt: null,
