@@ -9,10 +9,22 @@ const withPWA = withPWAInit({
     aggressiveFrontEndNavCaching: true,
     reloadOnOnline: true,
     cacheStartUrl: true,
-    dynamicStartUrl: false,
+    dynamicStartUrl: true,
     workboxOptions: {
         disableDevLogs: true,
         runtimeCaching: [
+            {
+                urlPattern: /\/_next\/data\/.*/i,
+                handler: "NetworkFirst",
+                options: {
+                    cacheName: "next-data",
+                    expiration: {
+                        maxEntries: 32,
+                        maxAgeSeconds: 60 * 5,
+                    },
+                    networkTimeoutSeconds: 3,
+                },
+            },
             {
                 urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/.*/i,
                 handler: "NetworkFirst",

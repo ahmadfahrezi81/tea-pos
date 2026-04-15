@@ -122,14 +122,62 @@ export async function middleware(request: NextRequest) {
                 new URL(`/old-browser?tenant=${tenantSlug}`, request.url),
             );
         }
-    }
+        // }
 
-    // ============================================================================
-    // TENANT HANDLING
-    // ============================================================================
-    if (
-        tenantSlug &&
-        ![
+        // // ============================================================================
+        // // TENANT HANDLING
+        // // ============================================================================
+        // if (
+        //     tenantSlug &&
+        //     ![
+        //         "api",
+        //         "login",
+        //         "signup",
+        //         "docs",
+        //         "_next",
+        //         "unauthorized",
+        //         "old-browser",
+        //     ].includes(tenantSlug)
+        // ) {
+        //     const { data: tenant } = await supabase
+        //         .from("tenants")
+        //         .select("id")
+        //         .eq("slug", tenantSlug)
+        //         .single();
+
+        //     if (tenant?.id) {
+        //         response.cookies.set("x-tenant-id", tenant.id, {
+        //             httpOnly: true,
+        //             secure: process.env.NODE_ENV === "production",
+        //             sameSite: "lax",
+        //             maxAge: 60 * 60 * 24,
+        //         });
+        //     }
+        // } else {
+        //     response.cookies.delete("x-tenant-id");
+        // }
+
+        // // ============================================================================
+        // // AUTH HANDLING
+        // // ============================================================================
+        // const {
+        //     data: { user },
+        // } = await supabase.auth.getUser();
+
+        // if (user) {
+        //     const { data: profile } = await supabase
+        //         .from("profiles")
+        //         .select("role")
+        //         .eq("id", user.id)
+        //         .single();
+
+        //     setUserCookie(response, user.id, profile?.role || "SELLER");
+        // }
+
+        // ============================================================================
+        // TENANT + AUTH IN PARALLEL
+        // ============================================================================
+        const RESERVED = [
             "api",
             "login",
             "signup",
@@ -137,167 +185,106 @@ export async function middleware(request: NextRequest) {
             "_next",
             "unauthorized",
             "old-browser",
-        ].includes(tenantSlug)
-    ) {
-        const { data: tenant } = await supabase
-            .from("tenants")
-            .select("id")
-            .eq("slug", tenantSlug)
-            .single();
+        ];
+        const shouldResolveTenant =
+            tenantSlug && !RESERVED.includes(tenantSlug);
 
-        if (tenant?.id) {
-            response.cookies.set("x-tenant-id", tenant.id, {
+        const [
+            {
+                data: { user },
+            },
+            tenantResult,
+        ] = await Promise.all([
+            supabase.auth.getUser(),
+            shouldResolveTenant
+                ? supabase
+                      .from("tenants")
+                      .select("id")
+                      .eq("slug", tenantSlug)
+                      .single()
+                : Promise.resolve({ data: null }),
+        ]);
+
+        if (tenantResult.data?.id) {
+            response.cookies.set("x-tenant-id", tenantResult.data.id, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === "production",
                 sameSite: "lax",
                 maxAge: 60 * 60 * 24,
             });
-        }
-    } else {
-        response.cookies.delete("x-tenant-id");
-    }
-
-    // ============================================================================
-    // AUTH HANDLING
-    // ============================================================================
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
-
-    if (user) {
-        const { data: profile } = await supabase
-            .from("profiles")
-            .select("role")
-            .eq("id", user.id)
-            .single();
-
-        setUserCookie(response, user.id, profile?.role || "SELLER");
-    }
-
-    // ============================================================================
-    // HANDLE LOGIN/SIGNUP PAGES
-    // ============================================================================
-    if (pathname === "/login" || pathname === "/signup") {
-        if (!user) {
-            return response;
+        } else if (!shouldResolveTenant) {
+            response.cookies.delete("x-tenant-id");
         }
 
-        // Fetch user's tenant assignments
-        const { data: tenantAssignments } = await supabase
-            .from("user_tenant_assignments")
-            .select("tenant_id, tenants(slug)")
-            .eq("user_id", user.id);
+        if (user) {
+            const cached = request.cookies.get("x-user-info")?.value;
+            const cachedRole = cached ? JSON.parse(cached).role : null;
 
-        if (!tenantAssignments || tenantAssignments.length === 0) {
-            return NextResponse.redirect(
-                new URL("/unauthorized?reason=no-tenant", request.url),
-            );
+            if (!cachedRole) {
+                const { data: profile } = await supabase
+                    .from("profiles")
+                    .select("role")
+                    .eq("id", user.id)
+                    .single();
+                setUserCookie(response, user.id, profile?.role || "SELLER");
+            }
         }
 
-        const tenantsData = tenantAssignments[0].tenants;
-        const firstTenant = Array.isArray(tenantsData)
-            ? tenantsData[0]
-            : tenantsData;
+        // ============================================================================
+        // HANDLE LOGIN/SIGNUP PAGES
+        // ============================================================================
+        if (pathname === "/login" || pathname === "/signup") {
+            if (!user) {
+                return response;
+            }
 
-        if (!firstTenant?.slug) {
-            return NextResponse.redirect(
-                new URL("/unauthorized?reason=invalid-tenant", request.url),
-            );
-        }
+            // Fetch user's tenant assignments
+            const { data: tenantAssignments } = await supabase
+                .from("user_tenant_assignments")
+                .select("tenant_id, tenants(slug)")
+                .eq("user_id", user.id);
 
-        // Check if user has seller role
-        const { data: storeAssignments } = await supabase
-            .from("user_store_assignments")
-            .select("role")
-            .eq("user_id", user.id);
+            if (!tenantAssignments || tenantAssignments.length === 0) {
+                return NextResponse.redirect(
+                    new URL("/unauthorized?reason=no-tenant", request.url),
+                );
+            }
 
-        const hasSeller = storeAssignments?.some((a) => a.role === "seller");
-
-        const targetPath = hasSeller
-            ? `/${firstTenant.slug}/mobile/pos`
-            : `/${firstTenant.slug}/mobile/profile`;
-
-        return NextResponse.redirect(new URL(targetPath, request.url));
-    }
-
-    // ============================================================================
-    // HANDLE /{tenant}/mobile ROOT
-    // ============================================================================
-    if (pathname === `/${tenantSlug}/mobile`) {
-        if (!user) {
-            return NextResponse.redirect(
-                new URL(`/${tenantSlug}/mobile/profile`, request.url),
-            );
-        }
-
-        const { data: storeAssignments } = await supabase
-            .from("user_store_assignments")
-            .select("role")
-            .eq("user_id", user.id);
-
-        const hasSeller = storeAssignments?.some((a) => a.role === "seller");
-
-        const targetPath = hasSeller
-            ? `/${tenantSlug}/mobile/pos`
-            : `/${tenantSlug}/mobile/profile`;
-
-        return NextResponse.redirect(new URL(targetPath, request.url));
-    }
-
-    // ============================================================================
-    // PROTECT TENANT-PREFIXED ROUTES
-    // ============================================================================
-    const isProtectedRoute =
-        pathname.startsWith(`/${tenantSlug}/admin`) ||
-        pathname.startsWith(`/${tenantSlug}/mobile`);
-
-    if (!isProtectedRoute) {
-        return response;
-    }
-
-    if (!user) {
-        return NextResponse.redirect(new URL("/login", request.url));
-    }
-
-    // Verify tenant exists
-    const { data: tenant } = await supabase
-        .from("tenants")
-        .select("id")
-        .eq("slug", tenantSlug)
-        .single();
-
-    if (!tenant?.id) {
-        return NextResponse.redirect(
-            new URL("/unauthorized?reason=tenant-not-found", request.url),
-        );
-    }
-
-    // Check user assignment to this tenant
-    const { data: userTenantAssignment } = await supabase
-        .from("user_tenant_assignments")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("tenant_id", tenant.id)
-        .single();
-
-    if (!userTenantAssignment) {
-        // User doesn't belong - redirect to their valid tenant
-        const { data: validTenantAssignments } = await supabase
-            .from("user_tenant_assignments")
-            .select("tenant_id, tenants(slug)")
-            .eq("user_id", user.id)
-            .limit(1)
-            .single();
-
-        if (validTenantAssignments?.tenants) {
-            const tenantsData = validTenantAssignments.tenants;
-            const validTenant = Array.isArray(tenantsData)
+            const tenantsData = tenantAssignments[0].tenants;
+            const firstTenant = Array.isArray(tenantsData)
                 ? tenantsData[0]
                 : tenantsData;
 
-            if (!validTenant?.slug) {
+            if (!firstTenant?.slug) {
                 return NextResponse.redirect(
                     new URL("/unauthorized?reason=invalid-tenant", request.url),
+                );
+            }
+
+            // Check if user has seller role
+            const { data: storeAssignments } = await supabase
+                .from("user_store_assignments")
+                .select("role")
+                .eq("user_id", user.id);
+
+            const hasSeller = storeAssignments?.some(
+                (a) => a.role === "seller",
+            );
+
+            const targetPath = hasSeller
+                ? `/${firstTenant.slug}/mobile/pos`
+                : `/${firstTenant.slug}/mobile/profile`;
+
+            return NextResponse.redirect(new URL(targetPath, request.url));
+        }
+
+        // ============================================================================
+        // HANDLE /{tenant}/mobile ROOT
+        // ============================================================================
+        if (pathname === `/${tenantSlug}/mobile`) {
+            if (!user) {
+                return NextResponse.redirect(
+                    new URL(`/${tenantSlug}/mobile/profile`, request.url),
                 );
             }
 
@@ -311,18 +298,105 @@ export async function middleware(request: NextRequest) {
             );
 
             const targetPath = hasSeller
-                ? `/${validTenant.slug}/mobile/pos`
-                : `/${validTenant.slug}/mobile/profile`;
+                ? `/${tenantSlug}/mobile/pos`
+                : `/${tenantSlug}/mobile/profile`;
 
             return NextResponse.redirect(new URL(targetPath, request.url));
         }
 
-        return NextResponse.redirect(
-            new URL("/unauthorized?reason=no-access", request.url),
-        );
-    }
+        // ============================================================================
+        // PROTECT TENANT-PREFIXED ROUTES
+        // ============================================================================
+        const isProtectedRoute =
+            pathname.startsWith(`/${tenantSlug}/admin`) ||
+            pathname.startsWith(`/${tenantSlug}/mobile`);
 
-    return response;
+        if (!isProtectedRoute) {
+            return response;
+        }
+
+        if (!user) {
+            return NextResponse.redirect(new URL("/login", request.url));
+        }
+
+        // // Verify tenant exists
+        // const { data: tenant } = await supabase
+        //     .from("tenants")
+        //     .select("id")
+        //     .eq("slug", tenantSlug)
+        //     .single();
+
+        // if (!tenant?.id) {
+        //     return NextResponse.redirect(
+        //         new URL("/unauthorized?reason=tenant-not-found", request.url),
+        //     );
+        // }
+
+        // Verify tenant exists (already fetched above)
+        const tenantId =
+            tenantResult.data?.id ?? request.cookies.get("x-tenant-id")?.value;
+
+        if (!tenantId) {
+            return NextResponse.redirect(
+                new URL("/unauthorized?reason=tenant-not-found", request.url),
+            );
+        }
+
+        // Check user assignment to this tenant
+        const { data: userTenantAssignment } = await supabase
+            .from("user_tenant_assignments")
+            .select("id")
+            .eq("user_id", user.id)
+            .eq("tenant_id", tenantId)
+            .single();
+
+        if (!userTenantAssignment) {
+            // User doesn't belong - redirect to their valid tenant
+            const { data: validTenantAssignments } = await supabase
+                .from("user_tenant_assignments")
+                .select("tenant_id, tenants(slug)")
+                .eq("user_id", user.id)
+                .limit(1)
+                .single();
+
+            if (validTenantAssignments?.tenants) {
+                const tenantsData = validTenantAssignments.tenants;
+                const validTenant = Array.isArray(tenantsData)
+                    ? tenantsData[0]
+                    : tenantsData;
+
+                if (!validTenant?.slug) {
+                    return NextResponse.redirect(
+                        new URL(
+                            "/unauthorized?reason=invalid-tenant",
+                            request.url,
+                        ),
+                    );
+                }
+
+                const { data: storeAssignments } = await supabase
+                    .from("user_store_assignments")
+                    .select("role")
+                    .eq("user_id", user.id);
+
+                const hasSeller = storeAssignments?.some(
+                    (a) => a.role === "seller",
+                );
+
+                const targetPath = hasSeller
+                    ? `/${validTenant.slug}/mobile/pos`
+                    : `/${validTenant.slug}/mobile/profile`;
+
+                return NextResponse.redirect(new URL(targetPath, request.url));
+            }
+
+            return NextResponse.redirect(
+                new URL("/unauthorized?reason=no-access", request.url),
+            );
+        }
+
+        return response;
+    }
 }
 
 export const config = {
