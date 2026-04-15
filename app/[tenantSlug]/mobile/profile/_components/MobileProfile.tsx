@@ -83,12 +83,13 @@ export default function MobileProfile() {
             "Are you sure you want to log out?",
         );
         if (shouldLogout) {
-            await supabase.auth.signOut();
-            document.cookie = "x-user-info=; path=/; max-age=0";
-            document.cookie = "x-tenant-id=; path=/; max-age=0";
+            await fetch("/api/auth/signout", {
+                method: "POST",
+                credentials: "include",
+            });
             router.push("/login");
         }
-    }, [router, supabase]);
+    }, [router]);
 
     const handleAdminDashboard = useCallback(() => {
         window.open(url("/admin"), "_blank", "noopener,noreferrer");
