@@ -13,7 +13,7 @@ import dynamic from "next/dynamic";
 const MiniHourlySalesChart = dynamic(() => import("./MiniHourlySalesChart"), {
     ssr: false,
     loading: () => (
-        <div className="h-32 animate-pulse bg-gray-100 rounded-xl" />
+        <div className="h-43 animate-pulse bg-gray-100 rounded-xl" />
     ),
 });
 

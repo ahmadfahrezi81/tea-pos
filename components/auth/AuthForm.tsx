@@ -27,9 +27,9 @@ export default function AuthForm() {
                     <Image
                         src="/LEMONI-512x512.png"
                         alt="Lemoni Logo"
-                        width={72}
-                        height={72}
-                        className="rounded-2xl"
+                        width={90}
+                        height={90}
+                        className="rounded-xl"
                     />
                     <div className="text-center">
                         <h1 className="text-2xl font-bold text-gray-900 mb-1">

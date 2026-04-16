@@ -151,6 +151,8 @@ export default function MobileLayoutClient({
         if (path.endsWith("/mobile/analytics/chart")) return "Monthly Chart";
         if (path.endsWith("/mobile/profile")) return "Profile";
         if (path.endsWith("/mobile/profile/stores")) return "Assigned Stores";
+        if (path.endsWith("/mobile/profile/personal"))
+            return "Personal Details";
         if (path.endsWith("/mobile/notifications")) return "Notifications";
         if (
             path.includes("/mobile/notifications/") &&
@@ -493,7 +495,7 @@ export default function MobileLayoutClient({
                     isInlineHeader
                         ? "pt-14"
                         : currentIsSubPage
-                          ? "pt-24"
+                          ? "pt-27"
                           : "pt-17"
                 }`}
             >

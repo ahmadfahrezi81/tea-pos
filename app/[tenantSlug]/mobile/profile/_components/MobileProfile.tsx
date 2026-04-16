@@ -156,11 +156,14 @@ export default function MobileProfile() {
             <h3 className="text-lg font-semibold text-gray-800 mb-1">
                 Account Settings
             </h3>
-            <div className="bg-white rounded-xl p-4 py-2 space-y-1 shadow-sm">
+            <div className="bg-white rounded-xl p-4 py-1 space-y-1 shadow-sm">
                 <SettingsRow
                     icon={<Pencil size={20} className="text-gray-900" />}
                     label="Personal Details"
-                    disabled
+                    sublabel="View your account info"
+                    onClick={() =>
+                        navigation.push(url("/mobile/profile/personal"))
+                    }
                 />
                 {assignedStores.length > 0 && (
                     <SettingsRow
