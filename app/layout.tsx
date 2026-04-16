@@ -63,7 +63,12 @@ export default async function RootLayout({
 }) {
     const cookieStore = await cookies();
     const userCookie = cookieStore.get("x-user-info");
-    const initialUser = userCookie ? JSON.parse(userCookie.value) : null;
+    let initialUser = null;
+    try {
+        initialUser = userCookie?.value ? JSON.parse(userCookie.value) : null;
+    } catch {
+        initialUser = null;
+    }
 
     return (
         <html lang="en" suppressHydrationWarning>
