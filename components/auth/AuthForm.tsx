@@ -45,7 +45,7 @@ export default function AuthForm() {
                 <button
                     onClick={handleGoogleSignIn}
                     disabled={isLoading}
-                    className="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-200 text-gray-700 font-medium py-4 px-6 rounded-xl hover:bg-gray-50 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed text-base"
+                    className="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-200 text-gray-800 font-bold py-4 px-5 pl-4 rounded-2xl transition-all duration-100 disabled:opacity-60 disabled:cursor-not-allowed text-base shadow-[0_6px_0_0_#d1d5db] hover:shadow-[0_4px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[6px]"
                 >
                     {isLoading ? (
                         <>
