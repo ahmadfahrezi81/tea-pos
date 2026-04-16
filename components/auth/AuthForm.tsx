@@ -21,7 +21,7 @@ export default function AuthForm() {
 
     return (
         <div className="w-full max-w-md mx-auto p-6">
-            <div className="bg-gray-50 rounded-2xl p-10 flex flex-col items-center gap-8">
+            <div className="bg-gray-50 rounded-2xl p-10 flex flex-col items-center gap-8 select-none">
                 {/* Logo */}
                 <div className="flex flex-col items-center gap-4">
                     <Image
@@ -33,19 +33,18 @@ export default function AuthForm() {
                     />
                     <div className="text-center">
                         <h1 className="text-2xl font-bold text-gray-900 mb-1">
-                            Welcome back 👋
+                            Welcome back
                         </h1>
                         <p className="text-base text-gray-800">
                             Ready to sell? Let&apos;s get you in.
                         </p>
                     </div>
                 </div>
-
                 {/* Google Button */}
                 <button
                     onClick={handleGoogleSignIn}
                     disabled={isLoading}
-                    className="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-200 text-gray-800 font-bold py-4 px-5 pl-4 rounded-2xl transition-all duration-100 disabled:opacity-60 disabled:cursor-not-allowed text-base shadow-[0_6px_0_0_#d1d5db] hover:shadow-[0_4px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[6px]"
+                    className="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-200 text-gray-800 font-bold py-4 px-5 pl-4 rounded-2xl transition-all duration-100 disabled:opacity-60 disabled:cursor-not-allowed text-base shadow-[0_4px_0_0_#d1d5db,0_4px_0_1px_#e5e7eb] hover:shadow-[0_2px_0_0_#d1d5db,0_2px_0_1px_#e5e7eb] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px]"
                 >
                     {isLoading ? (
                         <>
