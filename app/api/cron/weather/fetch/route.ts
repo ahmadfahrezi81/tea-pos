@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
 
         const todayDateStr = getTodayLocalDateStr();
         const currentLocalHour = getCurrentLocalHour();
-        const cutoffTime = new Date(Date.now() + 24 * 60 * 60 * 1000); // now + 24h
+        const cutoffTime = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
         const toUpsert = hourlyData
             .map((hour: { time: string; values: Record<string, number> }) => {
@@ -88,11 +88,12 @@ export async function GET(request: NextRequest) {
                     localDateStr: string;
                     localHour: number;
                 }) => {
-                    if (utcDate > cutoffTime) return false; // beyond 24h, skip
+                    if (utcDate > cutoffTime) return false;
                     if (localDateStr === todayDateStr) {
-                        return localHour >= currentLocalHour; // today: skip past hours
+                        // skip current hour — owned by realtime cron
+                        return localHour > currentLocalHour;
                     }
-                    return true; // tomorrow's overflow: upsert all
+                    return true;
                 },
             );
 
@@ -105,7 +106,7 @@ export async function GET(request: NextRequest) {
                 .toISOString()
                 .split("T")[0];
             return (
-                localDateStr === todayDateStr && localHour < currentLocalHour
+                localDateStr === todayDateStr && localHour <= currentLocalHour
             );
         }).length;
 
@@ -155,7 +156,7 @@ export async function GET(request: NextRequest) {
             hoursUpserted: succeeded,
             skippedPast,
             skippedFuture,
-            hoursFailed: failed.length, // fixed: was leaking rejected promise objects
+            hoursFailed: failed.length,
         });
     } catch (error) {
         console.error("[cron/weather/fetch]", error);
