@@ -8,8 +8,8 @@ import {
 const TZ_OFFSET = parseInt(process.env.TIMEZONE_OFFSET ?? "7");
 
 const LOCATION = {
-    lat: -6.590049642741057,
-    lng: 106.75922097982183,
+    lat: -6.60534088404916,
+    lng: 106.76243694791512,
     city: "Ciomas",
     region: "Bogor",
 } as const;
