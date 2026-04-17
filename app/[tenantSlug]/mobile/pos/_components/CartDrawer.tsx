@@ -155,11 +155,24 @@ export const CartDrawer = memo(function CartDrawer({
                                     Cash
                                 </button>
                                 <button
-                                    onClick={() => setPaymentMethod("qris")}
+                                    onClick={() => {
+                                        if (
+                                            process.env
+                                                .NEXT_PUBLIC_IS_STAGING ===
+                                            "true"
+                                        ) {
+                                            setPaymentMethod("qris");
+                                        }
+                                    }}
                                     className={`px-3.5 py-1 rounded-full text-sm font-semibold transition-all duration-200 ${
                                         paymentMethod === "qris"
                                             ? "bg-white text-gray-900 shadow-sm"
                                             : "text-gray-500"
+                                    } ${
+                                        process.env.NEXT_PUBLIC_IS_STAGING !==
+                                        "true"
+                                            ? "opacity-40 cursor-not-allowed"
+                                            : ""
                                     }`}
                                 >
                                     QRIS
