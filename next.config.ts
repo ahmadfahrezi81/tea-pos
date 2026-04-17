@@ -1,11 +1,71 @@
 import type { NextConfig } from "next";
-import { version } from "./package.json"; // Make sure tsconfig allows JSON imports
+import { version } from "./package.json";
+import withPWAInit from "@ducanh2912/next-pwa";
+
+const withPWA = withPWAInit({
+    dest: "public",
+    disable: process.env.NODE_ENV === "development",
+    cacheOnFrontEndNav: true,
+    aggressiveFrontEndNavCaching: true,
+    reloadOnOnline: true,
+    cacheStartUrl: true,
+    dynamicStartUrl: true,
+    workboxOptions: {
+        disableDevLogs: true,
+        runtimeCaching: [
+            {
+                urlPattern: /\/_next\/data\/.*/i,
+                handler: "NetworkFirst",
+                options: {
+                    cacheName: "next-data",
+                    expiration: {
+                        maxEntries: 32,
+                        maxAgeSeconds: 60 * 5,
+                    },
+                    networkTimeoutSeconds: 3,
+                },
+            },
+            {
+                urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/.*/i,
+                handler: "NetworkFirst",
+                options: {
+                    cacheName: "supabase-api",
+                    expiration: {
+                        maxEntries: 50,
+                        maxAgeSeconds: 60 * 5,
+                    },
+                    networkTimeoutSeconds: 5,
+                },
+            },
+            {
+                urlPattern: /^https:\/\/i\.ibb\.co\.com\/.*/i,
+                handler: "CacheFirst",
+                options: {
+                    cacheName: "product-images",
+                    expiration: {
+                        maxEntries: 200,
+                        maxAgeSeconds: 60 * 60 * 24 * 30,
+                    },
+                },
+            },
+            {
+                urlPattern: /\/_next\/static\/.*/i,
+                handler: "CacheFirst",
+                options: {
+                    cacheName: "next-static",
+                    expiration: {
+                        maxAgeSeconds: 60 * 60 * 24 * 365,
+                    },
+                },
+            },
+        ],
+    },
+});
 
 const nextConfig: NextConfig = {
     env: {
-        NEXT_PUBLIC_APP_VERSION: version, // Expose version to frontend
+        NEXT_PUBLIC_APP_VERSION: version,
     },
-    /* config options here */
     images: {
         remotePatterns: [
             {
@@ -14,7 +74,6 @@ const nextConfig: NextConfig = {
             },
         ],
     },
-    // ... your existing config
     async rewrites() {
         return [
             {
@@ -23,7 +82,6 @@ const nextConfig: NextConfig = {
             },
         ];
     },
-    // Optional: Add headers for better API handling
     async headers() {
         return [
             {
@@ -45,4 +103,4 @@ const nextConfig: NextConfig = {
     },
 };
 
-export default nextConfig;
+export default withPWA(nextConfig);

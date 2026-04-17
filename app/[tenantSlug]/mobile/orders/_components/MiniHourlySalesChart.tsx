@@ -103,7 +103,7 @@ export default function MiniHourlySalesChart({ storeId, date }: Props) {
     if (isLoading) {
         return (
             <div
-                className="mt-3 border-t border-gray-100 bg-gray-200 rounded-xl animate-pulse relative"
+                className="border-t border-gray-100 bg-gray-200 rounded-xl animate-pulse relative"
                 style={{ height: 170 }}
             >
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -116,7 +116,7 @@ export default function MiniHourlySalesChart({ storeId, date }: Props) {
     if (hourlySales.length === 0) return null;
 
     return (
-        <div className="mt-3 border-t border-gray-100 bg-white rounded-xl shadow-sm p-2 pb-1">
+        <div className="border-t border-gray-100 bg-white rounded-xl shadow-sm p-2 pb-1">
             <div className="flex justify-end mb-1">
                 <button
                     onClick={() => {

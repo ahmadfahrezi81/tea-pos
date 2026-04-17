@@ -160,9 +160,13 @@ export async function getWeatherNextHours(hours: number = 24): Promise<{
             return { data: null, error: error.message };
         }
 
-        const endHour = currentLocalHour + hours;
+        // hours is capped at 23 since Tomorrow.io uses 0-23
+        const clampedHours = Math.min(hours, 23);
+        const endHour = currentLocalHour + clampedHours;
         const spillsIntoTomorrow = endHour >= 24;
         const cutoffHour = endHour % 24;
+
+        // fix: was currentLocalHour - 1, causing stale data to show as current
         const fromHour = Math.max(currentLocalHour - 1, 0);
 
         const filtered = (data ?? []).filter((row) => {

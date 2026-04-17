@@ -169,6 +169,8 @@ body {
 @layer base {
     * {
         @apply border-border outline-ring/50;
+                margin-bottom: 0;
+                    /* remove default margin */
     }
 
     body {
@@ -193,4 +195,16 @@ input[type="date"]::-webkit-date-and-time-value {
     text-align: left;
     padding: 0;
     margin: 0;
+}
+
+
+/* PWA safe area fixes */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .pb-safe {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .footer-safe {
+        padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem);
+    }
 }

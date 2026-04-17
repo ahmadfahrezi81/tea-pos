@@ -15,7 +15,7 @@ export async function createServerComponentClient() {
                     return cookieStore.get(name)?.value;
                 },
             },
-        }
+        },
     );
 }
 
@@ -30,10 +30,13 @@ export async function createRouteHandlerClient() {
                 get(name: string) {
                     return cookieStore.get(name)?.value;
                 },
-                // In Route Handlers, we don't set/remove cookies directly
-                set(_name: string, _value: string, _options: CookieOptions) {},
-                remove(_name: string, _options: CookieOptions) {},
+                set(name: string, value: string, options: CookieOptions) {
+                    cookieStore.set({ name, value, ...options });
+                },
+                remove(name: string, options: CookieOptions) {
+                    cookieStore.set({ name, value: "", ...options });
+                },
             },
-        }
+        },
     );
 }

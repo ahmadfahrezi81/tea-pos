@@ -1,6 +1,7 @@
 // lib/schemas/orders.ts
 import { z } from "zod";
 import { UUIDSchema } from "./common";
+import { PaymentMethodSchema } from "./payments";
 
 /**
  * NAMING CONVENTION FOR SCHEMAS
@@ -114,6 +115,10 @@ export const OrderResponse = z
             })
             .nullable(),
         orderItems: z.array(OrderItemResponse),
+        paymentMethod: PaymentMethodSchema.optional().openapi({
+            description: "Payment method used",
+            example: "cash",
+        }),
     })
     .openapi({ title: "OrderResponse" });
 

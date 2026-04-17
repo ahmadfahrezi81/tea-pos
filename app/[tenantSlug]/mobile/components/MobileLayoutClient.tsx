@@ -28,6 +28,7 @@ import { StorePickerDrawer } from "./StorePickerDrawer";
 import { navigation } from "@/lib/utils/navigation";
 import useNotifications from "@/lib/hooks/notifications/useNotifications";
 import { useProfileIcon } from "@/lib/context/ProfileIconContext";
+import { useIsIPhonePWA } from "@/lib/frontend/hooks/usePWA";
 
 export interface Assignment {
     user_id: string;
@@ -68,6 +69,7 @@ export default function MobileLayoutClient({
     const { data: storesData, isLoading: storesLoading } = useStores();
     const { selectedStore, setIsPickerOpen, isPickerOpen } = useStore();
     const { ProfileIcon } = useProfileIcon();
+    const isIPhonePWA = useIsIPhonePWA();
 
     const user = useMemo(
         () => (profile ? { id: profile.id } : null),
@@ -149,6 +151,8 @@ export default function MobileLayoutClient({
         if (path.endsWith("/mobile/analytics/chart")) return "Monthly Chart";
         if (path.endsWith("/mobile/profile")) return "Profile";
         if (path.endsWith("/mobile/profile/stores")) return "Assigned Stores";
+        if (path.endsWith("/mobile/profile/personal"))
+            return "Personal Details";
         if (path.endsWith("/mobile/notifications")) return "Notifications";
         if (
             path.includes("/mobile/notifications/") &&
@@ -286,6 +290,7 @@ export default function MobileLayoutClient({
                             alt="Logo"
                             width={80}
                             height={80}
+                            priority
                             className="rounded-xl shadow-2xl mx-auto"
                         />
                     </div>
@@ -315,6 +320,7 @@ export default function MobileLayoutClient({
                             alt="Logo"
                             width={80}
                             height={80}
+                            priority
                             className="rounded-xl shadow-2xl mx-auto"
                         />
                     </div>
@@ -489,7 +495,7 @@ export default function MobileLayoutClient({
                     isInlineHeader
                         ? "pt-14"
                         : currentIsSubPage
-                          ? "pt-24"
+                          ? "pt-27"
                           : "pt-17"
                 }`}
             >
@@ -502,9 +508,53 @@ export default function MobileLayoutClient({
                 )}
             </div>
 
-            {!currentIsSubPage && (
+            {/* {!currentIsSubPage && (
                 <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
                     <div className="flex">
+                        {tabs.map((tab) => {
+                            const Icon = tab.icon;
+                            const isActive =
+                                tab.matchPaths.includes(currentPath);
+                            const isProfileTab =
+                                tab.path === url("/mobile/profile");
+
+                            return (
+                                <button
+                                    key={tab.path}
+                                    onClick={() => handleNavClick(tab.path)}
+                                    className={`flex-1 py-3 px-4 pb-2 flex flex-col items-center space-y-1 relative transition-all duration-75 active:scale-98 ${
+                                        isActive
+                                            ? "text-brand bg-brand/5"
+                                            : "text-gray-600 hover:text-brand"
+                                    }`}
+                                >
+                                    {isProfileTab ? (
+                                        <ProfileIcon
+                                            size={22}
+                                            className="transition-transform duration-75"
+                                        />
+                                    ) : (
+                                        <Icon
+                                            size={22}
+                                            className="transition-transform duration-75"
+                                        />
+                                    )}
+                                    <span className="text-xs font-medium transition-transform duration-75">
+                                        {tab.label}
+                                    </span>
+                                    {isActive && (
+                                        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-brand rounded-b-full transition-all duration-200" />
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </footer>
+            )} */}
+
+            {!currentIsSubPage && (
+                <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
+                    <div className={`flex ${isIPhonePWA ? "pb-8" : ""}`}>
                         {tabs.map((tab) => {
                             const Icon = tab.icon;
                             const isActive =
