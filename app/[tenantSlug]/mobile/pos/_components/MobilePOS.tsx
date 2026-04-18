@@ -3,19 +3,22 @@
 import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
-import { formatRupiah } from "@/lib/utils/formatCurrency";
-import { CreateOrderInput, CreateOrderResponse } from "@/lib/schemas/orders";
+import { formatRupiah } from "@/lib/shared/utils/formatCurrency";
+import {
+    CreateOrderInput,
+    CreateOrderResponse,
+} from "@/lib/shared/schemas/orders";
 import { mutate } from "swr";
-import { useProducts } from "@/lib/hooks/products/useProducts";
-import { useStore } from "@/lib/context/StoreContext";
-import { useFastOrderMode } from "@/lib/context/FastOrderModeContext";
-import type { ProductResponse } from "@/lib/schemas/products";
-import type { Product } from "@/lib/schemas/products";
+import { useProducts } from "@/lib/client/hooks/products/useProducts";
+import { useStore } from "@/lib/client/context/StoreContext";
+import { useFastOrderMode } from "@/lib/client/context/FastOrderModeContext";
+import type { ProductResponse } from "@/lib/shared/schemas/products";
+import type { Product } from "@/lib/shared/schemas/products";
 import { format } from "date-fns";
 import { WeatherDrawer } from "./WeatherDrawer";
 import { WeatherButton } from "./WeatherButton";
 import { CartDrawer } from "./CartDrawer";
-import { useIsIPhonePWA } from "@/lib/frontend/hooks/usePWA";
+import { useIsIPhonePWA } from "@/lib/client/usePWA";
 
 export interface CartItem {
     product: ProductResponse;

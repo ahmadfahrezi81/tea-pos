@@ -1,6 +1,6 @@
 // app/api/categories/route.ts
-import { createRouteHandlerClient } from "@/lib/supabase/server";
-import { getCurrentTenantId } from "@/lib/tenant";
+import { createRouteHandlerClient } from "@/lib/server/supabase/server";
+import { getCurrentTenantId } from "@/lib/server/config/tenant";
 import { NextRequest, NextResponse } from "next/server";
 import {
     CreateCategoryInput,
@@ -9,8 +9,8 @@ import {
     CreateCategoryResponse,
     UpdateCategoryResponse,
     DeleteCategoryResponse,
-} from "@/lib/schemas/product-categories";
-import { toCamelKeys, toSnakeKeys } from "@/lib/utils/schemas";
+} from "@/lib/shared/schemas/product-categories";
+import { toCamelKeys, toSnakeKeys } from "@/lib/shared/utils/schemas";
 
 // ============================================================================
 // GET /api/categories
@@ -39,14 +39,14 @@ export async function GET(request: NextRequest) {
         if (!parsed.success) {
             console.error(
                 "Categories response validation failed:",
-                parsed.error
+                parsed.error,
             );
             return NextResponse.json(
                 {
                     error: "Invalid response shape",
                     details: parsed.error.format(),
                 },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
         console.error("Categories GET error:", error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
         if (!result.success) {
             return NextResponse.json(
                 { error: "Validation failed", details: result.error.format() },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
         if (userError || !user) {
             return NextResponse.json(
                 { error: "Unauthorized" },
-                { status: 401 }
+                { status: 401 },
             );
         }
 
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
                 {
                     error: categoryError?.message || "Category insert failed",
                 },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
                     error: "Invalid response shape",
                     details: parsed.error.format(),
                 },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
         console.error("Categories POST error:", error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }
@@ -148,7 +148,7 @@ export async function PUT(request: NextRequest) {
         if (!result.success) {
             return NextResponse.json(
                 { error: "Validation failed", details: result.error.format() },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -162,7 +162,7 @@ export async function PUT(request: NextRequest) {
         if (userError || !user) {
             return NextResponse.json(
                 { error: "Unauthorized" },
-                { status: 401 }
+                { status: 401 },
             );
         }
 
@@ -175,7 +175,7 @@ export async function PUT(request: NextRequest) {
         if (Object.keys(updates).length === 1) {
             return NextResponse.json(
                 { error: "No fields to update" },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -190,7 +190,7 @@ export async function PUT(request: NextRequest) {
         if (categoryError || !categoryData) {
             return NextResponse.json(
                 { error: categoryError?.message || "Category not found" },
-                { status: 404 }
+                { status: 404 },
             );
         }
 
@@ -203,7 +203,7 @@ export async function PUT(request: NextRequest) {
                     error: "Invalid response shape",
                     details: parsed.error.format(),
                 },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
@@ -212,7 +212,7 @@ export async function PUT(request: NextRequest) {
         console.error("Categories PUT error:", error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }
@@ -231,7 +231,7 @@ export async function DELETE(request: NextRequest) {
         if (!id) {
             return NextResponse.json(
                 { error: "Category ID is required" },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -242,7 +242,7 @@ export async function DELETE(request: NextRequest) {
         if (userError || !user) {
             return NextResponse.json(
                 { error: "Unauthorized" },
-                { status: 401 }
+                { status: 401 },
             );
         }
 
@@ -257,7 +257,7 @@ export async function DELETE(request: NextRequest) {
         if (categoryError || !categoryData) {
             return NextResponse.json(
                 { error: categoryError?.message || "Category not found" },
-                { status: 404 }
+                { status: 404 },
             );
         }
 
@@ -270,7 +270,7 @@ export async function DELETE(request: NextRequest) {
                     error: "Invalid response shape",
                     details: parsed.error.format(),
                 },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
@@ -279,7 +279,7 @@ export async function DELETE(request: NextRequest) {
         console.error("Categories DELETE error:", error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

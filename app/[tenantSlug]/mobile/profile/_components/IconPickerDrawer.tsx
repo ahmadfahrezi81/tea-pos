@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { Drawer } from "vaul";
-import { X, Check, Panda, Shrimp, Origami } from "lucide-react";
+import { X, Panda, Shrimp, Origami } from "lucide-react";
 import {
     Bird,
     Cat,
@@ -14,9 +14,6 @@ import {
     Turtle,
     Snail,
     Bug,
-    Shell,
-    Egg,
-    PawPrint,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 

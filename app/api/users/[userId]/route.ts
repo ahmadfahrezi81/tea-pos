@@ -1,16 +1,19 @@
 // app/api/users/[userId]/route.ts
-import { createRouteHandlerClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createRouteHandlerClient } from "@/lib/server/supabase/server";
+import { createAdminClient } from "@/lib/server/supabase/admin";
 import { NextRequest, NextResponse } from "next/server";
-import { UpdateUserInput, UpdateUserResponse } from "@/lib/schemas/users";
-import { toSnakeKeys } from "@/lib/utils/schemas";
+import {
+    UpdateUserInput,
+    UpdateUserResponse,
+} from "@/lib/shared/schemas/users";
+import { toSnakeKeys } from "@/lib/shared/utils/schemas";
 
 // ============================================================================
 // PATCH /api/users/[userId] - Update user
 // ============================================================================
 export async function PATCH(
     request: NextRequest,
-    { params }: { params: Promise<{ userId: string }> }
+    { params }: { params: Promise<{ userId: string }> },
 ) {
     try {
         const supabase = await createRouteHandlerClient();
@@ -23,7 +26,7 @@ export async function PATCH(
         if (!result.success) {
             return NextResponse.json(
                 { error: "Validation failed", details: result.error.format() },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -38,7 +41,7 @@ export async function PATCH(
         if (userError || !currentUser) {
             return NextResponse.json(
                 { error: "Unauthorized" },
-                { status: 401 }
+                { status: 401 },
             );
         }
 
@@ -52,7 +55,7 @@ export async function PATCH(
         if (!currentUserTenant) {
             return NextResponse.json(
                 { error: "You don't belong to any tenant" },
-                { status: 403 }
+                { status: 403 },
             );
         }
 
@@ -62,7 +65,7 @@ export async function PATCH(
                 {
                     error: "Access denied - only owners and managers can update users",
                 },
-                { status: 403 }
+                { status: 403 },
             );
         }
 
@@ -77,7 +80,7 @@ export async function PATCH(
         if (!targetUserAssignment) {
             return NextResponse.json(
                 { error: "User not found in your tenant" },
-                { status: 404 }
+                { status: 404 },
             );
         }
 
@@ -116,7 +119,7 @@ export async function PATCH(
                 console.error("Profile update error:", profileError);
                 return NextResponse.json(
                     { error: "Failed to update user profile" },
-                    { status: 400 }
+                    { status: 400 },
                 );
             }
         }
@@ -134,7 +137,7 @@ export async function PATCH(
                 console.error("Assignment update error:", assignmentError);
                 return NextResponse.json(
                     { error: "Failed to update user role" },
-                    { status: 400 }
+                    { status: 400 },
                 );
             }
         }
@@ -153,7 +156,7 @@ export async function PATCH(
                     error: "Invalid response shape",
                     details: parsed.error.format(),
                 },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
@@ -162,7 +165,7 @@ export async function PATCH(
         console.error("Error updating user:", error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }
@@ -172,7 +175,7 @@ export async function PATCH(
 // ============================================================================
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: Promise<{ userId: string }> }
+    { params }: { params: Promise<{ userId: string }> },
 ) {
     try {
         const supabase = await createRouteHandlerClient();
@@ -188,7 +191,7 @@ export async function DELETE(
         if (userError || !currentUser) {
             return NextResponse.json(
                 { error: "Unauthorized" },
-                { status: 401 }
+                { status: 401 },
             );
         }
 
@@ -202,7 +205,7 @@ export async function DELETE(
         if (!currentUserTenant) {
             return NextResponse.json(
                 { error: "You don't belong to any tenant" },
-                { status: 403 }
+                { status: 403 },
             );
         }
 
@@ -212,7 +215,7 @@ export async function DELETE(
                 {
                     error: "Access denied - only owners can delete users",
                 },
-                { status: 403 }
+                { status: 403 },
             );
         }
 
@@ -220,7 +223,7 @@ export async function DELETE(
         if (userId === currentUser.id) {
             return NextResponse.json(
                 { error: "You cannot delete yourself" },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -235,7 +238,7 @@ export async function DELETE(
             console.error("Delete error:", deleteError);
             return NextResponse.json(
                 { error: "Failed to remove user" },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -247,7 +250,7 @@ export async function DELETE(
         console.error("Error deleting user:", error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

@@ -1,12 +1,12 @@
 // app/api/orders/list/route.ts
-import { createRouteHandlerClient } from "@/lib/supabase/server";
-import { getCurrentTenantId } from "@/lib/tenant";
+import { createRouteHandlerClient } from "@/lib/server/supabase/server";
+import { getCurrentTenantId } from "@/lib/server/config/tenant";
 import { NextRequest, NextResponse } from "next/server";
 import {
     ListAllOrdersQuery,
     AllOrdersListResponse,
-} from "@/lib/schemas/order-list";
-import { toCamelKeys } from "@/lib/utils/schemas";
+} from "@/lib/shared/schemas/order-list";
+import { toCamelKeys } from "@/lib/shared/utils/schemas";
 
 // ============================================================================
 // GET /api/orders/list
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
 
         // Parse and validate query parameters
         const queryResult = ListAllOrdersQuery.safeParse(
-            Object.fromEntries(searchParams)
+            Object.fromEntries(searchParams),
         );
         if (!queryResult.success) {
             return NextResponse.json(
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
                     error: "Invalid query parameters",
                     details: queryResult.error.format(),
                 },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
                     total_price,
                     products(name)
                 )
-            `
+            `,
             )
             .eq("tenant_id", currentTenantId)
             .order("created_at", { ascending: false });
@@ -83,8 +83,8 @@ export async function GET(request: NextRequest) {
             filteredData = filteredData.filter((order) =>
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 order.order_items?.some((item: any) =>
-                    productIds.includes(item.product_id)
-                )
+                    productIds.includes(item.product_id),
+                ),
             );
         }
 
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
                 order.order_items?.reduce(
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     (sum: number, item: any) => sum + (item.quantity || 0),
-                    0
+                    0,
                 ) || 0;
 
             return {
@@ -137,7 +137,7 @@ export async function GET(request: NextRequest) {
                     error: "Invalid response shape",
                     details: parsed.error.format(),
                 },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
@@ -146,7 +146,7 @@ export async function GET(request: NextRequest) {
         console.error("Internal server error:", error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

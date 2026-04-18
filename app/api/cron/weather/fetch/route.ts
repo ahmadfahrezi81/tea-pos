@@ -3,7 +3,7 @@ import {
     getTodayLocalDateStr,
     getCurrentLocalHour,
     upsertWeatherHour,
-} from "@/lib/services/weather";
+} from "@/lib/server/services/weather";
 
 const TZ_OFFSET = parseInt(process.env.TIMEZONE_OFFSET ?? "7");
 

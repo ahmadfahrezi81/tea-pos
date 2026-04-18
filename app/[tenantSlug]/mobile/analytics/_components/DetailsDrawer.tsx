@@ -1,15 +1,15 @@
 // components/mobile/components/DetailsDrawer.tsx
 import { Drawer } from "vaul";
 import { X } from "lucide-react";
-import { formatFullIndonesiaTimestamp } from "@/lib/timezone";
+import { formatFullIndonesiaTimestamp } from "@/lib/server/config/timezone";
 import CopyableField from "@/components/mobile/shared/CopyableField";
-import { DailySummary } from "@/lib/schemas/daily-summaries";
-import { Expense } from "@/lib/schemas/expenses";
+import { DailySummary } from "@/lib/shared/schemas/daily-summaries";
+import { Expense } from "@/lib/shared/schemas/expenses";
 import { SummaryPhotoThumbnail } from "@/app/[tenantSlug]/mobile/analytics/daily/_components/SummaryPhotoThumbnail";
-import { PHOTO_SLOTS } from "@/lib/frontend/constants/photo-slots";
-import { formatRupiah } from "@/lib/utils/formatCurrency";
-import { useSummaryPhotosById } from "@/lib/hooks/summaries/useSummaryPhotosById";
-import { useSummaryBreakdown } from "@/lib/hooks/summaries/useSummaryBreakdown";
+import { PHOTO_SLOTS } from "@/lib/shared/config/photo-slots";
+import { formatRupiah } from "@/lib/shared/utils/formatCurrency";
+import { useSummaryPhotosById } from "@/lib/client/hooks/summaries/useSummaryPhotosById";
+import { useSummaryBreakdown } from "@/lib/client/hooks/summaries/useSummaryBreakdown";
 
 export type DailySummaryWithExpenses = DailySummary & {
     expenses: Expense[];

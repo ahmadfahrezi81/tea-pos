@@ -32,12 +32,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Check, ChevronsUpDown, Loader2, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/shared/utils/cn";
 import { toast } from "sonner";
-import useTenantUsers from "@/lib/hooks/tenants/useTenantUsers";
+import useTenantUsers from "@/lib/client/hooks/tenants/useTenantUsers";
 import { useTenant } from "@/app/[tenantSlug]/TenantProvider";
 import { useStoreScope } from "@/app/[tenantSlug]/admin/StoreScopeProvider";
-import useStoreUsers from "@/lib/hooks/stores/useStoreUsers";
+import useStoreUsers from "@/lib/client/hooks/stores/useStoreUsers";
 import { ScopeBadge } from "../../../_components/scope-badge";
 
 interface PendingAssignment {

@@ -3,8 +3,8 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useProducts } from "@/lib/hooks/products/useProducts";
-import { useAllStores } from "@/lib/hooks/stores/useAllStores";
+import { useProducts } from "@/lib/client/hooks/products/useProducts";
+import { useStores } from "@/lib/client/hooks/stores/useStores";
 import { Input } from "@/components/ui/input"; // ✅ add this import
 import {
     Select,
@@ -17,11 +17,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Store, Search } from "lucide-react"; // ✅ add Search icon
 import { ProductGrid } from "./_components/product-grid";
 import { Cart } from "./_components/cart";
-import { CreateOrderInput, CreateOrderResponse } from "@/lib/schemas/orders";
+import {
+    CreateOrderInput,
+    CreateOrderResponse,
+} from "@/lib/shared/schemas/orders";
 import { toast } from "sonner";
-import type { Product } from "@/lib/schemas/products";
+import type { Product } from "@/lib/shared/schemas/products";
 import { ScopeBadge } from "../_components/scope-badge";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/shared/utils/cn";
 
 export interface CartItem {
     productId: string;
@@ -33,7 +36,7 @@ export interface CartItem {
 
 export default function POSPage() {
     const { data: products = [], isLoading: productsLoading } = useProducts();
-    const { data: storesData, isLoading: storesLoading } = useAllStores();
+    const { data: storesData, isLoading: storesLoading } = useStores();
 
     const stores = useMemo(() => storesData?.stores ?? [], [storesData]);
 
@@ -48,7 +51,7 @@ export default function POSPage() {
     const filteredProducts = useMemo(() => {
         const query = searchQuery.toLowerCase();
         return products.filter(
-            (p) => p.isActive && p.name.toLowerCase().includes(query)
+            (p) => p.isActive && p.name.toLowerCase().includes(query),
         );
     }, [products, searchQuery]);
 
@@ -77,7 +80,7 @@ export default function POSPage() {
                 return prev.map((item) =>
                     item.productId === product.id
                         ? { ...item, quantity: item.quantity + 1 }
-                        : item
+                        : item,
                 );
             }
             return [
@@ -96,13 +99,13 @@ export default function POSPage() {
     const updateQuantity = (productId: string, quantity: number) => {
         if (quantity <= 0) {
             setCart((prev) =>
-                prev.filter((item) => item.productId !== productId)
+                prev.filter((item) => item.productId !== productId),
             );
         } else {
             setCart((prev) =>
                 prev.map((item) =>
-                    item.productId === productId ? { ...item, quantity } : item
-                )
+                    item.productId === productId ? { ...item, quantity } : item,
+                ),
             );
         }
     };
@@ -150,7 +153,7 @@ export default function POSPage() {
                     }).format(amount);
 
                 toast.success(
-                    `Order processed! Total: ${formatRupiah(data.totalAmount)}`
+                    `Order processed! Total: ${formatRupiah(data.totalAmount)}`,
                 );
                 setCart([]);
             } else {
@@ -233,7 +236,7 @@ export default function POSPage() {
                                     "focus-visible:outline-none",
                                     "focus-visible:ring-0",
                                     "focus:bg-muted", // Slightly darker background for light mode
-                                    "dark:focus:bg-muted/60" // Slightly lighter background in dark mode
+                                    "dark:focus:bg-muted/60", // Slightly lighter background in dark mode
                                 )}
                             />
                         </div>

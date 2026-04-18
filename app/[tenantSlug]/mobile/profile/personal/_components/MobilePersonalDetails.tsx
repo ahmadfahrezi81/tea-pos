@@ -1,6 +1,6 @@
 "use client";
 
-import { useProfile } from "@/lib/hooks/profile/useProfile";
+import { useProfile } from "@/lib/client/hooks/profile/useProfile";
 import { Copy, Check } from "lucide-react";
 import { useState } from "react";
 

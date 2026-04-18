@@ -16,19 +16,19 @@ import {
     ArrowLeft,
     ChevronsUpDown,
 } from "lucide-react";
-import { useStores } from "@/lib/hooks/stores/useStores";
+import { useStores } from "@/lib/client/hooks/stores/useStores";
 import Image from "next/image";
-import { hasManagerRole, hasSellerRole } from "@/lib/utils/roleUtils";
+import { hasManagerRole, hasSellerRole } from "@/lib/shared/utils/roleUtils";
 import { useRouter, usePathname } from "next/navigation";
-import { useAuth } from "@/lib/context/AuthContext";
+import { useAuth } from "@/lib/client/context/AuthContext";
 import VersionInfo from "@/components/shared/VersionInfo";
-import { useTenantSlug } from "@/lib/tenant-url";
-import { useStore } from "@/lib/context/StoreContext";
+import { useTenantSlug } from "@/lib/server/config/tenant-url";
+import { useStore } from "@/lib/client/context/StoreContext";
 import { StorePickerDrawer } from "./StorePickerDrawer";
-import { navigation } from "@/lib/utils/navigation";
-import useNotifications from "@/lib/hooks/notifications/useNotifications";
-import { useProfileIcon } from "@/lib/context/ProfileIconContext";
-import { useIsIPhonePWA } from "@/lib/frontend/hooks/usePWA";
+import { navigation } from "@/lib/shared/utils/navigation";
+import useNotifications from "@/lib/client/hooks/notifications/useNotifications";
+import { useProfileIcon } from "@/lib/client/context/ProfileIconContext";
+import { useIsIPhonePWA } from "@/lib/client/usePWA";
 
 export interface Assignment {
     user_id: string;
@@ -159,8 +159,7 @@ export default function MobileLayoutClient({
             path.endsWith("/weather")
         )
             return "Weather Forecast";
-        if (path.endsWith("/mobile/analytics/daily/close"))
-            return "Daily Close";
+        if (path.endsWith("/mobile/analytics/daily/close")) return "Close Day";
         if (path.endsWith("/mobile/analytics/daily/open")) return "Open Store";
         return "Mobile";
     }, []);

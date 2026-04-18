@@ -1,11 +1,11 @@
 // app/api/analytics/admin/metrics/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@/lib/supabase/server";
-import { getCurrentTenantId } from "@/lib/tenant";
+import { createRouteHandlerClient } from "@/lib/server/supabase/server";
+import { getCurrentTenantId } from "@/lib/server/config/tenant";
 import {
     AdminDateRangeQuery,
     AdminMetricsResponse,
-} from "@/lib/schemas/analytics";
+} from "@/lib/shared/schemas/analytics";
 
 // ============================================================================
 // HELPER: Fetch all orders with pagination
@@ -16,7 +16,7 @@ async function fetchAllOrders(
     tenantId: string,
     startDate: string,
     endDate: string,
-    storeIds?: string[]
+    storeIds?: string[],
 ) {
     const pageSize = 1000;
     let from = 0;
@@ -33,7 +33,7 @@ async function fetchAllOrders(
                 total_amount,
                 order_items(quantity),
                 store_id
-            `
+            `,
             )
             .eq("tenant_id", tenantId)
             .gte("created_at", startDate)
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
 
         // Validate query parameters (dateFrom, dateTo expected)
         const queryResult = AdminDateRangeQuery.safeParse(
-            Object.fromEntries(searchParams)
+            Object.fromEntries(searchParams),
         );
         if (!queryResult.success) {
             return NextResponse.json(
@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
                     error: "Invalid query parameters",
                     details: queryResult.error.format(),
                 },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -96,18 +96,18 @@ export async function GET(request: NextRequest) {
         const currentStart = new Date(
             `${dateFrom}T00:00:00+${String(TIMEZONE_OFFSET).padStart(
                 2,
-                "0"
-            )}:00`
+                "0",
+            )}:00`,
         ).toISOString();
         const currentEnd = new Date(
-            `${dateTo}T23:59:59+${String(TIMEZONE_OFFSET).padStart(2, "0")}:00`
+            `${dateTo}T23:59:59+${String(TIMEZONE_OFFSET).padStart(2, "0")}:00`,
         ).toISOString();
 
         // Calculate previous period dates
         const currentDate = new Date(dateFrom);
         const endDate = new Date(dateTo);
         const daysDiff = Math.ceil(
-            (endDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24)
+            (endDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24),
         );
 
         const previousStart = new Date(currentDate);
@@ -117,13 +117,13 @@ export async function GET(request: NextRequest) {
 
         const prevStart = new Date(
             `${previousStart.toISOString().split("T")[0]}T00:00:00+${String(
-                TIMEZONE_OFFSET
-            ).padStart(2, "0")}:00`
+                TIMEZONE_OFFSET,
+            ).padStart(2, "0")}:00`,
         ).toISOString();
         const prevEnd = new Date(
             `${previousEnd.toISOString().split("T")[0]}T23:59:59+${String(
-                TIMEZONE_OFFSET
-            ).padStart(2, "0")}:00`
+                TIMEZONE_OFFSET,
+            ).padStart(2, "0")}:00`,
         ).toISOString();
 
         // Fetch current period data with pagination (optionally filtered by stores)
@@ -132,7 +132,7 @@ export async function GET(request: NextRequest) {
             currentTenantId,
             currentStart,
             currentEnd,
-            storeIds
+            storeIds,
         );
 
         // Fetch previous period data with pagination
@@ -141,14 +141,14 @@ export async function GET(request: NextRequest) {
             currentTenantId,
             prevStart,
             prevEnd,
-            storeIds
+            storeIds,
         );
 
         // Calculate current period metrics
         const totalRevenue =
             currentOrders?.reduce(
                 (sum, order) => sum + (order.total_amount || 0),
-                0
+                0,
             ) || 0;
 
         const totalOrders = currentOrders?.length || 0;
@@ -160,7 +160,7 @@ export async function GET(request: NextRequest) {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         (itemSum: number, item: any) =>
                             itemSum + (item.quantity || 0),
-                        0
+                        0,
                     ) || 0;
                 return sum + orderCups;
             }, 0) || 0;
@@ -172,7 +172,7 @@ export async function GET(request: NextRequest) {
         const prevRevenue =
             previousOrders?.reduce(
                 (sum, order) => sum + (order.total_amount || 0),
-                0
+                0,
             ) || 0;
 
         const prevOrders = previousOrders?.length || 0;
@@ -184,7 +184,7 @@ export async function GET(request: NextRequest) {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         (itemSum: number, item: any) =>
                             itemSum + (item.quantity || 0),
-                        0
+                        0,
                     ) || 0;
                 return sum + orderCups;
             }, 0) || 0;
@@ -217,14 +217,14 @@ export async function GET(request: NextRequest) {
         if (!parsed.success) {
             console.error(
                 "AdminMetricsResponse validation failed:",
-                parsed.error
+                parsed.error,
             );
             return NextResponse.json(
                 {
                     error: "Invalid response shape",
                     details: parsed.error.format(),
                 },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
@@ -233,7 +233,7 @@ export async function GET(request: NextRequest) {
         console.error("Admin metrics error:", error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button";
 import { UserPlus } from "lucide-react";
 import { useTenant } from "../../../TenantProvider";
 import { useStoreScope } from "../../StoreScopeProvider";
-import useStoreUsers from "@/lib/hooks/stores/useStoreUsers";
+import useStoreUsers from "@/lib/client/hooks/stores/useStoreUsers";
 import { DataTable } from "./_components/data-table";
 import { createColumns } from "./_components/columns";
-import { StoreUser } from "@/lib/schemas/userStoreAssignments";
+import { StoreUser } from "@/lib/shared/schemas/userStoreAssignments";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -64,7 +64,7 @@ export default function StoreUsersPage() {
                 `/api/stores/assignments?${params.toString()}`,
                 {
                     method: "DELETE",
-                }
+                },
             );
 
             if (!response.ok) {
@@ -80,7 +80,7 @@ export default function StoreUsersPage() {
             toast.error(
                 error instanceof Error
                     ? error.message
-                    : "Failed to remove assignment"
+                    : "Failed to remove assignment",
             );
         } finally {
             setIsRemoving(false);

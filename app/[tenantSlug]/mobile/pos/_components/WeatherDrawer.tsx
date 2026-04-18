@@ -3,9 +3,9 @@
 import { useMemo } from "react";
 import { Drawer } from "vaul";
 import { Cloud, X } from "lucide-react";
-import { getWeatherMeta, isNightHour } from "@/lib/utils/weatherCode";
-import useWeather from "@/lib/hooks/weather/useWeather";
-import { getCurrentLocalHour } from "@/lib/utils/time";
+import { getWeatherMeta, isNightHour } from "@/lib/shared/utils/weatherCode";
+import useWeather from "@/lib/client/hooks/weather/useWeather";
+import { getCurrentLocalHour } from "@/lib/shared/utils/time";
 import { Bebas_Neue } from "next/font/google";
 
 const bebas = Bebas_Neue({

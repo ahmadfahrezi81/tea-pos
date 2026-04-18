@@ -1,14 +1,14 @@
 {
     "name": "tea-pos",
-    "version": "3.9.7",
-    "backendVersionDate": "6.4.26",
+    "version": "3.10.0",
+    "backendVersionDate": "19.4.26",
     "private": true,
     "scripts": {
         "dev": "next dev --turbopack",
         "build": "next build",
         "start": "next start",
         "lint": "next lint",
-        "types:db": "dotenv -e .env -- pnpm dlx supabase gen types typescript --project-id urzoiliisayupuvmaris --schema public > lib/db.types.ts"
+        "types:db": "dotenv -e .env -- pnpm dlx supabase gen types typescript --project-id urzoiliisayupuvmaris --schema public > lib/server/supabase/db.types.ts"
     },
     "dependencies": {
         "@asteasolutions/zod-to-openapi": "^8.1.0",
@@ -41,6 +41,7 @@
         "lucide-react": "^0.539.0",
         "next": "15.3.6",
         "next-themes": "^0.4.6",
+        "radix-ui": "^1.4.3",
         "react": "19.1.0",
         "react-day-picker": "^9.11.1",
         "react-dom": "19.1.0",

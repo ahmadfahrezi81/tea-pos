@@ -1,6 +1,6 @@
 // app/api/expenses/route.ts
-import { createRouteHandlerClient } from "@/lib/supabase/server";
-import { getCurrentTenantId } from "@/lib/tenant";
+import { createRouteHandlerClient } from "@/lib/server/supabase/server";
+import { getCurrentTenantId } from "@/lib/server/config/tenant";
 import { NextRequest, NextResponse } from "next/server";
 import {
     CreateExpenseInput,
@@ -10,8 +10,8 @@ import {
     CreateExpenseResponse,
     UpdateExpenseResponse,
     DeleteExpenseResponse,
-} from "@/lib/schemas/expenses";
-import { toCamelKeys, toSnakeKeys } from "@/lib/utils/schemas";
+} from "@/lib/shared/schemas/expenses";
+import { toCamelKeys, toSnakeKeys } from "@/lib/shared/utils/schemas";
 
 // ============================================================================
 // GET /api/expenses

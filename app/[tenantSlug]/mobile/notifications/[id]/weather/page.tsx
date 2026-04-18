@@ -2,8 +2,8 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import useNotifications from "@/lib/hooks/notifications/useNotifications";
-import { getWeatherMeta } from "@/lib/utils/weatherCode";
+import useNotifications from "@/lib/client/hooks/notifications/useNotifications";
+import { getWeatherMeta } from "@/lib/shared/utils/weatherCode";
 import { Cloud } from "lucide-react";
 import { Bebas_Neue } from "next/font/google";
 import { useMemo } from "react";

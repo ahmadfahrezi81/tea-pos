@@ -6,7 +6,7 @@
 // import { Button } from "@/components/ui/button";
 // import { Mail, UserPlus } from "lucide-react";
 // import { useTenant } from "../../TenantProvider";
-// import useTenantUsers from "@/lib/hooks/tenants/useTenantUsers";
+// import useTenantUsers from "@/lib/client/hooks/tenants/useTenantUsers";
 // import { DataTable } from "./_components/data-table";
 // import { createColumns, User } from "./_components/columns";
 // import { AddUserModal } from "./_components/add-user-modal";
@@ -234,7 +234,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Mail, UserPlus } from "lucide-react";
 import { useTenant } from "../../TenantProvider";
-import useTenantUsers from "@/lib/hooks/tenants/useTenantUsers";
+import useTenantUsers from "@/lib/client/hooks/tenants/useTenantUsers";
 import { DataTable } from "./_components/data-table";
 import { createColumns, User } from "./_components/columns";
 import { AddUserModal } from "./_components/add-user-modal";

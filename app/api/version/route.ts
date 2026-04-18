@@ -8,7 +8,7 @@
 // }
 
 import { NextResponse } from "next/server";
-import { getBackendVersion } from "@/lib/version";
+import { getBackendVersion } from "@/lib/shared/version";
 import packageJson from "@/package.json";
 
 export async function GET() {

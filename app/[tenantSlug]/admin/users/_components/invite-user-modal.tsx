@@ -251,7 +251,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Send } from "lucide-react";
 
 import { toast } from "sonner";
-import { InviteUserInput } from "@/lib/schemas/tenantInvites";
+import { InviteUserInput } from "@/lib/shared/schemas/tenantInvites";
 
 interface InviteUserModalProps {
     open: boolean;
@@ -309,7 +309,7 @@ export function InviteUserModal({
             toast.error(
                 error instanceof Error
                     ? error.message
-                    : "Failed to send invitation"
+                    : "Failed to send invitation",
             );
         } finally {
             setIsSubmitting(false);

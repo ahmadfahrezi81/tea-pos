@@ -1,6 +1,6 @@
 "use client";
 import { useMemo } from "react";
-import useDayOfWeekSales from "@/lib/hooks/analytics/useDayOfWeekSales";
+import useDayOfWeekSales from "@/lib/client/hooks/analytics/useDayOfWeekSales";
 import {
     Bar,
     BarChart,
@@ -11,7 +11,7 @@ import {
     CartesianGrid,
 } from "recharts";
 import { ChartConfig, ChartContainer } from "@/components/ui/chart";
-import { useBrandColor } from "@/lib/hooks/useBrandColor";
+import { useBrandColor } from "@/lib/client/hooks/useBrandColor";
 
 interface Props {
     storeId: string;

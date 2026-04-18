@@ -1,7 +1,7 @@
 // app/api/payments/qris/webhook/route.ts
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient } from "@/lib/server/supabase/admin";
 import { NextRequest, NextResponse } from "next/server";
-import { XenditQrisWebhookPayload } from "@/lib/schemas/payments";
+import { XenditQrisWebhookPayload } from "@/lib/shared/schemas/payments";
 
 // ============================================================================
 // POST /api/payments/qris/webhook

@@ -12,7 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { Product } from "@/lib/schemas/products";
+import { Product } from "@/lib/shared/schemas/products";
 
 // export type Product = {
 //     id: string;
@@ -39,7 +39,7 @@ const STATUS_STYLES: Record<StatusType, string> = {
 
 export const createColumns = (
     onEdit: (product: Product) => void,
-    onDelete: (product: Product) => void
+    onDelete: (product: Product) => void,
 ): ColumnDef<Product>[] => [
     {
         id: "select",

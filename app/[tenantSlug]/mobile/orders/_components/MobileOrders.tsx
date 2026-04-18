@@ -1,12 +1,10 @@
 "use client";
 import { useState, useMemo } from "react";
-import useStoreOrders from "@/lib/hooks/orders/useStoreOrders";
-import { Calendar, CalendarDays, Receipt, BarChart4 } from "lucide-react";
-import { formatRupiah } from "@/lib/utils/formatCurrency";
+import useStoreOrders from "@/lib/client/hooks/orders/useStoreOrders";
+import { Calendar, CalendarDays, Receipt } from "lucide-react";
+import { formatRupiah } from "@/lib/shared/utils/formatCurrency";
 import CopyableField from "@/components/mobile/shared/CopyableField";
-import { useRouter } from "next/navigation";
-import { useTenantSlug } from "@/lib/tenant-url";
-import { useStore } from "@/lib/context/StoreContext";
+import { useStore } from "@/lib/client/context/StoreContext";
 
 import dynamic from "next/dynamic";
 
@@ -48,8 +46,6 @@ const formatDateForInput = (date: Date) => date.toISOString().split("T")[0];
 
 export default function MobileOrders() {
     const { selectedStoreId } = useStore();
-    const router = useRouter();
-    const { url } = useTenantSlug();
 
     const [selectedDate, setSelectedDate] = useState(
         formatDateForInput(new Date()),

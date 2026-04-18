@@ -1,8 +1,7 @@
 // app/api/notifications/[id]/read/route.ts
-import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { createRouteHandlerClient } from "@/lib/server/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
-import { MarkOneReadResponse } from "@/lib/schemas/notifications";
-import { toCamelKeys } from "@/lib/utils/schemas";
+import { MarkOneReadResponse } from "@/lib/shared/schemas/notifications";
 
 // ============================================================================
 // PATCH /api/notifications/[id]/read

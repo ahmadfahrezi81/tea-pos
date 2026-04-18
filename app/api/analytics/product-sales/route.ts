@@ -1,12 +1,12 @@
 //app/api/analytics/product-sales/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { createRouteHandlerClient } from "@/lib/server/supabase/server";
 import {
     ProductSalesQuery,
     ProductSalesResponse,
-} from "@/lib/schemas/analytics";
-import { getCurrentTenantId } from "@/lib/tenant";
+} from "@/lib/shared/schemas/analytics";
+import { getCurrentTenantId } from "@/lib/server/config/tenant";
 
 async function fetchAllOrderItems(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -14,7 +14,7 @@ async function fetchAllOrderItems(
     storeId: string,
     tenantId: string,
     startDate: string,
-    endDate: string
+    endDate: string,
 ) {
     const pageSize = 1000;
     let from = 0;
@@ -33,7 +33,7 @@ async function fetchAllOrderItems(
                 products(name),
                 order_id,
                 orders!inner(store_id, created_at)
-            `
+            `,
             )
             .eq("tenant_id", tenantId)
             .eq("orders.store_id", storeId)
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
                     error: "Invalid query parameters",
                     details: queryValidation.error.format(),
                 },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
         // ✅ Calculate first and last day of month
         const startDate = new Date(Date.UTC(parsedYear, parsedMonth - 1, 1));
         const endDate = new Date(
-            Date.UTC(parsedYear, parsedMonth, 0, 23, 59, 59)
+            Date.UTC(parsedYear, parsedMonth, 0, 23, 59, 59),
         );
 
         // ✅ Fetch order items in pages
@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
             storeId,
             currentTenantId,
             startDate.toISOString(),
-            endDate.toISOString()
+            endDate.toISOString(),
         );
 
         // ✅ Aggregate by product
@@ -117,7 +117,7 @@ export async function GET(request: NextRequest) {
         // ✅ Calculate total quantity
         const totalQuantity = Object.values(productData).reduce(
             (sum, product) => sum + product.quantity,
-            0
+            0,
         );
 
         // ✅ Convert to array and add percentages
@@ -143,14 +143,14 @@ export async function GET(request: NextRequest) {
         if (!parsedResponse.success) {
             console.error(
                 "ProductSalesResponse validation failed:",
-                parsedResponse.error
+                parsedResponse.error,
             );
             return NextResponse.json(
                 {
                     error: "Invalid response shape",
                     details: parsedResponse.error.format(),
                 },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
@@ -159,7 +159,7 @@ export async function GET(request: NextRequest) {
         console.error("Product sales error:", error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

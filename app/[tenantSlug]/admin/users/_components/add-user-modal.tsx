@@ -28,8 +28,8 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { CreateUserInput } from "@/lib/schemas/users";
-import useCreateUser from "@/lib/hooks/users/useCreateUser";
+import { CreateUserInput } from "@/lib/shared/schemas/users";
+import useCreateUser from "@/lib/client/hooks/users/useCreateUser";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ScopeBadge } from "../../_components/scope-badge";
@@ -70,7 +70,9 @@ export function AddUserModal({
             onSuccess?.();
         } catch (error) {
             toast.error(
-                error instanceof Error ? error.message : "Failed to create user"
+                error instanceof Error
+                    ? error.message
+                    : "Failed to create user",
             );
         }
     };
@@ -201,7 +203,7 @@ export function AddUserModal({
                                                     className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                                                     onClick={() =>
                                                         setShowPassword(
-                                                            !showPassword
+                                                            !showPassword,
                                                         )
                                                     }
                                                 >
@@ -246,7 +248,7 @@ export function AddUserModal({
                                                     className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                                                     onClick={() =>
                                                         setShowConfirmPassword(
-                                                            !showConfirmPassword
+                                                            !showConfirmPassword,
                                                         )
                                                     }
                                                 >

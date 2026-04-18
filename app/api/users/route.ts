@@ -1,9 +1,12 @@
 // app/api/users/route.ts
-import { createRouteHandlerClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createRouteHandlerClient } from "@/lib/server/supabase/server";
+import { createAdminClient } from "@/lib/server/supabase/admin";
 import { NextRequest, NextResponse } from "next/server";
-import { CreateUserInput, CreateUserResponse } from "@/lib/schemas/users";
-import { toSnakeKeys } from "@/lib/utils/schemas";
+import {
+    CreateUserInput,
+    CreateUserResponse,
+} from "@/lib/shared/schemas/users";
+import { toSnakeKeys } from "@/lib/shared/utils/schemas";
 
 // ============================================================================
 // POST /api/users - Create new user
@@ -19,7 +22,7 @@ export async function POST(request: NextRequest) {
         if (!result.success) {
             return NextResponse.json(
                 { error: "Validation failed", details: result.error.format() },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -34,7 +37,7 @@ export async function POST(request: NextRequest) {
         if (userError || !currentUser) {
             return NextResponse.json(
                 { error: "Unauthorized" },
-                { status: 401 }
+                { status: 401 },
             );
         }
 
@@ -48,7 +51,7 @@ export async function POST(request: NextRequest) {
         if (!currentUserTenant) {
             return NextResponse.json(
                 { error: "You don't belong to any tenant" },
-                { status: 403 }
+                { status: 403 },
             );
         }
 
@@ -58,7 +61,7 @@ export async function POST(request: NextRequest) {
                 {
                     error: "Access denied - only owners and managers can create users",
                 },
-                { status: 403 }
+                { status: 403 },
             );
         }
 
@@ -72,7 +75,7 @@ export async function POST(request: NextRequest) {
         if (existingProfile) {
             return NextResponse.json(
                 { error: "User with this email already exists" },
-                { status: 409 }
+                { status: 409 },
             );
         }
 
@@ -91,7 +94,7 @@ export async function POST(request: NextRequest) {
             console.error("Auth error:", authError);
             return NextResponse.json(
                 { error: authError?.message || "Failed to create user" },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -114,7 +117,7 @@ export async function POST(request: NextRequest) {
             await supabaseAdmin.auth.admin.deleteUser(newUserId);
             return NextResponse.json(
                 { error: "Failed to create user profile" },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -135,7 +138,7 @@ export async function POST(request: NextRequest) {
             await supabaseAdmin.auth.admin.deleteUser(newUserId);
             return NextResponse.json(
                 { error: "Failed to assign user to tenant" },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -154,7 +157,7 @@ export async function POST(request: NextRequest) {
                     error: "Invalid response shape",
                     details: parsed.error.format(),
                 },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
@@ -163,7 +166,7 @@ export async function POST(request: NextRequest) {
         console.error("Error creating user:", error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

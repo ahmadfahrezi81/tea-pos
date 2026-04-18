@@ -5,7 +5,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { AdminStoreBreakdownResponse } from "@/lib/schemas/analytics";
+import { AdminStoreBreakdownResponse } from "@/lib/shared/schemas/analytics";
 
 const storeColors = [
     "#3E92CC", // Light Blue

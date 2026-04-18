@@ -1,9 +1,12 @@
 //app/api/analytics/daily-sales/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@/lib/supabase/server";
-import { DailySalesQuery, DailySalesResponse } from "@/lib/schemas/analytics";
-import { getCurrentTenantId } from "@/lib/tenant";
+import { createRouteHandlerClient } from "@/lib/server/supabase/server";
+import {
+    DailySalesQuery,
+    DailySalesResponse,
+} from "@/lib/shared/schemas/analytics";
+import { getCurrentTenantId } from "@/lib/server/config/tenant";
 
 async function fetchAllOrders(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -11,7 +14,7 @@ async function fetchAllOrders(
     storeId: string,
     tenantId: string,
     startDate: string,
-    endDate: string
+    endDate: string,
 ) {
     const pageSize = 1000;
     let from = 0;
@@ -27,7 +30,7 @@ async function fetchAllOrders(
                 id,
                 created_at,
                 order_items(quantity)
-            `
+            `,
             )
             .eq("tenant_id", tenantId)
             .eq("store_id", storeId)
@@ -65,7 +68,7 @@ export async function GET(request: NextRequest) {
                     error: "Invalid query parameters",
                     details: queryValidation.error.format(),
                 },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -79,7 +82,7 @@ export async function GET(request: NextRequest) {
         // ✅ Calculate first and last day of month
         const startDate = new Date(Date.UTC(parsedYear, parsedMonth - 1, 1));
         const endDate = new Date(
-            Date.UTC(parsedYear, parsedMonth, 0, 23, 59, 59)
+            Date.UTC(parsedYear, parsedMonth, 0, 23, 59, 59),
         );
 
         // ✅ Timezone offset in hours (default UTC+7)
@@ -91,7 +94,7 @@ export async function GET(request: NextRequest) {
             storeId,
             currentTenantId,
             startDate.toISOString(),
-            endDate.toISOString()
+            endDate.toISOString(),
         );
 
         // ✅ Aggregate orders by *local date*
@@ -103,7 +106,7 @@ export async function GET(request: NextRequest) {
             // Convert UTC → local time using timezone offset
             const utcDate = new Date(order.created_at);
             const localTime = new Date(
-                utcDate.getTime() + TIMEZONE_OFFSET * 60 * 60 * 1000
+                utcDate.getTime() + TIMEZONE_OFFSET * 60 * 60 * 1000,
             );
 
             const dateKey = localTime.toISOString().split("T")[0]; // YYYY-MM-DD (local)
@@ -114,7 +117,7 @@ export async function GET(request: NextRequest) {
                 order.order_items?.reduce(
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     (sum: number, item: any) => sum + (item.quantity || 0),
-                    0
+                    0,
                 ) ?? 0;
 
             dailyData[dateKey] += totalCups;
@@ -133,14 +136,14 @@ export async function GET(request: NextRequest) {
         if (!parsedResponse.success) {
             console.error(
                 "DailySalesResponse validation failed:",
-                parsedResponse.error
+                parsedResponse.error,
             );
             return NextResponse.json(
                 {
                     error: "Invalid response shape",
                     details: parsedResponse.error.format(),
                 },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
@@ -149,7 +152,7 @@ export async function GET(request: NextRequest) {
         console.error("Daily sales error:", error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

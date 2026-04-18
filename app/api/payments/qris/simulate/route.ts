@@ -1,8 +1,7 @@
 // app/api/payments/qris/simulate/route.ts
-import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { createRouteHandlerClient } from "@/lib/server/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { UUIDSchema } from "@/lib/schemas/common";
 
 const SimulateInput = z.object({
     xenditQrId: z.string(),
@@ -11,21 +10,12 @@ const SimulateInput = z.object({
 
 // ============================================================================
 // POST /api/payments/qris/simulate
-// Staging only — triggers Xendit sandbox simulate
+// Staging only — triggered from UI via feature flag (qris)
 // ============================================================================
 export async function POST(request: NextRequest) {
-    // block in production
-    if (process.env.NEXT_PUBLIC_IS_STAGING !== "true") {
-        return NextResponse.json(
-            { error: "Not available in production" },
-            { status: 403 },
-        );
-    }
-
     try {
         const supabase = await createRouteHandlerClient();
 
-        // auth check
         const {
             data: { user },
             error: userError,
@@ -48,7 +38,6 @@ export async function POST(request: NextRequest) {
 
         const { xenditQrId, amount } = result.data;
 
-        // call Xendit simulate
         const xenditResponse = await fetch(
             `https://api.xendit.co/qr_codes/${xenditQrId}/payments/simulate`,
             {

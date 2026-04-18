@@ -1,6 +1,6 @@
 "use client";
 import { useMemo, useRef, useEffect } from "react";
-import useHourlySales from "@/lib/hooks/analytics/useHourlySales";
+import useHourlySales from "@/lib/client/hooks/analytics/useHourlySales";
 import {
     Area,
     AreaChart,
@@ -11,10 +11,9 @@ import {
 } from "recharts";
 import { ChartConfig, ChartContainer } from "@/components/ui/chart";
 import { SquareArrowOutUpRight } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useTenantSlug } from "@/lib/tenant-url";
-import { useBrandColor } from "@/lib/hooks/useBrandColor";
-import { navigation } from "@/lib/utils/navigation";
+import { useTenantSlug } from "@/lib/server/config/tenant-url";
+import { useBrandColor } from "@/lib/client/hooks/useBrandColor";
+import { navigation } from "@/lib/shared/utils/navigation";
 
 interface Props {
     storeId: string;
@@ -59,7 +58,6 @@ export default function MiniHourlySalesChart({ storeId, date }: Props) {
     const scrollRef = useRef<HTMLDivElement>(null);
     const brandColor = useBrandColor();
 
-    const router = useRouter();
     const { url } = useTenantSlug();
 
     const chartConfig = useMemo(

@@ -2,11 +2,12 @@
 
 import { Drawer } from "vaul";
 import { Plus, Minus, ShoppingCart, X, Trash2, RefreshCw } from "lucide-react";
-import { formatRupiah } from "@/lib/utils/formatCurrency";
+import { formatRupiah } from "@/lib/shared/utils/formatCurrency";
 import type { CartItem } from "./MobilePOS";
 import { useState, useEffect, useMemo, memo, useCallback } from "react";
 import { QrisCode } from "./QrisCode";
-import { useQrisPayment } from "@/lib/hooks/payments/useQrisPayment";
+import { useQrisPayment } from "@/lib/client/hooks/payments/useQrisPayment";
+import { useFeatures } from "@/lib/client/context/features-provider";
 
 interface CartDrawerProps {
     isOpen: boolean;
@@ -35,6 +36,7 @@ export const CartDrawer = memo(function CartDrawer({
     selectedStoreId,
     onShowToast,
 }: CartDrawerProps) {
+    const { qris } = useFeatures();
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
     const [showSuccess, setShowSuccess] = useState(false);
     const [simulating, setSimulating] = useState(false);
@@ -70,7 +72,6 @@ export const CartDrawer = memo(function CartDrawer({
         referenceId,
         createQrisPayment,
         simulatePayment,
-        isStaging,
     } = useQrisPayment({
         selectedStoreId,
         cart,
@@ -99,8 +100,6 @@ export const CartDrawer = memo(function CartDrawer({
         if (simulating) return;
         setSimulating(true);
         await simulatePayment();
-        // keep disabled — realtime will fire success/fail and close the drawer
-        // if something goes wrong, reset after 5s
         setTimeout(() => setSimulating(false), 5000);
     }, [simulating, simulatePayment]);
 
@@ -155,25 +154,14 @@ export const CartDrawer = memo(function CartDrawer({
                                     Cash
                                 </button>
                                 <button
-                                    onClick={() => {
-                                        if (
-                                            process.env
-                                                .NEXT_PUBLIC_IS_STAGING ===
-                                            "true"
-                                        ) {
-                                            setPaymentMethod("qris");
-                                        }
-                                    }}
+                                    onClick={() =>
+                                        qris && setPaymentMethod("qris")
+                                    }
                                     className={`px-3.5 py-1 rounded-full text-sm font-semibold transition-all duration-200 ${
                                         paymentMethod === "qris"
                                             ? "bg-white text-gray-900 shadow-sm"
                                             : "text-gray-500"
-                                    } ${
-                                        process.env.NEXT_PUBLIC_IS_STAGING !==
-                                        "true"
-                                            ? "opacity-40 cursor-not-allowed"
-                                            : ""
-                                    }`}
+                                    } ${!qris ? "opacity-40 cursor-not-allowed" : ""}`}
                                 >
                                     QRIS
                                 </button>
@@ -389,7 +377,7 @@ export const CartDrawer = memo(function CartDrawer({
                                     )}
 
                                     {/* Simulate — staging only */}
-                                    {isStaging &&
+                                    {qris &&
                                         qrisStatus === "pending" &&
                                         !showSuccess && (
                                             <button

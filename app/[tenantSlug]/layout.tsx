@@ -1,5 +1,5 @@
 // // app/[tenantSlug]/layout.tsx
-// import { createRouteHandlerClient } from "@/lib/supabase/server";
+// import { createRouteHandlerClient } from "@/lib/server/supabase/server";
 // import { notFound, redirect } from "next/navigation";
 
 // export default async function TenantLayout({
@@ -81,7 +81,7 @@
 // }
 
 // // app/[tenantSlug]/layout.tsx
-// import { createRouteHandlerClient } from "@/lib/supabase/server";
+// import { createRouteHandlerClient } from "@/lib/server/supabase/server";
 // import { notFound, redirect } from "next/navigation";
 
 // export default async function TenantLayout({
@@ -156,7 +156,7 @@
 //     return <>{children}</>;
 // }
 
-import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { createRouteHandlerClient } from "@/lib/server/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import { TenantProvider } from "./TenantProvider";
 import Link from "next/link";

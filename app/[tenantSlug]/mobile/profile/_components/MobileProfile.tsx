@@ -1,10 +1,10 @@
 "use client";
+
 import { useState, useCallback } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { useAuth } from "@/lib/context/AuthContext";
+import { useAuth } from "@/lib/client/context/AuthContext";
 import VersionInfo from "@/components/shared/VersionInfo";
 import { useRouter } from "next/navigation";
-import { useTenantSlug } from "@/lib/tenant-url";
+import { useTenantSlug } from "@/lib/server/config/tenant-url";
 import {
     Pencil,
     Bell,
@@ -15,11 +15,11 @@ import {
     Building2,
 } from "lucide-react";
 import { Icon } from "@iconify/react";
-import { useStore } from "@/lib/context/StoreContext";
-import { useFastOrderMode } from "@/lib/context/FastOrderModeContext";
-import { navigation } from "@/lib/utils/navigation";
+import { useStore } from "@/lib/client/context/StoreContext";
+import { useFastOrderMode } from "@/lib/client/context/FastOrderModeContext";
+import { navigation } from "@/lib/shared/utils/navigation";
 import { IconPickerDrawer } from "./IconPickerDrawer";
-import { useProfileIcon } from "@/lib/context/ProfileIconContext";
+import { useProfileIcon } from "@/lib/client/context/ProfileIconContext";
 
 // ============================================================================
 // SETTINGS ROW
@@ -67,7 +67,6 @@ const SettingsRow = ({
 // ============================================================================
 
 export default function MobileProfile() {
-    const supabase = createClient();
     const router = useRouter();
     const { url } = useTenantSlug();
     const { profile } = useAuth();
@@ -181,7 +180,7 @@ export default function MobileProfile() {
                 <SettingsRow
                     icon={<Building2 size={20} className="text-gray-900" />}
                     label="Assigned Stores"
-                    sublabel={`You're assigned in ${stores.length} ${stores.length !== 1 ? "stores" : "store"}`}
+                    sublabel={`You're assigned in ${assignedStores.length} ${assignedStores.length !== 1 ? "stores" : "store"}`}
                     onClick={handleAssignedStores}
                 />
                 <SettingsRow

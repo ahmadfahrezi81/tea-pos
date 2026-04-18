@@ -4,21 +4,21 @@ import {
     OpenApiGeneratorV31,
     OpenAPIRegistry,
 } from "@asteasolutions/zod-to-openapi";
-import { registerOrderRoutes } from "@/lib/openapi/orders";
-import { getBackendVersion } from "@/lib/version";
-import { registerTenantRoutes } from "@/lib/openapi/tenants";
-import { registerUserTenantAssignmentRoutes } from "@/lib/openapi/userTenantAssignments";
-import { registerTenantInviteRoutes } from "@/lib/openapi/tenantInvites";
-import { registerProductRoutes } from "@/lib/openapi/products";
-import { registerStoreRoutes } from "@/lib/openapi/stores";
-import { registerExpenseRoutes } from "@/lib/openapi/expenses";
-import { registerDailySummaryRoutes } from "@/lib/openapi/daily-summaries";
-import { registerAssignmentRoutes } from "@/lib/openapi/userStoreAssignments";
-import { registerProfileRoutes } from "@/lib/openapi/profiles";
-import { registerWeatherRoutes } from "@/lib/openapi/weather";
-import { registerNotificationRoutes } from "@/lib/openapi/notifications";
-import { registerDailySummaryPhotoRoutes } from "@/lib/openapi/daily-summary-photos";
-import { registerPaymentRoutes } from "@/lib/openapi/payments";
+import { registerOrderRoutes } from "@/lib/shared/openapi/orders";
+import { getBackendVersion } from "@/lib/shared/version";
+import { registerTenantRoutes } from "@/lib/shared/openapi/tenants";
+import { registerUserTenantAssignmentRoutes } from "@/lib/shared/openapi/userTenantAssignments";
+import { registerTenantInviteRoutes } from "@/lib/shared/openapi/tenantInvites";
+import { registerProductRoutes } from "@/lib/shared/openapi/products";
+import { registerStoreRoutes } from "@/lib/shared/openapi/stores";
+import { registerExpenseRoutes } from "@/lib/shared/openapi/expenses";
+import { registerDailySummaryRoutes } from "@/lib/shared/openapi/daily-summaries";
+import { registerAssignmentRoutes } from "@/lib/shared/openapi/userStoreAssignments";
+import { registerProfileRoutes } from "@/lib/shared/openapi/profiles";
+import { registerWeatherRoutes } from "@/lib/shared/openapi/weather";
+import { registerNotificationRoutes } from "@/lib/shared/openapi/notifications";
+import { registerDailySummaryPhotoRoutes } from "@/lib/shared/openapi/daily-summary-photos";
+import { registerPaymentRoutes } from "@/lib/shared/openapi/payments";
 
 const registry = new OpenAPIRegistry();
 

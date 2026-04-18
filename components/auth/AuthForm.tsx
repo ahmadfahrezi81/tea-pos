@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/client/supabase";
 import Image from "next/image";
 
 export default function AuthForm() {

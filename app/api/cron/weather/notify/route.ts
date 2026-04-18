@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { format } from "date-fns";
-import { createRouteHandlerClient } from "@/lib/supabase/server";
-import { createNotification } from "@/lib/services/notifications";
+import { createRouteHandlerClient } from "@/lib/server/supabase/server";
+import { createNotification } from "@/lib/server/services/notifications";
 import {
     getTodayLocalDateStr,
     getWeatherForDate,
     buildRainLine,
-} from "@/lib/services/weather";
+} from "@/lib/server/services/weather";
 
 // ============================================================================
 // GET /api/cron/weather/notify

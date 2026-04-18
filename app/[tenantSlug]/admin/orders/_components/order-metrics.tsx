@@ -3,7 +3,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { ShoppingCart, Coffee, TrendingUp, DollarSign } from "lucide-react";
-import { OrderListItem } from "@/lib/schemas/order-list";
+import { OrderListItem } from "@/lib/shared/schemas/order-list";
 
 interface OrderMetricsProps {
     orders: OrderListItem[];
@@ -26,11 +26,11 @@ export function OrderMetrics({ orders }: OrderMetricsProps) {
     const totalOrders = orders.length;
     const totalCups = orders.reduce(
         (sum, order) => sum + order.totalQuantity,
-        0
+        0,
     );
     const totalSales = orders.reduce(
         (sum, order) => sum + order.totalAmount,
-        0
+        0,
     );
     const averageOrderValue = totalOrders > 0 ? totalSales / totalOrders : 0;
 

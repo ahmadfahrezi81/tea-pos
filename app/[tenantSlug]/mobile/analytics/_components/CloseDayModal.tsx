@@ -1,6 +1,6 @@
 // import { useEffect, useState } from "react";
 // import { X } from "lucide-react";
-// import { formatRupiah } from "@/lib/utils/formatCurrency";
+// import { formatRupiah } from "@/lib/shared/utils/cn/formatCurrency";
 // import { DailySummary as BaseDailySummary } from "@/lib/types";
 
 // interface Expense {
@@ -191,7 +191,7 @@
 // //components/CloseDayModal.tsx
 // import { useEffect, useState } from "react";
 // import { X } from "lucide-react";
-// import { formatRupiah } from "@/lib/utils/formatCurrency";
+// import { formatRupiah } from "@/lib/shared/utils/cn/formatCurrency";
 // import { DailySummary as BaseDailySummary } from "@/lib/types";
 
 // interface Expense {
@@ -419,9 +419,9 @@
 // components/mobile/components/CloseDayModal.tsx
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
-import { formatRupiah } from "@/lib/utils/formatCurrency";
-import { DailySummary } from "@/lib/schemas/daily-summaries";
-import { Expense } from "@/lib/schemas/expenses";
+import { formatRupiah } from "@/lib/shared/utils/formatCurrency";
+import { DailySummary } from "@/lib/shared/schemas/daily-summaries";
+import { Expense } from "@/lib/shared/schemas/expenses";
 
 type DailySummaryWithExpenses = DailySummary & {
     expenses: Expense[];
@@ -435,7 +435,7 @@ interface CloseDayModalProps {
     onSubmit: (
         actualCash: number,
         notes: string,
-        variance: number
+        variance: number,
     ) => Promise<void>;
     formatDate: (date: string) => string;
     getStoreName: () => string;
@@ -600,7 +600,7 @@ export const CloseDayModal = ({
                                         <span
                                             className={
                                                 parseFloat(
-                                                    closeForm.actualCash
+                                                    closeForm.actualCash,
                                                 ) -
                                                     summary.expectedCash >=
                                                 0
@@ -610,8 +610,8 @@ export const CloseDayModal = ({
                                         >
                                             {formatRupiah(
                                                 parseFloat(
-                                                    closeForm.actualCash
-                                                ) - summary.expectedCash
+                                                    closeForm.actualCash,
+                                                ) - summary.expectedCash,
                                             )}
                                         </span>
                                     </p>

@@ -1,8 +1,8 @@
 "use client";
 import { useState } from "react";
-import { CalendarDays, ChevronsUpDown } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useStore } from "@/lib/context/StoreContext";
+import { useStore } from "@/lib/client/context/StoreContext";
 
 import dynamic from "next/dynamic";
 const DailySalesChart = dynamic(() => import("./DailySalesChart"), {
@@ -31,7 +31,7 @@ const formatMonthForInput = (date: Date) => {
 };
 
 export default function MobileDailySales() {
-    const { selectedStoreId, selectedStore, setIsPickerOpen } = useStore();
+    const { selectedStoreId } = useStore();
     const searchParams = useSearchParams();
 
     const [selectedMonth, setSelectedMonth] = useState(

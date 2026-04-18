@@ -1,13 +1,12 @@
 // app/api/payments/qris/route.ts
-import { createRouteHandlerClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { getCurrentTenantId } from "@/lib/tenant";
+import { createRouteHandlerClient } from "@/lib/server/supabase/server";
+import { createAdminClient } from "@/lib/server/supabase/admin";
+import { getCurrentTenantId } from "@/lib/server/config/tenant";
 import { NextRequest, NextResponse } from "next/server";
 import {
     CreateQrisPaymentInput,
     CreateQrisPaymentResponse,
-} from "@/lib/schemas/payments";
-import { toSnakeKeys } from "@/lib/utils/schemas";
+} from "@/lib/shared/schemas/payments";
 
 // ============================================================================
 // POST /api/payments/qris

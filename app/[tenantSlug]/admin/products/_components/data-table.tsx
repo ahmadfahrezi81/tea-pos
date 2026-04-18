@@ -39,7 +39,7 @@
 // import { Badge } from "@/components/ui/badge";
 // import { Settings2, Plus, X, ArrowDown, ArrowUp } from "lucide-react";
 // import { useState } from "react";
-// import { useCategories } from "@/lib/hooks/products/useCategories";
+// import { useCategories } from "@/lib/client/hooks/products/useCategories";
 
 // interface DataTableProps<TData, TValue> {
 //     columns: ColumnDef<TData, TValue>[];
@@ -636,7 +636,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Settings2, Plus, X, ArrowDown, ArrowUp } from "lucide-react";
 import { useState } from "react";
-import { useCategories } from "@/lib/hooks/products/useCategories";
+import { useCategories } from "@/lib/client/hooks/products/useCategories";
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];

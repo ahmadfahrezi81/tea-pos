@@ -8,13 +8,13 @@ import {
     AlertCircle,
     Check,
 } from "lucide-react";
-import { formatRupiah } from "@/lib/utils/formatCurrency";
-import { DailySummary } from "@/lib/schemas/daily-summaries";
+import { formatRupiah } from "@/lib/shared/utils/formatCurrency";
+import { DailySummary } from "@/lib/shared/schemas/daily-summaries";
 import { SummaryPhotoThumbnail } from "./SummaryPhotoThumbnail";
 import {
     SavedSlottedPhoto,
     SlottedPhoto,
-} from "@/lib/schemas/daily-summary-photos";
+} from "@/lib/shared/schemas/daily-summary-photos";
 import { useState } from "react";
 
 interface ReviewStepProps {

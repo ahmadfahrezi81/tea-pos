@@ -2,7 +2,7 @@
 
 // import { useState, useEffect } from "react";
 // import { Check } from "lucide-react";
-// import { formatRupiah } from "@/lib/utils/formatCurrency";
+// import { formatRupiah } from "@/lib/shared/utils/cn/formatCurrency";
 
 // interface SimpleCashStepProps {
 //     expectedCash: number;
@@ -147,7 +147,7 @@
 
 import { useState, useEffect } from "react";
 import { Check } from "lucide-react";
-import { formatRupiah } from "@/lib/utils/formatCurrency";
+import { formatRupiah } from "@/lib/shared/utils/formatCurrency";
 
 interface SimpleCashStepProps {
     expectedCash: number;

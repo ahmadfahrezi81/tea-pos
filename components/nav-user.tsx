@@ -29,7 +29,7 @@ import {
 
 import { SettingsDialog } from "./settings-dialog";
 import VersionInfo from "./shared/VersionInfo";
-import { useAuth } from "@/lib/context/AuthContext";
+import { useAuth } from "@/lib/client/context/AuthContext";
 
 export function NavUser() {
     const { isMobile } = useSidebar();

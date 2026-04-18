@@ -1,6 +1,6 @@
 // //app/api/store/assignments/route.ts
 
-// import { createRouteHandlerClient } from "@/lib/supabase/server";
+// import { createRouteHandlerClient } from "@/lib/server/supabase/server";
 // import { NextRequest, NextResponse } from "next/server";
 
 // // POST - Create or update assignment
@@ -150,7 +150,7 @@
 // }
 
 // app/api/stores/assignments/route.ts
-import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { createRouteHandlerClient } from "@/lib/server/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import {
     CreateAssignmentInput,
@@ -159,8 +159,8 @@ import {
     CreateAssignmentResponse,
     UpdateAssignmentResponse,
     DeleteAssignmentResponse,
-} from "@/lib/schemas/userStoreAssignments";
-import { toCamelKeys, toSnakeKeys } from "@/lib/utils/schemas";
+} from "@/lib/shared/schemas/userStoreAssignments";
+import { toCamelKeys, toSnakeKeys } from "@/lib/shared/utils/schemas";
 
 // ============================================================================
 // POST /api/stores/assignments
@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
         if (!result.success) {
             return NextResponse.json(
                 { error: "Validation failed", details: result.error.format() },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -192,7 +192,7 @@ export async function POST(request: NextRequest) {
         if (existingAssignment) {
             return NextResponse.json(
                 { error: "Assignment already exists" },
-                { status: 409 }
+                { status: 409 },
             );
         }
 
@@ -224,7 +224,7 @@ export async function POST(request: NextRequest) {
                     error:
                         assignmentError?.message || "Assignment insert failed",
                 },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -237,7 +237,7 @@ export async function POST(request: NextRequest) {
                     error: "Invalid response shape",
                     details: parsed.error.format(),
                 },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
@@ -246,7 +246,7 @@ export async function POST(request: NextRequest) {
         console.error(error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }
@@ -263,7 +263,7 @@ export async function PUT(request: NextRequest) {
         if (!result.success) {
             return NextResponse.json(
                 { error: "Validation failed", details: result.error.format() },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -289,7 +289,7 @@ export async function PUT(request: NextRequest) {
         if (assignmentError || !assignmentData) {
             return NextResponse.json(
                 { error: assignmentError?.message || "Assignment not found" },
-                { status: 404 }
+                { status: 404 },
             );
         }
 
@@ -302,7 +302,7 @@ export async function PUT(request: NextRequest) {
                     error: "Invalid response shape",
                     details: parsed.error.format(),
                 },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
@@ -311,7 +311,7 @@ export async function PUT(request: NextRequest) {
         console.error(error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }
@@ -325,7 +325,7 @@ export async function DELETE(request: NextRequest) {
         const { searchParams } = new URL(request.url);
 
         const queryResult = DeleteAssignmentQuery.safeParse(
-            Object.fromEntries(searchParams)
+            Object.fromEntries(searchParams),
         );
         if (!queryResult.success) {
             return NextResponse.json(
@@ -333,7 +333,7 @@ export async function DELETE(request: NextRequest) {
                     error: "Invalid query parameters",
                     details: queryResult.error.format(),
                 },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -349,7 +349,7 @@ export async function DELETE(request: NextRequest) {
         if (deleteError) {
             return NextResponse.json(
                 { error: deleteError.message },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -362,7 +362,7 @@ export async function DELETE(request: NextRequest) {
                     error: "Invalid response shape",
                     details: parsed.error.format(),
                 },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
@@ -371,7 +371,7 @@ export async function DELETE(request: NextRequest) {
         console.error(error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

@@ -1,10 +1,10 @@
 // "use client";
 // import { useEffect, useMemo } from "react";
 // import { useRouter } from "next/navigation";
-// import { useStores } from "@/lib/hooks/stores/useStores";
-// import { hasSellerRole } from "@/lib/utils/roleUtils";
+// import { useStores } from "@/lib/client/hooks/stores/useStores";
+// import { hasSellerRole } from "@/lib/shared/utils/cn/roleUtils";
 // import { useAuth } from "@/lib/context/AuthContext";
-// import { useTenantSlug } from "@/lib/tenant-url";
+// import { useTenantSlug } from "@/lib/server/config/tenant-url";
 
 // export default function MobilePage() {
 //     const router = useRouter();
