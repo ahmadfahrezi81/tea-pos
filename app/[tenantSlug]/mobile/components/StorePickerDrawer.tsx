@@ -68,9 +68,14 @@ export function StorePickerDrawer() {
                                         <span className="text-lg text-gray-900">
                                             {store.name}
                                         </span>
-                                        {store.isFake && (
+                                        {store.status === "fake" && (
                                             <span className="text-[10px] font-semibold px-1.5 py-0.5 mt-0.5 rounded bg-red-100 text-red-600">
                                                 DEMO
+                                            </span>
+                                        )}
+                                        {store.status === "inactive" && (
+                                            <span className="text-[10px] font-semibold px-1.5 py-0.5 mt-0.5 rounded bg-gray-100 text-gray-500">
+                                                INACTIVE
                                             </span>
                                         )}
                                     </div>

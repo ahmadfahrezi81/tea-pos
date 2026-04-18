@@ -624,10 +624,10 @@ export type Database = {
           address: string | null
           created_at: string | null
           id: string
-          is_fake: boolean
           latitude: number | null
           longitude: number | null
           name: string
+          status: string
           tenant_id: string | null
           updated_at: string | null
         }
@@ -635,10 +635,10 @@ export type Database = {
           address?: string | null
           created_at?: string | null
           id?: string
-          is_fake?: boolean
           latitude?: number | null
           longitude?: number | null
           name: string
+          status?: string
           tenant_id?: string | null
           updated_at?: string | null
         }
@@ -646,10 +646,10 @@ export type Database = {
           address?: string | null
           created_at?: string | null
           id?: string
-          is_fake?: boolean
           latitude?: number | null
           longitude?: number | null
           name?: string
+          status?: string
           tenant_id?: string | null
           updated_at?: string | null
         }

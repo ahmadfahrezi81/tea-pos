@@ -5,13 +5,13 @@ import { NextRequest, NextResponse } from "next/server";
 import {
     CreateStoreInput,
     UpdateStoreInput,
-    ListStoresQuery,
     StoreListResponse,
     CreateStoreResponse,
     UpdateStoreResponse,
     DeleteStoreResponse,
 } from "@/lib/shared/schemas/stores";
 import { toCamelKeys, toSnakeKeys } from "@/lib/shared/utils/schemas";
+import { checkIsAdmin } from "@/lib/server/supabase/checkIsAdmin";
 
 // ============================================================================
 // GET /api/stores
@@ -20,33 +20,56 @@ export async function GET(request: NextRequest) {
     try {
         const supabase = await createRouteHandlerClient();
         const currentTenantId = await getCurrentTenantId();
-        const { searchParams } = new URL(request.url);
 
-        const queryResult = ListStoresQuery.safeParse(
-            Object.fromEntries(searchParams),
-        );
-        if (!queryResult.success) {
+        const {
+            data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) {
             return NextResponse.json(
-                {
-                    error: "Invalid query parameters",
-                    details: queryResult.error.format(),
-                },
-                { status: 400 },
+                { error: "Unauthorized" },
+                { status: 401 },
             );
         }
 
-        const { userId } = queryResult.data;
+        const isAdmin = await checkIsAdmin(supabase);
 
         let storesData;
         let assignmentsData;
 
-        if (userId) {
-            // Fetch only the user's store assignments
+        if (isAdmin) {
+            const { data: stores, error: storesError } = await supabase
+                .from("stores")
+                .select("*")
+                .eq("tenant_id", currentTenantId)
+                .order("name");
+
+            if (storesError) {
+                return NextResponse.json(
+                    { error: storesError.message },
+                    { status: 400 },
+                );
+            }
+
+            const { data: assignments, error: assignmentsError } =
+                await supabase
+                    .from("user_store_assignments")
+                    .select("user_id, store_id, role, is_default");
+
+            if (assignmentsError) {
+                return NextResponse.json(
+                    { error: assignmentsError.message },
+                    { status: 400 },
+                );
+            }
+
+            storesData = stores;
+            assignmentsData = assignments;
+        } else {
             const { data: userAssignments, error: userAssignmentsError } =
                 await supabase
                     .from("user_store_assignments")
                     .select("user_id, store_id, role, is_default")
-                    .eq("user_id", userId);
+                    .eq("user_id", user.id);
 
             if (userAssignmentsError) {
                 return NextResponse.json(
@@ -57,7 +80,6 @@ export async function GET(request: NextRequest) {
 
             const storeIds = userAssignments?.map((a) => a.store_id) || [];
 
-            // Fetch only relevant stores for current tenant
             const { data: stores, error: storesError } = await supabase
                 .from("stores")
                 .select("*")
@@ -74,70 +96,20 @@ export async function GET(request: NextRequest) {
 
             storesData = stores;
             assignmentsData = userAssignments;
-        } else {
-            // Load all stores for current tenant
-            const { data: stores, error: storesError } = await supabase
-                .from("stores")
-                .select("*")
-                .eq("tenant_id", currentTenantId)
-                .order("name");
-
-            if (storesError) {
-                return NextResponse.json(
-                    { error: storesError.message },
-                    { status: 400 },
-                );
-            }
-
-            storesData = stores;
-
-            // Load all assignments
-            const { data: assignments, error: assignmentsError } =
-                await supabase
-                    .from("user_store_assignments")
-                    .select("user_id, store_id, role, is_default");
-
-            if (assignmentsError) {
-                return NextResponse.json(
-                    { error: assignmentsError.message },
-                    { status: 400 },
-                );
-            }
-
-            assignmentsData = assignments;
         }
 
-        // Load users
-        let usersData;
-        if (userId) {
-            const { data: users, error: usersError } = await supabase
-                .from("profiles")
-                .select("id, full_name, email")
-                .eq("id", userId);
+        const { data: usersData, error: usersError } = await supabase
+            .from("profiles")
+            .select("id, full_name, email")
+            .order("full_name");
 
-            if (usersError) {
-                return NextResponse.json(
-                    { error: usersError.message },
-                    { status: 400 },
-                );
-            }
-            usersData = users;
-        } else {
-            const { data: users, error: usersError } = await supabase
-                .from("profiles")
-                .select("id, full_name, email")
-                .order("full_name");
-
-            if (usersError) {
-                return NextResponse.json(
-                    { error: usersError.message },
-                    { status: 400 },
-                );
-            }
-            usersData = users;
+        if (usersError) {
+            return NextResponse.json(
+                { error: usersError.message },
+                { status: 400 },
+            );
         }
 
-        // Group assignments by store with role information
         const assignmentsByStore: Record<
             string,
             Array<{
@@ -158,12 +130,10 @@ export async function GET(request: NextRequest) {
             });
         });
 
-        // Convert to camelCase
         const camelStores = toCamelKeys(storesData || []);
         const camelUsers = toCamelKeys(usersData || []);
         const camelAssignments = toCamelKeys(assignmentsByStore);
 
-        // Validate response
         const response = {
             stores: camelStores,
             users: camelUsers,
@@ -209,23 +179,14 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // const { name, address } = result.data;
-
-        // // Insert store with tenant_id
-        // const storePayload = toSnakeKeys({
-        //     name: name.trim(),
-        //     address: address?.trim() || null,
-        //     tenantId: currentTenantId,
-        // });
-
-        const { name, address, latitude, longitude, isFake } = result.data;
+        const { name, address, latitude, longitude, status } = result.data;
 
         const storePayload = toSnakeKeys({
             name: name.trim(),
             address: address?.trim() || null,
             latitude,
             longitude,
-            isFake,
+            status,
             tenantId: currentTenantId,
         });
 
@@ -242,7 +203,6 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Validate response
         const camelStore = toCamelKeys(storeData);
         const parsed = CreateStoreResponse.safeParse(camelStore);
         if (!parsed.success) {
@@ -282,12 +242,12 @@ export async function PUT(request: NextRequest) {
             );
         }
 
-        const { id, name, address, isFake } = result.data;
+        const { id, name, address, status } = result.data;
 
         const updates = {
             name: name.trim(),
             address: address?.trim() || null,
-            is_fake: isFake,
+            status,
             updated_at: new Date().toISOString(),
         };
 
@@ -306,7 +266,6 @@ export async function PUT(request: NextRequest) {
             );
         }
 
-        // Validate response
         const camelStore = toCamelKeys(storeData);
         const parsed = UpdateStoreResponse.safeParse(camelStore);
         if (!parsed.success) {
@@ -346,13 +305,11 @@ export async function DELETE(request: NextRequest) {
             );
         }
 
-        // Delete all assignments first (explicit cleanup)
         await supabase
             .from("user_store_assignments")
             .delete()
             .eq("store_id", id);
 
-        // Delete the store (tenant isolation via eq filter)
         const { error: storeError } = await supabase
             .from("stores")
             .delete()
@@ -360,7 +317,6 @@ export async function DELETE(request: NextRequest) {
             .eq("tenant_id", currentTenantId);
 
         if (storeError) {
-            // Check for foreign key violation
             if (
                 storeError.message.includes("violates foreign key constraint")
             ) {
@@ -378,7 +334,6 @@ export async function DELETE(request: NextRequest) {
             );
         }
 
-        // Validate response
         const response = { success: true };
         const parsed = DeleteStoreResponse.safeParse(response);
         if (!parsed.success) {

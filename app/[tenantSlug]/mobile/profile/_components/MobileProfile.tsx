@@ -180,7 +180,7 @@ export default function MobileProfile() {
                 <SettingsRow
                     icon={<Building2 size={20} className="text-gray-900" />}
                     label="Assigned Stores"
-                    sublabel={`You're assigned in ${stores.length} ${stores.length !== 1 ? "stores" : "store"}`}
+                    sublabel={`You're assigned in ${assignedStores.length} ${assignedStores.length !== 1 ? "stores" : "store"}`}
                     onClick={handleAssignedStores}
                 />
                 <SettingsRow

@@ -25,6 +25,13 @@ import { UUIDSchema } from "./common";
  */
 
 // ============================================================================
+// STORE STATUS ENUM
+// ============================================================================
+
+export const StoreStatus = z.enum(["active", "fake", "inactive"]);
+export type StoreStatus = z.infer<typeof StoreStatus>;
+
+// ============================================================================
 // INPUT SCHEMAS
 // ============================================================================
 
@@ -38,12 +45,11 @@ export const CreateStoreInput = z
             description: "Store address",
             example: "123 Main St, Jakarta",
         }),
-        // tenantId is NOT included in input - it's derived from session
         latitude: z.number().nullable().optional(),
         longitude: z.number().nullable().optional(),
-        isFake: z.boolean().openapi({
-            description: "Whether this is a fake/practice store",
-            example: false,
+        status: StoreStatus.openapi({
+            description: "Store status",
+            example: "active",
         }),
     })
     .openapi({ title: "CreateStoreInput" });
@@ -59,9 +65,9 @@ export const UpdateStoreInput = z
             description: "Store address",
             example: "123 Main St, Jakarta",
         }),
-        isFake: z.boolean().optional().openapi({
-            description: "Whether this is a fake/practice store",
-            example: false,
+        status: StoreStatus.optional().openapi({
+            description: "Store status",
+            example: "active",
         }),
     })
     .openapi({ title: "UpdateStoreInput" });
@@ -75,7 +81,6 @@ export const ListStoresQuery = z
         userId: UUIDSchema.optional().openapi({
             description: "Filter stores by user assignments",
         }),
-        // tenantId is NOT a query param - it's from the session
     })
     .openapi({ title: "ListStoresQuery" });
 
@@ -106,10 +111,7 @@ export const StoreResponse = z
         address: z.string().nullable(),
         latitude: z.number().nullable().optional(),
         longitude: z.number().nullable().optional(),
-        isFake: z.boolean().openapi({
-            description: "Whether this is a fake/practice store",
-            example: false,
-        }),
+        status: StoreStatus,
         tenantId: UUIDSchema,
         createdAt: z.string().nullable(),
         updatedAt: z.string().nullable(),

@@ -129,6 +129,21 @@ export function StoreSwitcher() {
                                     <Box className="size-3.5 shrink-0" />
                                 </div>
                                 <span>{s.name}</span>
+                                {s.status === "active" && (
+                                    <span className="ml-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-green-100 text-green-700">
+                                        ACTIVE
+                                    </span>
+                                )}
+                                {s.status === "fake" && (
+                                    <span className="ml-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-red-100 text-red-600">
+                                        FAKE
+                                    </span>
+                                )}
+                                {s.status === "inactive" && (
+                                    <span className="ml-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">
+                                        INACTIVE
+                                    </span>
+                                )}
                                 {storeId === s.id && (
                                     <Check className="ml-auto size-4 text-primary" />
                                 )}
