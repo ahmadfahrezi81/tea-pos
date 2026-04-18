@@ -1,12 +1,12 @@
 // app/api/stores/[storeId]/users/route.ts
-import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { createRouteHandlerClient } from "@/lib/server/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import {
     ListStoreAssignmentsQuery,
     ListStoreAssignmentsResponse,
     StoreUserResponse,
-} from "@/lib/schemas/userStoreAssignments";
-import { toCamelKeys } from "@/lib/utils/schemas";
+} from "@/lib/shared/schemas/userStoreAssignments";
+import { toCamelKeys } from "@/lib/shared/utils/schemas";
 
 // ============================================================================
 // GET /api/stores/[storeId]/users
@@ -14,7 +14,7 @@ import { toCamelKeys } from "@/lib/utils/schemas";
 // ============================================================================
 export async function GET(
     request: NextRequest,
-    context: { params: Promise<{ storeId: string }> }
+    context: { params: Promise<{ storeId: string }> },
 ) {
     const { storeId } = await context.params; // ✅ await it!
 
@@ -35,7 +35,7 @@ export async function GET(
                     error: "Invalid query parameters",
                     details: queryResult.error.format(),
                 },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -57,7 +57,7 @@ export async function GET(
           full_name,
           email
         )
-      `
+      `,
             )
             .eq("store_id", validatedStoreId);
 
@@ -71,14 +71,14 @@ export async function GET(
             if (storeError || !storeData) {
                 return NextResponse.json(
                     { error: "Store not found" },
-                    { status: 404 }
+                    { status: 404 },
                 );
             }
 
             if (storeData.tenant_id !== validatedTenantId) {
                 return NextResponse.json(
                     { error: "Store does not belong to this tenant" },
-                    { status: 403 }
+                    { status: 403 },
                 );
             }
         }
@@ -89,12 +89,12 @@ export async function GET(
         if (assignmentsError) {
             return NextResponse.json(
                 { error: assignmentsError.message },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
         const camelAssignments = (assignmentsData || []).map((a) =>
-            toCamelKeys(a)
+            toCamelKeys(a),
         );
 
         const validatedAssignments = camelAssignments
@@ -113,7 +113,7 @@ export async function GET(
                     error: "Invalid response shape",
                     details: parsed.error.format(),
                 },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
@@ -122,7 +122,7 @@ export async function GET(
         console.error("[GET /api/stores/[storeId]/users]", error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

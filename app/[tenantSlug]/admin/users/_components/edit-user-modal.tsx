@@ -29,7 +29,7 @@
 // import { Input } from "@/components/ui/input";
 // import { Button } from "@/components/ui/button";
 // import { UpdateUserInput } from "@/lib/schemas/users";
-// import useUpdateUser from "@/lib/hooks/users/useUpdateUser";
+// import useUpdateUser from "@/lib/client/hooks/users/useUpdateUser";
 // import { Loader2 } from "lucide-react";
 // import { toast } from "sonner";
 
@@ -220,8 +220,8 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { UpdateUserInput } from "@/lib/schemas/users";
-import useUpdateUser from "@/lib/hooks/users/useUpdateUser";
+import { UpdateUserInput } from "@/lib/shared/schemas/users";
+import useUpdateUser from "@/lib/client/hooks/users/useUpdateUser";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -329,7 +329,9 @@ export function EditUserModal({
             onSuccess?.();
         } catch (error) {
             toast.error(
-                error instanceof Error ? error.message : "Failed to update user"
+                error instanceof Error
+                    ? error.message
+                    : "Failed to update user",
             );
         }
     };

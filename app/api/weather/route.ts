@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { createRouteHandlerClient } from "@/lib/server/supabase/server";
 import {
     getTodayLocalDateStr,
     getWeatherForDate,
     getWeatherNextHours,
     WeatherHourlyRow,
-} from "@/lib/services/weather";
-import { WeatherHourlyResponse } from "@/lib/schemas/weather";
+} from "@/lib/server/services/weather";
+import { WeatherHourlyResponse } from "@/lib/shared/schemas/weather";
 
 // ─── Shared helper ────────────────────────────────────────────────────────────
 

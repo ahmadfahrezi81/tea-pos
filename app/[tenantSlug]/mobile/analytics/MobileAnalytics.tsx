@@ -2,12 +2,12 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useAuth } from "@/lib/context/AuthContext";
-import { useSummaries } from "@/lib/hooks/summaries/useDailySummaries";
-import { DailySummary } from "@/lib/schemas/daily-summaries";
-import { Expense } from "@/lib/schemas/expenses";
-import { formatRupiah } from "@/lib/utils/formatCurrency";
-import { toIndonesiaMonthYear } from "@/lib/timezone";
+import { useAuth } from "@/lib/client/context/AuthContext";
+import { useSummaries } from "@/lib/client/hooks/summaries/useDailySummaries";
+import { DailySummary } from "@/lib/shared/schemas/daily-summaries";
+import { Expense } from "@/lib/shared/schemas/expenses";
+import { formatRupiah } from "@/lib/shared/utils/formatCurrency";
+import { toIndonesiaMonthYear } from "@/lib/server/config/timezone";
 import {
     Calendar,
     CalendarDays,
@@ -20,16 +20,16 @@ import { SetExpenseModal } from "./_components/SetExpenseModal";
 import { CloseDayModal } from "./_components/CloseDayModal";
 import { DetailsDrawer } from "./_components/DetailsDrawer";
 import { ConfirmationPopup } from "@/components/mobile/shared/ConfirmationPopup";
-import { useStore } from "@/lib/context/StoreContext";
+import { useStore } from "@/lib/client/context/StoreContext";
 // import MiniDailySalesChart from "./_components/MiniDailySalesChart";
 import {
     isCurrentMonthSelected,
     formatDate,
     getExpensesForDate,
 } from "../analytics/utils/summariesHelpers";
-import { navigation } from "@/lib/utils/navigation";
-import { useTenantSlug } from "@/lib/tenant-url";
-import { useSummaryPhotoCount } from "@/lib/hooks/summaries/useSummaryPhotoCount";
+import { navigation } from "@/lib/shared/utils/navigation";
+import { useTenantSlug } from "@/lib/server/config/tenant-url";
+import { useSummaryPhotoCount } from "@/lib/client/hooks/summaries/useSummaryPhotoCount";
 
 import dynamic from "next/dynamic";
 const MiniDailySalesChart = dynamic(

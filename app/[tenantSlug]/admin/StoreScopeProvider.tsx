@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { useAllStores } from "@/lib/hooks/stores/useAllStores"; // ✅ import store data hook
+import { useAllStores } from "@/lib/client/hooks/stores/useAllStores"; // ✅ import store data hook
 
 type Scope = "company" | "store";
 

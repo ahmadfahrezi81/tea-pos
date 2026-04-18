@@ -1,6 +1,6 @@
 // app/api/stores/route.ts
-import { createRouteHandlerClient } from "@/lib/supabase/server";
-import { getCurrentTenantId } from "@/lib/tenant";
+import { createRouteHandlerClient } from "@/lib/server/supabase/server";
+import { getCurrentTenantId } from "@/lib/server/config/tenant";
 import { NextRequest, NextResponse } from "next/server";
 import {
     CreateStoreInput,
@@ -10,8 +10,8 @@ import {
     CreateStoreResponse,
     UpdateStoreResponse,
     DeleteStoreResponse,
-} from "@/lib/schemas/stores";
-import { toCamelKeys, toSnakeKeys } from "@/lib/utils/schemas";
+} from "@/lib/shared/schemas/stores";
+import { toCamelKeys, toSnakeKeys } from "@/lib/shared/utils/schemas";
 
 // ============================================================================
 // GET /api/stores
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url);
 
         const queryResult = ListStoresQuery.safeParse(
-            Object.fromEntries(searchParams)
+            Object.fromEntries(searchParams),
         );
         if (!queryResult.success) {
             return NextResponse.json(
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
                     error: "Invalid query parameters",
                     details: queryResult.error.format(),
                 },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
             if (userAssignmentsError) {
                 return NextResponse.json(
                     { error: userAssignmentsError.message },
-                    { status: 400 }
+                    { status: 400 },
                 );
             }
 
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
             if (storesError) {
                 return NextResponse.json(
                     { error: storesError.message },
-                    { status: 400 }
+                    { status: 400 },
                 );
             }
 
@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
             if (storesError) {
                 return NextResponse.json(
                     { error: storesError.message },
-                    { status: 400 }
+                    { status: 400 },
                 );
             }
 
@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
             if (assignmentsError) {
                 return NextResponse.json(
                     { error: assignmentsError.message },
-                    { status: 400 }
+                    { status: 400 },
                 );
             }
 
@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
             if (usersError) {
                 return NextResponse.json(
                     { error: usersError.message },
-                    { status: 400 }
+                    { status: 400 },
                 );
             }
             usersData = users;
@@ -131,7 +131,7 @@ export async function GET(request: NextRequest) {
             if (usersError) {
                 return NextResponse.json(
                     { error: usersError.message },
-                    { status: 400 }
+                    { status: 400 },
                 );
             }
             usersData = users;
@@ -178,7 +178,7 @@ export async function GET(request: NextRequest) {
                     error: "Invalid response shape",
                     details: parsed.error.format(),
                 },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
@@ -187,7 +187,7 @@ export async function GET(request: NextRequest) {
         console.error(error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }
@@ -205,7 +205,7 @@ export async function POST(request: NextRequest) {
         if (!result.success) {
             return NextResponse.json(
                 { error: "Validation failed", details: result.error.format() },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -237,7 +237,7 @@ export async function POST(request: NextRequest) {
         if (storeError || !storeData) {
             return NextResponse.json(
                 { error: storeError?.message || "Store insert failed" },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -250,7 +250,7 @@ export async function POST(request: NextRequest) {
                     error: "Invalid response shape",
                     details: parsed.error.format(),
                 },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
@@ -259,7 +259,7 @@ export async function POST(request: NextRequest) {
         console.error(error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }
@@ -277,7 +277,7 @@ export async function PUT(request: NextRequest) {
         if (!result.success) {
             return NextResponse.json(
                 { error: "Validation failed", details: result.error.format() },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -301,7 +301,7 @@ export async function PUT(request: NextRequest) {
         if (storeError || !storeData) {
             return NextResponse.json(
                 { error: storeError?.message || "Store not found" },
-                { status: 404 }
+                { status: 404 },
             );
         }
 
@@ -314,7 +314,7 @@ export async function PUT(request: NextRequest) {
                     error: "Invalid response shape",
                     details: parsed.error.format(),
                 },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
@@ -323,7 +323,7 @@ export async function PUT(request: NextRequest) {
         console.error(error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }
@@ -341,7 +341,7 @@ export async function DELETE(request: NextRequest) {
         if (!id) {
             return NextResponse.json(
                 { error: "Store ID is required" },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -367,13 +367,13 @@ export async function DELETE(request: NextRequest) {
                     {
                         error: "Cannot delete store because it has related data (e.g. daily summaries). Remove those first or archive the store.",
                     },
-                    { status: 400 }
+                    { status: 400 },
                 );
             }
 
             return NextResponse.json(
                 { error: storeError.message },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -386,7 +386,7 @@ export async function DELETE(request: NextRequest) {
                     error: "Invalid response shape",
                     details: parsed.error.format(),
                 },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
@@ -395,7 +395,7 @@ export async function DELETE(request: NextRequest) {
         console.error(error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

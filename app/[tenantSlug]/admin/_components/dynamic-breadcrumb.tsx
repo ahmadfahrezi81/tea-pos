@@ -9,7 +9,7 @@
 // // //     BreadcrumbPage,
 // // //     BreadcrumbSeparator,
 // // // } from "@/components/ui/breadcrumb";
-// // // import { useTenantSlug } from "@/lib/tenant-url";
+// // // import { useTenantSlug } from "@/lib/server/config/tenant-url";
 // // // import React from "react";
 
 // // // export function DynamicBreadcrumb() {
@@ -88,7 +88,7 @@
 // // //     BreadcrumbPage,
 // // //     BreadcrumbSeparator,
 // // // } from "@/components/ui/breadcrumb";
-// // // import { useTenantSlug } from "@/lib/tenant-url";
+// // // import { useTenantSlug } from "@/lib/server/config/tenant-url";
 // // // import { Box, Boxes } from "lucide-react";
 // // // import React from "react";
 
@@ -175,7 +175,7 @@
 // //     BreadcrumbPage,
 // //     BreadcrumbSeparator,
 // // } from "@/components/ui/breadcrumb";
-// // import { useTenantSlug } from "@/lib/tenant-url";
+// // import { useTenantSlug } from "@/lib/server/config/tenant-url";
 // // import { Box, Boxes } from "lucide-react";
 // // import { useStoreScope } from "@/app/[tenantSlug]/admin/StoreScopeProvider";
 
@@ -306,7 +306,7 @@
 // //     BreadcrumbPage,
 // //     BreadcrumbSeparator,
 // // } from "@/components/ui/breadcrumb";
-// // import { useTenantSlug } from "@/lib/tenant-url";
+// // import { useTenantSlug } from "@/lib/server/config/tenant-url";
 // // import { Box, Boxes } from "lucide-react";
 // // import { useStoreScope } from "@/app/[tenantSlug]/admin/StoreScopeProvider";
 
@@ -437,7 +437,7 @@
 //     BreadcrumbPage,
 //     BreadcrumbSeparator,
 // } from "@/components/ui/breadcrumb";
-// import { useTenantSlug } from "@/lib/tenant-url";
+// import { useTenantSlug } from "@/lib/server/config/tenant-url";
 // import { Box, Boxes } from "lucide-react";
 // import { useStoreScope } from "@/app/[tenantSlug]/admin/StoreScopeProvider";
 // import { useTenant } from "@/app/[tenantSlug]/TenantProvider"; // ✅ import tenant context
@@ -577,12 +577,12 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useAllStores } from "@/lib/hooks/stores/useAllStores";
-import { useTenantSlug } from "@/lib/tenant-url";
+import { useAllStores } from "@/lib/client/hooks/stores/useAllStores";
+import { useTenantSlug } from "@/lib/server/config/tenant-url";
 import { Box, Boxes, ChevronsUpDown, Check } from "lucide-react";
 import { useStoreScope } from "@/app/[tenantSlug]/admin/StoreScopeProvider";
 import { useTenant } from "@/app/[tenantSlug]/TenantProvider";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/shared/utils/cn";
 
 export function DynamicBreadcrumb() {
     const pathname = usePathname();

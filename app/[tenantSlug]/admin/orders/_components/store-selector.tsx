@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { Check, ChevronsUpDown, Store } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/shared/utils/cn";
 
 interface Store {
     id: string;

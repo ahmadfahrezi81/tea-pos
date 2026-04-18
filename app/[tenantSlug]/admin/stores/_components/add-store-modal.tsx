@@ -23,8 +23,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { CreateStoreInput } from "@/lib/schemas/stores";
-import useCreateStore from "@/lib/hooks/stores/useCreateStore";
+import { CreateStoreInput } from "@/lib/shared/schemas/stores";
+import useCreateStore from "@/lib/client/hooks/stores/useCreateStore";
 import dynamic from "next/dynamic";
 import { ScopeBadge } from "../../_components/scope-badge";
 
@@ -33,7 +33,7 @@ const DynamicMap = dynamic(
     () => import("./map-selector").then((m) => m.MapSelector),
     {
         ssr: false,
-    }
+    },
 );
 
 interface AddStoreModalProps {
@@ -74,7 +74,7 @@ export function AddStoreModal({
             onSuccess?.();
         } catch (err) {
             toast.error(
-                err instanceof Error ? err.message : "Failed to create store"
+                err instanceof Error ? err.message : "Failed to create store",
             );
         }
     };

@@ -30,8 +30,8 @@
 // import { Button } from "@/components/ui/button";
 // import { Loader2, Upload, Plus, X } from "lucide-react";
 // import { toast } from "sonner";
-// import { createClient } from "@/lib/supabase/client";
-// import { useCategories } from "@/lib/hooks/products/useCategories";
+// import { createClient } from "@/lib/client/supabase";
+// import { useCategories } from "@/lib/client/hooks/products/useCategories";
 
 // const EditProductSchema = z.object({
 //     name: z.string().min(1, "Product name is required"),
@@ -493,10 +493,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2, Upload, Plus, X } from "lucide-react";
 import { toast } from "sonner";
-import { createClient } from "@/lib/supabase/client";
-import { useCategories } from "@/lib/hooks/products/useCategories";
-import { UpdateProductInput } from "@/lib/schemas/products";
-import type { Product } from "@/lib/schemas/products";
+import { createClient } from "@/lib/client/supabase";
+import { useCategories } from "@/lib/client/hooks/products/useCategories";
+import { UpdateProductInput } from "@/lib/shared/schemas/products";
+import type { Product } from "@/lib/shared/schemas/products";
 
 type EditProductFormData = Omit<UpdateProductInput, "id">;
 
@@ -610,7 +610,7 @@ export function EditProductModal({
             setNewCategoryName("");
         } catch (err) {
             toast.error(
-                err instanceof Error ? err.message : "Error creating category"
+                err instanceof Error ? err.message : "Error creating category",
             );
         } finally {
             setIsAddingCategory(false);
@@ -673,7 +673,7 @@ export function EditProductModal({
             onOpenChange(false);
         } catch (err) {
             toast.error(
-                err instanceof Error ? err.message : "Failed to update product"
+                err instanceof Error ? err.message : "Failed to update product",
             );
         } finally {
             setIsSubmitting(false);
@@ -761,8 +761,8 @@ export function EditProductModal({
                                             onChange={(e) =>
                                                 field.onChange(
                                                     parseFloat(
-                                                        e.target.value
-                                                    ) || 0
+                                                        e.target.value,
+                                                    ) || 0,
                                                 )
                                             }
                                         />
@@ -817,7 +817,7 @@ export function EditProductModal({
                                                 value={newCategoryName}
                                                 onChange={(e) =>
                                                     setNewCategoryName(
-                                                        e.target.value
+                                                        e.target.value,
                                                     )
                                                 }
                                             />

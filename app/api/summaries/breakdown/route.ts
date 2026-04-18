@@ -1,6 +1,6 @@
 // app/api/summaries/breakdown/route.ts
-import { createRouteHandlerClient } from "@/lib/supabase/server";
-import { getCurrentTenantId } from "@/lib/tenant";
+import { createRouteHandlerClient } from "@/lib/server/supabase/server";
+import { getCurrentTenantId } from "@/lib/server/config/tenant";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -63,16 +63,22 @@ export async function GET(request: NextRequest) {
             {};
 
         (orders ?? []).forEach((order) => {
-            order.order_items?.forEach((item) => {
-                const name =
-                    (item.products as { name: string } | null)?.name ??
-                    "Unknown Product";
-                if (!breakdown[name]) {
-                    breakdown[name] = { quantity: 0, revenue: 0 };
-                }
-                breakdown[name].quantity += item.quantity;
-                breakdown[name].revenue += item.total_price;
-            });
+            order.order_items?.forEach(
+                (item: {
+                    products: { name: string } | null;
+                    quantity: number;
+                    total_price: number;
+                }) => {
+                    const name =
+                        (item.products as { name: string } | null)?.name ??
+                        "Unknown Product";
+                    if (!breakdown[name]) {
+                        breakdown[name] = { quantity: 0, revenue: 0 };
+                    }
+                    breakdown[name].quantity += item.quantity;
+                    breakdown[name].revenue += item.total_price;
+                },
+            );
         });
 
         return NextResponse.json({ breakdown });

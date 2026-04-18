@@ -1,15 +1,18 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useProducts } from "@/lib/hooks/products/useProducts";
+import { useProducts } from "@/lib/client/hooks/products/useProducts";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search } from "lucide-react";
 import { ProductGrid } from "../../pos/_components/product-grid";
 import { Cart } from "../../pos/_components/cart";
-import { CreateOrderInput, CreateOrderResponse } from "@/lib/schemas/orders";
+import {
+    CreateOrderInput,
+    CreateOrderResponse,
+} from "@/lib/shared/schemas/orders";
 import { toast } from "sonner";
-import type { Product } from "@/lib/schemas/products";
+import type { Product } from "@/lib/shared/schemas/products";
 import { ScopeBadge } from "../../_components/scope-badge";
 import { useStoreScope } from "../../StoreScopeProvider"; // ✅ get store context
 
@@ -33,7 +36,7 @@ export default function StorePosPage() {
     const filteredProducts = useMemo(() => {
         const query = searchQuery.toLowerCase();
         return products.filter(
-            (p) => p.isActive && p.name.toLowerCase().includes(query)
+            (p) => p.isActive && p.name.toLowerCase().includes(query),
         );
     }, [products, searchQuery]);
 
@@ -55,7 +58,7 @@ export default function StorePosPage() {
                 return prev.map((item) =>
                     item.productId === product.id
                         ? { ...item, quantity: item.quantity + 1 }
-                        : item
+                        : item,
                 );
             }
             return [
@@ -74,13 +77,13 @@ export default function StorePosPage() {
     const updateQuantity = (productId: string, quantity: number) => {
         if (quantity <= 0) {
             setCart((prev) =>
-                prev.filter((item) => item.productId !== productId)
+                prev.filter((item) => item.productId !== productId),
             );
         } else {
             setCart((prev) =>
                 prev.map((item) =>
-                    item.productId === productId ? { ...item, quantity } : item
-                )
+                    item.productId === productId ? { ...item, quantity } : item,
+                ),
             );
         }
     };
@@ -126,7 +129,7 @@ export default function StorePosPage() {
                     }).format(amount);
 
                 toast.success(
-                    `Order processed! Total: ${formatRupiah(data.totalAmount)}`
+                    `Order processed! Total: ${formatRupiah(data.totalAmount)}`,
                 );
                 setCart([]);
             } else {

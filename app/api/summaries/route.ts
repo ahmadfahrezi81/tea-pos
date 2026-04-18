@@ -1,6 +1,6 @@
 // app/api/summaries/route.ts
-import { createRouteHandlerClient } from "@/lib/supabase/server";
-import { getCurrentTenantId } from "@/lib/tenant";
+import { createRouteHandlerClient } from "@/lib/server/supabase/server";
+import { getCurrentTenantId } from "@/lib/server/config/tenant";
 import { NextRequest, NextResponse } from "next/server";
 import {
     CreateDailySummaryInput,
@@ -9,8 +9,8 @@ import {
     DailySummaryListResponse,
     CreateDailySummaryResponse,
     UpdateDailySummaryResponse,
-} from "@/lib/schemas/daily-summaries";
-import { toCamelKeys, toSnakeKeys } from "@/lib/utils/schemas";
+} from "@/lib/shared/schemas/daily-summaries";
+import { toCamelKeys, toSnakeKeys } from "@/lib/shared/utils/schemas";
 
 // ============================================================================
 // TYPES

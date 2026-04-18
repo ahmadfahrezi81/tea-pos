@@ -21,7 +21,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { StoreUser } from "@/lib/schemas/userStoreAssignments";
+import { StoreUser } from "@/lib/shared/schemas/userStoreAssignments";
 import { toast } from "sonner";
 
 const getRoleIcon = (role: string) => {
@@ -38,7 +38,7 @@ const getRoleIcon = (role: string) => {
 
 // Factory function to create columns with callbacks
 export const createColumns = (
-    onRemove: (user: StoreUser) => void
+    onRemove: (user: StoreUser) => void,
 ): ColumnDef<StoreUser>[] => [
     {
         id: "select",

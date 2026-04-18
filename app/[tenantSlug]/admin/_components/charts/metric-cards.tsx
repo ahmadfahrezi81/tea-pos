@@ -7,7 +7,7 @@ import {
     Store,
     CupSoda,
 } from "lucide-react";
-import { AdminMetricsResponse } from "@/lib/schemas/analytics";
+import { AdminMetricsResponse } from "@/lib/shared/schemas/analytics";
 
 interface MetricCardProps {
     title: string;

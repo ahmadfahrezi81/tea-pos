@@ -1,7 +1,7 @@
 "use client";
 
-import { formatRupiah } from "@/lib/utils/formatCurrency";
-import { CashBreakdown } from "@/lib/schemas/daily-summaries";
+import { formatRupiah } from "@/lib/shared/utils/formatCurrency";
+import { CashBreakdown } from "@/lib/shared/schemas/daily-summaries";
 import { useRef, useState } from "react";
 
 const DENOMINATIONS: {

@@ -267,7 +267,7 @@
 // components/mobile/components/SetBalanceModal.tsx
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
-import { DailySummary } from "@/lib/schemas/daily-summaries";
+import { DailySummary } from "@/lib/shared/schemas/daily-summaries";
 
 interface SetBalanceModalProps {
     isOpen: boolean;

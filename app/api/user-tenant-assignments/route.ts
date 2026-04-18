@@ -1,13 +1,13 @@
 // app/api/user-tenant-assignments/route.ts
-import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { createRouteHandlerClient } from "@/lib/server/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import {
     AssignUserToTenantInput,
     ListUserTenantAssignmentsQuery,
     UserTenantAssignmentListResponse,
     AssignUserToTenantResponse,
-} from "@/lib/schemas/userTenantAssignments";
-import { toCamelKeys, toSnakeKeys } from "@/lib/utils/schemas";
+} from "@/lib/shared/schemas/userTenantAssignments";
+import { toCamelKeys, toSnakeKeys } from "@/lib/shared/utils/schemas";
 
 // ============================================================================
 // GET /api/user-tenant-assignments
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url);
 
         const queryResult = ListUserTenantAssignmentsQuery.safeParse(
-            Object.fromEntries(searchParams)
+            Object.fromEntries(searchParams),
         );
         if (!queryResult.success) {
             return NextResponse.json(
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
                     error: "Invalid query parameters",
                     details: queryResult.error.format(),
                 },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
         if (userError || !user) {
             return NextResponse.json(
                 { error: "Unauthorized" },
-                { status: 401 }
+                { status: 401 },
             );
         }
 
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
         if (!userAccess) {
             return NextResponse.json(
                 { error: "Access denied - you don't belong to this tenant" },
-                { status: 403 }
+                { status: 403 },
             );
         }
 
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
                 `
                 *,
                 profiles(full_name, email, phone_number, status)
-            `
+            `,
             )
             .eq("tenant_id", tenantId)
             .order("created_at", { ascending: false });
@@ -83,14 +83,14 @@ export async function GET(request: NextRequest) {
         if (!parsed.success) {
             console.error(
                 "User tenant assignments response validation failed:",
-                parsed.error
+                parsed.error,
             );
             return NextResponse.json(
                 {
                     error: "Invalid response shape",
                     details: parsed.error.format(),
                 },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
         console.error(error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
         if (!result.success) {
             return NextResponse.json(
                 { error: "Validation failed", details: result.error.format() },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
         if (userError || !user) {
             return NextResponse.json(
                 { error: "Unauthorized" },
-                { status: 401 }
+                { status: 401 },
             );
         }
 
@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
                 {
                     error: "Access denied - admin or owner role required to assign users",
                 },
-                { status: 403 }
+                { status: 403 },
             );
         }
 
@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
         if (targetUserError || !targetUser) {
             return NextResponse.json(
                 { error: "Target user not found" },
-                { status: 404 }
+                { status: 404 },
             );
         }
 
@@ -179,7 +179,7 @@ export async function POST(request: NextRequest) {
         if (existingAssignment) {
             return NextResponse.json(
                 { error: "User is already assigned to this tenant" },
-                { status: 409 }
+                { status: 409 },
             );
         }
 
@@ -203,7 +203,7 @@ export async function POST(request: NextRequest) {
                         assignmentError?.message ||
                         "Assignment creation failed",
                 },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -222,7 +222,7 @@ export async function POST(request: NextRequest) {
                     error: "Invalid response shape",
                     details: parsed.error.format(),
                 },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
@@ -231,7 +231,7 @@ export async function POST(request: NextRequest) {
         console.error(error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

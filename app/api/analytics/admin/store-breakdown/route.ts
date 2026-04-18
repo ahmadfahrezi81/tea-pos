@@ -1,11 +1,11 @@
 // app/api/analytics/admin/store-breakdown/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@/lib/supabase/server";
-import { getCurrentTenantId } from "@/lib/tenant";
+import { createRouteHandlerClient } from "@/lib/server/supabase/server";
+import { getCurrentTenantId } from "@/lib/server/config/tenant";
 import {
     AdminDateRangeQuery,
     AdminStoreBreakdownResponse,
-} from "@/lib/schemas/analytics";
+} from "@/lib/shared/schemas/analytics";
 
 // ============================================================================
 // HELPER: Fetch all orders with pagination
@@ -16,7 +16,7 @@ async function fetchAllOrders(
     tenantId: string,
     startDate: string,
     endDate: string,
-    storeIds?: string[]
+    storeIds?: string[],
 ) {
     const pageSize = 1000;
     let from = 0;
@@ -32,7 +32,7 @@ async function fetchAllOrders(
                 id,
                 store_id,
                 stores!inner(name)
-            `
+            `,
             )
             .eq("tenant_id", tenantId)
             .gte("created_at", startDate)
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
 
         // Validate query parameters
         const queryResult = AdminDateRangeQuery.safeParse(
-            Object.fromEntries(searchParams)
+            Object.fromEntries(searchParams),
         );
         if (!queryResult.success) {
             return NextResponse.json(
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
                     error: "Invalid query parameters",
                     details: queryResult.error.format(),
                 },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -94,11 +94,11 @@ export async function GET(request: NextRequest) {
         const start = new Date(
             `${dateFrom}T00:00:00+${String(TIMEZONE_OFFSET).padStart(
                 2,
-                "0"
-            )}:00`
+                "0",
+            )}:00`,
         ).toISOString();
         const end = new Date(
-            `${dateTo}T23:59:59+${String(TIMEZONE_OFFSET).padStart(2, "0")}:00`
+            `${dateTo}T23:59:59+${String(TIMEZONE_OFFSET).padStart(2, "0")}:00`,
         ).toISOString();
 
         // Fetch orders grouped by store with pagination (optionally filtered)
@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
             currentTenantId,
             start,
             end,
-            storeIds
+            storeIds,
         );
 
         // Aggregate by store
@@ -143,7 +143,7 @@ export async function GET(request: NextRequest) {
                 percentage:
                     totalOrders > 0
                         ? Number(
-                              ((store.orders / totalOrders) * 100).toFixed(1)
+                              ((store.orders / totalOrders) * 100).toFixed(1),
                           )
                         : 0,
             }))
@@ -158,14 +158,14 @@ export async function GET(request: NextRequest) {
         if (!parsed.success) {
             console.error(
                 "AdminStoreBreakdownResponse validation failed:",
-                parsed.error
+                parsed.error,
             );
             return NextResponse.json(
                 {
                     error: "Invalid response shape",
                     details: parsed.error.format(),
                 },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
@@ -174,7 +174,7 @@ export async function GET(request: NextRequest) {
         console.error("Admin store breakdown error:", error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

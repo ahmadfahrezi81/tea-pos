@@ -4,11 +4,11 @@ import { useRef, useState } from "react";
 import { ImagePlus, Loader2, CircleMinus } from "lucide-react";
 import imageCompression from "browser-image-compression";
 import { SummaryPhotoThumbnail } from "./SummaryPhotoThumbnail";
-import { PhotoType } from "@/lib/schemas/daily-summary-photos";
+import { PhotoType } from "@/lib/shared/schemas/daily-summary-photos";
 import {
     SlottedPhoto,
     SavedSlottedPhoto,
-} from "@/lib/schemas/daily-summary-photos";
+} from "@/lib/shared/schemas/daily-summary-photos";
 
 // Slots that have a quantity input and their fixed unit
 const QUANTITY_CONFIG: Partial<

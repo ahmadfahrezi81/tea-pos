@@ -28,7 +28,7 @@
 // import { Input } from "@/components/ui/input";
 // import { Button } from "@/components/ui/button";
 // import { CreateUserInput } from "@/lib/schemas/users";
-// import useCreateUser from "@/lib/hooks/users/useCreateUser";
+// import useCreateUser from "@/lib/client/hooks/users/useCreateUser";
 // import { Eye, EyeOff, Loader2 } from "lucide-react";
 // import { toast } from "sonner"; // 👈 new import
 
@@ -286,9 +286,9 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { CreateUserInput, UpdateUserInput } from "@/lib/schemas/users";
-import useCreateUser from "@/lib/hooks/users/useCreateUser";
-import useUpdateUser from "@/lib/hooks/users/useUpdateUser";
+import { CreateUserInput, UpdateUserInput } from "@/lib/shared/schemas/users";
+import useCreateUser from "@/lib/client/hooks/users/useCreateUser";
+import useUpdateUser from "@/lib/client/hooks/users/useUpdateUser";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -369,7 +369,7 @@ export function UserFormModal({
             toast.error(
                 error instanceof Error
                     ? error.message
-                    : `Failed to ${isEditMode ? "update" : "create"} user`
+                    : `Failed to ${isEditMode ? "update" : "create"} user`,
             );
         }
     };
@@ -391,7 +391,7 @@ export function UserFormModal({
                 <Form {...form}>
                     <form
                         onSubmit={form.handleSubmit(onSubmit, (errors) =>
-                            console.log("Validation errors:", errors)
+                            console.log("Validation errors:", errors),
                         )}
                         className="space-y-6"
                     >
@@ -495,7 +495,7 @@ export function UserFormModal({
                                                         className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                                                         onClick={() =>
                                                             setShowPassword(
-                                                                !showPassword
+                                                                !showPassword,
                                                             )
                                                         }
                                                     >
@@ -539,7 +539,7 @@ export function UserFormModal({
                                                         className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                                                         onClick={() =>
                                                             setShowConfirmPassword(
-                                                                !showConfirmPassword
+                                                                !showConfirmPassword,
                                                             )
                                                         }
                                                     >

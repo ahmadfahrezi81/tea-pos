@@ -1308,8 +1308,8 @@
 // components/mobile/components/SetExpenseModal.tsx
 import { useState, useEffect } from "react";
 import { X, CircleMinus } from "lucide-react";
-import { DailySummary } from "@/lib/schemas/daily-summaries";
-import { Expense } from "@/lib/schemas/expenses";
+import { DailySummary } from "@/lib/shared/schemas/daily-summaries";
+import { Expense } from "@/lib/shared/schemas/expenses";
 
 type DailySummaryWithExpenses = DailySummary & {
     expenses?: Expense[];
@@ -1439,7 +1439,7 @@ export const SetExpenseModal = ({
         return (
             expenseForm.items.length > 0 &&
             expenseForm.items.every(
-                (item) => item.amount && parseInt(item.amount, 10) > 0
+                (item) => item.amount && parseInt(item.amount, 10) > 0,
             )
         );
     };
@@ -1541,7 +1541,7 @@ export const SetExpenseModal = ({
                                         onChange={(e) =>
                                             updateExpenseAmount(
                                                 idx,
-                                                e.target.value
+                                                e.target.value,
                                             )
                                         }
                                         className="w-48 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"

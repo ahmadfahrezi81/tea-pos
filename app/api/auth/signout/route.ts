@@ -1,5 +1,5 @@
 // app/api/auth/signout/route.ts
-import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { createRouteHandlerClient } from "@/lib/server/supabase/server";
 import { NextResponse } from "next/server";
 
 export async function POST() {

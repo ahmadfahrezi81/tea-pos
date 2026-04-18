@@ -1,14 +1,14 @@
 // app/api/orders/route.ts
-import { createRouteHandlerClient } from "@/lib/supabase/server";
-import { getCurrentTenantId } from "@/lib/tenant";
+import { createRouteHandlerClient } from "@/lib/server/supabase/server";
+import { getCurrentTenantId } from "@/lib/server/config/tenant";
 import { NextRequest, NextResponse } from "next/server";
 import {
     CreateOrderInput,
     ListOrdersQuery,
     OrderListResponse,
     CreateOrderResponse,
-} from "@/lib/schemas/orders";
-import { toCamelKeys, toSnakeKeys } from "@/lib/utils/schemas";
+} from "@/lib/shared/schemas/orders";
+import { toCamelKeys, toSnakeKeys } from "@/lib/shared/utils/schemas";
 
 // ============================================================================
 // GET /api/orders
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url);
 
         const queryResult = ListOrdersQuery.safeParse(
-            Object.fromEntries(searchParams)
+            Object.fromEntries(searchParams),
         );
         if (!queryResult.success) {
             return NextResponse.json(
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
                     error: "Invalid query parameters",
                     details: queryResult.error.format(),
                 },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
                 stores(name),
                 profiles(full_name),
                 order_items(*, products(name))
-            `
+            `,
             )
             .eq("tenant_id", currentTenantId)
             .order("created_at", { ascending: false });
@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
                     error: "Invalid response shape",
                     details: parsed.error.format(),
                 },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
         console.error(error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
         if (!result.success) {
             return NextResponse.json(
                 { error: "Validation failed", details: result.error.format() },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
         if (userError || !user) {
             return NextResponse.json(
                 { error: "Unauthorized" },
-                { status: 401 }
+                { status: 401 },
             );
         }
 
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
         if (storeError || !store) {
             return NextResponse.json(
                 { error: "Store not found or access denied" },
-                { status: 404 }
+                { status: 404 },
             );
         }
 
@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
                 {
                     error: "Access denied - seller role required for this store",
                 },
-                { status: 403 }
+                { status: 403 },
             );
         }
 
@@ -159,13 +159,13 @@ export async function POST(request: NextRequest) {
         if (productsError) {
             return NextResponse.json(
                 { error: "Error validating products" },
-                { status: 400 }
+                { status: 400 },
             );
         }
         if (!products || products.length !== productIds.length) {
             return NextResponse.json(
                 { error: "Some products are invalid or inactive" },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -178,7 +178,7 @@ export async function POST(request: NextRequest) {
                     {
                         error: `Product ${item.productId} not found or inactive.`,
                     },
-                    { status: 400 }
+                    { status: 400 },
                 );
             }
             if (Math.abs(dbPrice - item.unitPrice) > 0.01) {
@@ -186,7 +186,7 @@ export async function POST(request: NextRequest) {
                     {
                         error: `Price mismatch for product ${item.productId}. Expected ${dbPrice}, got ${item.unitPrice}`,
                     },
-                    { status: 400 }
+                    { status: 400 },
                 );
             }
         }
@@ -194,7 +194,7 @@ export async function POST(request: NextRequest) {
         // calculate total
         const totalAmount = items.reduce(
             (sum, i) => sum + i.unitPrice * i.quantity,
-            0
+            0,
         );
 
         // insert order with tenant_id inherited from store
@@ -214,7 +214,7 @@ export async function POST(request: NextRequest) {
         if (orderError || !orderData) {
             return NextResponse.json(
                 { error: orderError?.message || "Order insert failed" },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -227,7 +227,7 @@ export async function POST(request: NextRequest) {
                 unitPrice: i.unitPrice,
                 totalPrice: i.unitPrice * i.quantity,
                 tenantId: store.tenant_id,
-            }))
+            })),
         );
 
         const { error: itemsError } = await supabase
@@ -237,7 +237,7 @@ export async function POST(request: NextRequest) {
         if (itemsError) {
             return NextResponse.json(
                 { error: itemsError.message },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -250,7 +250,7 @@ export async function POST(request: NextRequest) {
                     error: "Invalid response shape",
                     details: parsed.error.format(),
                 },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
@@ -259,7 +259,7 @@ export async function POST(request: NextRequest) {
         console.error(error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

@@ -1,8 +1,8 @@
 // app/api/tenants/current/route.ts
-import { createRouteHandlerClient } from "@/lib/supabase/server";
-import { getCurrentTenantId } from "@/lib/tenant";
+import { createRouteHandlerClient } from "@/lib/server/supabase/server";
+import { getCurrentTenantId } from "@/lib/server/config/tenant";
 import { NextResponse } from "next/server";
-import { toCamelKeys } from "@/lib/utils/schemas";
+import { toCamelKeys } from "@/lib/shared/utils/schemas";
 
 export async function GET() {
     try {
@@ -12,7 +12,7 @@ export async function GET() {
         if (!currentTenantId) {
             return NextResponse.json(
                 { error: "No tenant context" },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -24,7 +24,7 @@ export async function GET() {
         if (userError || !user) {
             return NextResponse.json(
                 { error: "Unauthorized" },
-                { status: 401 }
+                { status: 401 },
             );
         }
 
@@ -39,7 +39,7 @@ export async function GET() {
         if (!userAccess) {
             return NextResponse.json(
                 { error: "Access denied to this tenant" },
-                { status: 403 }
+                { status: 403 },
             );
         }
 
@@ -61,7 +61,7 @@ export async function GET() {
         console.error(error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

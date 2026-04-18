@@ -1,5 +1,5 @@
-import { createRouteHandlerClient } from "@/lib/supabase/server";
-import { getCurrentTenantId } from "@/lib/tenant";
+import { createRouteHandlerClient } from "@/lib/server/supabase/server";
+import { getCurrentTenantId } from "@/lib/server/config/tenant";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {

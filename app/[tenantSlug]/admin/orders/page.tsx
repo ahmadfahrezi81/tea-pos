@@ -3,13 +3,13 @@
 
 import { useState, useMemo } from "react";
 import { useTenant } from "../../TenantProvider";
-import { useAllStores } from "@/lib/hooks/stores/useAllStores";
-import useOrdersList from "@/lib/hooks/orders/useOrdersList";
+import { useAllStores } from "@/lib/client/hooks/stores/useAllStores";
+import useOrdersList from "@/lib/client/hooks/orders/useOrdersList";
 import { DataTable } from "./_components/data-table";
 import { createColumns } from "./_components/columns";
 import { StoreSelector } from "./_components/store-selector";
 import { DateSelector } from "./_components/date-selector";
-import { OrderListItem } from "@/lib/schemas/order-list";
+import { OrderListItem } from "@/lib/shared/schemas/order-list";
 import { format } from "date-fns";
 import { OrderMetrics } from "./_components/order-metrics";
 import { ScopeBadge } from "../_components/scope-badge";

@@ -30,8 +30,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2, Upload, Plus, X } from "lucide-react";
 import { toast } from "sonner";
-import { createClient } from "@/lib/supabase/client";
-import { useCategories } from "@/lib/hooks/products/useCategories";
+import { createClient } from "@/lib/client/supabase";
+import { useCategories } from "@/lib/client/hooks/products/useCategories";
 // import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const AddProductSchema = z.object({

@@ -8,13 +8,13 @@ import StoreSalesBreakdownChart from "./_components/charts/store-sales-breakdown
 import RecentOrdersTable from "./_components/charts/recent-orders-table";
 import MetricCards from "./_components/charts/metric-cards";
 import { DateRange } from "react-day-picker";
-import useAdminMetrics from "@/lib/hooks/analytics/useAdminMetrics";
-import useAdminTimeline from "@/lib/hooks/analytics/useAdminTimeline";
-import useAdminStoreBreakdown from "@/lib/hooks/analytics/useAdminStoreBreakdown";
-import useRecentOrders from "@/lib/hooks/analytics/useRecentOrders";
+import useAdminMetrics from "@/lib/client/hooks/analytics/useAdminMetrics";
+import useAdminTimeline from "@/lib/client/hooks/analytics/useAdminTimeline";
+import useAdminStoreBreakdown from "@/lib/client/hooks/analytics/useAdminStoreBreakdown";
+import useRecentOrders from "@/lib/client/hooks/analytics/useRecentOrders";
 import { format } from "date-fns";
 import { ScopeBadge } from "./_components/scope-badge";
-import { useAllStores } from "@/lib/hooks/stores/useAllStores";
+import { useAllStores } from "@/lib/client/hooks/stores/useAllStores";
 import { StoreSelector } from "./orders/_components/store-selector"; // reuse your StoreSelector
 
 export default function AdminDashboard() {

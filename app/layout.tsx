@@ -1,49 +1,10 @@
-// import "./globals.css";
-// import { Metadata } from "next";
-// import { cookies } from "next/headers";
-// import { SWRConfig } from "swr";
-// import { Analytics } from "@vercel/analytics/next";
-// import { AuthProvider } from "@/lib/context/AuthContext";
-
-// export const metadata: Metadata = {
-//     title: "POS System",
-//     description: "Point of Sale System",
-// };
-
-// export default async function RootLayout({
-//     children,
-// }: {
-//     children: React.ReactNode;
-// }) {
-//     const cookieStore = await cookies();
-//     const userCookie = cookieStore.get("x-user-info");
-//     const initialUser = userCookie ? JSON.parse(userCookie.value) : null;
-
-//     return (
-//         <html lang="en" suppressHydrationWarning>
-//             <body>
-//                 <SWRConfig
-//                     value={{
-//                         dedupingInterval: 5000,
-//                         revalidateOnFocus: true,
-//                     }}
-//                 >
-//                     <AuthProvider initialUser={initialUser}>
-//                         {children}
-//                         <Analytics />
-//                     </AuthProvider>
-//                 </SWRConfig>
-//             </body>
-//         </html>
-//     );
-// }
-
 import "./globals.css";
 import { Metadata } from "next";
 import { cookies } from "next/headers";
 import { SWRConfig } from "swr";
 import { Analytics } from "@vercel/analytics/next";
-import { AuthProvider } from "@/lib/context/AuthContext";
+import { AuthProvider } from "@/lib/client/context/AuthContext";
+import { FeaturesProvider } from "@/lib/client/context/features-provider";
 
 export const metadata: Metadata = {
     title: "Tea POS",
@@ -104,10 +65,12 @@ export default async function RootLayout({
                 <SWRConfig
                     value={{ dedupingInterval: 5000, revalidateOnFocus: false }}
                 >
-                    <AuthProvider initialUser={initialUser}>
-                        {children}
-                        <Analytics />
-                    </AuthProvider>
+                    <FeaturesProvider>
+                        <AuthProvider initialUser={initialUser}>
+                            {children}
+                            <Analytics />
+                        </AuthProvider>
+                    </FeaturesProvider>
                 </SWRConfig>
             </body>
         </html>

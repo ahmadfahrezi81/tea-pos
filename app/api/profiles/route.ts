@@ -1,8 +1,8 @@
 // app/api/profiles/route.ts
-import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { createRouteHandlerClient } from "@/lib/server/supabase/server";
 import { NextResponse } from "next/server";
-import { toCamelKeys } from "@/lib/utils/schemas";
-import { ProfileResponse } from "@/lib/schemas/profiles";
+import { toCamelKeys } from "@/lib/shared/utils/schemas";
+import { ProfileResponse } from "@/lib/shared/schemas/profiles";
 
 // Type for the raw database response
 type ProfileRow = {
@@ -31,14 +31,14 @@ export async function GET() {
             console.error("Auth error:", userError);
             return NextResponse.json(
                 { error: "Authentication failed" },
-                { status: 401 }
+                { status: 401 },
             );
         }
 
         if (!user) {
             return NextResponse.json(
                 { error: "Not authenticated" },
-                { status: 401 }
+                { status: 401 },
             );
         }
 
@@ -56,20 +56,20 @@ export async function GET() {
             if (profileError.code === "PGRST116") {
                 return NextResponse.json(
                     { error: "Profile not found" },
-                    { status: 404 }
+                    { status: 404 },
                 );
             }
 
             return NextResponse.json(
                 { error: "Failed to fetch profile" },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
         if (!data) {
             return NextResponse.json(
                 { error: "Profile not found" },
-                { status: 404 }
+                { status: 404 },
             );
         }
 
@@ -85,7 +85,7 @@ export async function GET() {
         console.error("Profile API error:", error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

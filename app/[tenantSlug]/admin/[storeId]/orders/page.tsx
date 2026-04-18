@@ -4,11 +4,11 @@
 
 import { useState, useMemo } from "react";
 import { useTenant } from "../../../TenantProvider";
-import useOrdersList from "@/lib/hooks/orders/useOrdersList";
+import useOrdersList from "@/lib/client/hooks/orders/useOrdersList";
 import { DataTable } from "../../orders/_components/data-table";
 import { createColumns } from "../../orders/_components/columns";
 import { DateSelector } from "../../orders/_components/date-selector";
-import { OrderListItem } from "@/lib/schemas/order-list";
+import { OrderListItem } from "@/lib/shared/schemas/order-list";
 import { format } from "date-fns";
 import { OrderMetrics } from "../../orders/_components/order-metrics";
 import { ScopeBadge } from "../../_components/scope-badge";
@@ -35,7 +35,7 @@ export default function StoreOrdersPage() {
     } = useOrdersList(
         storeId ? [storeId] : [],
         formattedDate,
-        selectedProductIds
+        selectedProductIds,
     );
 
     // ──────────────────────────────

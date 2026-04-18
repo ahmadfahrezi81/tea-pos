@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { createRouteHandlerClient } from "@/lib/server/supabase/server";
 import {
     DayOfWeekSalesQuery,
     DayOfWeekSalesResponse,
-} from "@/lib/schemas/analytics";
-import { getCurrentTenantId } from "@/lib/tenant";
+} from "@/lib/shared/schemas/analytics";
+import { getCurrentTenantId } from "@/lib/server/config/tenant";
 
 const TZ_OFFSET_HOURS = 7; // WIB (UTC+7)
 

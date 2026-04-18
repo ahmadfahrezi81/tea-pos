@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { AddProductModal } from "./_components/add-product-modal";
-import { useProducts } from "@/lib/hooks/products/useProducts";
+import { useProducts } from "@/lib/client/hooks/products/useProducts";
 import { useTenant } from "../../TenantProvider";
 import { DataTable } from "./_components/data-table";
 import { createColumns } from "./_components/columns";
@@ -20,7 +20,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { EditProductModal } from "./_components/edit-product-modal";
-import { Product } from "@/lib/schemas/products";
+import { Product } from "@/lib/shared/schemas/products";
 import { ScopeBadge } from "../_components/scope-badge";
 
 export default function ProductsPage() {
@@ -29,13 +29,13 @@ export default function ProductsPage() {
 
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [productToDelete, setProductToDelete] = useState<Product | null>(
-        null
+        null,
     );
     const [isDeleting, setIsDeleting] = useState(false);
     const [addModalOpen, setAddModalOpen] = useState(false);
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(
-        null
+        null,
     );
 
     const handleEditProduct = (product: Product) => {
@@ -71,7 +71,7 @@ export default function ProductsPage() {
             toast.error(
                 error instanceof Error
                     ? error.message
-                    : "Failed to delete product"
+                    : "Failed to delete product",
             );
         } finally {
             setIsDeleting(false);

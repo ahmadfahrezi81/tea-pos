@@ -3,7 +3,7 @@ import {
     getTodayLocalDateStr,
     getCurrentLocalHour,
     upsertWeatherHour,
-} from "@/lib/services/weather";
+} from "@/lib/server/services/weather";
 
 const LOCATION = {
     lat: -6.60534088404916,

@@ -2,23 +2,23 @@
 
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import { useStore } from "@/lib/context/StoreContext";
-import { useSummaries } from "@/lib/hooks/summaries/useDailySummaries";
-import { useSummaryPhotos } from "@/lib/hooks/summaries/useSummaryPhotos";
-import { useSummaryPhotosById } from "@/lib/hooks/summaries/useSummaryPhotosById";
+import { useStore } from "@/lib/client/context/StoreContext";
+import { useSummaries } from "@/lib/client/hooks/summaries/useDailySummaries";
+import { useSummaryPhotos } from "@/lib/client/hooks/summaries/useSummaryPhotos";
+import { useSummaryPhotosById } from "@/lib/client/hooks/summaries/useSummaryPhotosById";
 import {
     PhotoType,
     SlottedPhoto,
     SavedSlottedPhoto,
-} from "@/lib/schemas/daily-summary-photos";
+} from "@/lib/shared/schemas/daily-summary-photos";
 import { DailyStepHeader } from "../_components/DailyStepHeader";
 import { SinglePhotoStep } from "../_components/SinglePhotoStep";
-import { PHOTO_SLOTS } from "@/lib/frontend/constants/photo-slots";
+import { PHOTO_SLOTS } from "@/lib/shared/config/photo-slots";
 import { NotesStep } from "../_components/NotesStep";
 import { ReviewStep } from "../_components/ReviewStep";
 import { SimpleCashStep } from "../_components/SimpleCashStep";
-import { useTenantSlug } from "@/lib/tenant-url";
-import { navigation } from "@/lib/utils/navigation";
+import { useTenantSlug } from "@/lib/server/config/tenant-url";
+import { navigation } from "@/lib/shared/utils/navigation";
 import { Loader2 } from "lucide-react";
 
 // ============================================================================

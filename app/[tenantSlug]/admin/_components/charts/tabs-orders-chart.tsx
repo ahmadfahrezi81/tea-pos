@@ -13,7 +13,7 @@ import {
     ChartTooltip,
     ChartTooltipContent,
 } from "@/components/ui/chart";
-import { AdminTimelineResponse } from "@/lib/schemas/analytics";
+import { AdminTimelineResponse } from "@/lib/shared/schemas/analytics";
 
 const chartConfig = {
     orders: {
@@ -114,7 +114,7 @@ export default function TabsOrdersChart({
 
     // Calculate dynamic Y-axis domain
     const values = chartData.map(
-        (item) => item[activeTab as keyof typeof item]
+        (item) => item[activeTab as keyof typeof item],
     );
     const maxValue = Math.max(...(values as number[]));
     const minValue = Math.min(...(values as number[]));

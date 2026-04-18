@@ -19,7 +19,7 @@ import {
     PopoverTrigger,
     PopoverContent,
 } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/shared/utils/cn";
 
 interface Preset {
     label: string;

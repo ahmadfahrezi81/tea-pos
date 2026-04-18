@@ -1,7 +1,7 @@
 "use client";
 import { Drawer } from "vaul";
 import { Check, X } from "lucide-react";
-import { useStore } from "@/lib/context/StoreContext";
+import { useStore } from "@/lib/client/context/StoreContext";
 
 export function StorePickerDrawer() {
     const {
@@ -13,8 +13,6 @@ export function StorePickerDrawer() {
     } = useStore();
 
     if (assignedStores.length === 0) return null;
-
-    const selectedStore = assignedStores.find((s) => s.id === selectedStoreId);
 
     return (
         <Drawer.Root

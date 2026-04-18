@@ -1,6 +1,6 @@
 // app/api/summaries/photo/route.ts
-import { createRouteHandlerClient } from "@/lib/supabase/server";
-import { getCurrentTenantId } from "@/lib/tenant";
+import { createRouteHandlerClient } from "@/lib/server/supabase/server";
+import { getCurrentTenantId } from "@/lib/server/config/tenant";
 import { NextRequest, NextResponse } from "next/server";
 import {
     UploadSummaryPhotoInput,
@@ -8,8 +8,8 @@ import {
     DeleteSummaryPhotoResponse,
     ListSummaryPhotosQuery,
     ListSummaryPhotosResponse,
-} from "@/lib/schemas/daily-summary-photos";
-import { toCamelKeys } from "@/lib/utils/schemas";
+} from "@/lib/shared/schemas/daily-summary-photos";
+import { toCamelKeys } from "@/lib/shared/utils/schemas";
 
 const BUCKET = "daily-photos";
 const ALLOWED_MIME_TYPES = [

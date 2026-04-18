@@ -1,6 +1,6 @@
 "use client";
 import { useMemo, useRef, useEffect } from "react";
-import { DailySummary } from "@/lib/schemas/daily-summaries";
+import { DailySummary } from "@/lib/shared/schemas/daily-summaries";
 import {
     Area,
     AreaChart,
@@ -11,9 +11,9 @@ import {
 } from "recharts";
 import { ChartConfig, ChartContainer } from "@/components/ui/chart";
 import { SquareArrowOutUpRight } from "lucide-react";
-import { useTenantSlug } from "@/lib/tenant-url";
-import { useBrandColor } from "@/lib/hooks/useBrandColor";
-import { navigation } from "@/lib/utils/navigation";
+import { useTenantSlug } from "@/lib/server/config/tenant-url";
+import { useBrandColor } from "@/lib/client/hooks/useBrandColor";
+import { navigation } from "@/lib/shared/utils/navigation";
 
 interface Props {
     summaries: DailySummary[];

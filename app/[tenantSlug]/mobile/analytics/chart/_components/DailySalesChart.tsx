@@ -1,6 +1,6 @@
 "use client";
 import { useMemo, useRef, useEffect, useState } from "react";
-import useDailySales from "@/lib/hooks/analytics/useDailySales";
+import useDailySales from "@/lib/client/hooks/analytics/useDailySales";
 import {
     Area,
     AreaChart,
@@ -10,7 +10,7 @@ import {
     LabelList,
 } from "recharts";
 import { ChartConfig, ChartContainer } from "@/components/ui/chart";
-import { useBrandColor } from "@/lib/hooks/useBrandColor";
+import { useBrandColor } from "@/lib/client/hooks/useBrandColor";
 
 interface Props {
     storeId: string;

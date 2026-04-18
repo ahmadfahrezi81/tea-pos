@@ -19,8 +19,8 @@
 //     SidebarMenuItem,
 //     useSidebar,
 // } from "@/components/ui/sidebar";
-// import { useAllStores } from "@/lib/hooks/stores/useAllStores";
-// import { cn } from "@/lib/utils";
+// import { useAllStores } from "@/lib/client/hooks/stores/useAllStores";
+// import { cn } from "@/lib/shared/utils/cn";
 
 // export function StoreSwitcher() {
 //     const { isMobile } = useSidebar();
@@ -195,8 +195,8 @@ import {
     SidebarMenuItem,
     useSidebar,
 } from "@/components/ui/sidebar";
-import { useAllStores } from "@/lib/hooks/stores/useAllStores";
-import { cn } from "@/lib/utils";
+import { useAllStores } from "@/lib/client/hooks/stores/useAllStores";
+import { cn } from "@/lib/shared/utils/cn";
 import { useStoreScope } from "@/app/[tenantSlug]/admin/StoreScopeProvider";
 import { useTenant } from "@/app/[tenantSlug]/TenantProvider"; // ✅ import tenant provider
 

@@ -1,13 +1,13 @@
 // app/api/tenants/route.ts
-import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { createRouteHandlerClient } from "@/lib/server/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import {
     CreateTenantInput,
     ListTenantsQuery,
     TenantListResponse,
     CreateTenantResponse,
-} from "@/lib/schemas/tenants";
-import { toCamelKeys, toSnakeKeys } from "@/lib/utils/schemas";
+} from "@/lib/shared/schemas/tenants";
+import { toCamelKeys, toSnakeKeys } from "@/lib/shared/utils/schemas";
 
 // ============================================================================
 // GET /api/tenants
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url);
 
         const queryResult = ListTenantsQuery.safeParse(
-            Object.fromEntries(searchParams)
+            Object.fromEntries(searchParams),
         );
         if (!queryResult.success) {
             return NextResponse.json(
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
                     error: "Invalid query parameters",
                     details: queryResult.error.format(),
                 },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
         if (userError || !user) {
             return NextResponse.json(
                 { error: "Unauthorized" },
-                { status: 401 }
+                { status: 401 },
             );
         }
 
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
                 `
                 *,
                 user_tenant_assignments!inner(role)
-            `
+            `,
             )
             .eq("user_tenant_assignments.user_id", userId)
             .order("created_at", { ascending: false });
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
                     error: "Invalid response shape",
                     details: parsed.error.format(),
                 },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
         console.error(error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
         if (!result.success) {
             return NextResponse.json(
                 { error: "Validation failed", details: result.error.format() },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
         if (userError || !user) {
             return NextResponse.json(
                 { error: "Unauthorized" },
-                { status: 401 }
+                { status: 401 },
             );
         }
 
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
         if (tenantError || !tenantData) {
             return NextResponse.json(
                 { error: tenantError?.message || "Tenant creation failed" },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
             await supabase.from("tenants").delete().eq("id", tenantData.id);
             return NextResponse.json(
                 { error: "Failed to assign owner role" },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
                     error: "Invalid response shape",
                     details: parsed.error.format(),
                 },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
@@ -169,7 +169,7 @@ export async function POST(request: NextRequest) {
         console.error(error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

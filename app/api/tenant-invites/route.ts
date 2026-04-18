@@ -1,8 +1,8 @@
 // app/api/tenant-invites/route.ts
-import { createRouteHandlerClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createRouteHandlerClient } from "@/lib/server/supabase/server";
+import { createAdminClient } from "@/lib/server/supabase/admin";
 import { NextRequest, NextResponse } from "next/server";
-import { CreateTenantInviteInput } from "@/lib/schemas/tenantInvites";
+import { CreateTenantInviteInput } from "@/lib/shared/schemas/tenantInvites";
 
 // ============================================================================
 // POST /api/tenant-invites (Invite User)
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
         if (!result.success) {
             return NextResponse.json(
                 { error: "Validation failed", details: result.error.format() },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
         if (userError || !user) {
             return NextResponse.json(
                 { error: "Unauthorized" },
-                { status: 401 }
+                { status: 401 },
             );
         }
 
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
                 {
                     error: "Access denied - owner or manager role required to invite users",
                 },
-                { status: 403 }
+                { status: 403 },
             );
         }
 
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
             if (existingAssignment) {
                 return NextResponse.json(
                     { error: "User already has access to this tenant" },
-                    { status: 409 }
+                    { status: 409 },
                 );
             }
 
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
                 console.error("Assignment creation error:", assignmentError);
                 return NextResponse.json(
                     { error: "Failed to add user to tenant" },
-                    { status: 400 }
+                    { status: 400 },
                 );
             }
 
@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
             console.error("Supabase invite error:", inviteError);
             return NextResponse.json(
                 { error: inviteError?.message || "Failed to invite user" },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
             console.error("Assignment creation error:", assignmentError);
             return NextResponse.json(
                 { error: "Failed to create tenant assignment" },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
                 invited_email: invitedEmail,
                 created_by: user.id,
                 expires_at: new Date(
-                    Date.now() + 7 * 24 * 60 * 60 * 1000
+                    Date.now() + 7 * 24 * 60 * 60 * 1000,
                 ).toISOString(),
             });
 
@@ -179,13 +179,13 @@ export async function POST(request: NextRequest) {
                 message: "Invitation sent successfully",
                 userId: newUserId,
             },
-            { status: 201 }
+            { status: 201 },
         );
     } catch (error) {
         console.error("POST /api/tenant-invites error:", error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

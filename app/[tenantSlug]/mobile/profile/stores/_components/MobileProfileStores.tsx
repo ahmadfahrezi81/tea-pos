@@ -1,5 +1,5 @@
 "use client";
-import { useStores } from "@/lib/hooks/stores/useStores";
+import { useStores } from "@/lib/client/hooks/stores/useStores";
 
 export default function MobileProfileStores() {
     const { data: storeData, isLoading } = useStores();

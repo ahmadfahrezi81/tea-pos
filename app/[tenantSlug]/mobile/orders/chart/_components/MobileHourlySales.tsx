@@ -1,6 +1,6 @@
 "use client";
 import { useState, useMemo, useRef, useEffect } from "react";
-import { CalendarDays, ChevronsUpDown } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import {
     Area,
@@ -11,10 +11,9 @@ import {
     LabelList,
 } from "recharts";
 import { ChartConfig, ChartContainer } from "@/components/ui/chart";
-import useHourlySales from "@/lib/hooks/analytics/useHourlySales";
-import { useTenantSlug } from "@/lib/tenant-url";
-import { useStore } from "@/lib/context/StoreContext";
-import { useBrandColor } from "@/lib/hooks/useBrandColor";
+import useHourlySales from "@/lib/client/hooks/analytics/useHourlySales";
+import { useStore } from "@/lib/client/context/StoreContext";
+import { useBrandColor } from "@/lib/client/hooks/useBrandColor";
 
 const formatDateForInput = (date: Date) => date.toISOString().split("T")[0];
 
@@ -52,9 +51,8 @@ const CustomTooltip = ({ active, payload }: any) => {
 };
 
 export default function MobileHourlySales() {
-    const { selectedStoreId, selectedStore, setIsPickerOpen } = useStore();
+    const { selectedStoreId } = useStore();
     const searchParams = useSearchParams();
-    const { url } = useTenantSlug();
     const scrollRef = useRef<HTMLDivElement>(null);
     const brandColor = useBrandColor();
 

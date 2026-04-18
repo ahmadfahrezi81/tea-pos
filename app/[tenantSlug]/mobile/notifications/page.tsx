@@ -1,11 +1,11 @@
 "use client";
 
-import useNotifications from "@/lib/hooks/notifications/useNotifications";
-import { NotificationResponse } from "@/lib/schemas/notifications";
+import useNotifications from "@/lib/client/hooks/notifications/useNotifications";
+import { NotificationResponse } from "@/lib/shared/schemas/notifications";
 import { Cloud, CloudSun, Store } from "lucide-react";
-import { useTenantSlug } from "@/lib/tenant-url";
-import { formatTimeAgo } from "@/lib/utils/formatTimeAgo";
-import { navigation } from "@/lib/utils/navigation";
+import { useTenantSlug } from "@/lib/server/config/tenant-url";
+import { formatTimeAgo } from "@/lib/shared/utils/formatTimeAgo";
+import { navigation } from "@/lib/shared/utils/navigation";
 
 const typeStyles: Record<string, { bg: string; dot: string; label: string }> = {
     weather_forecast: {

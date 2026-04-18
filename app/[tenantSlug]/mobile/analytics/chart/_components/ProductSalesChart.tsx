@@ -1,6 +1,6 @@
 "use client";
 import { useMemo } from "react";
-import useProductSales from "@/lib/hooks/analytics/useProductSales";
+import useProductSales from "@/lib/client/hooks/analytics/useProductSales";
 import {
     Card,
     CardContent,

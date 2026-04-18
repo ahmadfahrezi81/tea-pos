@@ -1,9 +1,12 @@
 //app/api/analytics/hourly-sales/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@/lib/supabase/server";
-import { getCurrentTenantId } from "@/lib/tenant";
-import { HourlySalesQuery, HourlySalesResponse } from "@/lib/schemas/analytics";
-// import { toCamelKeys } from "@/lib/utils/schemas";
+import { createRouteHandlerClient } from "@/lib/server/supabase/server";
+import { getCurrentTenantId } from "@/lib/server/config/tenant";
+import {
+    HourlySalesQuery,
+    HourlySalesResponse,
+} from "@/lib/shared/schemas/analytics";
+// import { toCamelKeys } from "@/lib/shared/utils/cn/schemas";
 
 export async function GET(request: NextRequest) {
     try {

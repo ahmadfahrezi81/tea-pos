@@ -23,7 +23,7 @@ import {
     SidebarRail,
 } from "@/components/ui/sidebar";
 
-import { useTenantSlug } from "@/lib/tenant-url";
+import { useTenantSlug } from "@/lib/server/config/tenant-url";
 import { StoreSwitcher } from "./store-switcher";
 import { useStoreScope } from "@/app/[tenantSlug]/admin/StoreScopeProvider"; // ✅ import hook
 

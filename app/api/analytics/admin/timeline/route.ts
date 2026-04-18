@@ -1,11 +1,11 @@
 // app/api/analytics/admin/timeline/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@/lib/supabase/server";
-import { getCurrentTenantId } from "@/lib/tenant";
+import { createRouteHandlerClient } from "@/lib/server/supabase/server";
+import { getCurrentTenantId } from "@/lib/server/config/tenant";
 import {
     AdminDateRangeQuery,
     AdminTimelineResponse,
-} from "@/lib/schemas/analytics";
+} from "@/lib/shared/schemas/analytics";
 
 // ============================================================================
 // HELPER: Fetch all orders with pagination
@@ -16,7 +16,7 @@ async function fetchAllOrders(
     tenantId: string,
     startDate: string,
     endDate: string,
-    storeIds?: string[]
+    storeIds?: string[],
 ) {
     const pageSize = 1000;
     let from = 0;
@@ -33,7 +33,7 @@ async function fetchAllOrders(
                 created_at,
                 order_items(quantity),
                 store_id
-            `
+            `,
             )
             .eq("tenant_id", tenantId)
             .gte("created_at", startDate)
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
 
         // Validate query parameters
         const queryResult = AdminDateRangeQuery.safeParse(
-            Object.fromEntries(searchParams)
+            Object.fromEntries(searchParams),
         );
         if (!queryResult.success) {
             return NextResponse.json(
@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
                     error: "Invalid query parameters",
                     details: queryResult.error.format(),
                 },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -96,11 +96,11 @@ export async function GET(request: NextRequest) {
         const start = new Date(
             `${dateFrom}T00:00:00+${String(TIMEZONE_OFFSET).padStart(
                 2,
-                "0"
-            )}:00`
+                "0",
+            )}:00`,
         ).toISOString();
         const end = new Date(
-            `${dateTo}T23:59:59+${String(TIMEZONE_OFFSET).padStart(2, "0")}:00`
+            `${dateTo}T23:59:59+${String(TIMEZONE_OFFSET).padStart(2, "0")}:00`,
         ).toISOString();
 
         // Determine granularity (same day = hourly, otherwise daily)
@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
             currentTenantId,
             start,
             end,
-            storeIds
+            storeIds,
         );
 
         // Aggregate data based on granularity
@@ -124,7 +124,7 @@ export async function GET(request: NextRequest) {
 
             const utcDate = new Date(order.created_at as string);
             const localTime = new Date(
-                utcDate.getTime() + TIMEZONE_OFFSET * 60 * 60 * 1000
+                utcDate.getTime() + TIMEZONE_OFFSET * 60 * 60 * 1000,
             );
 
             let key: string;
@@ -147,7 +147,7 @@ export async function GET(request: NextRequest) {
                 order.order_items?.reduce(
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     (sum: number, item: any) => sum + (item.quantity || 0),
-                    0
+                    0,
                 ) ?? 0;
 
             timelineData[key].cups += totalCups;
@@ -169,7 +169,7 @@ export async function GET(request: NextRequest) {
                 const hourKey = `${hour.toString().padStart(2, "0")}:00`;
                 const existing = chartData.find((d) => d.label === hourKey);
                 filledData.push(
-                    existing || { label: hourKey, orders: 0, cups: 0 }
+                    existing || { label: hourKey, orders: 0, cups: 0 },
                 );
             }
             chartData.length = 0;
@@ -187,10 +187,10 @@ export async function GET(request: NextRequest) {
             ) {
                 const dateKey = d.toISOString().split("T")[0];
                 const existing = chartData.find(
-                    (item) => item.label === dateKey
+                    (item) => item.label === dateKey,
                 );
                 filledData.push(
-                    existing || { label: dateKey, orders: 0, cups: 0 }
+                    existing || { label: dateKey, orders: 0, cups: 0 },
                 );
             }
 
@@ -207,14 +207,14 @@ export async function GET(request: NextRequest) {
         if (!parsed.success) {
             console.error(
                 "AdminTimelineResponse validation failed:",
-                parsed.error
+                parsed.error,
             );
             return NextResponse.json(
                 {
                     error: "Invalid response shape",
                     details: parsed.error.format(),
                 },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
@@ -223,7 +223,7 @@ export async function GET(request: NextRequest) {
         console.error("Admin timeline error:", error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

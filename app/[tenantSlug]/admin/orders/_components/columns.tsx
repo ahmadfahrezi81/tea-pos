@@ -21,7 +21,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { OrderListItem } from "@/lib/schemas/order-list";
+import { OrderListItem } from "@/lib/shared/schemas/order-list";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
@@ -36,7 +36,7 @@ const formatCurrency = (amount: number): string => {
 // Factory function to create columns with callbacks
 export const createColumns = (
     onView: (order: OrderListItem) => void,
-    onDelete: (order: OrderListItem) => void
+    onDelete: (order: OrderListItem) => void,
 ): ColumnDef<OrderListItem>[] => [
     {
         id: "select",

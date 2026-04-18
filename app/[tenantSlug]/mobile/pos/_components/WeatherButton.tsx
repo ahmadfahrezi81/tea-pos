@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
-import useWeather from "@/lib/hooks/weather/useWeather";
-import { getWeatherMeta, isNightHour } from "@/lib/utils/weatherCode";
-import { getCurrentLocalHour } from "@/lib/utils/time";
+import useWeather from "@/lib/client/hooks/weather/useWeather";
+import { getWeatherMeta, isNightHour } from "@/lib/shared/utils/weatherCode";
+import { getCurrentLocalHour } from "@/lib/shared/utils/time";
 
 interface WeatherButtonProps {
     onClick: () => void;

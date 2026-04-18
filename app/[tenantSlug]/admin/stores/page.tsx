@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Store } from "lucide-react";
 import { useTenant } from "../../TenantProvider";
-import { useAllStores } from "@/lib/hooks/stores/useAllStores";
+import { useAllStores } from "@/lib/client/hooks/stores/useAllStores";
 import { DataTable } from "./_components/data-table";
 import { createColumns } from "./_components/columns";
 import { ScopeBadge } from "../_components/scope-badge";
@@ -21,7 +21,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import useDeleteStore from "@/lib/hooks/stores/useDeleteStore";
+import useDeleteStore from "@/lib/client/hooks/stores/useDeleteStore";
 
 export default function StoresPage() {
     const { tenantId } = useTenant();

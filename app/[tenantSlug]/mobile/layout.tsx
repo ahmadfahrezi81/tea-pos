@@ -19,9 +19,9 @@
 import { ReactNode } from "react";
 import MobileLayoutClient from "./components/MobileLayoutClient";
 import InactivityRefreshPopup from "@/components/shared/InactivityRefreshPopup";
-import { StoreProvider } from "@/lib/context/StoreContext";
-import { FastOrderModeProvider } from "@/lib/context/FastOrderModeContext";
-import { ProfileIconProvider } from "@/lib/context/ProfileIconContext";
+import { StoreProvider } from "@/lib/client/context/StoreContext";
+import { FastOrderModeProvider } from "@/lib/client/context/FastOrderModeContext";
+import { ProfileIconProvider } from "@/lib/client/context/ProfileIconContext";
 
 interface MobileLayoutProps {
     children: ReactNode;

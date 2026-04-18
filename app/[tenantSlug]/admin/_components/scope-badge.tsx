@@ -4,7 +4,7 @@ import * as React from "react";
 import { Box, Boxes } from "lucide-react";
 import { useTenant } from "@/app/[tenantSlug]/TenantProvider";
 import { useStoreScope } from "@/app/[tenantSlug]/admin/StoreScopeProvider";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/shared/utils/cn";
 
 interface ScopeBadgeProps {
     className?: string;
