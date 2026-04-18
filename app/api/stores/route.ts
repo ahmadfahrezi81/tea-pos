@@ -218,13 +218,14 @@ export async function POST(request: NextRequest) {
         //     tenantId: currentTenantId,
         // });
 
-        const { name, address, latitude, longitude } = result.data;
+        const { name, address, latitude, longitude, isFake } = result.data;
 
         const storePayload = toSnakeKeys({
             name: name.trim(),
             address: address?.trim() || null,
             latitude,
             longitude,
+            isFake,
             tenantId: currentTenantId,
         });
 
@@ -281,12 +282,12 @@ export async function PUT(request: NextRequest) {
             );
         }
 
-        const { id, name, address } = result.data;
+        const { id, name, address, isFake } = result.data;
 
-        // Build update payload
         const updates = {
             name: name.trim(),
             address: address?.trim() || null,
+            is_fake: isFake,
             updated_at: new Date().toISOString(),
         };
 

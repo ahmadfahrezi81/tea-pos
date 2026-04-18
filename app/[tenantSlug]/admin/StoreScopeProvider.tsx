@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { useAllStores } from "@/lib/client/hooks/stores/useAllStores"; // ✅ import store data hook
+import { useStores } from "@/lib/client/hooks/stores/useStores"; // ✅ import store data hook
 
 type Scope = "company" | "store";
 
@@ -16,7 +16,7 @@ interface StoreScopeContextValue {
 }
 
 const StoreScopeContext = React.createContext<StoreScopeContextValue | null>(
-    null
+    null,
 );
 
 export function useStoreScope() {
@@ -33,7 +33,7 @@ export function StoreScopeProvider({
 }) {
     const pathname = usePathname();
     const router = useRouter();
-    const { data } = useAllStores(); // ✅ use your existing stores hook
+    const { data } = useStores(); // ✅ use your existing stores hook
 
     // Parse URL: /slug/admin/(storeId?)/(subPath?)
     const segments = pathname.split("/").filter(Boolean);
@@ -95,12 +95,12 @@ export function StoreScopeProvider({
 
             router.push(`/${slug}/admin/${nextStoreId}${currentSub}`);
         },
-        [router, slug, subPath] // dependencies used inside switchStore
+        [router, slug, subPath], // dependencies used inside switchStore
     );
 
     const value = React.useMemo(
         () => ({ scope, storeId, storeName, subPath, switchStore }),
-        [scope, storeId, storeName, subPath, switchStore]
+        [scope, storeId, storeName, subPath, switchStore],
     );
 
     return (

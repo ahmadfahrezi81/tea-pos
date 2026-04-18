@@ -24,13 +24,13 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { useAllStores } from "@/lib/client/hooks/stores/useAllStores";
+import { useStores } from "@/lib/client/hooks/stores/useStores";
 import { useTenantSlug } from "@/lib/server/config/tenant-url";
 
 export function NavSearch() {
     const [open, setOpen] = React.useState(false);
     const router = useRouter();
-    const { data } = useAllStores();
+    const { data } = useStores();
     const { url } = useTenantSlug();
 
     const stores = data?.stores || [];

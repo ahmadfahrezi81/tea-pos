@@ -159,8 +159,7 @@ export default function MobileLayoutClient({
             path.endsWith("/weather")
         )
             return "Weather Forecast";
-        if (path.endsWith("/mobile/analytics/daily/close"))
-            return "Daily Close";
+        if (path.endsWith("/mobile/analytics/daily/close")) return "Close Day";
         if (path.endsWith("/mobile/analytics/daily/open")) return "Open Store";
         return "Mobile";
     }, []);

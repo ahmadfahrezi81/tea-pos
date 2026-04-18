@@ -14,7 +14,7 @@ import useAdminStoreBreakdown from "@/lib/client/hooks/analytics/useAdminStoreBr
 import useRecentOrders from "@/lib/client/hooks/analytics/useRecentOrders";
 import { format } from "date-fns";
 import { ScopeBadge } from "./_components/scope-badge";
-import { useAllStores } from "@/lib/client/hooks/stores/useAllStores";
+import { useStores } from "@/lib/client/hooks/stores/useStores";
 import { StoreSelector } from "./orders/_components/store-selector"; // reuse your StoreSelector
 
 export default function AdminDashboard() {
@@ -30,7 +30,7 @@ export default function AdminDashboard() {
     const [selectedStoreIds, setSelectedStoreIds] = useState<string[]>([]);
 
     // Fetch stores for selector
-    const { data: storesData } = useAllStores();
+    const { data: storesData } = useStores();
 
     const stores = useMemo(() => storesData?.stores ?? [], [storesData]);
 

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import {
     Dialog,
     DialogContent,
@@ -21,6 +22,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { CreateStoreInput } from "@/lib/shared/schemas/stores";
@@ -28,13 +30,12 @@ import useCreateStore from "@/lib/client/hooks/stores/useCreateStore";
 import dynamic from "next/dynamic";
 import { ScopeBadge } from "../../_components/scope-badge";
 
-// ✅ Dynamically import the Leaflet map to avoid SSR window issues
 const DynamicMap = dynamic(
     () => import("./map-selector").then((m) => m.MapSelector),
-    {
-        ssr: false,
-    },
+    { ssr: false },
 );
+
+type CreateStoreFormValues = z.output<typeof CreateStoreInput>;
 
 interface AddStoreModalProps {
     open: boolean;
@@ -50,17 +51,18 @@ export function AddStoreModal({
     const [position, setPosition] = useState<[number, number] | null>(null);
     const { trigger: createStore, isMutating } = useCreateStore();
 
-    const form = useForm<CreateStoreInput>({
+    const form = useForm<CreateStoreFormValues>({
         resolver: zodResolver(CreateStoreInput),
         defaultValues: {
             name: "",
             address: "",
             latitude: null,
             longitude: null,
+            isFake: false,
         },
     });
 
-    const onSubmit = async (data: CreateStoreInput) => {
+    const onSubmit = async (data: CreateStoreFormValues) => {
         try {
             await createStore({
                 ...data,
@@ -83,7 +85,6 @@ export function AddStoreModal({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogPortal>
                 <DialogContent className="sm:max-w-[500px]">
-                    {/* Badge positioned top-left */}
                     <div className="absolute -top-9 left-0 z-50">
                         <ScopeBadge />
                     </div>
@@ -136,7 +137,30 @@ export function AddStoreModal({
                                 )}
                             />
 
-                            {/* Map Selector */}
+                            <FormField
+                                control={form.control}
+                                name="isFake"
+                                render={({ field }) => (
+                                    <FormItem className="flex items-center justify-between rounded-lg border p-3">
+                                        <div>
+                                            <FormLabel>
+                                                Practice Store
+                                            </FormLabel>
+                                            <p className="text-sm text-muted-foreground">
+                                                Fake store for training new
+                                                employees
+                                            </p>
+                                        </div>
+                                        <FormControl>
+                                            <Switch
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
+                                            />
+                                        </FormControl>
+                                    </FormItem>
+                                )}
+                            />
+
                             <div>
                                 <FormLabel className="mb-1">
                                     Map Location

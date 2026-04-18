@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Store } from "lucide-react";
 import { useTenant } from "../../TenantProvider";
-import { useAllStores } from "@/lib/client/hooks/stores/useAllStores";
+import { useStores } from "@/lib/client/hooks/stores/useStores";
 import { DataTable } from "./_components/data-table";
 import { createColumns } from "./_components/columns";
 import { ScopeBadge } from "../_components/scope-badge";
@@ -25,7 +25,7 @@ import useDeleteStore from "@/lib/client/hooks/stores/useDeleteStore";
 
 export default function StoresPage() {
     const { tenantId } = useTenant();
-    const { data, error, isLoading, mutate } = useAllStores();
+    const { data, error, isLoading, mutate } = useStores();
     const [isAddModalOpen, setAddModalOpen] = useState(false);
 
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);

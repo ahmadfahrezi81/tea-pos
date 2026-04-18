@@ -41,6 +41,10 @@ export const CreateStoreInput = z
         // tenantId is NOT included in input - it's derived from session
         latitude: z.number().nullable().optional(),
         longitude: z.number().nullable().optional(),
+        isFake: z.boolean().openapi({
+            description: "Whether this is a fake/practice store",
+            example: false,
+        }),
     })
     .openapi({ title: "CreateStoreInput" });
 
@@ -54,6 +58,10 @@ export const UpdateStoreInput = z
         address: z.string().max(500).nullable().optional().openapi({
             description: "Store address",
             example: "123 Main St, Jakarta",
+        }),
+        isFake: z.boolean().optional().openapi({
+            description: "Whether this is a fake/practice store",
+            example: false,
         }),
     })
     .openapi({ title: "UpdateStoreInput" });
@@ -98,6 +106,10 @@ export const StoreResponse = z
         address: z.string().nullable(),
         latitude: z.number().nullable().optional(),
         longitude: z.number().nullable().optional(),
+        isFake: z.boolean().openapi({
+            description: "Whether this is a fake/practice store",
+            example: false,
+        }),
         tenantId: UUIDSchema,
         createdAt: z.string().nullable(),
         updatedAt: z.string().nullable(),

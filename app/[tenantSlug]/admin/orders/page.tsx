@@ -3,7 +3,7 @@
 
 import { useState, useMemo } from "react";
 import { useTenant } from "../../TenantProvider";
-import { useAllStores } from "@/lib/client/hooks/stores/useAllStores";
+import { useStores } from "@/lib/client/hooks/stores/useStores";
 import useOrdersList from "@/lib/client/hooks/orders/useOrdersList";
 import { DataTable } from "./_components/data-table";
 import { createColumns } from "./_components/columns";
@@ -31,7 +31,7 @@ export default function OrdersPage() {
         data: storesData,
         error: storesError,
         isLoading: storesLoading,
-    } = useAllStores();
+    } = useStores();
 
     // ✅ Memoize derived stores array to prevent hook warnings
     const stores = useMemo(() => storesData?.stores ?? [], [storesData]);

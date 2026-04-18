@@ -64,9 +64,16 @@ export function StorePickerDrawer() {
                                         !isLast ? "border-b" : ""
                                     }`}
                                 >
-                                    <span className="text-lg text-gray-900">
-                                        {store.name}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-lg text-gray-900">
+                                            {store.name}
+                                        </span>
+                                        {store.isFake && (
+                                            <span className="text-[10px] font-semibold px-1.5 py-0.5 mt-0.5 rounded bg-red-100 text-red-600">
+                                                DEMO
+                                            </span>
+                                        )}
+                                    </div>
                                     <span
                                         className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
                                             isSelected

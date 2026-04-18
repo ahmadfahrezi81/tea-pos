@@ -1,31 +1,19 @@
-// lib/hooks/useStores.ts
 import useSWR from "swr";
-import { useAuth } from "@/lib/client/context/AuthContext";
 import { StoreListResponse } from "@/lib/shared/schemas/stores";
 
-interface FetchStoresParams {
-    userId: string;
-}
+const fetchStores = async (): Promise<StoreListResponse> => {
+    const res = await fetch("/api/stores");
 
-const fetchStores = async ({ userId }: FetchStoresParams) => {
-    const params = new URLSearchParams();
-    params.append("userId", userId);
-
-    const res = await fetch(`/api/stores?${params.toString()}`);
     if (!res.ok) {
         let errMsg = `Failed to fetch stores: ${res.status}`;
         try {
             const body = await res.json();
             if (body?.error) errMsg += ` - ${body.error}`;
-        } catch {
-            // ignore JSON parse error
-        }
+        } catch {}
         throw new Error(errMsg);
     }
 
     const json = await res.json();
-
-    // ✅ validate client-side (optional, since backend already validates)
     const parsed = StoreListResponse.safeParse(json);
     if (!parsed.success) {
         console.error(
@@ -38,19 +26,13 @@ const fetchStores = async ({ userId }: FetchStoresParams) => {
     return parsed.data;
 };
 
+/**
+ * Fetch all stores for the current tenant.
+ * Client-side filtering is handled by the consumer (e.g. StoreContext).
+ */
 export function useStores() {
-    const { profile } = useAuth();
-    const key = profile ? `stores-${profile.id}` : null;
-
-    return useSWR(
-        key,
-        async () => {
-            if (!profile) return null;
-            return fetchStores({ userId: profile.id });
-        },
-        {
-            revalidateOnFocus: false,
-            dedupingInterval: 60000,
-        },
-    );
+    return useSWR("stores-all", fetchStores, {
+        revalidateOnFocus: false,
+        dedupingInterval: 60000,
+    });
 }

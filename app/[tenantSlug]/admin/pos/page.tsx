@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useProducts } from "@/lib/client/hooks/products/useProducts";
-import { useAllStores } from "@/lib/client/hooks/stores/useAllStores";
+import { useStores } from "@/lib/client/hooks/stores/useStores";
 import { Input } from "@/components/ui/input"; // ✅ add this import
 import {
     Select,
@@ -36,7 +36,7 @@ export interface CartItem {
 
 export default function POSPage() {
     const { data: products = [], isLoading: productsLoading } = useProducts();
-    const { data: storesData, isLoading: storesLoading } = useAllStores();
+    const { data: storesData, isLoading: storesLoading } = useStores();
 
     const stores = useMemo(() => storesData?.stores ?? [], [storesData]);
 

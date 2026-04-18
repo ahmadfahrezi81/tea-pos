@@ -1,6 +1,6 @@
 "use client";
+
 import { useState, useCallback } from "react";
-import { createClient } from "@/lib/client/supabase";
 import { useAuth } from "@/lib/client/context/AuthContext";
 import VersionInfo from "@/components/shared/VersionInfo";
 import { useRouter } from "next/navigation";

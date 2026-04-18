@@ -624,6 +624,7 @@ export type Database = {
           address: string | null
           created_at: string | null
           id: string
+          is_fake: boolean
           latitude: number | null
           longitude: number | null
           name: string
@@ -634,6 +635,7 @@ export type Database = {
           address?: string | null
           created_at?: string | null
           id?: string
+          is_fake?: boolean
           latitude?: number | null
           longitude?: number | null
           name: string
@@ -644,6 +646,7 @@ export type Database = {
           address?: string | null
           created_at?: string | null
           id?: string
+          is_fake?: boolean
           latitude?: number | null
           longitude?: number | null
           name?: string

@@ -10,6 +10,7 @@ import {
 type Store = {
     id: string;
     name: string;
+    isFake: boolean;
 };
 
 type StoreContextType = {
