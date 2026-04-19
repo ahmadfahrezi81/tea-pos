@@ -111,7 +111,7 @@ function ToastItem({ toast }: { toast: Toast }) {
             <div className="flex flex-col flex-1">
                 <span>{toast.message}</span>
                 {toast.subtitle && (
-                    <span className="text-white/9 text-sm font-medium">
+                    <span className="text-white/90 text-sm font-medium">
                         {toast.subtitle}
                     </span>
                 )}
