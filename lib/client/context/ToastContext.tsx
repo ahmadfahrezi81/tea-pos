@@ -40,7 +40,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         (message: string, type: ToastType = "info", subtitle?: string) => {
             const id = crypto.randomUUID();
             setToasts((prev) => [...prev, { id, message, subtitle, type }]);
-            setTimeout(() => dismissToast(id), 3000);
+            setTimeout(() => dismissToast(id), 4000);
         },
         [dismissToast],
     );
@@ -92,7 +92,7 @@ function ToastItem({ toast }: { toast: Toast }) {
     const [exiting, setExiting] = useState(false);
 
     useEffect(() => {
-        const exitDelay = setTimeout(() => setExiting(true), 2700);
+        const exitDelay = setTimeout(() => setExiting(true), 3700);
         return () => clearTimeout(exitDelay);
     }, []);
 
@@ -111,7 +111,7 @@ function ToastItem({ toast }: { toast: Toast }) {
             <div className="flex flex-col flex-1">
                 <span>{toast.message}</span>
                 {toast.subtitle && (
-                    <span className="text-xs font-medium">
+                    <span className="text-white/9 text-sm font-medium">
                         {toast.subtitle}
                     </span>
                 )}
