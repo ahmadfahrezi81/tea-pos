@@ -20,6 +20,7 @@ import { SimpleCashStep } from "../_components/SimpleCashStep";
 import { useTenantSlug } from "@/lib/server/config/tenant-url";
 import { navigation } from "@/lib/shared/utils/navigation";
 import { Loader2 } from "lucide-react";
+import { useToast } from "@/lib/client/context/ToastContext";
 
 // ============================================================================
 // CONSTANTS
@@ -51,6 +52,7 @@ export default function CloseDayPage() {
     const searchParams = useSearchParams();
     const { url } = useTenantSlug();
     const { selectedStoreId, selectedStore } = useStore();
+    const { showToast } = useToast();
 
     const summaryId = searchParams.get("summaryId");
     const STEP_KEY = summaryId ? `close-day-step-${summaryId}` : null;
@@ -294,10 +296,16 @@ export default function CloseDayPage() {
                 closedAt: new Date().toISOString(),
             });
             if (STEP_KEY) localStorage.removeItem(STEP_KEY);
+            showToast("Day closed successfully!", "success");
             navigation.push(url("/mobile/analytics"));
         } catch (err) {
             setError(
                 err instanceof Error ? err.message : "Failed to close day",
+            );
+            showToast(
+                // 👈
+                err instanceof Error ? err.message : "Failed to close day",
+                "error",
             );
         } finally {
             setIsSubmitting(false);
