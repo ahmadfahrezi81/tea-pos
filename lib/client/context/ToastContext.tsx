@@ -68,34 +68,21 @@ export function useToast() {
 const TOAST_CONFIG: Record<ToastType, { bg: string; icon: React.ReactNode }> = {
     success: {
         bg: "bg-green-500",
-        icon: (
-            <CheckCircle2
-                size={24}
-                className="text-neutral-50 shrink-0 mb-0.5"
-            />
-        ),
+        icon: <CheckCircle2 size={24} className="text-white shrink-0 mb-0.5" />,
     },
     error: {
         bg: "bg-red-500",
-        icon: (
-            <AlertCircle
-                size={24}
-                className="text-neutral-50 shrink-0 mb-0.5"
-            />
-        ),
+        icon: <AlertCircle size={24} className="text-white shrink-0 mb-0.5" />,
     },
     warning: {
         bg: "bg-amber-400",
         icon: (
-            <AlertTriangle
-                size={24}
-                className="text-neutral-50 shrink-0 mb-0.5"
-            />
+            <AlertTriangle size={24} className="text-white shrink-0 mb-0.5" />
         ),
     },
     info: {
         bg: "bg-blue-500",
-        icon: <Info size={24} className="text-neutral-50 shrink-0 mb-0.5" />,
+        icon: <Info size={24} className="text-white shrink-0 mb-0.5" />,
     },
 };
 
@@ -111,7 +98,7 @@ function ToastItem({ toast }: { toast: Toast }) {
 
     return (
         <div
-            className={`pointer-events-auto flex items-center gap-2.5 p-3 rounded-2xl shadow-lg text-neutral-50 font-semibold text-base ${bg}`}
+            className={`pointer-events-auto flex items-center gap-2.5 p-3 rounded-2xl shadow-lg text-white font-semibold text-base ${bg}`}
             style={{
                 animation: exiting
                     ? "slideUp 0.3s ease forwards"
