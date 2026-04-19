@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import Image from "next/image";
-import { X } from "lucide-react";
 import { formatRupiah } from "@/lib/shared/utils/formatCurrency";
 import {
     CreateOrderInput,
@@ -12,6 +11,7 @@ import { mutate } from "swr";
 import { useProducts } from "@/lib/client/hooks/products/useProducts";
 import { useStore } from "@/lib/client/context/StoreContext";
 import { useFastOrderMode } from "@/lib/client/context/FastOrderModeContext";
+import { useToast } from "@/lib/client/context/ToastContext";
 import type { ProductResponse } from "@/lib/shared/schemas/products";
 import type { Product } from "@/lib/shared/schemas/products";
 import { format } from "date-fns";
@@ -26,9 +26,6 @@ export interface CartItem {
 }
 
 // ─── Product Card ─────────────────────────────────────────────────────────────
-// Memoised so only the tapped card re-renders when its quantity changes,
-// not the entire grid. translateZ(0) moves the press animation to the GPU —
-// avoids the layout-recalc that causes jank on mid-range Android devices.
 
 interface ProductCardProps {
     product: ProductResponse;
@@ -109,6 +106,7 @@ export default function MobilePOS() {
     const { selectedStoreId } = useStore();
     const { fastOrderMode } = useFastOrderMode();
     const { data: products = [], isLoading: productsLoading } = useProducts();
+    const { showToast } = useToast();
 
     const isIPhonePWA = useIsIPhonePWA();
 
@@ -117,18 +115,6 @@ export default function MobilePOS() {
     const [showCart, setShowCart] = useState(false);
     const [showOthers, setShowOthers] = useState(false);
     const [isWeatherOpen, setIsWeatherOpen] = useState(false);
-    const [toast, setToast] = useState<{
-        message: string;
-        type: "success" | "error";
-    } | null>(null);
-
-    const showToast = useCallback(
-        (message: string, type: "success" | "error") => {
-            setToast({ message, type });
-            setTimeout(() => setToast(null), 4000);
-        },
-        [],
-    );
 
     const addToCart = useCallback((product: Product) => {
         setCart((prev) => {
@@ -183,7 +169,6 @@ export default function MobilePOS() {
         [cart],
     );
 
-    // Keyed map so ProductCard can look up its quantity in O(1)
     const cartQuantityMap = useMemo(() => {
         const map: Record<string, number> = {};
         for (const item of cart) {
@@ -220,8 +205,9 @@ export default function MobilePOS() {
 
             if (data.success) {
                 showToast(
-                    `Order processed! Total: ${formatRupiah(data.totalAmount)}`,
+                    "Order confirmed!",
                     "success",
+                    `${itemCount} items · ${formatRupiah(data.totalAmount)}`,
                 );
                 setCart([]);
                 closeCart();
@@ -297,6 +283,7 @@ export default function MobilePOS() {
                     <WeatherButton onClick={() => setIsWeatherOpen(true)} />
                 </div>
             </div>
+
             {/* Main Products Grid */}
             <div className="grid grid-cols-2 gap-3">
                 {mainProducts.map((product) => (
@@ -308,6 +295,7 @@ export default function MobilePOS() {
                     />
                 ))}
             </div>
+
             {/* Others Section */}
             {otherProducts.length > 0 && (
                 <div className="mt-6">
@@ -354,6 +342,7 @@ export default function MobilePOS() {
                     )}
                 </div>
             )}
+
             {/* Sticky Bottom Bar */}
             {cart.length > 0 && (
                 <div
@@ -401,6 +390,7 @@ export default function MobilePOS() {
                     </div>
                 </div>
             )}
+
             {/* Cart Drawer — only in normal mode */}
             {!fastOrderMode && (
                 <CartDrawer
@@ -413,34 +403,14 @@ export default function MobilePOS() {
                     onProcessOrder={processOrder}
                     processing={processing}
                     selectedStoreId={selectedStoreId}
-                    onShowToast={showToast}
                 />
             )}
+
             {/* Weather Drawer */}
             <WeatherDrawer
                 isOpen={isWeatherOpen}
                 onClose={() => setIsWeatherOpen(false)}
             />
-            {/* Toast */}
-            {toast && (
-                <div
-                    className={`fixed top-20 left-4 right-4 z-50 p-4 rounded-lg shadow-lg text-sm ${
-                        toast.type === "success"
-                            ? "bg-green-500 text-white"
-                            : "bg-red-500 text-white"
-                    }`}
-                >
-                    <div className="flex justify-between items-center">
-                        <span className="font-medium">{toast.message}</span>
-                        <button
-                            onClick={() => setToast(null)}
-                            className="ml-4 text-white hover:opacity-75"
-                        >
-                            <X size={20} />
-                        </button>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

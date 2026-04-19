@@ -8,6 +8,7 @@ import { useState, useEffect, useMemo, memo, useCallback } from "react";
 import { QrisCode } from "./QrisCode";
 import { useQrisPayment } from "@/lib/client/hooks/payments/useQrisPayment";
 import { useFeatures } from "@/lib/client/context/features-provider";
+import { useToast } from "@/lib/client/context/ToastContext";
 
 interface CartDrawerProps {
     isOpen: boolean;
@@ -19,7 +20,6 @@ interface CartDrawerProps {
     onProcessOrder: () => void;
     processing: boolean;
     selectedStoreId: string | null;
-    onShowToast: (message: string, type: "success" | "error") => void;
 }
 
 type PaymentMethod = "cash" | "qris";
@@ -34,9 +34,9 @@ export const CartDrawer = memo(function CartDrawer({
     onProcessOrder,
     processing,
     selectedStoreId,
-    onShowToast,
 }: CartDrawerProps) {
     const { qris } = useFeatures();
+    const { showToast } = useToast();
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
     const [showSuccess, setShowSuccess] = useState(false);
     const [simulating, setSimulating] = useState(false);
@@ -57,12 +57,13 @@ export const CartDrawer = memo(function CartDrawer({
             setShowSuccess(false);
             onClose();
             onClearCart();
-            onShowToast(
-                `Order processed! Total: ${formatRupiah(total)}`,
+            showToast(
+                "Order confirmed!",
                 "success",
+                `${cart.length} items · ${formatRupiah(total)}`, // use total from useMemo
             );
         }, 1500);
-    }, [onClose, onClearCart, onShowToast, total]);
+    }, [onClose, onClearCart, showToast, total]);
 
     // ── QRIS hook ────────────────────────────────────────────────────────────
     const {
