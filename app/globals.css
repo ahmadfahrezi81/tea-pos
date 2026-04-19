@@ -233,3 +233,5 @@ input[type="date"]::-webkit-date-and-time-value {
         transform: translateY(-12px);
     }
 }
+
+@import 'mapbox-gl/dist/mapbox-gl.css';

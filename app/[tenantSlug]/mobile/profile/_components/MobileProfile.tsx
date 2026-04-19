@@ -13,6 +13,7 @@ import {
     StoreIcon,
     ChevronRight,
     Building2,
+    MapPin,
 } from "lucide-react";
 import { Icon } from "@iconify/react";
 import { useStore } from "@/lib/client/context/StoreContext";
@@ -182,6 +183,12 @@ export default function MobileProfile() {
                     label="Assigned Stores"
                     sublabel={`You're assigned in ${assignedStores.length} ${assignedStores.length !== 1 ? "stores" : "store"}`}
                     onClick={handleAssignedStores}
+                />
+                <SettingsRow
+                    icon={<MapPin size={20} className="text-gray-900" />}
+                    label="New Location"
+                    sublabel="Add a store location on the map"
+                    onClick={() => navigation.push(url("/mobile/profile/map"))}
                 />
                 <SettingsRow
                     icon={<Bell size={20} className="text-gray-900" />}
