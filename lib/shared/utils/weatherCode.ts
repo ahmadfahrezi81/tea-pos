@@ -72,9 +72,7 @@ export function getWeatherMeta(code: number, isNight = false): WeatherMeta {
     if (code === 1102)
         return {
             fluentIcon: makeIcon(
-                isNight
-                    ? "fluent-emoji:cloud"
-                    : "fluent-emoji:sun-behind-large-cloud",
+                isNight ? "fluent-emoji:cloud" : "fluent-emoji:cloud",
             ),
             lucideIcon: isNight ? CloudMoon : Cloud,
             label: "Mostly Cloudy",

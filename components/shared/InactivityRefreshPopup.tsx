@@ -8,8 +8,8 @@ const INACTIVITY_LIMIT = 1000 * 60 * 15; // 15 minutes
 export default function RefreshOnStaleData() {
     const [showPrompt, setShowPrompt] = useState(false);
     const [lastActivity, setLastActivity] = useState(Date.now());
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
-    // Track user activity
     useEffect(() => {
         const updateActivity = () => {
             setLastActivity(Date.now());
@@ -24,26 +24,28 @@ export default function RefreshOnStaleData() {
         };
     }, []);
 
-    // Inactivity checker
     useEffect(() => {
         const interval = setInterval(() => {
             const now = Date.now();
             if (now - lastActivity > INACTIVITY_LIMIT) {
                 setShowPrompt(true);
             }
-        }, 1000); // check every second
+        }, 1000);
 
         return () => clearInterval(interval);
     }, [lastActivity]);
 
-    const handleRefresh = () => window.location.reload();
+    const handleRefresh = () => {
+        setIsRefreshing(true);
+        window.location.reload();
+    };
+
     const handleDismiss = () => setShowPrompt(false);
 
     if (!showPrompt) return null;
 
     return (
         <>
-            {/* Background click closes popup */}
             <div className="fixed inset-0 z-40" onClick={handleDismiss} />
 
             <div className="fixed bottom-4 right-4 z-50">
@@ -70,10 +72,14 @@ export default function RefreshOnStaleData() {
                             </p>
                             <button
                                 onClick={handleRefresh}
-                                className="mt-2 flex items-center px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-500 text-white hover:bg-blue-600"
+                                disabled={isRefreshing}
+                                className="mt-2 flex items-center px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-60 disabled:cursor-not-allowed"
                             >
-                                <RefreshCw size={14} className="mr-1" />
-                                Refresh Now
+                                <RefreshCw
+                                    size={14}
+                                    className={`mr-1 ${isRefreshing ? "animate-spin" : ""}`}
+                                />
+                                {isRefreshing ? "Refreshing..." : "Refresh Now"}
                             </button>
                         </div>
                     </div>
