@@ -21,7 +21,6 @@ import { CloseDayModal } from "./_components/CloseDayModal";
 import { DetailsDrawer } from "./_components/DetailsDrawer";
 import { ConfirmationPopup } from "@/components/mobile/shared/ConfirmationPopup";
 import { useStore } from "@/lib/client/context/StoreContext";
-// import MiniDailySalesChart from "./_components/MiniDailySalesChart";
 import {
     isCurrentMonthSelected,
     formatDate,
@@ -30,6 +29,7 @@ import {
 import { navigation } from "@/lib/shared/utils/navigation";
 import { useTenantSlug } from "@/lib/server/config/tenant-url";
 import { useSummaryPhotoCount } from "@/lib/client/hooks/summaries/useSummaryPhotoCount";
+import { useToast } from "@/lib/client/context/ToastContext";
 
 import dynamic from "next/dynamic";
 const MiniDailySalesChart = dynamic(
@@ -68,6 +68,7 @@ export default function MobileAnalytics() {
     const { profile } = useAuth();
     const { selectedStoreId, selectedStore } = useStore();
     const { url } = useTenantSlug();
+    const { showToast } = useToast();
 
     const storeName = selectedStore?.name ?? "Unknown Store";
 
@@ -85,11 +86,6 @@ export default function MobileAnalytics() {
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [hasSeenPopup, setHasSeenPopup] = useState(false);
     const [hasSeenCloseReminder, setHasSeenCloseReminder] = useState(false);
-
-    const [toast, setToast] = useState<{
-        message: string;
-        type: "success" | "error";
-    } | null>(null);
 
     const {
         data: summariesData,
@@ -110,14 +106,6 @@ export default function MobileAnalytics() {
     const unclosedSummaries = useMemo(
         () => summariesData?.summaries.filter((s) => !s.closedAt) ?? [],
         [summariesData?.summaries],
-    );
-
-    const showToast = useCallback(
-        (message: string, type: "success" | "error") => {
-            setToast({ message, type });
-            setTimeout(() => setToast(null), 3000);
-        },
-        [],
     );
 
     // ─── Open store reminder ───────────────────────────────────────────────
@@ -180,7 +168,7 @@ export default function MobileAnalytics() {
                 openingBalance: 0,
             });
             setShowOpenStorePopup(false);
-            showToast("Store opened for today", "success");
+            showToast("Store opened!", "success");
         } catch (error) {
             showToast(
                 error instanceof Error ? error.message : "Failed to open store",
@@ -205,7 +193,7 @@ export default function MobileAnalytics() {
             });
             setShowExpenseForm(false);
             setSelectedSummary(null);
-            showToast("Expenses saved successfully", "success");
+            showToast("Expenses saved!", "success");
         } catch (error) {
             showToast(
                 error instanceof Error
@@ -222,7 +210,7 @@ export default function MobileAnalytics() {
             await updateSummary(selectedSummary.id, { openingBalance });
             setShowEditForm(false);
             setSelectedSummary(null);
-            showToast("Opening balance updated successfully", "success");
+            showToast("Opening balance updated!", "success");
         } catch (error) {
             showToast(
                 error instanceof Error
@@ -247,7 +235,7 @@ export default function MobileAnalytics() {
             setShowCloseForm(false);
             setSelectedSummary(null);
             setShowCloseReminder(false);
-            showToast("Day closed successfully", "success");
+            showToast("Close Day. Thank you!", "success");
         } catch (error) {
             showToast(
                 error instanceof Error ? error.message : "Failed to close day",
@@ -417,8 +405,6 @@ export default function MobileAnalytics() {
                         </div>
                     ) : (
                         summariesData.summaries.map((summary) => {
-                            // totalOrders, totalCups, totalExpenses now come
-                            // precomputed from the DB — no client-side calculation
                             const dailyExpenses = getExpensesForDate(
                                 summariesData,
                                 summary.date,
@@ -653,12 +639,6 @@ export default function MobileAnalytics() {
                                                     Expenses
                                                 </button>
                                                 <button
-                                                    // onClick={() => {
-                                                    //     setSelectedSummary(
-                                                    //         summaryWithExtras,
-                                                    //     );
-                                                    //     setShowCloseForm(true);
-                                                    // }}
                                                     onClick={() => {
                                                         navigation.push(
                                                             url(
@@ -769,27 +749,6 @@ export default function MobileAnalytics() {
                         getStoreName={() => storeName}
                     />
                 </>
-            )}
-
-            {/* Toast */}
-            {toast && (
-                <div
-                    className={`fixed top-20 left-4 right-4 z-50 p-4 rounded-lg shadow-lg ${
-                        toast.type === "success"
-                            ? "bg-green-500 text-white"
-                            : "bg-red-500 text-white"
-                    }`}
-                >
-                    <div className="flex justify-between items-center">
-                        <span className="font-medium">{toast.message}</span>
-                        <button
-                            onClick={() => setToast(null)}
-                            className="ml-4 text-white hover:opacity-75"
-                        >
-                            ×
-                        </button>
-                    </div>
-                </div>
             )}
         </div>
     );
