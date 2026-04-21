@@ -7,8 +7,7 @@ import { MapPin, X, Navigation, Star, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTenantSlug } from "@/lib/server/config/tenant-url";
 
-mapboxgl.accessToken =
-    "pk.eyJ1IjoiYWhtYWRmYWhyZXppIiwiYSI6ImNtbzV2ODJpYzF1OTUyc29mYno2MmZ6MGkifQ.0FRmfo_M3OXHCOHJmrBRDQ";
+mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || "";
 
 export default function MobileMapSurvey() {
     const mapContainer = useRef<HTMLDivElement>(null);
