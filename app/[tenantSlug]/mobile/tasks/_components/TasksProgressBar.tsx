@@ -204,7 +204,7 @@ export default function TasksProgressBar({
                             </p>
                             <div className="flex items-center gap-2 mt-1">
                                 <p className="text-base text-gray-600">
-                                    Don't forget to take a photo
+                                    Don&apos;t forget to take a photo
                                 </p>
                                 <button
                                     disabled
