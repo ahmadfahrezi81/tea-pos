@@ -3,7 +3,7 @@ import { ListCustomerFeedbacksResponse } from "@/lib/shared/schemas/customer-fee
 
 interface UseCustomerFeedbacksParams {
     tenantId?: string;
-    sellerId?: string;
+    userId?: string;
     limit?: number;
     offset?: number;
 }
@@ -14,7 +14,7 @@ const fetchCustomerFeedbacks = async (
     const searchParams = new URLSearchParams();
 
     if (params.tenantId) searchParams.append("tenantId", params.tenantId);
-    if (params.sellerId) searchParams.append("sellerId", params.sellerId);
+    if (params.userId) searchParams.append("userId", params.userId);
     if (params.limit !== undefined)
         searchParams.append("limit", String(params.limit));
     if (params.offset !== undefined)
@@ -52,13 +52,13 @@ const fetchCustomerFeedbacks = async (
 export default function useCustomerFeedbacks(
     params: UseCustomerFeedbacksParams = {},
 ) {
-    const { tenantId, sellerId, limit = 20, offset = 0 } = params;
+    const { tenantId, userId, limit = 20, offset = 0 } = params;
 
-    const key = `customer-feedbacks-${tenantId ?? "all"}-${sellerId ?? "all"}-${limit}-${offset}`;
+    const key = `customer-feedbacks-${tenantId ?? "all"}-${userId ?? "all"}-${limit}-${offset}`;
 
     return useSWR<ListCustomerFeedbacksResponse>(
         key,
-        () => fetchCustomerFeedbacks({ tenantId, sellerId, limit, offset }),
+        () => fetchCustomerFeedbacks({ tenantId, userId, limit, offset }),
         {
             revalidateOnFocus: true,
             dedupingInterval: 10_000,

@@ -166,7 +166,8 @@ export default function MobileLayoutClient({
         if (path.endsWith("/mobile/profile/stores")) return "Assigned Stores";
         if (path.endsWith("/mobile/profile/personal"))
             return "Personal Details";
-        if (path.endsWith("/mobile/profile/map")) return "New Location";
+        if (path.endsWith("/mobile/profile/map"))
+            return "Feedback Location History";
         if (path.endsWith("/mobile/notifications")) return "Notifications";
         if (
             path.includes("/mobile/notifications/") &&
@@ -290,15 +291,15 @@ export default function MobileLayoutClient({
     const currentTitle = getCurrentPageTitle(currentPath);
     const currentIsSubPage = isSubPage(currentPath);
 
-    const isFullscreenPage = currentPath.endsWith("/mobile/profile/map");
-    const isInlineHeader = currentPath.endsWith(
-        "/mobile/analytics/daily/close",
-    );
+    const isFullscreenPage = false;
+    const isInlineHeader =
+        currentPath.endsWith("/mobile/analytics/daily/close") ||
+        currentPath.endsWith("/mobile/profile/map");
 
     const scrollPaddingTop = isFullscreenPage
         ? "pt-0"
         : isInlineHeader
-          ? "pt-14"
+          ? "pt-16"
           : currentIsSubPage
             ? "pt-27"
             : "pt-17";

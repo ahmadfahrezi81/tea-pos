@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url);
         const parsed = ListCustomerFeedbacksQuery.safeParse({
             tenantId: searchParams.get("tenantId") ?? undefined,
-            sellerId: searchParams.get("sellerId") ?? undefined,
+            userId: searchParams.get("userId") ?? undefined,
             limit: searchParams.get("limit") ?? undefined,
             offset: searchParams.get("offset") ?? undefined,
         });
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
         const { data, error } = await createCustomerFeedback({
             input: parsed.data,
             tenantId,
-            sellerId: user.id,
+            userId: user.id,
         });
 
         if (error) return NextResponse.json({ error }, { status: 500 });

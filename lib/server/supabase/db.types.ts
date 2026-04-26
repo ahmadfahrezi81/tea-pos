@@ -23,8 +23,8 @@ export type Database = {
           location_name: string
           longitude: number
           notes: string | null
-          seller_id: string
           tenant_id: string
+          user_id: string
         }
         Insert: {
           created_at?: string
@@ -34,8 +34,8 @@ export type Database = {
           location_name: string
           longitude: number
           notes?: string | null
-          seller_id: string
           tenant_id: string
+          user_id: string
         }
         Update: {
           created_at?: string
@@ -45,13 +45,13 @@ export type Database = {
           location_name?: string
           longitude?: number
           notes?: string | null
-          seller_id?: string
           tenant_id?: string
+          user_id?: string
         }
         Relationships: [
           {
             foreignKeyName: "customer_feedbacks_seller_id_fkey"
-            columns: ["seller_id"]
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]

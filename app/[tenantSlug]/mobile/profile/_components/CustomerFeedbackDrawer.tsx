@@ -236,7 +236,7 @@ export function CustomerFeedbackDrawer({
                     </div>
 
                     {/* Mini Map */}
-                    <div className="shrink-0 h-[180px] w-full px-4 mb-3">
+                    <div className="shrink-0 h-45 w-full px-4 mb-3">
                         <MiniMap
                             lng={selectedLocation?.longitude ?? BOGOR_LNG}
                             lat={selectedLocation?.latitude ?? BOGOR_LAT}

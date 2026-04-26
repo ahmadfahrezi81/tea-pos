@@ -52,7 +52,7 @@ export const CreateCustomerFeedbackInput = z
 export const ListCustomerFeedbacksQuery = z
     .object({
         tenantId: UUIDSchema.optional(),
-        sellerId: UUIDSchema.optional(),
+        userId: UUIDSchema.optional(),
         limit: z.coerce
             .number()
             .int()
@@ -79,7 +79,11 @@ export const CustomerFeedbackResponse = z
     .object({
         id: UUIDSchema,
         tenantId: UUIDSchema,
-        sellerId: UUIDSchema,
+        userId: UUIDSchema,
+        userName: z.string().nullable().openapi({
+            description: "Full name of the user who submitted the feedback",
+            example: "Ahmad Fahrezi",
+        }),
         locationName: z.string(),
         locationDisplay: z.string(),
         latitude: z.number(),
