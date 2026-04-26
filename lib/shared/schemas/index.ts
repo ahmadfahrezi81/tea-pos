@@ -44,5 +44,8 @@ export * from "./weather";
 // Daily Summary Photos
 export * from "./daily-summary-photos";
 
+// Customer Feedbacks
+export * from "./customer-feedbacks";
+
 // Type exports for frontend
 export type { z } from "zod";

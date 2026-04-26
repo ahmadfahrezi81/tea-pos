@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      customer_feedbacks: {
+        Row: {
+          created_at: string
+          id: string
+          latitude: number
+          location_display: string
+          location_name: string
+          longitude: number
+          notes: string | null
+          seller_id: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          latitude: number
+          location_display: string
+          location_name: string
+          longitude: number
+          notes?: string | null
+          seller_id: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          latitude?: number
+          location_display?: string
+          location_name?: string
+          longitude?: number
+          notes?: string | null
+          seller_id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_feedbacks_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_feedbacks_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_summaries: {
         Row: {
           actual_cash: number | null
