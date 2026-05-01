@@ -1,0 +1,16 @@
+{
+  "name": "@tea-pos/services",
+  "version": "0.0.1",
+  "private": true,
+  "exports": {
+    "./customer-feedbacks": "./customer-feedbacks.ts",
+    "./notifications": "./notifications.ts",
+    "./weather": "./weather.ts"
+  },
+  "dependencies": {
+    "@tea-pos/features": "workspace:*"
+  },
+  "peerDependencies": {
+    "@supabase/supabase-js": "^2.0.0"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "@tea-pos/features",
+  "version": "0.0.1",
+  "private": true,
+  "exports": {
+    "./*": "./*.ts",
+    "./*/schema": "./*/schema.ts",
+    "./*/openapi": "./*/openapi.ts",
+    "./shared/*": "./shared/*.ts"
+  },
+  "dependencies": {
+    "@asteasolutions/zod-to-openapi": "^8.1.0",
+    "zod": "^4.1.12"
+  }
+}
