@@ -4,22 +4,24 @@ import {
     OpenApiGeneratorV31,
     OpenAPIRegistry,
 } from "@asteasolutions/zod-to-openapi";
-import { registerOrderRoutes } from "@/lib/shared/openapi/orders";
-import { getBackendVersion } from "@/lib/shared/version";
-import { registerTenantRoutes } from "@/lib/shared/openapi/tenants";
-import { registerUserTenantAssignmentRoutes } from "@/lib/shared/openapi/userTenantAssignments";
-import { registerTenantInviteRoutes } from "@/lib/shared/openapi/tenantInvites";
-import { registerProductRoutes } from "@/lib/shared/openapi/products";
-import { registerStoreRoutes } from "@/lib/shared/openapi/stores";
-import { registerExpenseRoutes } from "@/lib/shared/openapi/expenses";
-import { registerDailySummaryRoutes } from "@/lib/shared/openapi/daily-summaries";
-import { registerAssignmentRoutes } from "@/lib/shared/openapi/userStoreAssignments";
-import { registerProfileRoutes } from "@/lib/shared/openapi/profiles";
-import { registerWeatherRoutes } from "@/lib/shared/openapi/weather";
-import { registerNotificationRoutes } from "@/lib/shared/openapi/notifications";
-import { registerDailySummaryPhotoRoutes } from "@/lib/shared/openapi/daily-summary-photos";
-import { registerPaymentRoutes } from "@/lib/shared/openapi/payments";
-import { registerCustomerFeedbackRoutes } from "@/lib/shared/openapi/customer-feedbacks";
+import { registerOrderRoutes } from "@tea-pos/features/orders/openapi";
+import { getBackendVersion } from "@tea-pos/features/shared/version";
+import { registerTenantRoutes } from "@tea-pos/features/tenants/openapi";
+import packageJson from "../../../package.json";
+
+import { registerUserTenantAssignmentRoutes } from "@tea-pos/features/tenants/user-assignments-openapi";
+import { registerTenantInviteRoutes } from "@tea-pos/features/tenants/invites-openapi";
+import { registerProductRoutes } from "@tea-pos/features/products/openapi";
+import { registerStoreRoutes } from "@tea-pos/features/stores/openapi";
+import { registerExpenseRoutes } from "@tea-pos/features/expenses/openapi";
+import { registerDailySummaryRoutes } from "@tea-pos/features/summaries/openapi";
+import { registerAssignmentRoutes } from "@tea-pos/features/stores/user-assignments-openapi";
+import { registerProfileRoutes } from "@tea-pos/features/profiles/openapi";
+import { registerWeatherRoutes } from "@tea-pos/features/weather/openapi";
+import { registerNotificationRoutes } from "@tea-pos/features/notifications/openapi";
+import { registerDailySummaryPhotoRoutes } from "@tea-pos/features/summaries/photos-openapi";
+import { registerPaymentRoutes } from "@tea-pos/features/payments/openapi";
+import { registerCustomerFeedbackRoutes } from "@tea-pos/features/customer-feedbacks/openapi";
 
 const registry = new OpenAPIRegistry();
 
@@ -49,7 +51,7 @@ export async function GET() {
         info: {
             version: "1.0.0", // API contract version
             title: "POS System API",
-            description: `API for managing orders, products, and daily summaries\n\nBackend build: ${getBackendVersion()}`,
+            description: `API for managing orders, products, and daily summaries\n\nBackend build: ${getBackendVersion(packageJson)}`,
         },
         servers: [{ url: "http://localhost:3000" }],
         tags: [{ name: "Orders", description: "Order management" }],

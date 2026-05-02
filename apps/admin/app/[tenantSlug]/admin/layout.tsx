@@ -8,10 +8,10 @@
 //     SidebarProvider,
 //     SidebarInset,
 //     SidebarTrigger,
-// } from "@/components/ui/sidebar";
+// } from "@tea-pos/ui/components/sidebar";
 // import { DynamicBreadcrumb } from "./_components/dynamic-breadcrumb";
-// import { Separator } from "@/components/ui/separator";
-// import { Toaster } from "@/components/ui/sonner";
+// import { Separator } from "@tea-pos/ui/components/separator";
+// import { Toaster } from "@tea-pos/ui/components/sonner";
 
 // import type { Metadata } from "next";
 // import { DateTimeDisplay } from "./_components/date-time-display";
@@ -94,10 +94,10 @@ import {
     SidebarProvider,
     SidebarInset,
     SidebarTrigger,
-} from "@/components/ui/sidebar";
+} from "@tea-pos/ui/components/sidebar";
 import { DynamicBreadcrumb } from "./_components/dynamic-breadcrumb";
-import { Separator } from "@/components/ui/separator";
-import { Toaster } from "@/components/ui/sonner";
+import { Separator } from "@tea-pos/ui/components/separator";
+import { Toaster } from "@tea-pos/ui/components/sonner";
 import type { Metadata } from "next";
 import { DateTimeDisplay } from "./_components/date-time-display";
 import { StoreScopeProvider } from "./StoreScopeProvider";

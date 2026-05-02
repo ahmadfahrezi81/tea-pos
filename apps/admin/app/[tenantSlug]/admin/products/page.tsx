@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@tea-pos/ui/components/button";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { AddProductModal } from "./_components/add-product-modal";
-import { useProducts } from "@/lib/client/hooks/products/useProducts";
+import { useProducts } from "@/lib/hooks/products/useProducts";
 import { useTenant } from "../../TenantProvider";
 import { DataTable } from "./_components/data-table";
 import { createColumns } from "./_components/columns";
@@ -18,9 +18,9 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@tea-pos/ui/components/alert-dialog";
 import { EditProductModal } from "./_components/edit-product-modal";
-import { Product } from "@/lib/shared/schemas/products";
+import { Product } from "@tea-pos/features/products/schema";
 import { ScopeBadge } from "../_components/scope-badge";
 
 export default function ProductsPage() {

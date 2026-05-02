@@ -1,9 +1,9 @@
 // app/[tenantSlug]/admin/orders/_components/order-metrics.tsx
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@tea-pos/ui/components/card";
 import { ShoppingCart, Coffee, TrendingUp, DollarSign } from "lucide-react";
-import { OrderListItem } from "@/lib/shared/schemas/order-list";
+import { OrderListItem } from "@tea-pos/features/orders/order-list-schema";
 
 interface OrderMetricsProps {
     orders: OrderListItem[];

@@ -16,9 +16,15 @@
 // }
 
 //lib/version.ts
-import packageJson from "../../package.json";
+// import packageJson from "../../package.json";
 
-export function getBackendVersion() {
+// export function getBackendVersion() {
+//     const sha = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || "local";
+//     return `${packageJson.backendVersionDate}-${sha}`;
+// }
+//
+
+export function getBackendVersion(packageJson: { backendVersionDate: string }) {
     const sha = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || "local";
     return `${packageJson.backendVersionDate}-${sha}`;
 }

@@ -10,7 +10,7 @@
 //     DialogDescription,
 //     DialogHeader,
 //     DialogTitle,
-// } from "@/components/ui/dialog";
+// } from "@tea-pos/ui/components/dialog";
 // import {
 //     Form,
 //     FormControl,
@@ -18,20 +18,20 @@
 //     FormItem,
 //     FormLabel,
 //     FormMessage,
-// } from "@/components/ui/form";
+// } from "@tea-pos/ui/components/form";
 // import {
 //     Select,
 //     SelectContent,
 //     SelectItem,
 //     SelectTrigger,
 //     SelectValue,
-// } from "@/components/ui/select";
-// import { Input } from "@/components/ui/input";
-// import { Button } from "@/components/ui/button";
+// } from "@tea-pos/ui/components/select";
+// import { Input } from "@tea-pos/ui/components/input";
+// import { Button } from "@tea-pos/ui/components/button";
 // import { Loader2, Upload, Plus, X } from "lucide-react";
 // import { toast } from "sonner";
-// import { createClient } from "@/lib/client/supabase";
-// import { useCategories } from "@/lib/client/hooks/products/useCategories";
+// import { createClient } from "@/lib/supabase";
+// import { useCategories } from "@/lib/hooks/products/useCategories";
 
 // const EditProductSchema = z.object({
 //     name: z.string().min(1, "Product name is required"),
@@ -473,7 +473,7 @@ import {
     DialogDescription,
     DialogHeader,
     DialogTitle,
-} from "@/components/ui/dialog";
+} from "@tea-pos/ui/components/dialog";
 import {
     Form,
     FormControl,
@@ -481,22 +481,22 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
-} from "@/components/ui/form";
+} from "@tea-pos/ui/components/form";
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+} from "@tea-pos/ui/components/select";
+import { Input } from "@tea-pos/ui/components/input";
+import { Button } from "@tea-pos/ui/components/button";
 import { Loader2, Upload, Plus, X } from "lucide-react";
 import { toast } from "sonner";
-import { createClient } from "@/lib/client/supabase";
-import { useCategories } from "@/lib/client/hooks/products/useCategories";
-import { UpdateProductInput } from "@/lib/shared/schemas/products";
-import type { Product } from "@/lib/shared/schemas/products";
+import { createClient } from "@/lib/supabase";
+import { useCategories } from "@/lib/hooks/products/useCategories";
+import { UpdateProductInput } from "@tea-pos/features/products/schema";
+import type { Product } from "@tea-pos/features/products/schema";
 
 type EditProductFormData = Omit<UpdateProductInput, "id">;
 

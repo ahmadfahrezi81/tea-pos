@@ -2,11 +2,10 @@ import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 import {
     CreateCustomerFeedbackInput,
     ListCustomerFeedbacksQuery,
-    CustomerFeedbackResponse,
     CreateCustomerFeedbackResponse,
     ListCustomerFeedbacksResponse,
-} from "../schemas/index";
-import { ErrorResponseSchema } from "../schemas/common";
+    ErrorResponseSchema,
+} from "@tea-pos/features/shared/schemas-index";
 
 export function registerCustomerFeedbackRoutes(registry: OpenAPIRegistry) {
     // GET /api/customer-feedbacks

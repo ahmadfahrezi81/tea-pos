@@ -1,6 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Button } from "@/components/ui/button";
+import { Checkbox } from "@tea-pos/ui/components/checkbox";
+import { Button } from "@tea-pos/ui/components/button";
 import { ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal } from "lucide-react";
 import {
     DropdownMenu,
@@ -8,11 +8,15 @@ import {
     DropdownMenuItem,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+} from "@tea-pos/ui/components/dropdown-menu";
+import { Badge } from "@tea-pos/ui/components/badge";
+import {
+    Avatar,
+    AvatarFallback,
+    AvatarImage,
+} from "@tea-pos/ui/components/avatar";
 import { toast } from "sonner";
-import { Product } from "@/lib/shared/schemas/products";
+import { Product } from "@tea-pos/features/products/schema";
 
 // export type Product = {
 //     id: string;

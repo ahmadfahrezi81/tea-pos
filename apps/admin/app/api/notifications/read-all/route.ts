@@ -1,8 +1,8 @@
 // app/api/notifications/read-all/route.ts
-import { createRouteHandlerClient } from "@/lib/server/supabase/server";
-import { getCurrentTenantId } from "@/lib/server/config/tenant";
+import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { getCurrentTenantId } from "@tea-pos/utils/server-config/tenant";
 import { NextRequest, NextResponse } from "next/server";
-import { MarkAllReadResponse } from "@/lib/shared/schemas/notifications";
+import { MarkAllReadResponse } from "@tea-pos/features/notifications/schema";
 
 // ============================================================================
 // PATCH /api/notifications/read-all

@@ -1,6 +1,6 @@
 // app/api/stores/route.ts
-import { createRouteHandlerClient } from "@/lib/server/supabase/server";
-import { getCurrentTenantId } from "@/lib/server/config/tenant";
+import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { getCurrentTenantId } from "@tea-pos/utils/server-config/tenant";
 import { NextRequest, NextResponse } from "next/server";
 import {
     CreateStoreInput,
@@ -9,9 +9,9 @@ import {
     CreateStoreResponse,
     UpdateStoreResponse,
     DeleteStoreResponse,
-} from "@/lib/shared/schemas/stores";
-import { toCamelKeys, toSnakeKeys } from "@/lib/shared/utils/schemas";
-import { checkIsAdmin } from "@/lib/server/supabase/checkIsAdmin";
+} from "@tea-pos/features/stores/schema";
+import { toCamelKeys, toSnakeKeys } from "@tea-pos/utils/schemas";
+import { checkIsAdmin } from "@/lib/supabase/checkIsAdmin";
 
 // ============================================================================
 // GET /api/stores

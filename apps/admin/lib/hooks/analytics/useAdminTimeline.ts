@@ -1,6 +1,6 @@
 // lib/hooks/analytics/useAdminTimeline.ts
 import useSWR from "swr";
-import { AdminTimelineResponse } from "@/lib/shared/schemas/analytics";
+import { AdminTimelineResponse } from "@tea-pos/features/analytics/schema";
 
 interface UseAdminTimelineParams {
     dateFrom: string; // YYYY-MM-DD

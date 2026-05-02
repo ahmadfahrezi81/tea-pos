@@ -6,7 +6,7 @@ import {
     ListTenantsQuery,
     TenantListResponse,
     ErrorResponseSchema,
-} from "../schemas/index";
+} from "@tea-pos/features/shared/schemas-index";
 
 export function registerTenantRoutes(registry: OpenAPIRegistry) {
     // Register GET /api/tenants

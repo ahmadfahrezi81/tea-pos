@@ -1,12 +1,12 @@
 // app/api/notifications/route.ts
-import { createRouteHandlerClient } from "@/lib/server/supabase/server";
-import { getCurrentTenantId } from "@/lib/server/config/tenant";
+import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { getCurrentTenantId } from "@tea-pos/utils/server-config/tenant";
 import { NextRequest, NextResponse } from "next/server";
 import {
     CreateNotificationInput,
     NotificationListResponse,
-} from "@/lib/shared/schemas/notifications";
-import { toCamelKeys, toSnakeKeys } from "@/lib/shared/utils/schemas";
+} from "@tea-pos/features/notifications/schema";
+import { toCamelKeys, toSnakeKeys } from "@tea-pos/utils/schemas";
 
 // ============================================================================
 // GET /api/notifications

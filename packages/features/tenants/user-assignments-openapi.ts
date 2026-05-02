@@ -6,7 +6,7 @@ import {
     ListUserTenantAssignmentsQuery,
     UserTenantAssignmentListResponse,
     ErrorResponseSchema,
-} from "../schemas/index";
+} from "@tea-pos/features/shared/schemas-index";
 
 export function registerUserTenantAssignmentRoutes(registry: OpenAPIRegistry) {
     // Register GET /api/user-tenant-assignments

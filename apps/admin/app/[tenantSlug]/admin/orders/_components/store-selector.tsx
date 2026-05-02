@@ -2,15 +2,15 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@tea-pos/ui/components/button";
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
-} from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
+} from "@tea-pos/ui/components/popover";
+import { Badge } from "@tea-pos/ui/components/badge";
 import { Check, ChevronsUpDown, Store } from "lucide-react";
-import { cn } from "@/lib/shared/utils/cn";
+import { cn } from "@tea-pos/utils/cn";
 
 interface Store {
     id: string;
@@ -41,7 +41,7 @@ export function StoreSelector({
     const handleToggleStore = (storeId: string) => {
         if (selectedStoreIds.includes(storeId)) {
             const newSelection = selectedStoreIds.filter(
-                (id) => id !== storeId
+                (id) => id !== storeId,
             );
             onSelectionChange(newSelection);
         } else {
@@ -83,7 +83,7 @@ export function StoreSelector({
                         <div
                             className={cn(
                                 "flex items-center gap-2 rounded-sm px-2 py-2 cursor-pointer hover:bg-accent",
-                                allStoresSelected && "bg-accent"
+                                allStoresSelected && "bg-accent",
                             )}
                             onClick={handleSelectAll}
                         >
@@ -92,7 +92,7 @@ export function StoreSelector({
                                     "h-4 w-4 rounded-sm border flex items-center justify-center",
                                     allStoresSelected
                                         ? "bg-primary border-primary"
-                                        : "border-input"
+                                        : "border-input",
                                 )}
                             >
                                 {allStoresSelected && (
@@ -109,14 +109,14 @@ export function StoreSelector({
                         {/* Individual Stores */}
                         {stores.map((store) => {
                             const isSelected = selectedStoreIds.includes(
-                                store.id
+                                store.id,
                             );
                             return (
                                 <div
                                     key={store.id}
                                     className={cn(
                                         "flex items-center gap-2 rounded-sm px-2 py-2 cursor-pointer hover:bg-accent",
-                                        isSelected && "bg-accent"
+                                        isSelected && "bg-accent",
                                     )}
                                     onClick={() => handleToggleStore(store.id)}
                                 >
@@ -125,7 +125,7 @@ export function StoreSelector({
                                             "h-4 w-4 rounded-sm border flex items-center justify-center",
                                             isSelected
                                                 ? "bg-primary border-primary"
-                                                : "border-input"
+                                                : "border-input",
                                         )}
                                     >
                                         {isSelected && (

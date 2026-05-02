@@ -10,7 +10,7 @@ import {
     Sparkles,
 } from "lucide-react";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@tea-pos/ui/components/avatar";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -19,17 +19,17 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@tea-pos/ui/components/dropdown-menu";
 import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
     useSidebar,
-} from "@/components/ui/sidebar";
+} from "@tea-pos/ui/components/sidebar";
 
 import { SettingsDialog } from "./settings-dialog";
 import VersionInfo from "./shared/VersionInfo";
-import { useAuth } from "@/lib/client/context/AuthContext";
+import { useAuth } from "@/lib/context/AuthContext";
 
 export function NavUser() {
     const { isMobile } = useSidebar();

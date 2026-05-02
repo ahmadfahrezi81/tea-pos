@@ -4,7 +4,7 @@ import {
     WeatherHourlyResponse,
     WeatherFetchResponse,
     ErrorResponseSchema,
-} from "../schemas/index";
+} from "@tea-pos/features/shared/schemas-index";
 
 export function registerWeatherRoutes(registry: OpenAPIRegistry) {
     // GET /api/weather

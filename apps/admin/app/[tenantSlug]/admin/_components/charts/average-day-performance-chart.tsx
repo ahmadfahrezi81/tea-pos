@@ -4,13 +4,13 @@ import {
     CardDescription,
     CardHeader,
     CardTitle,
-} from "@/components/ui/card";
+} from "@tea-pos/ui/components/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import {
     ChartContainer,
     ChartTooltip,
     ChartTooltipContent,
-} from "@/components/ui/chart";
+} from "@tea-pos/ui/components/chart";
 import { TrendingUp } from "lucide-react";
 
 interface DayData {
@@ -43,16 +43,16 @@ export default function AverageDayPerformance({
 }) {
     // Find the top performing day
     const topDay = data.reduce((max, item) =>
-        item.cups > max.cups ? item : max
+        item.cups > max.cups ? item : max,
     );
 
     // Calculate average for comparison
     const averageCups = Math.round(
-        data.reduce((sum, item) => sum + item.cups, 0) / data.length
+        data.reduce((sum, item) => sum + item.cups, 0) / data.length,
     );
 
     const percentageAboveAvg = Math.round(
-        ((topDay.cups - averageCups) / averageCups) * 100
+        ((topDay.cups - averageCups) / averageCups) * 100,
     );
 
     return (

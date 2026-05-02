@@ -3,8 +3,8 @@ import { Metadata } from "next";
 import { cookies } from "next/headers";
 import { SWRConfig } from "swr";
 import { Analytics } from "@vercel/analytics/next";
-import { AuthProvider } from "@/lib/client/context/AuthContext";
-import { FeaturesProvider } from "@/lib/client/context/features-provider";
+import { AuthProvider } from "@/lib/context/AuthContext";
+import { FeaturesProvider } from "@/lib/context/features-provider";
 
 export const metadata: Metadata = {
     title: "Tea POS",

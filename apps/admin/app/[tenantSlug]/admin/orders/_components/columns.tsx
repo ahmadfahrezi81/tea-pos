@@ -2,8 +2,8 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Button } from "@/components/ui/button";
+import { Checkbox } from "@tea-pos/ui/components/checkbox";
+import { Button } from "@tea-pos/ui/components/button";
 import {
     ArrowUpDown,
     ArrowUp,
@@ -19,9 +19,9 @@ import {
     DropdownMenuItem,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
-import { OrderListItem } from "@/lib/shared/schemas/order-list";
+} from "@tea-pos/ui/components/dropdown-menu";
+import { Badge } from "@tea-pos/ui/components/badge";
+import { OrderListItem } from "@tea-pos/features/orders/order-list-schema";
 import { format } from "date-fns";
 import { toast } from "sonner";
 

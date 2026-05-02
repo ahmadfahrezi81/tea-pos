@@ -3,7 +3,7 @@ import useSWRMutation from "swr/mutation";
 import {
     CreateUserInput,
     CreateUserResponse,
-} from "@/lib/shared/schemas/users";
+} from "@tea-pos/features/users/schema";
 
 async function createUser(
     url: string,

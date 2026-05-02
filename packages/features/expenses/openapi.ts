@@ -10,7 +10,7 @@ import {
     DeleteExpenseResponse,
     ErrorResponseSchema,
     DeleteByIdQuery,
-} from "../schemas/index";
+} from "@tea-pos/features/shared/schemas-index";
 
 export function registerExpenseRoutes(registry: OpenAPIRegistry) {
     // Register GET /api/expenses

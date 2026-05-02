@@ -8,7 +8,7 @@ import {
     MarkAllReadResponse,
     MarkOneReadResponse,
     ErrorResponseSchema,
-} from "../schemas/index";
+} from "@tea-pos/features/shared/schemas-index";
 
 export function registerNotificationRoutes(registry: OpenAPIRegistry) {
     // GET /api/notifications

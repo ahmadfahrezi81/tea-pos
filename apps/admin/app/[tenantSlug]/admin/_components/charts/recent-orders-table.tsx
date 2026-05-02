@@ -5,9 +5,9 @@ import {
     CardDescription,
     CardHeader,
     CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+} from "@tea-pos/ui/components/card";
+import { Button } from "@tea-pos/ui/components/button";
+import { Badge } from "@tea-pos/ui/components/badge";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface OrderItem {
@@ -161,7 +161,7 @@ export default function RecentOrdersTable({
                                                                     ?.name ||
                                                                     "Unknown"}
                                                             </Badge>
-                                                        )
+                                                        ),
                                                     )}
                                                 </div>
                                             )}

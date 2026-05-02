@@ -1,13 +1,13 @@
 // app/api/tenants/route.ts
-import { createRouteHandlerClient } from "@/lib/server/supabase/server";
+import { createRouteHandlerClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import {
     CreateTenantInput,
     ListTenantsQuery,
     TenantListResponse,
     CreateTenantResponse,
-} from "@/lib/shared/schemas/tenants";
-import { toCamelKeys, toSnakeKeys } from "@/lib/shared/utils/schemas";
+} from "@tea-pos/features/tenants/schema";
+import { toCamelKeys, toSnakeKeys } from "@tea-pos/utils/schemas";
 
 // ============================================================================
 // GET /api/tenants

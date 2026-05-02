@@ -7,7 +7,7 @@ import {
     ListSummaryPhotosQuery,
     ListSummaryPhotosResponse,
     ErrorResponseSchema,
-} from "../schemas/index";
+} from "@tea-pos/features/shared/schemas-index";
 
 export function registerDailySummaryPhotoRoutes(registry: OpenAPIRegistry) {
     // POST /api/summaries/photo

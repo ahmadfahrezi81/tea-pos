@@ -2,14 +2,14 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@tea-pos/ui/components/button";
 import { UserPlus } from "lucide-react";
 import { useTenant } from "../../../TenantProvider";
 import { useStoreScope } from "../../StoreScopeProvider";
-import useStoreUsers from "@/lib/client/hooks/stores/useStoreUsers";
+import useStoreUsers from "@/lib/hooks/stores/useStoreUsers";
 import { DataTable } from "./_components/data-table";
 import { createColumns } from "./_components/columns";
-import { StoreUser } from "@/lib/shared/schemas/userStoreAssignments";
+import { StoreUser } from "@tea-pos/features/stores/user-assignments-schema";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -19,7 +19,7 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@tea-pos/ui/components/alert-dialog";
 import { toast } from "sonner";
 import { ScopeBadge } from "../../_components/scope-badge";
 import { AddAssignmentModal } from "./_components/add-assignment-modal";

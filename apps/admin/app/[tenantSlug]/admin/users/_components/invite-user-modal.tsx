@@ -9,7 +9,7 @@
 //     DialogDescription,
 //     DialogHeader,
 //     DialogTitle,
-// } from "@/components/ui/dialog";
+// } from "@tea-pos/ui/components/dialog";
 // import {
 //     Form,
 //     FormControl,
@@ -17,16 +17,16 @@
 //     FormItem,
 //     FormLabel,
 //     FormMessage,
-// } from "@/components/ui/form";
+// } from "@tea-pos/ui/components/form";
 // import {
 //     Select,
 //     SelectContent,
 //     SelectItem,
 //     SelectTrigger,
 //     SelectValue,
-// } from "@/components/ui/select";
-// import { Input } from "@/components/ui/input";
-// import { Button } from "@/components/ui/button";
+// } from "@tea-pos/ui/components/select";
+// import { Input } from "@tea-pos/ui/components/input";
+// import { Button } from "@tea-pos/ui/components/button";
 // import { Loader2, Send } from "lucide-react";
 
 // import { toast } from "sonner";
@@ -230,7 +230,7 @@ import {
     DialogDescription,
     DialogHeader,
     DialogTitle,
-} from "@/components/ui/dialog";
+} from "@tea-pos/ui/components/dialog";
 import {
     Form,
     FormControl,
@@ -238,20 +238,20 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
-} from "@/components/ui/form";
+} from "@tea-pos/ui/components/form";
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+} from "@tea-pos/ui/components/select";
+import { Input } from "@tea-pos/ui/components/input";
+import { Button } from "@tea-pos/ui/components/button";
 import { Loader2, Send } from "lucide-react";
 
 import { toast } from "sonner";
-import { InviteUserInput } from "@/lib/shared/schemas/tenantInvites";
+import { InviteUserInput } from "@tea-pos/features/tenants/invites-schema";
 
 interface InviteUserModalProps {
     open: boolean;

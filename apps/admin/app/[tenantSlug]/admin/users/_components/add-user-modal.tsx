@@ -10,7 +10,7 @@ import {
     DialogHeader,
     DialogPortal,
     DialogTitle,
-} from "@/components/ui/dialog";
+} from "@tea-pos/ui/components/dialog";
 import {
     Form,
     FormControl,
@@ -18,18 +18,18 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
-} from "@/components/ui/form";
+} from "@tea-pos/ui/components/form";
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { CreateUserInput } from "@/lib/shared/schemas/users";
-import useCreateUser from "@/lib/client/hooks/users/useCreateUser";
+} from "@tea-pos/ui/components/select";
+import { Input } from "@tea-pos/ui/components/input";
+import { Button } from "@tea-pos/ui/components/button";
+import { CreateUserInput } from "@tea-pos/features/users/schema";
+import useCreateUser from "@/lib/hooks/users/useCreateUser";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ScopeBadge } from "../../_components/scope-badge";

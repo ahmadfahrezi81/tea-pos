@@ -5,8 +5,8 @@ import {
     CreateQrisPaymentResponse,
     SimulateQrisPaymentResponse,
     XenditQrisWebhookPayload,
-} from "../schemas/payments";
-import { ErrorResponseSchema } from "../schemas/index";
+} from "@tea-pos/features/shared/schemas-index";
+import { ErrorResponseSchema } from "@tea-pos/features/shared/common-schema";
 
 export function registerPaymentRoutes(registry: OpenAPIRegistry) {
     // POST /api/payments/qris

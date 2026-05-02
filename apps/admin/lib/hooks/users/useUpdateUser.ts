@@ -3,7 +3,7 @@ import useSWRMutation from "swr/mutation";
 import {
     UpdateUserInputWithId,
     UpdateUserResponse,
-} from "@/lib/shared/schemas/users";
+} from "@tea-pos/features/users/schema";
 
 async function updateUser(
     url: string,

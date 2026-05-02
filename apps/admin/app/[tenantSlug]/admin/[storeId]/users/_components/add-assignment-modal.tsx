@@ -8,7 +8,7 @@ import {
     DialogDescription,
     DialogHeader,
     DialogTitle,
-} from "@/components/ui/dialog";
+} from "@tea-pos/ui/components/dialog";
 import {
     Command,
     CommandEmpty,
@@ -16,28 +16,28 @@ import {
     CommandInput,
     CommandItem,
     CommandList,
-} from "@/components/ui/command";
+} from "@tea-pos/ui/components/command";
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@tea-pos/ui/components/popover";
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+} from "@tea-pos/ui/components/select";
+import { Button } from "@tea-pos/ui/components/button";
+import { Checkbox } from "@tea-pos/ui/components/checkbox";
 import { Check, ChevronsUpDown, Loader2, X } from "lucide-react";
-import { cn } from "@/lib/shared/utils/cn";
+import { cn } from "@tea-pos/utils/cn";
 import { toast } from "sonner";
-import useTenantUsers from "@/lib/client/hooks/tenants/useTenantUsers";
+import useTenantUsers from "@/lib/hooks/tenants/useTenantUsers";
 import { useTenant } from "@/app/[tenantSlug]/TenantProvider";
 import { useStoreScope } from "@/app/[tenantSlug]/admin/StoreScopeProvider";
-import useStoreUsers from "@/lib/client/hooks/stores/useStoreUsers";
+import useStoreUsers from "@/lib/hooks/stores/useStoreUsers";
 import { ScopeBadge } from "../../../_components/scope-badge";
 
 interface PendingAssignment {
@@ -64,7 +64,7 @@ export function AddAssignmentModal({
     const { data: tenantUsers } = useTenantUsers(tenantId);
     const { data: storeUsers } = useStoreUsers(
         storeId ?? null,
-        tenantId ?? null
+        tenantId ?? null,
     );
 
     const [searchOpen, setSearchOpen] = useState(false);
@@ -77,7 +77,7 @@ export function AddAssignmentModal({
     const availableUsers = (tenantUsers || []).filter((tenantUser) => {
         // Check if user already has assignments in this store
         const existingAssignments = (storeUsers || []).filter(
-            (storeUser) => storeUser.userId === tenantUser.userId
+            (storeUser) => storeUser.userId === tenantUser.userId,
         );
 
         // If user has no assignments, they're available
@@ -85,10 +85,10 @@ export function AddAssignmentModal({
 
         // Check if they already have both roles
         const hasSellerRole = existingAssignments.some(
-            (a) => a.role === "seller"
+            (a) => a.role === "seller",
         );
         const hasManagerRole = existingAssignments.some(
-            (a) => a.role === "manager"
+            (a) => a.role === "manager",
         );
 
         // Don't show if they already have both roles
@@ -103,10 +103,10 @@ export function AddAssignmentModal({
 
         // Check what roles this user already has
         const existingAssignments = (storeUsers || []).filter(
-            (storeUser) => storeUser.userId === user.userId
+            (storeUser) => storeUser.userId === user.userId,
         );
         const hasSellerRole = existingAssignments.some(
-            (a) => a.role === "seller"
+            (a) => a.role === "seller",
         );
 
         // Default to the role they don't have yet
@@ -159,7 +159,7 @@ export function AddAssignmentModal({
             const roles = roleMap.get(key)!;
             if (roles.has(assignment.role)) {
                 toast.error(
-                    `Cannot assign ${assignment.userName} as ${assignment.role} twice`
+                    `Cannot assign ${assignment.userName} as ${assignment.role} twice`,
                 );
                 return;
             }
@@ -186,12 +186,12 @@ export function AddAssignmentModal({
                     if (!response.ok) {
                         const error = await response.json();
                         throw new Error(
-                            error.error || "Failed to create assignment"
+                            error.error || "Failed to create assignment",
                         );
                     }
 
                     return response.json();
-                })
+                }),
             );
 
             // Check results
@@ -200,11 +200,11 @@ export function AddAssignmentModal({
 
             if (failed.length > 0) {
                 toast.error(
-                    `${failed.length} assignment(s) failed. ${succeeded.length} succeeded.`
+                    `${failed.length} assignment(s) failed. ${succeeded.length} succeeded.`,
                 );
             } else {
                 toast.success(
-                    `Successfully added ${succeeded.length} assignment(s)`
+                    `Successfully added ${succeeded.length} assignment(s)`,
                 );
             }
 
@@ -216,7 +216,7 @@ export function AddAssignmentModal({
             toast.error(
                 error instanceof Error
                     ? error.message
-                    : "Failed to create assignments"
+                    : "Failed to create assignments",
             );
         } finally {
             setIsSubmitting(false);
@@ -268,7 +268,7 @@ export function AddAssignmentModal({
                                                     pendingAssignments.some(
                                                         (p) =>
                                                             p.userId ===
-                                                            user.userId
+                                                            user.userId,
                                                     );
 
                                                 return (
@@ -277,7 +277,7 @@ export function AddAssignmentModal({
                                                         value={`${user.profiles?.fullName} ${user.profiles?.email}`}
                                                         onSelect={() =>
                                                             handleSelectUser(
-                                                                user
+                                                                user,
                                                             )
                                                         }
                                                         disabled={
@@ -289,7 +289,7 @@ export function AddAssignmentModal({
                                                                 "mr-2 h-4 w-4",
                                                                 alreadyPending
                                                                     ? "opacity-100"
-                                                                    : "opacity-0"
+                                                                    : "opacity-0",
                                                             )}
                                                         />
                                                         <div className="flex flex-col">
@@ -432,11 +432,11 @@ export function AddAssignmentModal({
                                                     onValueChange={(
                                                         value:
                                                             | "seller"
-                                                            | "manager"
+                                                            | "manager",
                                                     ) =>
                                                         handleRoleChange(
                                                             index,
-                                                            value
+                                                            value,
                                                         )
                                                     }
                                                 >
@@ -460,11 +460,11 @@ export function AddAssignmentModal({
                                                             assignment.isDefault
                                                         }
                                                         onCheckedChange={(
-                                                            checked
+                                                            checked,
                                                         ) =>
                                                             handleDefaultChange(
                                                                 index,
-                                                                checked as boolean
+                                                                checked as boolean,
                                                             )
                                                         }
                                                     />

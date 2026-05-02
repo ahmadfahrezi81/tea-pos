@@ -8,8 +8,8 @@
 // }
 
 import { NextResponse } from "next/server";
-import { getBackendVersion } from "@/lib/shared/version";
-import packageJson from "@/package.json";
+import { getBackendVersion } from "@tea-pos/features/shared/version";
+import packageJson from "../../../package.json";
 
 export async function GET() {
     return NextResponse.json({
@@ -17,6 +17,6 @@ export async function GET() {
             process.env.NEXT_PUBLIC_APP_VERSION ||
             packageJson.version ||
             "1.0.0",
-        backendVersion: getBackendVersion(),
+        backendVersion: getBackendVersion(packageJson),
     });
 }

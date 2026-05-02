@@ -22,24 +22,24 @@
 //     TableHead,
 //     TableHeader,
 //     TableRow,
-// } from "@/components/ui/table";
-// import { Button } from "@/components/ui/button";
-// import { Input } from "@/components/ui/input";
+// } from "@tea-pos/ui/components/table";
+// import { Button } from "@tea-pos/ui/components/button";
+// import { Input } from "@tea-pos/ui/components/input";
 // import {
 //     DropdownMenu,
 //     DropdownMenuCheckboxItem,
 //     DropdownMenuContent,
 //     DropdownMenuTrigger,
-// } from "@/components/ui/dropdown-menu";
+// } from "@tea-pos/ui/components/dropdown-menu";
 // import {
 //     Popover,
 //     PopoverContent,
 //     PopoverTrigger,
-// } from "@/components/ui/popover";
-// import { Badge } from "@/components/ui/badge";
+// } from "@tea-pos/ui/components/popover";
+// import { Badge } from "@tea-pos/ui/components/badge";
 // import { Settings2, Plus, X, ArrowDown, ArrowUp } from "lucide-react";
 // import { useState } from "react";
-// import { useCategories } from "@/lib/client/hooks/products/useCategories";
+// import { useCategories } from "@/lib/hooks/products/useCategories";
 
 // interface DataTableProps<TData, TValue> {
 //     columns: ColumnDef<TData, TValue>[];
@@ -619,24 +619,24 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+} from "@tea-pos/ui/components/table";
+import { Button } from "@tea-pos/ui/components/button";
+import { Input } from "@tea-pos/ui/components/input";
 import {
     DropdownMenu,
     DropdownMenuCheckboxItem,
     DropdownMenuContent,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@tea-pos/ui/components/dropdown-menu";
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
-} from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
+} from "@tea-pos/ui/components/popover";
+import { Badge } from "@tea-pos/ui/components/badge";
 import { Settings2, Plus, X, ArrowDown, ArrowUp } from "lucide-react";
 import { useState } from "react";
-import { useCategories } from "@/lib/client/hooks/products/useCategories";
+import { useCategories } from "@/lib/hooks/products/useCategories";
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
@@ -656,7 +656,7 @@ export function DataTable<TData, TValue>({
     const [sorting, setSorting] = useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
     const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
-        {}
+        {},
     );
     const [rowSelection, setRowSelection] = useState({});
     const [globalFilter, setGlobalFilter] = useState("");
@@ -768,7 +768,7 @@ export function DataTable<TData, TValue>({
                                                 const option =
                                                     STATUS_OPTIONS.find(
                                                         (opt) =>
-                                                            opt.id === status
+                                                            opt.id === status,
                                                     );
                                                 return (
                                                     <Badge
@@ -818,7 +818,7 @@ export function DataTable<TData, TValue>({
                                                 className="flex items-center gap-2 rounded-sm px-2 py-1.5 cursor-pointer hover:bg-accent"
                                                 onClick={() =>
                                                     handleStatusFilterChange(
-                                                        option.id
+                                                        option.id,
                                                     )
                                                 }
                                             >
@@ -922,7 +922,7 @@ export function DataTable<TData, TValue>({
                                             {categories.map((category) => {
                                                 const isSelected =
                                                     categoryFilter.includes(
-                                                        category.name
+                                                        category.name,
                                                     );
                                                 return (
                                                     <div
@@ -930,7 +930,7 @@ export function DataTable<TData, TValue>({
                                                         className="flex items-center gap-2 rounded-sm px-2 py-1.5 cursor-pointer hover:bg-accent"
                                                         onClick={() =>
                                                             handleCategoryFilterChange(
-                                                                category.name
+                                                                category.name,
                                                             )
                                                         }
                                                     >
@@ -1025,11 +1025,11 @@ export function DataTable<TData, TValue>({
                             sort.id === "price"
                                 ? "Price"
                                 : sort.id === "createdAt"
-                                ? "Created At"
-                                : sort.id === "updatedAt"
-                                ? "Last Updated"
-                                : sort.id.charAt(0).toUpperCase() +
-                                  sort.id.slice(1);
+                                  ? "Created At"
+                                  : sort.id === "updatedAt"
+                                    ? "Last Updated"
+                                    : sort.id.charAt(0).toUpperCase() +
+                                      sort.id.slice(1);
                         return (
                             <Badge
                                 key={sort.id}
@@ -1047,8 +1047,8 @@ export function DataTable<TData, TValue>({
                                     onClick={() => {
                                         setSorting(
                                             sorting.filter(
-                                                (s) => s.id !== sort.id
-                                            )
+                                                (s) => s.id !== sort.id,
+                                            ),
                                         );
                                     }}
                                 >
@@ -1074,7 +1074,7 @@ export function DataTable<TData, TValue>({
                                                 : flexRender(
                                                       header.column.columnDef
                                                           .header,
-                                                      header.getContext()
+                                                      header.getContext(),
                                                   )}
                                         </TableHead>
                                     );
@@ -1109,7 +1109,7 @@ export function DataTable<TData, TValue>({
                                                     {flexRender(
                                                         cell.column.columnDef
                                                             .cell,
-                                                        cell.getContext()
+                                                        cell.getContext(),
                                                     )}
                                                 </TableCell>
                                             );

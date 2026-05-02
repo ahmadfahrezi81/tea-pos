@@ -3,28 +3,33 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useProducts } from "@/lib/client/hooks/products/useProducts";
-import { useStores } from "@/lib/client/hooks/stores/useStores";
-import { Input } from "@/components/ui/input"; // ✅ add this import
+import { useProducts } from "@/lib/hooks/products/useProducts";
+import { useStores } from "@/lib/hooks/stores/useStores";
+import { Input } from "@tea-pos/ui/components/input"; // ✅ add this import
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+} from "@tea-pos/ui/components/select";
+import {
+    Tabs,
+    TabsContent,
+    TabsList,
+    TabsTrigger,
+} from "@tea-pos/ui/components/tabs";
 import { Store, Search } from "lucide-react"; // ✅ add Search icon
 import { ProductGrid } from "./_components/product-grid";
 import { Cart } from "./_components/cart";
 import {
     CreateOrderInput,
     CreateOrderResponse,
-} from "@/lib/shared/schemas/orders";
+} from "@tea-pos/features/orders/schema";
 import { toast } from "sonner";
-import type { Product } from "@/lib/shared/schemas/products";
+import type { Product } from "@tea-pos/features/products/schema";
 import { ScopeBadge } from "../_components/scope-badge";
-import { cn } from "@/lib/shared/utils/cn";
+import { cn } from "@tea-pos/utils/cn";
 
 export interface CartItem {
     productId: string;

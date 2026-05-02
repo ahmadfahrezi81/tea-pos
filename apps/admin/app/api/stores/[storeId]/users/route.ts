@@ -1,12 +1,12 @@
 // app/api/stores/[storeId]/users/route.ts
-import { createRouteHandlerClient } from "@/lib/server/supabase/server";
+import { createRouteHandlerClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import {
     ListStoreAssignmentsQuery,
     ListStoreAssignmentsResponse,
     StoreUserResponse,
-} from "@/lib/shared/schemas/userStoreAssignments";
-import { toCamelKeys } from "@/lib/shared/utils/schemas";
+} from "@tea-pos/features/stores/user-assignments-schema";
+import { toCamelKeys } from "@tea-pos/utils/schemas";
 
 // ============================================================================
 // GET /api/stores/[storeId]/users

@@ -1,51 +1,27 @@
 // lib/schemas/index.ts - Main exports
 // Common schemas
-export * from "../shared/common-schema";
+export * from "./common-schema";
 
-// Profiles
-export * from "./profiles";
-
-// Orders
-export * from "./orders";
-
-// Products
-export * from "./products";
-
-// Stores
-export * from "./stores";
-
-// User Store Assignments
-export * from "./userStoreAssignments";
-
-// Expenses
+// Features
+export * from "../analytics/schema";
+export * from "../customer-feedbacks/schema";
 export * from "../expenses/schema";
-
-// Summaries
-export * from "./daily-summaries";
-
-// Tenants
-export * from "./tenants";
-
-// User Tenant Assignments
-export * from "./userTenantAssignments";
-
-// Tenant Invites
-export * from "./tenantInvites";
-
-// Analytics
-export * from "./analytics";
-
-// Notifications
-export * from "./notifications";
-
-// Weather
-export * from "./weather";
-
-// Daily Summary Photos
-export * from "./photos-schema";
-
-// Customer Feedbacks
-export * from "./customer-feedbacks";
+export * from "../notifications/schema";
+export * from "../orders/schema";
+export * from "../orders/order-list-schema";
+export * from "../payments/schema";
+export * from "../products/schema";
+export * from "../products/categories-schema";
+export * from "../profiles/schema";
+export * from "../stores/schema";
+export * from "../stores/user-assignments-schema";
+export * from "../summaries/schema";
+export * from "../summaries/photos-schema";
+export * from "../tenants/schema";
+export * from "../tenants/user-assignments-schema";
+export * from "../tenants/invites-schema";
+export * from "../users/schema";
+export * from "../weather/schema";
 
 // Type exports for frontend
 export type { z } from "zod";

@@ -6,14 +6,14 @@ import {
     CardDescription,
     CardHeader,
     CardTitle,
-} from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+} from "@tea-pos/ui/components/card";
+import { Tabs, TabsList, TabsTrigger } from "@tea-pos/ui/components/tabs";
 import {
     ChartContainer,
     ChartTooltip,
     ChartTooltipContent,
-} from "@/components/ui/chart";
-import { AdminTimelineResponse } from "@/lib/shared/schemas/analytics";
+} from "@tea-pos/ui/components/chart";
+import { AdminTimelineResponse } from "@tea-pos/features/analytics/schema";
 
 const chartConfig = {
     orders: {

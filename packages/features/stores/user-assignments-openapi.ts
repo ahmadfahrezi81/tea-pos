@@ -8,7 +8,7 @@ import {
     UpdateAssignmentResponse,
     DeleteAssignmentResponse,
     ErrorResponseSchema,
-} from "../schemas/index";
+} from "@tea-pos/features/shared/schemas-index";
 
 export function registerAssignmentRoutes(registry: OpenAPIRegistry) {
     // Register POST /api/stores/userStoreAssignments

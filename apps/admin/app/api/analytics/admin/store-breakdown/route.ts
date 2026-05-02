@@ -1,11 +1,11 @@
 // app/api/analytics/admin/store-breakdown/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@/lib/server/supabase/server";
-import { getCurrentTenantId } from "@/lib/server/config/tenant";
+import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { getCurrentTenantId } from "@tea-pos/utils/server-config/tenant";
 import {
     AdminDateRangeQuery,
     AdminStoreBreakdownResponse,
-} from "@/lib/shared/schemas/analytics";
+} from "@tea-pos/features/analytics/schema";
 
 // ============================================================================
 // HELPER: Fetch all orders with pagination

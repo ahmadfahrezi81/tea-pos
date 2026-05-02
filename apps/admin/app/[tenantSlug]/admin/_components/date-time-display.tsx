@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Calendar } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
+import { Separator } from "@tea-pos/ui/components/separator";
 
 export function DateTimeDisplay() {
     const [dateTime, setDateTime] = React.useState<Date | null>(null);

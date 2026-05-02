@@ -4,7 +4,7 @@ import {
     CardDescription,
     CardHeader,
     CardTitle,
-} from "@/components/ui/card";
+} from "@tea-pos/ui/components/card";
 import { Package } from "lucide-react";
 
 interface ProductData {

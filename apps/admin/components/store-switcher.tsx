@@ -10,15 +10,15 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@tea-pos/ui/components/dropdown-menu";
 import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
     useSidebar,
-} from "@/components/ui/sidebar";
-import { useStores } from "@/lib/client/hooks/stores/useStores";
-import { cn } from "@/lib/shared/utils/cn";
+} from "@tea-pos/ui/components/sidebar";
+import { useStores } from "@/lib/hooks/stores/useStores";
+import { cn } from "@tea-pos/utils/cn";
 import { useStoreScope } from "@/app/[tenantSlug]/admin/StoreScopeProvider";
 import { useTenant } from "@/app/[tenantSlug]/TenantProvider";
 

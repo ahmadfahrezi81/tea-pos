@@ -1,12 +1,12 @@
 // app/api/users/route.ts
-import { createRouteHandlerClient } from "@/lib/server/supabase/server";
-import { createAdminClient } from "@/lib/server/supabase/admin";
+import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { NextRequest, NextResponse } from "next/server";
 import {
     CreateUserInput,
     CreateUserResponse,
-} from "@/lib/shared/schemas/users";
-import { toSnakeKeys } from "@/lib/shared/utils/schemas";
+} from "@tea-pos/features/users/schema";
+import { toSnakeKeys } from "@tea-pos/utils/schemas";
 
 // ============================================================================
 // POST /api/users - Create new user

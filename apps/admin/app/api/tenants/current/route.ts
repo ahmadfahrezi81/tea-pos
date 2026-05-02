@@ -1,8 +1,8 @@
 // app/api/tenants/current/route.ts
-import { createRouteHandlerClient } from "@/lib/server/supabase/server";
-import { getCurrentTenantId } from "@/lib/server/config/tenant";
+import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { getCurrentTenantId } from "@tea-pos/utils/server-config/tenant";
 import { NextResponse } from "next/server";
-import { toCamelKeys } from "@/lib/shared/utils/schemas";
+import { toCamelKeys } from "@tea-pos/utils/schemas";
 
 export async function GET() {
     try {

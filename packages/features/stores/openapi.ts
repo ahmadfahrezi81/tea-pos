@@ -10,7 +10,7 @@ import {
     DeleteStoreResponse,
     ErrorResponseSchema,
     DeleteByIdQuery,
-} from "../schemas/index";
+} from "@tea-pos/features/shared/schemas-index";
 
 export function registerStoreRoutes(registry: OpenAPIRegistry) {
     // Register GET /api/store

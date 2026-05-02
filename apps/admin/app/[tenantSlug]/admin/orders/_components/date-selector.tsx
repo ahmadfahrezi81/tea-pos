@@ -2,16 +2,16 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@tea-pos/ui/components/button";
+import { Calendar } from "@tea-pos/ui/components/calendar";
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@tea-pos/ui/components/popover";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
-import { cn } from "@/lib/shared/utils/cn";
+import { cn } from "@tea-pos/utils/cn";
 
 interface DateSelectorProps {
     date: Date;
@@ -28,7 +28,7 @@ export function DateSelector({ date, onDateChange }: DateSelectorProps) {
                     variant="outline"
                     className={cn(
                         "w-[200px] justify-start text-left font-normal",
-                        !date && "text-muted-foreground"
+                        !date && "text-muted-foreground",
                     )}
                 >
                     <CalendarIcon className="mr-2 h-4 w-4" />

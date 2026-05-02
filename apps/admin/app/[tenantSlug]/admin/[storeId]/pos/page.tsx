@@ -1,18 +1,23 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useProducts } from "@/lib/client/hooks/products/useProducts";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useProducts } from "@/lib/hooks/products/useProducts";
+import { Input } from "@tea-pos/ui/components/input";
+import {
+    Tabs,
+    TabsContent,
+    TabsList,
+    TabsTrigger,
+} from "@tea-pos/ui/components/tabs";
 import { Search } from "lucide-react";
 import { ProductGrid } from "../../pos/_components/product-grid";
 import { Cart } from "../../pos/_components/cart";
 import {
     CreateOrderInput,
     CreateOrderResponse,
-} from "@/lib/shared/schemas/orders";
+} from "@tea-pos/features/orders/schema";
 import { toast } from "sonner";
-import type { Product } from "@/lib/shared/schemas/products";
+import type { Product } from "@tea-pos/features/products/schema";
 import { ScopeBadge } from "../../_components/scope-badge";
 import { useStoreScope } from "../../StoreScopeProvider"; // ✅ get store context
 

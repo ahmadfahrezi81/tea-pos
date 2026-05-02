@@ -2,8 +2,8 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Button } from "@/components/ui/button";
+import { Checkbox } from "@tea-pos/ui/components/checkbox";
+import { Button } from "@tea-pos/ui/components/button";
 import {
     Briefcase,
     UserCog,
@@ -19,9 +19,9 @@ import {
     DropdownMenuItem,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
-import { StoreUser } from "@/lib/shared/schemas/userStoreAssignments";
+} from "@tea-pos/ui/components/dropdown-menu";
+import { Badge } from "@tea-pos/ui/components/badge";
+import { StoreUser } from "@tea-pos/features/stores/user-assignments-schema";
 import { toast } from "sonner";
 
 const getRoleIcon = (role: string) => {

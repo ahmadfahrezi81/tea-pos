@@ -18,14 +18,14 @@ import {
     CommandInput,
     CommandItem,
     CommandList,
-} from "@/components/ui/command";
+} from "@tea-pos/ui/components/command";
 import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-} from "@/components/ui/sidebar";
-import { useStores } from "@/lib/client/hooks/stores/useStores";
-import { useTenantSlug } from "@/lib/server/config/tenant-url";
+} from "@tea-pos/ui/components/sidebar";
+import { useStores } from "@/lib/hooks/stores/useStores";
+import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 
 export function NavSearch() {
     const [open, setOpen] = React.useState(false);

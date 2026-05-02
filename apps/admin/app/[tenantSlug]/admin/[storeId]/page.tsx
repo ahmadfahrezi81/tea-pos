@@ -6,8 +6,8 @@ import { DateRangePickerWithPresets } from "../_components/date-range-picker-wit
 import TabsOrdersChart from "../_components/charts/tabs-orders-chart";
 import MetricCards from "../_components/charts/metric-cards";
 import { DateRange } from "react-day-picker";
-import useAdminMetrics from "@/lib/client/hooks/analytics/useAdminMetrics";
-import useAdminTimeline from "@/lib/client/hooks/analytics/useAdminTimeline";
+import useAdminMetrics from "@/lib/hooks/analytics/useAdminMetrics";
+import useAdminTimeline from "@/lib/hooks/analytics/useAdminTimeline";
 import { format } from "date-fns";
 import { ScopeBadge } from "../_components/scope-badge";
 import { useStoreScope } from "../StoreScopeProvider";
@@ -33,7 +33,7 @@ export default function StoreDashboardPage() {
     // Create selectedStoreIds array with just this store
     const selectedStoreIds = useMemo(
         () => (storeId ? [storeId] : []),
-        [storeId]
+        [storeId],
     );
 
     // Fetch data using custom hooks — pass single store in array

@@ -1,4 +1,9 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from "@tea-pos/ui/components/card";
 import {
     TrendingUp,
     TrendingDown,
@@ -7,7 +12,7 @@ import {
     Store,
     CupSoda,
 } from "lucide-react";
-import { AdminMetricsResponse } from "@/lib/shared/schemas/analytics";
+import { AdminMetricsResponse } from "@tea-pos/features/analytics/schema";
 
 interface MetricCardProps {
     title: string;

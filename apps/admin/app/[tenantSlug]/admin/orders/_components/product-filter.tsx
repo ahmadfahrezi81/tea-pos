@@ -2,15 +2,15 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@tea-pos/ui/components/button";
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
-} from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
+} from "@tea-pos/ui/components/popover";
+import { Badge } from "@tea-pos/ui/components/badge";
 import { Plus, Check } from "lucide-react";
-import { cn } from "@/lib/shared/utils/cn";
+import { cn } from "@tea-pos/utils/cn";
 
 interface Product {
     id: string;
@@ -33,7 +33,7 @@ export function ProductFilter({
     const handleToggleProduct = (productId: string) => {
         if (selectedProductIds.includes(productId)) {
             onSelectionChange(
-                selectedProductIds.filter((id) => id !== productId)
+                selectedProductIds.filter((id) => id !== productId),
             );
         } else {
             onSelectionChange([...selectedProductIds, productId]);
@@ -59,7 +59,7 @@ export function ProductFilter({
                             <div className="flex gap-1">
                                 {selectedProductIds.slice(0, 2).map((id) => {
                                     const product = products.find(
-                                        (p) => p.id === id
+                                        (p) => p.id === id,
                                     );
                                     return (
                                         <Badge
@@ -103,7 +103,7 @@ export function ProductFilter({
                         <div className="space-y-1">
                             {products.map((product) => {
                                 const isSelected = selectedProductIds.includes(
-                                    product.id
+                                    product.id,
                                 );
                                 return (
                                     <div
@@ -118,7 +118,7 @@ export function ProductFilter({
                                                 "h-4 w-4 rounded-sm border flex items-center justify-center",
                                                 isSelected
                                                     ? "bg-primary border-primary"
-                                                    : "border-input"
+                                                    : "border-input",
                                             )}
                                         >
                                             {isSelected && (

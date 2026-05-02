@@ -23,17 +23,17 @@
 //     TableHead,
 //     TableHeader,
 //     TableRow,
-// } from "@/components/ui/table";
-// import { Button } from "@/components/ui/button";
-// import { Input } from "@/components/ui/input";
+// } from "@tea-pos/ui/components/table";
+// import { Button } from "@tea-pos/ui/components/button";
+// import { Input } from "@tea-pos/ui/components/input";
 // import {
 //     DropdownMenu,
 //     DropdownMenuCheckboxItem,
 //     DropdownMenuContent,
 //     DropdownMenuItem,
 //     DropdownMenuTrigger,
-// } from "@/components/ui/dropdown-menu";
-// import { Badge } from "@/components/ui/badge";
+// } from "@tea-pos/ui/components/dropdown-menu";
+// import { Badge } from "@tea-pos/ui/components/badge";
 // import { Settings2, Copy, X, ArrowDown, ArrowUp } from "lucide-react";
 // import { useState } from "react";
 // import { ProductFilter } from "./product-filter";
@@ -472,17 +472,17 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+} from "@tea-pos/ui/components/table";
+import { Button } from "@tea-pos/ui/components/button";
+import { Input } from "@tea-pos/ui/components/input";
 import {
     DropdownMenu,
     DropdownMenuCheckboxItem,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
+} from "@tea-pos/ui/components/dropdown-menu";
+import { Badge } from "@tea-pos/ui/components/badge";
 import { Settings2, Copy, X, ArrowDown, ArrowUp } from "lucide-react";
 import { useState } from "react";
 import { ProductFilter } from "./product-filter";
@@ -601,12 +601,12 @@ export function DataTable<TData, TValue>({
                                                 table.getFilteredSelectedRowModel()
                                                     .rows;
                                             const data = rows.map(
-                                                (row) => row.original
+                                                (row) => row.original,
                                             );
 
                                             // Convert to CSV
                                             const headers = Object.keys(
-                                                data[0]
+                                                data[0],
                                             );
                                             const csv = [
                                                 headers.join(","),
@@ -615,10 +615,10 @@ export function DataTable<TData, TValue>({
                                                         .map((header) =>
                                                             JSON.stringify(
                                                                 row[header] ??
-                                                                    ""
-                                                            )
+                                                                    "",
+                                                            ),
                                                         )
-                                                        .join(",")
+                                                        .join(","),
                                                 ),
                                             ].join("\n");
 
@@ -628,7 +628,7 @@ export function DataTable<TData, TValue>({
                                             });
                                             const url =
                                                 window.URL.createObjectURL(
-                                                    blob
+                                                    blob,
                                                 );
                                             const a =
                                                 document.createElement("a");
@@ -650,12 +650,12 @@ export function DataTable<TData, TValue>({
                                                 table.getFilteredSelectedRowModel()
                                                     .rows;
                                             const data = rows.map(
-                                                (row) => row.original
+                                                (row) => row.original,
                                             );
                                             const json = JSON.stringify(
                                                 data,
                                                 null,
-                                                2
+                                                2,
                                             );
 
                                             // Download JSON
@@ -664,7 +664,7 @@ export function DataTable<TData, TValue>({
                                             });
                                             const url =
                                                 window.URL.createObjectURL(
-                                                    blob
+                                                    blob,
                                                 );
                                             const a =
                                                 document.createElement("a");
@@ -731,11 +731,11 @@ export function DataTable<TData, TValue>({
                             sort.id === "timestamp"
                                 ? "Timestamp"
                                 : sort.id === "totalAmount"
-                                ? "Total Amount"
-                                : sort.id === "totalQuantity"
-                                ? "Total Quantity"
-                                : sort.id.charAt(0).toUpperCase() +
-                                  sort.id.slice(1);
+                                  ? "Total Amount"
+                                  : sort.id === "totalQuantity"
+                                    ? "Total Quantity"
+                                    : sort.id.charAt(0).toUpperCase() +
+                                      sort.id.slice(1);
                         return (
                             <Badge
                                 key={sort.id}
@@ -753,8 +753,8 @@ export function DataTable<TData, TValue>({
                                     onClick={() => {
                                         setSorting(
                                             sorting.filter(
-                                                (s) => s.id !== sort.id
-                                            )
+                                                (s) => s.id !== sort.id,
+                                            ),
                                         );
                                     }}
                                 >
@@ -780,7 +780,7 @@ export function DataTable<TData, TValue>({
                                                 : flexRender(
                                                       header.column.columnDef
                                                           .header,
-                                                      header.getContext()
+                                                      header.getContext(),
                                                   )}
                                         </TableHead>
                                     );
@@ -815,7 +815,7 @@ export function DataTable<TData, TValue>({
                                                     {flexRender(
                                                         cell.column.columnDef
                                                             .cell,
-                                                        cell.getContext()
+                                                        cell.getContext(),
                                                     )}
                                                 </TableCell>
                                             );

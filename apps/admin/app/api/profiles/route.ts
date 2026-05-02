@@ -1,8 +1,8 @@
 // app/api/profiles/route.ts
-import { createRouteHandlerClient } from "@/lib/server/supabase/server";
+import { createRouteHandlerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
-import { toCamelKeys } from "@/lib/shared/utils/schemas";
-import { ProfileResponse } from "@/lib/shared/schemas/profiles";
+import { toCamelKeys } from "@tea-pos/utils/schemas";
+import { ProfileResponse } from "@tea-pos/features/profiles/schema";
 
 // Type for the raw database response
 type ProfileRow = {

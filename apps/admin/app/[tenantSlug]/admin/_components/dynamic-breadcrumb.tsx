@@ -9,19 +9,19 @@ import {
     BreadcrumbList,
     BreadcrumbPage,
     BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+} from "@tea-pos/ui/components/breadcrumb";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useStores } from "@/lib/client/hooks/stores/useStores";
-import { useTenantSlug } from "@/lib/server/config/tenant-url";
+} from "@tea-pos/ui/components/dropdown-menu";
+import { useStores } from "@/lib/hooks/stores/useStores";
+import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { Box, Boxes, ChevronsUpDown, Check } from "lucide-react";
 import { useStoreScope } from "@/app/[tenantSlug]/admin/StoreScopeProvider";
 import { useTenant } from "@/app/[tenantSlug]/TenantProvider";
-import { cn } from "@/lib/shared/utils/cn";
+import { cn } from "@tea-pos/utils/cn";
 
 export function DynamicBreadcrumb() {
     const pathname = usePathname();

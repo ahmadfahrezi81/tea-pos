@@ -1,13 +1,13 @@
 // app/api/user-tenant-assignments/route.ts
-import { createRouteHandlerClient } from "@/lib/server/supabase/server";
+import { createRouteHandlerClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import {
     AssignUserToTenantInput,
     ListUserTenantAssignmentsQuery,
     UserTenantAssignmentListResponse,
     AssignUserToTenantResponse,
-} from "@/lib/shared/schemas/userTenantAssignments";
-import { toCamelKeys, toSnakeKeys } from "@/lib/shared/utils/schemas";
+} from "@tea-pos/features/tenants/user-assignments-schema";
+import { toCamelKeys, toSnakeKeys } from "@tea-pos/utils/schemas";
 
 // ============================================================================
 // GET /api/user-tenant-assignments

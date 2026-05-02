@@ -4,8 +4,8 @@ import {
     CardDescription,
     CardHeader,
     CardTitle,
-} from "@/components/ui/card";
-import { AdminStoreBreakdownResponse } from "@/lib/shared/schemas/analytics";
+} from "@tea-pos/ui/components/card";
+import { AdminStoreBreakdownResponse } from "@tea-pos/features/analytics/schema";
 
 const storeColors = [
     "#3E92CC", // Light Blue

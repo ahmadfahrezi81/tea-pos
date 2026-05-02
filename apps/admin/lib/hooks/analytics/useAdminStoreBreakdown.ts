@@ -1,6 +1,6 @@
 // lib/hooks/analytics/useAdminStoreBreakdown.ts
 import useSWR from "swr";
-import { AdminStoreBreakdownResponse } from "@/lib/shared/schemas/analytics";
+import { AdminStoreBreakdownResponse } from "@tea-pos/features/analytics/schema";
 
 interface UseAdminStoreBreakdownParams {
     dateFrom: string; // YYYY-MM-DD

@@ -66,6 +66,18 @@ const nextConfig: NextConfig = {
     env: {
         NEXT_PUBLIC_APP_VERSION: version,
     },
+    images: {
+        remotePatterns: [
+            {
+                protocol: "https",
+                hostname: "i.ibb.co.com",
+            },
+            {
+                protocol: "https",
+                hostname: "i.ibb.co",
+            },
+        ],
+    },
     transpilePackages: ["@tea-pos/ui", "@tea-pos/db", "@tea-pos/features", "@tea-pos/services", "@tea-pos/utils"],
     async headers() {
         return [

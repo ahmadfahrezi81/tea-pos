@@ -9,7 +9,7 @@
 //     DialogDescription,
 //     DialogHeader,
 //     DialogTitle,
-// } from "@/components/ui/dialog";
+// } from "@tea-pos/ui/components/dialog";
 // import {
 //     Form,
 //     FormControl,
@@ -17,18 +17,18 @@
 //     FormItem,
 //     FormLabel,
 //     FormMessage,
-// } from "@/components/ui/form";
+// } from "@tea-pos/ui/components/form";
 // import {
 //     Select,
 //     SelectContent,
 //     SelectItem,
 //     SelectTrigger,
 //     SelectValue,
-// } from "@/components/ui/select";
-// import { Input } from "@/components/ui/input";
-// import { Button } from "@/components/ui/button";
+// } from "@tea-pos/ui/components/select";
+// import { Input } from "@tea-pos/ui/components/input";
+// import { Button } from "@tea-pos/ui/components/button";
 // import { CreateUserInput } from "@/lib/schemas/users";
-// import useCreateUser from "@/lib/client/hooks/users/useCreateUser";
+// import useCreateUser from "@/lib/hooks/users/useCreateUser";
 // import { Eye, EyeOff, Loader2 } from "lucide-react";
 // import { toast } from "sonner"; // 👈 new import
 
@@ -268,7 +268,7 @@ import {
     DialogDescription,
     DialogHeader,
     DialogTitle,
-} from "@/components/ui/dialog";
+} from "@tea-pos/ui/components/dialog";
 import {
     Form,
     FormControl,
@@ -276,19 +276,22 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
-} from "@/components/ui/form";
+} from "@tea-pos/ui/components/form";
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { CreateUserInput, UpdateUserInput } from "@/lib/shared/schemas/users";
-import useCreateUser from "@/lib/client/hooks/users/useCreateUser";
-import useUpdateUser from "@/lib/client/hooks/users/useUpdateUser";
+} from "@tea-pos/ui/components/select";
+import { Input } from "@tea-pos/ui/components/input";
+import { Button } from "@tea-pos/ui/components/button";
+import {
+    CreateUserInput,
+    UpdateUserInput,
+} from "@tea-pos/features/users/schema";
+import useCreateUser from "@/lib/hooks/users/useCreateUser";
+import useUpdateUser from "@/lib/hooks/users/useUpdateUser";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 

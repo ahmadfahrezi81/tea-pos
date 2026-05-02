@@ -1,6 +1,6 @@
 // lib/hooks/analytics/useAdminMetrics.ts
 import useSWR from "swr";
-import { AdminMetricsResponse } from "@/lib/shared/schemas/analytics";
+import { AdminMetricsResponse } from "@tea-pos/features/analytics/schema";
 
 interface UseAdminMetricsParams {
     dateFrom: string; // YYYY-MM-DD

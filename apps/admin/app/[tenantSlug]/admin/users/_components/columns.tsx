@@ -1,8 +1,8 @@
 // "use client";
 
 // import { ColumnDef } from "@tanstack/react-table";
-// import { Checkbox } from "@/components/ui/checkbox";
-// import { Button } from "@/components/ui/button";
+// import { Checkbox } from "@tea-pos/ui/components/checkbox";
+// import { Button } from "@tea-pos/ui/components/button";
 // import {
 //     Crown,
 //     Zap,
@@ -20,8 +20,8 @@
 //     DropdownMenuItem,
 //     DropdownMenuSeparator,
 //     DropdownMenuTrigger,
-// } from "@/components/ui/dropdown-menu";
-// import { Badge } from "@/components/ui/badge";
+// } from "@tea-pos/ui/components/dropdown-menu";
+// import { Badge } from "@tea-pos/ui/components/badge";
 // import { toast } from "sonner";
 
 // export type User = {
@@ -237,8 +237,8 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Button } from "@/components/ui/button";
+import { Checkbox } from "@tea-pos/ui/components/checkbox";
+import { Button } from "@tea-pos/ui/components/button";
 import {
     Crown,
     Zap,
@@ -256,8 +256,8 @@ import {
     DropdownMenuItem,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
+} from "@tea-pos/ui/components/dropdown-menu";
+import { Badge } from "@tea-pos/ui/components/badge";
 import { toast } from "sonner";
 
 export type User = {
@@ -291,7 +291,7 @@ const getRoleIcon = (role: string) => {
 };
 
 const getStatusBadge = (
-    status: "active" | "inactive" | "pending" | "suspended"
+    status: "active" | "inactive" | "pending" | "suspended",
 ) => {
     const variants = {
         active: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100",
@@ -312,7 +312,7 @@ const getStatusBadge = (
 // Factory function to create columns with callbacks
 export const createColumns = (
     onEdit: (user: User) => void,
-    onDelete: (user: User) => void
+    onDelete: (user: User) => void,
 ): ColumnDef<User>[] => [
     {
         id: "select",

@@ -10,14 +10,14 @@ import {
     SettingsIcon,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@tea-pos/ui/components/button";
 import {
     Dialog,
     DialogContent,
     DialogDescription,
     DialogTitle,
     DialogTrigger,
-} from "@/components/ui/dialog";
+} from "@tea-pos/ui/components/dialog";
 import {
     Sidebar,
     SidebarContent,
@@ -27,7 +27,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
     SidebarProvider,
-} from "@/components/ui/sidebar";
+} from "@tea-pos/ui/components/sidebar";
 import { useTheme } from "next-themes";
 
 const settingsNav = [
@@ -74,7 +74,7 @@ export function SettingsDialog() {
                                                     }
                                                     onClick={() =>
                                                         setActiveSection(
-                                                            item.id
+                                                            item.id,
                                                         )
                                                     }
                                                     disabled={item.disabled}
@@ -95,7 +95,7 @@ export function SettingsDialog() {
                             <h2 className="text-xl font-semibold">
                                 {
                                     settingsNav.find(
-                                        (item) => item.id === activeSection
+                                        (item) => item.id === activeSection,
                                     )?.name
                                 }
                             </h2>
@@ -223,7 +223,7 @@ function AppsSettings() {
                                 Connect
                             </Button>
                         </div>
-                    )
+                    ),
                 )}
             </div>
         </div>

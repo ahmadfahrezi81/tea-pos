@@ -11,7 +11,7 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-} from "@/components/ui/sidebar";
+} from "@tea-pos/ui/components/sidebar";
 
 export function NavMain({
     items,

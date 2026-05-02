@@ -1,5 +1,5 @@
 // app/[tenantSlug]/admin/pos/_components/cart.tsx
-import { Button } from "@/components/ui/button";
+import { Button } from "@tea-pos/ui/components/button";
 import { Plus, Minus, Trash2 } from "lucide-react";
 import type { CartItem } from "../page";
 
@@ -97,7 +97,7 @@ export function Cart({
                                                     <p className="text-xs text-muted-foreground">
                                                         {item.quantity} ×{" "}
                                                         {formatRupiah(
-                                                            item.price
+                                                            item.price,
                                                         )}
                                                     </p>
                                                 </div>
@@ -116,7 +116,7 @@ export function Cart({
                                                 className="h-7 w-7 text-destructive hover:bg-destructive/10 border rounded-full"
                                                 onClick={() =>
                                                     onRemoveFromCart(
-                                                        item.productId
+                                                        item.productId,
                                                     )
                                                 }
                                             >
@@ -132,7 +132,7 @@ export function Cart({
                                                     onClick={() =>
                                                         onUpdateQuantity(
                                                             item.productId,
-                                                            item.quantity - 1
+                                                            item.quantity - 1,
                                                         )
                                                     }
                                                 >
@@ -148,7 +148,7 @@ export function Cart({
                                                     onClick={() =>
                                                         onUpdateQuantity(
                                                             item.productId,
-                                                            item.quantity + 1
+                                                            item.quantity + 1,
                                                         )
                                                     }
                                                 >

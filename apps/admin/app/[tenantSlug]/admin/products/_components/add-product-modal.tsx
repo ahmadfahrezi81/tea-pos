@@ -10,7 +10,7 @@ import {
     DialogDescription,
     DialogHeader,
     DialogTitle,
-} from "@/components/ui/dialog";
+} from "@tea-pos/ui/components/dialog";
 import {
     Form,
     FormControl,
@@ -18,21 +18,21 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
-} from "@/components/ui/form";
+} from "@tea-pos/ui/components/form";
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+} from "@tea-pos/ui/components/select";
+import { Input } from "@tea-pos/ui/components/input";
+import { Button } from "@tea-pos/ui/components/button";
 import { Loader2, Upload, Plus, X } from "lucide-react";
 import { toast } from "sonner";
-import { createClient } from "@/lib/client/supabase";
-import { useCategories } from "@/lib/client/hooks/products/useCategories";
-// import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { createClient } from "@/lib/supabase";
+import { useCategories } from "@/lib/hooks/products/useCategories";
+// import { Avatar, AvatarFallback, AvatarImage } from "@tea-pos/ui/components/avatar";
 
 const AddProductSchema = z.object({
     name: z.string().min(1, "Product name is required"),
@@ -136,7 +136,7 @@ export function AddProductModal({
             toast.error(
                 error instanceof Error
                     ? error.message
-                    : "Failed to create category"
+                    : "Failed to create category",
             );
         } finally {
             setIsAddingCategory(false);
@@ -203,7 +203,7 @@ export function AddProductModal({
             toast.error(
                 error instanceof Error
                     ? error.message
-                    : "Failed to create product"
+                    : "Failed to create product",
             );
         } finally {
             setIsSubmitting(false);
@@ -303,8 +303,8 @@ export function AddProductModal({
                                             onChange={(e) =>
                                                 field.onChange(
                                                     parseFloat(
-                                                        e.target.value
-                                                    ) || 0
+                                                        e.target.value,
+                                                    ) || 0,
                                                 )
                                             }
                                         />
@@ -361,7 +361,7 @@ export function AddProductModal({
                                                 value={newCategoryName}
                                                 onChange={(e) =>
                                                     setNewCategoryName(
-                                                        e.target.value
+                                                        e.target.value,
                                                     )
                                                 }
                                             />
@@ -394,7 +394,7 @@ export function AddProductModal({
                                                     field.onChange(
                                                         value === "null"
                                                             ? ""
-                                                            : value
+                                                            : value,
                                                     )
                                                 }
                                                 value={field.value || "null"}

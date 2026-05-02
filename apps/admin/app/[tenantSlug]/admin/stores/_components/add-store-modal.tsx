@@ -11,7 +11,7 @@ import {
     DialogPortal,
     DialogTitle,
     DialogDescription,
-} from "@/components/ui/dialog";
+} from "@tea-pos/ui/components/dialog";
 import {
     Form,
     FormField,
@@ -19,20 +19,20 @@ import {
     FormLabel,
     FormMessage,
     FormControl,
-} from "@/components/ui/form";
+} from "@tea-pos/ui/components/form";
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+} from "@tea-pos/ui/components/select";
+import { Input } from "@tea-pos/ui/components/input";
+import { Button } from "@tea-pos/ui/components/button";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { CreateStoreInput } from "@/lib/shared/schemas/stores";
-import useCreateStore from "@/lib/client/hooks/stores/useCreateStore";
+import { CreateStoreInput } from "@tea-pos/features/stores/schema";
+import useCreateStore from "@/lib/hooks/stores/useCreateStore";
 import dynamic from "next/dynamic";
 import { ScopeBadge } from "../../_components/scope-badge";
 

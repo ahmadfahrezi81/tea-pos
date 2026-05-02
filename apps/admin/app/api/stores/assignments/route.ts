@@ -1,6 +1,6 @@
 // //app/api/store/assignments/route.ts
 
-// import { createRouteHandlerClient } from "@/lib/server/supabase/server";
+// import { createRouteHandlerClient } from "@/lib/supabase/server";
 // import { NextRequest, NextResponse } from "next/server";
 
 // // POST - Create or update assignment
@@ -150,7 +150,7 @@
 // }
 
 // app/api/stores/assignments/route.ts
-import { createRouteHandlerClient } from "@/lib/server/supabase/server";
+import { createRouteHandlerClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import {
     CreateAssignmentInput,
@@ -159,8 +159,8 @@ import {
     CreateAssignmentResponse,
     UpdateAssignmentResponse,
     DeleteAssignmentResponse,
-} from "@/lib/shared/schemas/userStoreAssignments";
-import { toCamelKeys, toSnakeKeys } from "@/lib/shared/utils/schemas";
+} from "@tea-pos/features/stores/user-assignments-schema";
+import { toCamelKeys, toSnakeKeys } from "@tea-pos/utils/schemas";
 
 // ============================================================================
 // POST /api/stores/assignments

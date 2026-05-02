@@ -1,8 +1,8 @@
 // app/api/tenant-invites/route.ts
-import { createRouteHandlerClient } from "@/lib/server/supabase/server";
-import { createAdminClient } from "@/lib/server/supabase/admin";
+import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { NextRequest, NextResponse } from "next/server";
-import { CreateTenantInviteInput } from "@/lib/shared/schemas/tenantInvites";
+import { CreateTenantInviteInput } from "@tea-pos/features/tenants/invites-schema";
 
 // ============================================================================
 // POST /api/tenant-invites (Invite User)

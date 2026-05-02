@@ -21,11 +21,11 @@ import {
     SidebarGroup,
     SidebarHeader,
     SidebarRail,
-} from "@/components/ui/sidebar";
+} from "@tea-pos/ui/components/sidebar";
 
-import { useTenantSlug } from "@/lib/server/config/tenant-url";
+import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { StoreSwitcher } from "./store-switcher";
-import { useStoreScope } from "@/app/[tenantSlug]/admin/StoreScopeProvider"; // ✅ import hook
+import { useStoreScope } from "@/app/[tenantSlug]/admin/StoreScopeProvider";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const { url } = useTenantSlug();
@@ -40,7 +40,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             }
             return url(`/admin${path}`);
         },
-        [scope, storeId, url]
+        [scope, storeId, url],
     );
 
     // ✅ Sidebar data
@@ -98,7 +98,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             navMain = navMain
                 .filter(
                     (item) =>
-                        item.title !== "Products" && item.title !== "Stores"
+                        item.title !== "Products" && item.title !== "Stores",
                 )
                 .map((item) => {
                     if (item.title === "Dashboard")

@@ -8,7 +8,7 @@ import {
     CreateDailySummaryResponse,
     UpdateDailySummaryResponse,
     ErrorResponseSchema,
-} from "../schemas/index";
+} from "@tea-pos/features/shared/schemas-index";
 
 export function registerDailySummaryRoutes(registry: OpenAPIRegistry) {
     // GET /api/summaries

@@ -12,14 +12,14 @@ import {
 } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { DateRange } from "react-day-picker";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@tea-pos/ui/components/button";
+import { Calendar } from "@tea-pos/ui/components/calendar";
 import {
     Popover,
     PopoverTrigger,
     PopoverContent,
-} from "@/components/ui/popover";
-import { cn } from "@/lib/shared/utils/cn";
+} from "@tea-pos/ui/components/popover";
+import { cn } from "@tea-pos/utils/cn";
 
 interface Preset {
     label: string;
@@ -76,7 +76,7 @@ const getDefaultPresets = (): Preset[] => {
 // Helper function to check if a range matches a preset
 const findMatchingPreset = (
     range: DateRange | undefined,
-    presets: Preset[]
+    presets: Preset[],
 ): string | null => {
     if (!range?.from || !range?.to) return null;
 
@@ -100,12 +100,12 @@ export function DateRangePickerWithPresets({
     className,
 }: Props) {
     const [range, setRange] = React.useState<DateRange | undefined>(
-        initialRange
+        initialRange,
     );
 
     // Automatically detect which preset matches the initial range
     const [selectedPreset, setSelectedPreset] = React.useState<string | null>(
-        () => findMatchingPreset(initialRange, presets)
+        () => findMatchingPreset(initialRange, presets),
     );
 
     const handleSelect = (selected: DateRange | undefined) => {
@@ -124,7 +124,7 @@ export function DateRangePickerWithPresets({
         ? range.to
             ? `${format(range.from, "d MMM yyyy")} - ${format(
                   range.to,
-                  "d MMM yyyy"
+                  "d MMM yyyy",
               )}`
             : format(range.from, "d MMM yyyy")
         : "Select date range";
@@ -137,7 +137,7 @@ export function DateRangePickerWithPresets({
                     className={cn(
                         "h-9 px-3 text-left font-normal justify-start w-auto max-w-[240px]",
                         !range && "text-muted-foreground",
-                        className
+                        className,
                     )}
                 >
                     <CalendarIcon className="mr-2 h-4 w-4" />
@@ -172,7 +172,7 @@ export function DateRangePickerWithPresets({
                                         className={cn(
                                             "justify-start font-normal",
                                             selectedPreset === preset.label &&
-                                                "bg-accent"
+                                                "bg-accent",
                                         )}
                                     >
                                         {preset.label}

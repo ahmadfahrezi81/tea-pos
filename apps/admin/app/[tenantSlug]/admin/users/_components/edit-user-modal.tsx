@@ -10,7 +10,7 @@
 //     DialogDescription,
 //     DialogHeader,
 //     DialogTitle,
-// } from "@/components/ui/dialog";
+// } from "@tea-pos/ui/components/dialog";
 // import {
 //     Form,
 //     FormControl,
@@ -18,18 +18,18 @@
 //     FormItem,
 //     FormLabel,
 //     FormMessage,
-// } from "@/components/ui/form";
+// } from "@tea-pos/ui/components/form";
 // import {
 //     Select,
 //     SelectContent,
 //     SelectItem,
 //     SelectTrigger,
 //     SelectValue,
-// } from "@/components/ui/select";
-// import { Input } from "@/components/ui/input";
-// import { Button } from "@/components/ui/button";
+// } from "@tea-pos/ui/components/select";
+// import { Input } from "@tea-pos/ui/components/input";
+// import { Button } from "@tea-pos/ui/components/button";
 // import { UpdateUserInput } from "@/lib/schemas/users";
-// import useUpdateUser from "@/lib/client/hooks/users/useUpdateUser";
+// import useUpdateUser from "@/lib/hooks/users/useUpdateUser";
 // import { Loader2 } from "lucide-react";
 // import { toast } from "sonner";
 
@@ -202,7 +202,7 @@ import {
     DialogDescription,
     DialogHeader,
     DialogTitle,
-} from "@/components/ui/dialog";
+} from "@tea-pos/ui/components/dialog";
 import {
     Form,
     FormControl,
@@ -210,18 +210,18 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
-} from "@/components/ui/form";
+} from "@tea-pos/ui/components/form";
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { UpdateUserInput } from "@/lib/shared/schemas/users";
-import useUpdateUser from "@/lib/client/hooks/users/useUpdateUser";
+} from "@tea-pos/ui/components/select";
+import { Input } from "@tea-pos/ui/components/input";
+import { Button } from "@tea-pos/ui/components/button";
+import { UpdateUserInput } from "@tea-pos/features/users/schema";
+import useUpdateUser from "@/lib/hooks/users/useUpdateUser";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";

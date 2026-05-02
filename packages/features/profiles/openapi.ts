@@ -10,7 +10,7 @@ import {
     UpdateProfileInput,
     UpdateProfileResponse,
     ErrorResponseSchema,
-} from "../schemas/index";
+} from "@tea-pos/features/shared/schemas-index";
 
 export function registerProfileRoutes(registry: OpenAPIRegistry) {
     // Register GET /api/profiles/:id (Get single profile)

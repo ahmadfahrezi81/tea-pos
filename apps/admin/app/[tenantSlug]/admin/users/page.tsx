@@ -3,10 +3,10 @@
 // "use client";
 
 // import { useState } from "react";
-// import { Button } from "@/components/ui/button";
+// import { Button } from "@tea-pos/ui/components/button";
 // import { Mail, UserPlus } from "lucide-react";
 // import { useTenant } from "../../TenantProvider";
-// import useTenantUsers from "@/lib/client/hooks/tenants/useTenantUsers";
+// import useTenantUsers from "@/lib/hooks/tenants/useTenantUsers";
 // import { DataTable } from "./_components/data-table";
 // import { createColumns, User } from "./_components/columns";
 // import { AddUserModal } from "./_components/add-user-modal";
@@ -21,7 +21,7 @@
 //     AlertDialogFooter,
 //     AlertDialogHeader,
 //     AlertDialogTitle,
-// } from "@/components/ui/alert-dialog";
+// } from "@tea-pos/ui/components/alert-dialog";
 // import { toast } from "sonner";
 // import { ScopeBadge } from "../_components/scope-badge";
 
@@ -231,10 +231,10 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@tea-pos/ui/components/button";
 import { Mail, UserPlus } from "lucide-react";
 import { useTenant } from "../../TenantProvider";
-import useTenantUsers from "@/lib/client/hooks/tenants/useTenantUsers";
+import useTenantUsers from "@/lib/hooks/tenants/useTenantUsers";
 import { DataTable } from "./_components/data-table";
 import { createColumns, User } from "./_components/columns";
 import { AddUserModal } from "./_components/add-user-modal";
@@ -249,7 +249,7 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@tea-pos/ui/components/alert-dialog";
 import { toast } from "sonner";
 import { ScopeBadge } from "../_components/scope-badge";
 
@@ -304,7 +304,9 @@ export default function UsersPage() {
             setUserToDelete(null);
         } catch (error) {
             toast.error(
-                error instanceof Error ? error.message : "Failed to remove user"
+                error instanceof Error
+                    ? error.message
+                    : "Failed to remove user",
             );
         } finally {
             setIsDeleting(false);

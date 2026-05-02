@@ -8,7 +8,7 @@ import {
     ListTenantInvitesQuery,
     TenantInviteListResponse,
     ErrorResponseSchema,
-} from "../schemas/index";
+} from "@tea-pos/features/shared/schemas-index";
 
 export function registerTenantInviteRoutes(registry: OpenAPIRegistry) {
     // Register GET /api/tenant-invites

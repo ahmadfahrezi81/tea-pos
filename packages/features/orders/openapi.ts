@@ -6,7 +6,7 @@ import {
     ListOrdersQuery,
     OrderListResponse,
     ErrorResponseSchema,
-} from "../schemas/index";
+} from "@tea-pos/features/shared/schemas-index";
 
 export function registerOrderRoutes(registry: OpenAPIRegistry) {
     // Register GET /api/orders

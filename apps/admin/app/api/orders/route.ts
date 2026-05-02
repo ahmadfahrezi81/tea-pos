@@ -1,14 +1,14 @@
 // app/api/orders/route.ts
-import { createRouteHandlerClient } from "@/lib/server/supabase/server";
-import { getCurrentTenantId } from "@/lib/server/config/tenant";
+import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { getCurrentTenantId } from "@tea-pos/utils/server-config/tenant";
 import { NextRequest, NextResponse } from "next/server";
 import {
     CreateOrderInput,
     ListOrdersQuery,
     OrderListResponse,
     CreateOrderResponse,
-} from "@/lib/shared/schemas/orders";
-import { toCamelKeys, toSnakeKeys } from "@/lib/shared/utils/schemas";
+} from "@tea-pos/features/orders/schema";
+import { toCamelKeys, toSnakeKeys } from "@tea-pos/utils/schemas";
 
 // ============================================================================
 // GET /api/orders

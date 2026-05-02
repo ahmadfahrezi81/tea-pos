@@ -23,22 +23,22 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+} from "@tea-pos/ui/components/table";
+import { Button } from "@tea-pos/ui/components/button";
+import { Input } from "@tea-pos/ui/components/input";
 import {
     DropdownMenu,
     DropdownMenuCheckboxItem,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@tea-pos/ui/components/dropdown-menu";
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
-} from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
+} from "@tea-pos/ui/components/popover";
+import { Badge } from "@tea-pos/ui/components/badge";
 import {
     Settings2,
     Copy,
@@ -64,7 +64,7 @@ export function DataTable<TData, TValue>({
     const [sorting, setSorting] = useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
     const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
-        {}
+        {},
     );
     const [rowSelection, setRowSelection] = useState({});
     const [roleFilter, setRoleFilter] = useState<string[]>([]);
@@ -132,7 +132,7 @@ export function DataTable<TData, TValue>({
                                 table
                                     .getColumn("userId")
                                     ?.setFilterValue(
-                                        value.replace(/^USR-/i, "")
+                                        value.replace(/^USR-/i, ""),
                                     );
                             }
                         }}
@@ -263,11 +263,11 @@ export function DataTable<TData, TValue>({
                                                 table.getFilteredSelectedRowModel()
                                                     .rows;
                                             const data = rows.map(
-                                                (row) => row.original
+                                                (row) => row.original,
                                             );
 
                                             const headers = Object.keys(
-                                                data[0]
+                                                data[0],
                                             );
                                             const csv = [
                                                 headers.join(","),
@@ -276,10 +276,10 @@ export function DataTable<TData, TValue>({
                                                         .map((header) =>
                                                             JSON.stringify(
                                                                 row[header] ??
-                                                                    ""
-                                                            )
+                                                                    "",
+                                                            ),
                                                         )
-                                                        .join(",")
+                                                        .join(","),
                                                 ),
                                             ].join("\n");
 
@@ -294,12 +294,12 @@ export function DataTable<TData, TValue>({
                                                 table.getFilteredSelectedRowModel()
                                                     .rows;
                                             const data = rows.map(
-                                                (row) => row.original
+                                                (row) => row.original,
                                             );
                                             const json = JSON.stringify(
                                                 data,
                                                 null,
-                                                2
+                                                2,
                                             );
                                             navigator.clipboard.writeText(json);
                                         }}
@@ -324,11 +324,11 @@ export function DataTable<TData, TValue>({
                                                 table.getFilteredSelectedRowModel()
                                                     .rows;
                                             const data = rows.map(
-                                                (row) => row.original
+                                                (row) => row.original,
                                             );
 
                                             const headers = Object.keys(
-                                                data[0]
+                                                data[0],
                                             );
                                             const csv = [
                                                 headers.join(","),
@@ -337,10 +337,10 @@ export function DataTable<TData, TValue>({
                                                         .map((header) =>
                                                             JSON.stringify(
                                                                 row[header] ??
-                                                                    ""
-                                                            )
+                                                                    "",
+                                                            ),
                                                         )
-                                                        .join(",")
+                                                        .join(","),
                                                 ),
                                             ].join("\n");
 
@@ -349,7 +349,7 @@ export function DataTable<TData, TValue>({
                                             });
                                             const url =
                                                 window.URL.createObjectURL(
-                                                    blob
+                                                    blob,
                                                 );
                                             const a =
                                                 document.createElement("a");
@@ -371,12 +371,12 @@ export function DataTable<TData, TValue>({
                                                 table.getFilteredSelectedRowModel()
                                                     .rows;
                                             const data = rows.map(
-                                                (row) => row.original
+                                                (row) => row.original,
                                             );
                                             const json = JSON.stringify(
                                                 data,
                                                 null,
-                                                2
+                                                2,
                                             );
 
                                             const blob = new Blob([json], {
@@ -384,7 +384,7 @@ export function DataTable<TData, TValue>({
                                             });
                                             const url =
                                                 window.URL.createObjectURL(
-                                                    blob
+                                                    blob,
                                                 );
                                             const a =
                                                 document.createElement("a");
@@ -451,9 +451,9 @@ export function DataTable<TData, TValue>({
                             sort.id === "fullName"
                                 ? "Name"
                                 : sort.id === "phoneNumber"
-                                ? "Phone Number"
-                                : sort.id.charAt(0).toUpperCase() +
-                                  sort.id.slice(1);
+                                  ? "Phone Number"
+                                  : sort.id.charAt(0).toUpperCase() +
+                                    sort.id.slice(1);
                         return (
                             <Badge
                                 key={sort.id}
@@ -471,8 +471,8 @@ export function DataTable<TData, TValue>({
                                     onClick={() => {
                                         setSorting(
                                             sorting.filter(
-                                                (s) => s.id !== sort.id
-                                            )
+                                                (s) => s.id !== sort.id,
+                                            ),
                                         );
                                     }}
                                 >
@@ -498,7 +498,7 @@ export function DataTable<TData, TValue>({
                                                 : flexRender(
                                                       header.column.columnDef
                                                           .header,
-                                                      header.getContext()
+                                                      header.getContext(),
                                                   )}
                                         </TableHead>
                                     );
@@ -533,7 +533,7 @@ export function DataTable<TData, TValue>({
                                                     {flexRender(
                                                         cell.column.columnDef
                                                             .cell,
-                                                        cell.getContext()
+                                                        cell.getContext(),
                                                     )}
                                                 </TableCell>
                                             );

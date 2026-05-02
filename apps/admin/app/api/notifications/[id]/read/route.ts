@@ -1,7 +1,7 @@
 // app/api/notifications/[id]/read/route.ts
-import { createRouteHandlerClient } from "@/lib/server/supabase/server";
+import { createRouteHandlerClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
-import { MarkOneReadResponse } from "@/lib/shared/schemas/notifications";
+import { MarkOneReadResponse } from "@tea-pos/features/notifications/schema";
 
 // ============================================================================
 // PATCH /api/notifications/[id]/read

@@ -1,6 +1,6 @@
 // app/api/categories/route.ts
-import { createRouteHandlerClient } from "@/lib/server/supabase/server";
-import { getCurrentTenantId } from "@/lib/server/config/tenant";
+import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { getCurrentTenantId } from "@tea-pos/utils/server-config/tenant";
 import { NextRequest, NextResponse } from "next/server";
 import {
     CreateCategoryInput,
@@ -9,8 +9,8 @@ import {
     CreateCategoryResponse,
     UpdateCategoryResponse,
     DeleteCategoryResponse,
-} from "@/lib/shared/schemas/product-categories";
-import { toCamelKeys, toSnakeKeys } from "@/lib/shared/utils/schemas";
+} from "@tea-pos/features/products/categories-schema";
+import { toCamelKeys, toSnakeKeys } from "@tea-pos/utils/schemas";
 
 // ============================================================================
 // GET /api/categories

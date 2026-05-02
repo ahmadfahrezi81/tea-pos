@@ -1,7 +1,7 @@
 // app/[tenantSlug]/admin/pos/_components/product-grid.tsx
 import Image from "next/image";
-import { Card } from "@/components/ui/card";
-import type { Product } from "@/lib/shared/schemas/products";
+import { Card } from "@tea-pos/ui/components/card";
+import type { Product } from "@tea-pos/features/products/schema";
 import type { CartItem } from "../page";
 import { CirclePlus } from "lucide-react";
 

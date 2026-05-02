@@ -4,7 +4,7 @@ import * as React from "react";
 import { Box, Boxes } from "lucide-react";
 import { useTenant } from "@/app/[tenantSlug]/TenantProvider";
 import { useStoreScope } from "@/app/[tenantSlug]/admin/StoreScopeProvider";
-import { cn } from "@/lib/shared/utils/cn";
+import { cn } from "@tea-pos/utils/cn";
 
 interface ScopeBadgeProps {
     className?: string;
@@ -25,7 +25,7 @@ export function ScopeBadge({ className, showIcon = true }: ScopeBadgeProps) {
         <div
             className={cn(
                 "inline-flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-mono bg-background text-foreground border border-border mb-1 w-fit",
-                className
+                className,
             )}
             // className={cn(
             //     "inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-medium text-muted-foreground w-fit bg-muted/50 mb-1",
