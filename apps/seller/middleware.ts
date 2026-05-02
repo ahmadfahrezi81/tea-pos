@@ -3,25 +3,13 @@ import { NextResponse, type NextRequest } from "next/server";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const RESERVED_SLUGS = [
-    "api",
-    "login",
-    "signup",
-    "docs",
-    "_next",
-    "unauthorized",
-    "old-browser",
-];
-const STATIC_PREFIXES = [
-    "/_next",
-    "/api",
-    "/auth",
-    "/lite-legacy-client",
-    "/old-browser",
-    "/icons",
-    "/manifest",
-];
-const USER_COOKIE_TTL = 60 * 60 * 24 * 7; // 7 days — matches Supabase refresh token
+const RESERVED_SLUGS = ["api", "login", "docs", "_next", "unauthorized"];
+
+const STATIC_PREFIXES = ["/_next", "/api", "/auth", "/icons", "/manifest"];
+
+const ALLOWED_ROLES = ["USER", "ADMIN"];
+
+const USER_COOKIE_TTL = 60 * 60 * 24 * 7; // 7 days
 const TENANT_COOKIE_TTL = 60 * 60 * 24; // 24h
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -46,24 +34,6 @@ function setUserCookie(
     );
 }
 
-function isOldBrowser(userAgent: string): boolean {
-    if (!userAgent) return false;
-    const ua = userAgent.toLowerCase();
-    const check = (re: RegExp, min: number) => {
-        const m = ua.match(re);
-        return m ? parseInt(m[1]) < min : false;
-    };
-    return (
-        check(/chrome\/(\d+)/, 109) ||
-        check(/android\s+(\d+)/, 8) ||
-        check(/os\s+(\d+)_/, 13) ||
-        check(/firefox\/(\d+)/, 78) ||
-        check(/version\/(\d+).*safari/, 13) ||
-        ua.includes("msie") ||
-        ua.includes("trident/")
-    );
-}
-
 const redirect = (path: string, req: NextRequest) =>
     NextResponse.redirect(new URL(path, req.url));
 
@@ -72,7 +42,7 @@ const redirect = (path: string, req: NextRequest) =>
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
-    // Skip DB work entirely for static assets
+    // Skip static assets
     if (
         STATIC_PREFIXES.some((p) => pathname.startsWith(p)) ||
         pathname === "/favicon.ico"
@@ -110,13 +80,6 @@ export async function middleware(request: NextRequest) {
     const shouldResolveTenant =
         tenantSlug && !RESERVED_SLUGS.includes(tenantSlug);
 
-    // ── Old browser check (no DB needed) ─────────────────────────────────────
-    if (pathname.includes("/mobile")) {
-        const ua = request.headers.get("user-agent") || "";
-        if (isOldBrowser(ua))
-            return redirect(`/old-browser?tenant=${tenantSlug}`, request);
-    }
-
     // ── Tenant + auth in parallel ─────────────────────────────────────────────
     const [
         {
@@ -134,7 +97,7 @@ export async function middleware(request: NextRequest) {
             : Promise.resolve({ data: null }),
     ]);
 
-    // Cache tenant ID in cookie for subsequent requests
+    // Cache tenant ID in cookie
     const tenantId =
         tenantResult.data?.id ??
         request.cookies.get("x-tenant-id")?.value ??
@@ -164,7 +127,7 @@ export async function middleware(request: NextRequest) {
                 cachedRole,
                 cachedData.fullName ?? "",
                 cachedData.email ?? "",
-            ); // refresh TTL, no DB call
+            );
         } else {
             const { data: profile } = await supabase
                 .from("profiles")
@@ -174,15 +137,15 @@ export async function middleware(request: NextRequest) {
             setUserCookie(
                 response,
                 user.id,
-                profile?.role ?? "SELLER",
+                profile?.role ?? "USER",
                 profile?.full_name ?? "",
                 profile?.email ?? "",
             );
         }
     }
 
-    // ── /login and /signup ────────────────────────────────────────────────────
-    if (pathname === "/login" || pathname === "/signup") {
+    // ── /login ────────────────────────────────────────────────────────────────
+    if (pathname === "/login") {
         if (!user) return response;
 
         const { data: tenantAssignments } = await supabase
@@ -200,43 +163,28 @@ export async function middleware(request: NextRequest) {
         if (!firstTenant?.slug)
             return redirect("/unauthorized?reason=invalid-tenant", request);
 
-        const { data: storeAssignments } = await supabase
-            .from("user_store_assignments")
-            .select("role")
-            .eq("user_id", user.id);
-
-        const targetPath = storeAssignments?.some((a) => a.role === "seller")
-            ? `/${firstTenant.slug}/mobile/pos`
-            : `/${firstTenant.slug}/mobile/profile`;
-
-        return redirect(targetPath, request);
+        return redirect(`/${firstTenant.slug}/mobile/pos`, request);
     }
 
     // ── /{tenant}/mobile root ─────────────────────────────────────────────────
     if (pathname === `/${tenantSlug}/mobile`) {
-        if (!user) return redirect(`/${tenantSlug}/mobile/profile`, request);
-
-        const { data: storeAssignments } = await supabase
-            .from("user_store_assignments")
-            .select("role")
-            .eq("user_id", user.id);
-
-        const targetPath = storeAssignments?.some((a) => a.role === "seller")
-            ? `/${tenantSlug}/mobile/pos`
-            : `/${tenantSlug}/mobile/profile`;
-
-        return redirect(targetPath, request);
+        if (!user) return redirect("/login", request);
+        return redirect(`/${tenantSlug}/mobile/pos`, request);
     }
 
-    // ── Protect tenant routes ─────────────────────────────────────────────────
-    const isProtected =
-        pathname.startsWith(`/${tenantSlug}/admin`) ||
-        pathname.startsWith(`/${tenantSlug}/mobile`);
+    // ── Protect mobile routes ─────────────────────────────────────────────────
+    const isProtected = pathname.startsWith(`/${tenantSlug}/mobile`);
 
     if (!isProtected) return response;
     if (!user) return redirect("/login", request);
     if (!tenantId)
         return redirect("/unauthorized?reason=tenant-not-found", request);
+
+    // Check role is allowed
+    const cached = request.cookies.get("x-user-info")?.value;
+    const role = cached ? JSON.parse(cached).role : null;
+    if (role && !ALLOWED_ROLES.includes(role))
+        return redirect("/unauthorized?reason=no-access", request);
 
     // Verify user belongs to this tenant
     const { data: userTenantAssignment } = await supabase
@@ -266,23 +214,9 @@ export async function middleware(request: NextRequest) {
     if (!validTenant?.slug)
         return redirect("/unauthorized?reason=invalid-tenant", request);
 
-    const { data: storeAssignments } = await supabase
-        .from("user_store_assignments")
-        .select("role")
-        .eq("user_id", user.id);
-
-    const targetPath = storeAssignments?.some((a) => a.role === "seller")
-        ? `/${validTenant.slug}/mobile/pos`
-        : `/${validTenant.slug}/mobile/profile`;
-
-    return redirect(targetPath, request);
+    return redirect(`/${validTenant.slug}/mobile/pos`, request);
 }
 
 export const config = {
-    matcher: [
-        "/:tenantSlug/mobile/:path*",
-        "/:tenantSlug/mobile",
-        "/login",
-        "/signup",
-    ],
+    matcher: ["/:tenantSlug/mobile/:path*", "/:tenantSlug/mobile", "/login"],
 };
