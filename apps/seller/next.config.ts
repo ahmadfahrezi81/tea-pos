@@ -64,6 +64,7 @@ const withPWA = withPWAInit({
 
 const nextConfig: NextConfig = {
     reactCompiler: true,
+    turbopack: {},
     allowedDevOrigins: ["busked-florentina-ducally.ngrok-free.dev"],
     env: {
         NEXT_PUBLIC_APP_VERSION: version,
