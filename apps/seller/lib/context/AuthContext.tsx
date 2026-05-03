@@ -316,8 +316,16 @@ const fetchProfile = async (): Promise<Profile | null> => {
     }
 };
 
+const fetchAvatarUrl = async (): Promise<string | null> => {
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+    return user?.user_metadata?.avatar_url ?? null;
+};
+
 interface AuthContextType {
     profile: Profile | null;
+    avatarUrl: string | null;
     isLoading: boolean;
     mutate: () => Promise<Profile | null | undefined>;
 }
@@ -368,8 +376,13 @@ export function AuthProvider({
         },
     );
 
+    const { data: avatarUrl = null } = useSWR(
+        initialUser ? "avatarUrl" : null,
+        fetchAvatarUrl,
+    );
+
     return (
-        <AuthContext.Provider value={{ profile, isLoading, mutate }}>
+        <AuthContext.Provider value={{ profile, avatarUrl, isLoading, mutate }}>
             {children}
         </AuthContext.Provider>
     );

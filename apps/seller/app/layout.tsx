@@ -34,16 +34,29 @@ export default async function RootLayout({
     return (
         <html lang="en" suppressHydrationWarning>
             <head>
-                <meta name="theme-color" content="#F9FAFB" media="(prefers-color-scheme: light)" />
-                <meta name="theme-color" content="#F9FAFB" media="(prefers-color-scheme: dark)" />
+                <meta
+                    name="theme-color"
+                    content="#F9FAFB"
+                    media="(prefers-color-scheme: light)"
+                />
+                <meta
+                    name="theme-color"
+                    content="#F9FAFB"
+                    media="(prefers-color-scheme: dark)"
+                />
                 <meta name="mobile-web-app-capable" content="yes" />
                 <meta name="apple-mobile-web-app-capable" content="yes" />
-                <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+                <meta
+                    name="apple-mobile-web-app-status-bar-style"
+                    content="default"
+                />
                 <meta name="apple-mobile-web-app-title" content="Tea POS" />
                 <link rel="apple-touch-icon" href="/icons/icon-512x512.png" />
             </head>
             <body>
-                <SWRConfig value={{ dedupingInterval: 5000, revalidateOnFocus: false }}>
+                <SWRConfig
+                    value={{ dedupingInterval: 5000, revalidateOnFocus: false }}
+                >
                     <FeaturesProvider>
                         <AuthProvider initialUser={initialUser}>
                             {children}

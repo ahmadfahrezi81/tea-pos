@@ -19,6 +19,7 @@ import { WeatherDrawer } from "./WeatherDrawer";
 import { WeatherButton } from "./WeatherButton";
 import { CartDrawer } from "./CartDrawer";
 import { useIsIPhonePWA } from "@/lib/usePWA";
+import { PillSwitcher } from "./PillSwitcher";
 
 export interface CartItem {
     product: ProductResponse;
@@ -223,7 +224,7 @@ export default function MobilePOS() {
         } finally {
             setProcessing(false);
         }
-    }, [selectedStoreId, cart, showToast, closeCart]);
+    }, [selectedStoreId, cart, showToast, closeCart, itemCount]);
 
     const mainProducts = useMemo(
         () =>
@@ -269,6 +270,9 @@ export default function MobilePOS() {
 
     return (
         <div className="flex flex-col gap-4 pb-24">
+            {/* Pill Switcher */}
+            <PillSwitcher />
+
             {/* Greeting */}
             <div className="flex items-center justify-between">
                 <div>
@@ -286,7 +290,7 @@ export default function MobilePOS() {
 
             {/* Main Products Grid */}
             <div className="grid grid-cols-2 gap-3">
-                {mainProducts.map((product) => (
+                {[...mainProducts, ...otherProducts].map((product) => (
                     <ProductCard
                         key={product.id}
                         product={product}
@@ -295,53 +299,6 @@ export default function MobilePOS() {
                     />
                 ))}
             </div>
-
-            {/* Others Section */}
-            {otherProducts.length > 0 && (
-                <div className="mt-6">
-                    <button
-                        onClick={() => setShowOthers(!showOthers)}
-                        className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
-                    >
-                        <span className="font-medium text-gray-700">
-                            Others ({otherProducts.length} items)
-                        </span>
-                        <div
-                            className={`transform transition-transform duration-200 ${showOthers ? "rotate-180" : ""}`}
-                        >
-                            <svg
-                                className="w-5 h-5 text-gray-500"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M19 9l-7 7-7-7"
-                                />
-                            </svg>
-                        </div>
-                    </button>
-
-                    {showOthers && (
-                        <div className="grid grid-cols-2 gap-3 mt-3">
-                            {otherProducts.map((product) => (
-                                <ProductCard
-                                    key={product.id}
-                                    product={product}
-                                    quantityInCart={
-                                        cartQuantityMap[product.id] ?? 0
-                                    }
-                                    onAdd={addToCart}
-                                    dimmed
-                                />
-                            ))}
-                        </div>
-                    )}
-                </div>
-            )}
 
             {/* Sticky Bottom Bar */}
             {cart.length > 0 && (

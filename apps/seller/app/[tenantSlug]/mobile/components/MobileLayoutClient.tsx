@@ -1,3 +1,1175 @@
+// // "use client";
+// // import {
+// //     useEffect,
+// //     ReactNode,
+// //     useMemo,
+// //     useState,
+// //     useRef,
+// //     useCallback,
+// // } from "react";
+// // import {
+// //     User,
+// //     Bell,
+// //     ArrowLeft,
+// //     ChevronsUpDown,
+// //     ReceiptText,
+// //     StoreIcon,
+// //     ChartNoAxesCombinedIcon,
+// //     InboxIcon,
+// // } from "lucide-react";
+// // import { useStores } from "@/lib/hooks/stores/useStores";
+// // import Image from "next/image";
+// // import { hasManagerRole, hasSellerRole } from "@tea-pos/utils/roleUtils";
+// // import { useRouter, usePathname } from "next/navigation";
+// // import { useAuth } from "@/lib/context/AuthContext";
+// // import VersionInfo from "@/components/shared/VersionInfo";
+// // import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
+// // import { useStore } from "@/lib/context/StoreContext";
+// // import { StorePickerDrawer } from "./StorePickerDrawer";
+// // import { navigation } from "@tea-pos/utils/navigation";
+// // import useNotifications from "@/lib/hooks/notifications/useNotifications";
+// // import { useProfileIcon } from "@/lib/context/ProfileIconContext";
+// // import { useIsIPhonePWA } from "@/lib/usePWA";
+
+// // export interface Assignment {
+// //     user_id: string;
+// //     role: string;
+// //     is_default: boolean;
+// // }
+
+// // export interface Assignments {
+// //     [storeId: string]: Assignment[];
+// // }
+
+// // interface MobileLayoutClientProps {
+// //     children: ReactNode;
+// // }
+
+// // export default function MobileLayoutClient({
+// //     children,
+// // }: MobileLayoutClientProps) {
+// //     // ─── Router & path ───────────────────────────────────────────────
+// //     const router = useRouter();
+// //     const pathname = usePathname();
+// //     const { url } = useTenantSlug();
+
+// //     // ─── UI state ────────────────────────────────────────────────────
+// //     const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
+// //     const [isTransitioning, setIsTransitioning] = useState(false);
+// //     const [authRetryCount, setAuthRetryCount] = useState(0);
+// //     const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+// //     // ─── Auth ────────────────────────────────────────────────────────
+// //     const {
+// //         profile,
+// //         isLoading: profileLoading,
+// //         mutate: refreshProfile,
+// //     } = useAuth();
+
+// //     // ─── Stores & permissions ─────────────────────────────────────────
+// //     const { data: storesData, isLoading: storesLoading } = useStores();
+// //     const { selectedStore, setIsPickerOpen, isPickerOpen } = useStore();
+// //     const { ProfileIcon } = useProfileIcon();
+// //     const isIPhonePWA = useIsIPhonePWA();
+
+// //     const user = useMemo(
+// //         () => (profile ? { id: profile.id } : null),
+// //         [profile],
+// //     );
+// //     const assignments = useMemo(
+// //         () => storesData?.assignments ?? {},
+// //         [storesData?.assignments],
+// //     );
+
+// //     const canSell = useMemo(
+// //         () => !!user && hasSellerRole(user.id, assignments),
+// //         [user, assignments],
+// //     );
+// //     const canManage = useMemo(
+// //         () => !!user && hasManagerRole(user.id, assignments),
+// //         [user, assignments],
+// //     );
+
+// //     const { data: notificationsData } = useNotifications();
+// //     const unreadCount = notificationsData?.unreadCount ?? 0;
+// //     const badgeCount = unreadCount > 99 ? "99+" : unreadCount;
+
+// //     const isLoading = useMemo(() => {
+// //         if (authRetryCount >= 3) return false;
+// //         if (profileLoading || !profile) return true;
+// //         if (storesLoading) return true;
+// //         return false;
+// //     }, [profile, profileLoading, storesLoading, authRetryCount]);
+
+// //     // ─── Tabs ─────────────────────────────────────────────────────────
+// //     const tabs = useMemo(
+// //         () =>
+// //             [
+// //                 {
+// //                     path: url("/mobile/pos"),
+// //                     label: "Today",
+// //                     icon: StoreIcon,
+// //                     show: canSell,
+// //                     matchPaths: [url("/mobile/pos")],
+// //                 },
+// //                 {
+// //                     path: url("/mobile/orders"),
+// //                     label: "Orders",
+// //                     icon: ReceiptText,
+// //                     show: canSell || canManage,
+// //                     matchPaths: [
+// //                         url("/mobile/orders"),
+// //                         url("/mobile/orders/chart"),
+// //                     ],
+// //                 },
+// //                 {
+// //                     path: url("/mobile/analytics"),
+// //                     label: "Analytics",
+// //                     icon: ChartNoAxesCombinedIcon,
+// //                     show: canManage,
+// //                     matchPaths: [
+// //                         url("/mobile/analytics"),
+// //                         url("/mobile/analytics/chart"),
+// //                     ],
+// //                 },
+// //                 // {
+// //                 //     path: url("/mobile/tasks"),
+// //                 //     label: "Tasks",
+// //                 //     icon: ListChecks,
+// //                 //     show: canSell || canManage,
+// //                 //     matchPaths: [url("/mobile/tasks")],
+// //                 // },
+// //                 {
+// //                     path: url("/mobile/tasks"),
+// //                     label: "Inbox",
+// //                     icon: InboxIcon,
+// //                     show: true,
+// //                     matchPaths: [url("/mobile/tasks")],
+// //                 },
+// //                 {
+// //                     path: url("/mobile/profile"),
+// //                     label: "You",
+// //                     icon: User,
+// //                     show: true,
+// //                     matchPaths: [url("/mobile/profile")],
+// //                 },
+// //             ].filter((tab) => tab.show),
+// //         [canSell, canManage, url],
+// //     );
+
+// //     // ─── Path helpers ─────────────────────────────────────────────────
+// //     const getCurrentPageTitle = useCallback((path: string): string | null => {
+// //         if (path.endsWith("/mobile/pos")) return "Home";
+// //         if (path.endsWith("/mobile/orders")) return "Orders";
+// //         if (path.endsWith("/mobile/orders/chart")) return "Daily Chart";
+// //         if (path.endsWith("/mobile/analytics")) return "Analytics";
+// //         if (path.endsWith("/mobile/analytics/chart")) return "Monthly Chart";
+// //         if (path.endsWith("/mobile/tasks")) return "Tasks";
+// //         if (path.endsWith("/mobile/profile")) return "Profile";
+// //         if (path.endsWith("/mobile/profile/stores")) return "Assigned Stores";
+// //         if (path.endsWith("/mobile/profile/personal"))
+// //             return "Personal Details";
+// //         if (path.endsWith("/mobile/profile/map"))
+// //             return "Feedback Location History";
+// //         if (path.endsWith("/mobile/notifications")) return "Notifications";
+// //         if (
+// //             path.includes("/mobile/notifications/") &&
+// //             path.endsWith("/weather")
+// //         )
+// //             return "Weather Forecast";
+// //         if (path.endsWith("/mobile/analytics/daily/close")) return "Close Day";
+// //         if (path.endsWith("/mobile/analytics/daily/open")) return "Open Store";
+// //         return "Mobile";
+// //     }, []);
+
+// //     const isSubPage = useCallback(
+// //         (path: string) =>
+// //             path.includes("/mobile/profile/") ||
+// //             path.endsWith("/mobile/orders/chart") ||
+// //             path.endsWith("/mobile/analytics/chart") ||
+// //             path.endsWith("/mobile/notifications") ||
+// //             path.includes("/mobile/notifications/") ||
+// //             path.endsWith("/mobile/analytics/daily/close") ||
+// //             path.endsWith("/mobile/analytics/daily/open"),
+// //         [],
+// //     );
+
+// //     const isChartPage = useCallback(
+// //         (path: string) =>
+// //             path.endsWith("/mobile/orders/chart") ||
+// //             path.endsWith("/mobile/analytics/chart"),
+// //         [],
+// //     );
+
+// //     const getParentPath = useCallback(
+// //         (path: string) => {
+// //             if (path.includes("/mobile/profile/"))
+// //                 return url("/mobile/profile");
+// //             if (path.endsWith("/mobile/orders/chart"))
+// //                 return url("/mobile/orders");
+// //             if (path.endsWith("/mobile/analytics/chart"))
+// //                 return url("/mobile/analytics");
+// //             if (path.endsWith("/mobile/notifications"))
+// //                 return url("/mobile/pos");
+// //             if (path.includes("/mobile/notifications/"))
+// //                 return url("/mobile/notifications");
+// //             if (path.includes("/mobile/analytics/daily/"))
+// //                 return url("/mobile/analytics");
+// //             return url("/mobile");
+// //         },
+// //         [url],
+// //     );
+
+// //     // ─── Navigation ───────────────────────────────────────────────────
+// //     const handleNavClick = useCallback(
+// //         (path: string) => {
+// //             if (path === pathname) return;
+// //             setOptimisticPath(path.split("?")[0]);
+// //             setIsTransitioning(true);
+// //             router.push(path);
+// //         },
+// //         [pathname, router],
+// //     );
+
+// //     // ─── Effects ──────────────────────────────────────────────────────
+// //     useEffect(() => {
+// //         navigation.register(handleNavClick);
+// //     }, [handleNavClick]);
+
+// //     useEffect(() => {
+// //         if (optimisticPath && pathname === optimisticPath) {
+// //             setOptimisticPath(null);
+// //             setIsTransitioning(false);
+// //         }
+// //     }, [pathname, optimisticPath]);
+
+// //     useEffect(() => {
+// //         tabs.forEach((tab) => router.prefetch(tab.path));
+// //         router.prefetch(url("/mobile/notifications"));
+// //         router.prefetch(url("/mobile/orders"));
+// //         router.prefetch(url("/mobile/analytics"));
+// //         router.prefetch(url("/mobile/shift"));
+// //         router.prefetch(url("/mobile/profile"));
+// //     }, [tabs, router, url]);
+
+// //     useEffect(() => {
+// //         let mounted = true;
+// //         const checkAuthState = async () => {
+// //             if ((profileLoading || !profile) && authRetryCount < 3) {
+// //                 const timer = setTimeout(async () => {
+// //                     if (mounted && (profileLoading || !profile)) {
+// //                         await refreshProfile();
+// //                         setAuthRetryCount((prev) => prev + 1);
+// //                     }
+// //                 }, 3000);
+// //                 return () => clearTimeout(timer);
+// //             }
+// //         };
+// //         checkAuthState();
+// //         return () => {
+// //             mounted = false;
+// //         };
+// //     }, [profileLoading, profile, refreshProfile, authRetryCount]);
+
+// //     useEffect(() => {
+// //         if (profile) setAuthRetryCount(0);
+// //     }, [profile]);
+
+// //     useEffect(() => {
+// //         const el = scrollContainerRef.current;
+// //         if (!el) return;
+// //         if (isPickerOpen) {
+// //             el.dataset.scrollY = String(el.scrollTop);
+// //         } else {
+// //             const saved = el.dataset.scrollY;
+// //             if (saved !== undefined) {
+// //                 requestAnimationFrame(() => el.scrollTo(0, Number(saved)));
+// //             }
+// //         }
+// //     }, [isPickerOpen]);
+
+// //     // ─── Derived state ────────────────────────────────────────────────
+// //     const currentPath = optimisticPath || pathname;
+// //     const isProfilePage = currentPath.endsWith("/mobile/profile");
+// //     const currentTitle = getCurrentPageTitle(currentPath);
+// //     const currentIsSubPage = isSubPage(currentPath);
+
+// //     const isFullscreenPage = false;
+// //     const isInlineHeader =
+// //         currentPath.endsWith("/mobile/analytics/daily/close") ||
+// //         currentPath.endsWith("/mobile/profile/map");
+
+// //     const scrollPaddingTop = isFullscreenPage
+// //         ? "pt-0"
+// //         : isInlineHeader
+// //           ? "pt-16"
+// //           : currentIsSubPage
+// //             ? "pt-27"
+// //             : "pt-19";
+
+// //     // ─── Early returns ────────────────────────────────────────────────
+// //     if (isLoading) {
+// //         return (
+// //             <div className="h-dvh overflow-hidden bg-white flex flex-col items-center justify-center">
+// //                 <div className="text-center" role="status" aria-live="polite">
+// //                     <div className="mb-8">
+// //                         <Image
+// //                             src="/LEMONI-512x512.png"
+// //                             alt="Logo"
+// //                             width={80}
+// //                             height={80}
+// //                             priority
+// //                             className="rounded-xl shadow-2xl mx-auto"
+// //                         />
+// //                     </div>
+// //                     <div className="w-64 h-1.5 loading-track rounded-full">
+// //                         <div className="loading-bar" />
+// //                     </div>
+// //                     <div className="mt-4 text-xs text-gray-600 text-center">
+// //                         <VersionInfo />
+// //                     </div>
+// //                     {authRetryCount > 0 && (
+// //                         <div className="mt-2 text-xs text-brand">
+// //                             Connecting... ({authRetryCount}/3)
+// //                         </div>
+// //                     )}
+// //                 </div>
+// //             </div>
+// //         );
+// //     }
+
+// //     if (!profile) {
+// //         return (
+// //             <div className="h-dvh overflow-hidden bg-white flex flex-col items-center justify-center p-4">
+// //                 <div className="text-center">
+// //                     <div className="mb-6">
+// //                         <Image
+// //                             src="/LEMONI-512x512.png"
+// //                             alt="Logo"
+// //                             width={80}
+// //                             height={80}
+// //                             priority
+// //                             className="rounded-xl shadow-2xl mx-auto"
+// //                         />
+// //                     </div>
+// //                     <h2 className="text-lg font-semibold text-gray-800 mb-2">
+// //                         Authentication Required
+// //                     </h2>
+// //                     <p className="text-gray-600 mb-6 text-sm">
+// //                         Unable to load your profile. Please check your
+// //                         connection and try again.
+// //                     </p>
+// //                     <div className="flex gap-3 justify-center">
+// //                         <button
+// //                             onClick={() => window.location.reload()}
+// //                             className="px-4 py-2 bg-brand text-white rounded-lg text-sm font-medium"
+// //                         >
+// //                             Refresh Page
+// //                         </button>
+// //                         <button
+// //                             onClick={() => refreshProfile()}
+// //                             className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium"
+// //                         >
+// //                             Retry
+// //                         </button>
+// //                     </div>
+// //                     <div className="mt-6 text-xs text-gray-500">
+// //                         <VersionInfo />
+// //                     </div>
+// //                 </div>
+// //             </div>
+// //         );
+// //     }
+
+// //     // ─── Render ───────────────────────────────────────────────────────
+// //     return (
+// //         <div className="h-dvh flex flex-col bg-gray-50 select-none overflow-hidden">
+// //             {/* Header — hidden on fullscreen pages */}
+// //             {!isFullscreenPage && (
+// //                 <header className="fixed top-0 left-0 right-0 z-40 bg-gray-50 p-4 py-3">
+// //                     <div className="flex items-center justify-between">
+// //                         <div className="flex items-center gap-2">
+// //                             {currentIsSubPage ? (
+// //                                 isInlineHeader ? (
+// //                                     <div className="flex items-center gap-1">
+// //                                         <button
+// //                                             onClick={() =>
+// //                                                 handleNavClick(
+// //                                                     getParentPath(currentPath),
+// //                                                 )
+// //                                             }
+// //                                             className="text-gray-900 active:scale-95 pr-2 pl-0 py-1"
+// //                                         >
+// //                                             <ArrowLeft
+// //                                                 size={28}
+// //                                                 strokeWidth={2}
+// //                                             />
+// //                                         </button>
+// //                                         {currentTitle && (
+// //                                             <p className="text-xl font-semibold tracking-tight text-gray-900">
+// //                                                 {currentTitle}
+// //                                             </p>
+// //                                         )}
+// //                                     </div>
+// //                                 ) : isChartPage(currentPath) ? (
+// //                                     <div className="flex flex-col gap-2">
+// //                                         <button
+// //                                             onClick={() =>
+// //                                                 handleNavClick(
+// //                                                     getParentPath(currentPath),
+// //                                                 )
+// //                                             }
+// //                                             className="text-gray-900 active:scale-95 self-start pr-2 pl-0 py-1"
+// //                                         >
+// //                                             <ArrowLeft
+// //                                                 size={28}
+// //                                                 strokeWidth={2}
+// //                                             />
+// //                                         </button>
+// //                                         <div className="flex items-center gap-2">
+// //                                             <p className="text-2xl font-semibold tracking-tight text-gray-900">
+// //                                                 {currentTitle}
+// //                                             </p>
+// //                                             {selectedStore && (
+// //                                                 <button
+// //                                                     onClick={() =>
+// //                                                         setIsPickerOpen(true)
+// //                                                     }
+// //                                                     className="flex items-center mt-1 gap-0.5 active:scale-95"
+// //                                                 >
+// //                                                     <p className="text-lg text-brand font-bold">
+// //                                                         {selectedStore.name}
+// //                                                     </p>
+// //                                                     <ChevronsUpDown
+// //                                                         size={14}
+// //                                                         strokeWidth={3}
+// //                                                         className="text-brand"
+// //                                                     />
+// //                                                 </button>
+// //                                             )}
+// //                                         </div>
+// //                                     </div>
+// //                                 ) : (
+// //                                     <div className="flex flex-col gap-2">
+// //                                         <button
+// //                                             onClick={() =>
+// //                                                 handleNavClick(
+// //                                                     getParentPath(currentPath),
+// //                                                 )
+// //                                             }
+// //                                             className="text-gray-900 active:scale-95 self-start pr-2 pl-0 py-1"
+// //                                         >
+// //                                             <ArrowLeft
+// //                                                 size={28}
+// //                                                 strokeWidth={2}
+// //                                             />
+// //                                         </button>
+// //                                         <p className="text-2xl font-semibold tracking-tight text-gray-900">
+// //                                             {currentTitle}
+// //                                         </p>
+// //                                     </div>
+// //                                 )
+// //                             ) : (
+// //                                 <div className="flex items-center gap-2">
+// //                                     <h1 className="text-[32px] font-bold tracking-tight text-gray-900">
+// //                                         {currentTitle}
+// //                                     </h1>
+// //                                     {selectedStore && !isProfilePage && (
+// //                                         <button
+// //                                             onClick={() =>
+// //                                                 setIsPickerOpen(true)
+// //                                             }
+// //                                             className="flex items-center mt-2 active:scale-98"
+// //                                         >
+// //                                             <p className="text-xl font-semibold text-brand">
+// //                                                 {selectedStore.name}
+// //                                             </p>
+// //                                             <ChevronsUpDown
+// //                                                 size={16}
+// //                                                 strokeWidth={3}
+// //                                                 className="text-brand"
+// //                                             />
+// //                                         </button>
+// //                                     )}
+// //                                 </div>
+// //                             )}
+// //                         </div>
+
+// //                         {isProfilePage && (
+// //                             <button
+// //                                 onClick={() =>
+// //                                     handleNavClick(url("/mobile/notifications"))
+// //                                 }
+// //                                 className="relative p-1.5 rounded-xl active:scale-95"
+// //                                 aria-label="Notifications"
+// //                             >
+// //                                 <Bell size={28} className="text-black" />
+// //                                 {unreadCount > 0 && (
+// //                                     <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1">
+// //                                         {badgeCount}
+// //                                     </span>
+// //                                 )}
+// //                             </button>
+// //                         )}
+// //                     </div>
+// //                 </header>
+// //             )}
+
+// //             {/* Scroll container */}
+// //             <div
+// //                 ref={scrollContainerRef}
+// //                 className={`flex-1 overflow-y-auto bg-gray-50 ${
+// //                     isFullscreenPage ? "" : "p-4 pb-28"
+// //                 } ${scrollPaddingTop}`}
+// //             >
+// //                 {isTransitioning ? (
+// //                     <div className="absolute inset-0 flex items-center justify-center animate-pulse">
+// //                         <div className="w-7 h-7 border-3 border-brand border-t-transparent rounded-full animate-spin" />
+// //                     </div>
+// //                 ) : (
+// //                     children
+// //                 )}
+// //             </div>
+
+// //             {/* Footer nav — hidden on subpages */}
+// //             {!currentIsSubPage && (
+// //                 <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
+// //                     <div className={`flex ${isIPhonePWA ? "pb-8" : ""}`}>
+// //                         {tabs.map((tab) => {
+// //                             const Icon = tab.icon;
+// //                             const isActive =
+// //                                 tab.matchPaths.includes(currentPath);
+// //                             const isProfileTab =
+// //                                 tab.path === url("/mobile/profile");
+
+// //                             return (
+// //                                 <button
+// //                                     key={tab.path}
+// //                                     onClick={() => handleNavClick(tab.path)}
+// //                                     className={`flex-1 py-3 px-4 pb-2 flex flex-col items-center space-y-1 relative transition-all duration-75 active:scale-98 ${
+// //                                         isActive
+// //                                             ? "text-brand bg-brand/5"
+// //                                             : "text-gray-600 hover:text-brand"
+// //                                     }`}
+// //                                 >
+// //                                     {isProfileTab ? (
+// //                                         <ProfileIcon
+// //                                             size={24}
+// //                                             className="transition-transform duration-75"
+// //                                         />
+// //                                     ) : (
+// //                                         <Icon
+// //                                             size={24}
+// //                                             className="transition-transform duration-75"
+// //                                         />
+// //                                     )}
+// //                                     <span className="text-xs font-medium transition-transform duration-75">
+// //                                         {tab.label}
+// //                                     </span>
+// //                                     {isActive && (
+// //                                         <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-brand rounded-b-full transition-all duration-200" />
+// //                                     )}
+// //                                 </button>
+// //                             );
+// //                         })}
+// //                     </div>
+// //                 </footer>
+// //             )}
+
+// //             <StorePickerDrawer />
+// //         </div>
+// //     );
+// // }
+
+// "use client";
+// import {
+//     useEffect,
+//     ReactNode,
+//     useMemo,
+//     useState,
+//     useRef,
+//     useCallback,
+// } from "react";
+// import {
+//     User,
+//     Bell,
+//     ArrowLeft,
+//     ChevronsUpDown,
+//     ReceiptText,
+//     StoreIcon,
+//     ChartNoAxesCombinedIcon,
+//     InboxIcon,
+// } from "lucide-react";
+// import { useStores } from "@/lib/hooks/stores/useStores";
+// import Image from "next/image";
+// import { hasManagerRole, hasSellerRole } from "@tea-pos/utils/roleUtils";
+// import { useRouter, usePathname } from "next/navigation";
+// import { useAuth } from "@/lib/context/AuthContext";
+// import VersionInfo from "@/components/shared/VersionInfo";
+// import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
+// import { useStore } from "@/lib/context/StoreContext";
+// import { StorePickerDrawer } from "./StorePickerDrawer";
+// import { navigation } from "@tea-pos/utils/navigation";
+// import useNotifications from "@/lib/hooks/notifications/useNotifications";
+// import { useProfileIcon } from "@/lib/context/ProfileIconContext";
+// import { useIsIPhonePWA } from "@/lib/usePWA";
+
+// export interface Assignment {
+//     user_id: string;
+//     role: string;
+//     is_default: boolean;
+// }
+
+// export interface Assignments {
+//     [storeId: string]: Assignment[];
+// }
+
+// interface MobileLayoutClientProps {
+//     children: ReactNode;
+// }
+
+// export default function MobileLayoutClient({
+//     children,
+// }: MobileLayoutClientProps) {
+//     // ─── Router & path ───────────────────────────────────────────────
+//     const router = useRouter();
+//     const pathname = usePathname();
+//     const { url } = useTenantSlug();
+
+//     // ─── UI state ────────────────────────────────────────────────────
+//     const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
+//     const [isTransitioning, setIsTransitioning] = useState(false);
+//     const [authRetryCount, setAuthRetryCount] = useState(0);
+//     const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+//     // ─── Auth ────────────────────────────────────────────────────────
+//     const {
+//         profile,
+//         isLoading: profileLoading,
+//         mutate: refreshProfile,
+//     } = useAuth();
+
+//     // ─── Stores & permissions ─────────────────────────────────────────
+//     const { data: storesData, isLoading: storesLoading } = useStores();
+//     const { selectedStore, setIsPickerOpen, isPickerOpen } = useStore();
+//     const { ProfileIcon } = useProfileIcon();
+//     const isIPhonePWA = useIsIPhonePWA();
+
+//     const user = useMemo(
+//         () => (profile ? { id: profile.id } : null),
+//         [profile],
+//     );
+//     const assignments = useMemo(
+//         () => storesData?.assignments ?? {},
+//         [storesData?.assignments],
+//     );
+
+//     const canSell = useMemo(
+//         () => !!user && hasSellerRole(user.id, assignments),
+//         [user, assignments],
+//     );
+//     const canManage = useMemo(
+//         () => !!user && hasManagerRole(user.id, assignments),
+//         [user, assignments],
+//     );
+
+//     const { data: notificationsData } = useNotifications();
+//     const unreadCount = notificationsData?.unreadCount ?? 0;
+//     const badgeCount = unreadCount > 99 ? "99+" : unreadCount;
+
+//     const isLoading = useMemo(() => {
+//         if (authRetryCount >= 3) return false;
+//         if (profileLoading || !profile) return true;
+//         if (storesLoading) return true;
+//         return false;
+//     }, [profile, profileLoading, storesLoading, authRetryCount]);
+
+//     // ─── Tabs ─────────────────────────────────────────────────────────
+//     const tabs = useMemo(
+//         () =>
+//             [
+//                 {
+//                     path: url("/mobile/pos"),
+//                     label: "Today",
+//                     icon: StoreIcon,
+//                     show: canSell,
+//                     matchPaths: [url("/mobile/pos")],
+//                 },
+//                 {
+//                     path: url("/mobile/orders"),
+//                     label: "Orders",
+//                     icon: ReceiptText,
+//                     show: canSell || canManage,
+//                     matchPaths: [
+//                         url("/mobile/orders"),
+//                         url("/mobile/orders/chart"),
+//                     ],
+//                 },
+//                 {
+//                     path: url("/mobile/analytics"),
+//                     label: "Analytics",
+//                     icon: ChartNoAxesCombinedIcon,
+//                     show: canManage,
+//                     matchPaths: [
+//                         url("/mobile/analytics"),
+//                         url("/mobile/analytics/chart"),
+//                     ],
+//                 },
+//                 // {
+//                 //     path: url("/mobile/tasks"),
+//                 //     label: "Tasks",
+//                 //     icon: ListChecks,
+//                 //     show: canSell || canManage,
+//                 //     matchPaths: [url("/mobile/tasks")],
+//                 // },
+//                 {
+//                     path: url("/mobile/tasks"),
+//                     label: "Inbox",
+//                     icon: InboxIcon,
+//                     show: true,
+//                     matchPaths: [url("/mobile/tasks")],
+//                 },
+//                 {
+//                     path: url("/mobile/profile"),
+//                     label: "More",
+//                     icon: User,
+//                     show: true,
+//                     matchPaths: [url("/mobile/profile")],
+//                 },
+//             ].filter((tab) => tab.show),
+//         [canSell, canManage, url],
+//     );
+
+//     // ─── Path helpers ─────────────────────────────────────────────────
+//     const getCurrentPageTitle = useCallback((path: string): string | null => {
+//         if (path.endsWith("/mobile/pos")) return "Home";
+//         if (path.endsWith("/mobile/orders")) return "Orders";
+//         if (path.endsWith("/mobile/orders/chart")) return "Daily Chart";
+//         if (path.endsWith("/mobile/analytics")) return "Analytics";
+//         if (path.endsWith("/mobile/analytics/chart")) return "Monthly Chart";
+//         if (path.endsWith("/mobile/tasks")) return "Tasks";
+//         if (path.endsWith("/mobile/profile")) return "Profile";
+//         if (path.endsWith("/mobile/profile/stores")) return "Assigned Stores";
+//         if (path.endsWith("/mobile/profile/personal"))
+//             return "Personal Details";
+//         if (path.endsWith("/mobile/profile/map"))
+//             return "Feedback Location History";
+//         if (path.endsWith("/mobile/notifications")) return "Notifications";
+//         if (
+//             path.includes("/mobile/notifications/") &&
+//             path.endsWith("/weather")
+//         )
+//             return "Weather Forecast";
+//         if (path.endsWith("/mobile/analytics/daily/close")) return "Close Day";
+//         if (path.endsWith("/mobile/analytics/daily/open")) return "Open Store";
+//         return "Mobile";
+//     }, []);
+
+//     const isSubPage = useCallback(
+//         (path: string) =>
+//             path.includes("/mobile/profile/") ||
+//             path.endsWith("/mobile/orders/chart") ||
+//             path.endsWith("/mobile/analytics/chart") ||
+//             path.endsWith("/mobile/notifications") ||
+//             path.includes("/mobile/notifications/") ||
+//             path.endsWith("/mobile/analytics/daily/close") ||
+//             path.endsWith("/mobile/analytics/daily/open"),
+//         [],
+//     );
+
+//     const isChartPage = useCallback(
+//         (path: string) =>
+//             path.endsWith("/mobile/orders/chart") ||
+//             path.endsWith("/mobile/analytics/chart"),
+//         [],
+//     );
+
+//     const getParentPath = useCallback(
+//         (path: string) => {
+//             if (path.includes("/mobile/profile/"))
+//                 return url("/mobile/profile");
+//             if (path.endsWith("/mobile/orders/chart"))
+//                 return url("/mobile/orders");
+//             if (path.endsWith("/mobile/analytics/chart"))
+//                 return url("/mobile/analytics");
+//             if (path.endsWith("/mobile/notifications"))
+//                 return url("/mobile/pos");
+//             if (path.includes("/mobile/notifications/"))
+//                 return url("/mobile/notifications");
+//             if (path.includes("/mobile/analytics/daily/"))
+//                 return url("/mobile/analytics");
+//             return url("/mobile");
+//         },
+//         [url],
+//     );
+
+//     // ─── Navigation ───────────────────────────────────────────────────
+//     const handleNavClick = useCallback(
+//         (path: string) => {
+//             if (path === pathname) return;
+//             setOptimisticPath(path.split("?")[0]);
+//             setIsTransitioning(true);
+//             router.push(path);
+//         },
+//         [pathname, router],
+//     );
+
+//     // ─── Effects ──────────────────────────────────────────────────────
+//     useEffect(() => {
+//         navigation.register(handleNavClick);
+//     }, [handleNavClick]);
+
+//     useEffect(() => {
+//         if (optimisticPath && pathname === optimisticPath) {
+//             setTimeout(() => {
+//                 setOptimisticPath(null);
+//                 setIsTransitioning(false);
+//             }, 0);
+//         }
+//     }, [pathname, optimisticPath]);
+
+//     useEffect(() => {
+//         tabs.forEach((tab) => router.prefetch(tab.path));
+//         router.prefetch(url("/mobile/notifications"));
+//         router.prefetch(url("/mobile/orders"));
+//         router.prefetch(url("/mobile/analytics"));
+//         router.prefetch(url("/mobile/shift"));
+//         router.prefetch(url("/mobile/profile"));
+//     }, [tabs, router, url]);
+
+//     useEffect(() => {
+//         // Reset retry count as soon as profile is available
+//         if (profile) {
+//             setTimeout(() => setAuthRetryCount(0), 0);
+//             return;
+//         }
+
+//         let mounted = true;
+//         const checkAuthState = async () => {
+//             if (authRetryCount < 3) {
+//                 const timer = setTimeout(async () => {
+//                     if (mounted) {
+//                         await refreshProfile();
+//                         setAuthRetryCount((prev) => prev + 1);
+//                     }
+//                 }, 3000);
+//                 return () => clearTimeout(timer);
+//             }
+//         };
+
+//         const cleanupPromise = checkAuthState();
+//         return () => {
+//             mounted = false;
+//             cleanupPromise.then((fn) => fn?.());
+//         };
+//     }, [profile, refreshProfile, authRetryCount]);
+
+//     useEffect(() => {
+//         const el = scrollContainerRef.current;
+//         if (!el) return;
+//         if (isPickerOpen) {
+//             el.dataset.scrollY = String(el.scrollTop);
+//         } else {
+//             const saved = el.dataset.scrollY;
+//             if (saved !== undefined) {
+//                 requestAnimationFrame(() => el.scrollTo(0, Number(saved)));
+//             }
+//         }
+//     }, [isPickerOpen]);
+
+//     // ─── Derived state ────────────────────────────────────────────────
+//     const currentPath = optimisticPath || pathname;
+//     const isProfilePage = currentPath.endsWith("/mobile/profile");
+//     const currentTitle = getCurrentPageTitle(currentPath);
+//     const currentIsSubPage = isSubPage(currentPath);
+
+//     const isFullscreenPage = false;
+//     const isInlineHeader =
+//         currentPath.endsWith("/mobile/analytics/daily/close") ||
+//         currentPath.endsWith("/mobile/profile/map");
+
+//     const scrollPaddingTop = isFullscreenPage
+//         ? "pt-0"
+//         : isInlineHeader
+//           ? "pt-16"
+//           : currentIsSubPage
+//             ? "pt-27"
+//             : "pt-19";
+
+//     // ─── Early returns ────────────────────────────────────────────────
+//     if (isLoading) {
+//         return (
+//             <div className="h-dvh overflow-hidden bg-white flex flex-col items-center justify-center">
+//                 <div className="text-center" role="status" aria-live="polite">
+//                     <div className="mb-8">
+//                         <Image
+//                             src="/LEMONI-512x512.png"
+//                             alt="Logo"
+//                             width={80}
+//                             height={80}
+//                             priority
+//                             className="rounded-xl shadow-2xl mx-auto"
+//                         />
+//                     </div>
+//                     <div className="w-64 h-1.5 loading-track rounded-full">
+//                         <div className="loading-bar" />
+//                     </div>
+//                     <div className="mt-4 text-xs text-gray-600 text-center">
+//                         <VersionInfo />
+//                     </div>
+//                     {authRetryCount > 0 && (
+//                         <div className="mt-2 text-xs text-brand">
+//                             Connecting... ({authRetryCount}/3)
+//                         </div>
+//                     )}
+//                 </div>
+//             </div>
+//         );
+//     }
+
+//     if (!profile) {
+//         return (
+//             <div className="h-dvh overflow-hidden bg-white flex flex-col items-center justify-center p-4">
+//                 <div className="text-center">
+//                     <div className="mb-6">
+//                         <Image
+//                             src="/LEMONI-512x512.png"
+//                             alt="Logo"
+//                             width={80}
+//                             height={80}
+//                             priority
+//                             className="rounded-xl shadow-2xl mx-auto"
+//                         />
+//                     </div>
+//                     <h2 className="text-lg font-semibold text-gray-800 mb-2">
+//                         Authentication Required
+//                     </h2>
+//                     <p className="text-gray-600 mb-6 text-sm">
+//                         Unable to load your profile. Please check your
+//                         connection and try again.
+//                     </p>
+//                     <div className="flex gap-3 justify-center">
+//                         <button
+//                             onClick={() => window.location.reload()}
+//                             className="px-4 py-2 bg-brand text-white rounded-lg text-sm font-medium"
+//                         >
+//                             Refresh Page
+//                         </button>
+//                         <button
+//                             onClick={() => refreshProfile()}
+//                             className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium"
+//                         >
+//                             Retry
+//                         </button>
+//                     </div>
+//                     <div className="mt-6 text-xs text-gray-500">
+//                         <VersionInfo />
+//                     </div>
+//                 </div>
+//             </div>
+//         );
+//     }
+
+//     // ─── Render ───────────────────────────────────────────────────────
+//     return (
+//         <div className="h-dvh flex flex-col bg-gray-50 select-none overflow-hidden">
+//             {/* Header — hidden on fullscreen pages */}
+//             {!isFullscreenPage && (
+//                 <header className="fixed top-0 left-0 right-0 z-40 bg-gray-50 p-4 py-3">
+//                     <div className="flex items-center justify-between">
+//                         <div className="flex items-center gap-2">
+//                             {currentIsSubPage ? (
+//                                 isInlineHeader ? (
+//                                     <div className="flex items-center gap-1">
+//                                         <button
+//                                             onClick={() =>
+//                                                 handleNavClick(
+//                                                     getParentPath(currentPath),
+//                                                 )
+//                                             }
+//                                             className="text-gray-900 active:scale-95 pr-2 pl-0 py-1"
+//                                         >
+//                                             <ArrowLeft
+//                                                 size={28}
+//                                                 strokeWidth={2}
+//                                             />
+//                                         </button>
+//                                         {currentTitle && (
+//                                             <p className="text-xl font-semibold tracking-tight text-gray-900">
+//                                                 {currentTitle}
+//                                             </p>
+//                                         )}
+//                                     </div>
+//                                 ) : isChartPage(currentPath) ? (
+//                                     <div className="flex flex-col gap-2">
+//                                         <button
+//                                             onClick={() =>
+//                                                 handleNavClick(
+//                                                     getParentPath(currentPath),
+//                                                 )
+//                                             }
+//                                             className="text-gray-900 active:scale-95 self-start pr-2 pl-0 py-1"
+//                                         >
+//                                             <ArrowLeft
+//                                                 size={28}
+//                                                 strokeWidth={2}
+//                                             />
+//                                         </button>
+//                                         <div className="flex items-center gap-2">
+//                                             <p className="text-2xl font-semibold tracking-tight text-gray-900">
+//                                                 {currentTitle}
+//                                             </p>
+//                                             {selectedStore && (
+//                                                 <button
+//                                                     onClick={() =>
+//                                                         setIsPickerOpen(true)
+//                                                     }
+//                                                     className="flex items-center mt-1 gap-0.5 active:scale-95"
+//                                                 >
+//                                                     <p className="text-lg text-brand font-bold">
+//                                                         {selectedStore.name}
+//                                                     </p>
+//                                                     <ChevronsUpDown
+//                                                         size={14}
+//                                                         strokeWidth={3}
+//                                                         className="text-brand"
+//                                                     />
+//                                                 </button>
+//                                             )}
+//                                         </div>
+//                                     </div>
+//                                 ) : (
+//                                     <div className="flex flex-col gap-2">
+//                                         <button
+//                                             onClick={() =>
+//                                                 handleNavClick(
+//                                                     getParentPath(currentPath),
+//                                                 )
+//                                             }
+//                                             className="text-gray-900 active:scale-95 self-start pr-2 pl-0 py-1"
+//                                         >
+//                                             <ArrowLeft
+//                                                 size={28}
+//                                                 strokeWidth={2}
+//                                             />
+//                                         </button>
+//                                         <p className="text-2xl font-semibold tracking-tight text-gray-900">
+//                                             {currentTitle}
+//                                         </p>
+//                                     </div>
+//                                 )
+//                             ) : (
+//                                 <div className="flex items-center gap-2">
+//                                     <h1 className="text-[32px] font-bold tracking-tight text-gray-900">
+//                                         {currentTitle}
+//                                     </h1>
+//                                     {selectedStore && !isProfilePage && (
+//                                         <button
+//                                             onClick={() =>
+//                                                 setIsPickerOpen(true)
+//                                             }
+//                                             className="flex items-center mt-2 active:scale-98"
+//                                         >
+//                                             <p className="text-xl font-semibold text-brand">
+//                                                 {selectedStore.name}
+//                                             </p>
+//                                             <ChevronsUpDown
+//                                                 size={16}
+//                                                 strokeWidth={3}
+//                                                 className="text-brand"
+//                                             />
+//                                         </button>
+//                                     )}
+//                                 </div>
+//                             )}
+//                         </div>
+
+//                         {isProfilePage && (
+//                             <button
+//                                 onClick={() =>
+//                                     handleNavClick(url("/mobile/notifications"))
+//                                 }
+//                                 className="relative p-1.5 rounded-xl active:scale-95"
+//                                 aria-label="Notifications"
+//                             >
+//                                 <Bell size={28} className="text-black" />
+//                                 {unreadCount > 0 && (
+//                                     <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1">
+//                                         {badgeCount}
+//                                     </span>
+//                                 )}
+//                             </button>
+//                         )}
+//                     </div>
+//                 </header>
+//             )}
+
+//             {/* Scroll container */}
+//             <div
+//                 ref={scrollContainerRef}
+//                 className={`flex-1 overflow-y-auto bg-gray-50 ${
+//                     isFullscreenPage ? "" : "p-4 pb-28"
+//                 } ${scrollPaddingTop}`}
+//             >
+//                 {isTransitioning ? (
+//                     <div className="absolute inset-0 flex items-center justify-center animate-pulse">
+//                         <div className="w-7 h-7 border-3 border-brand border-t-transparent rounded-full animate-spin" />
+//                     </div>
+//                 ) : (
+//                     children
+//                 )}
+//             </div>
+
+//             {/* Footer nav — hidden on subpages */}
+//             {!currentIsSubPage && (
+//                 <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
+//                     <div className={`flex ${isIPhonePWA ? "pb-8" : ""}`}>
+//                         {tabs.map((tab) => {
+//                             const Icon = tab.icon;
+//                             const isActive =
+//                                 tab.matchPaths.includes(currentPath);
+//                             const isProfileTab =
+//                                 tab.path === url("/mobile/profile");
+
+//                             return (
+//                                 <button
+//                                     key={tab.path}
+//                                     onClick={() => handleNavClick(tab.path)}
+//                                     className={`flex-1 py-3 px-4 pb-2 flex flex-col items-center space-y-1 relative transition-all duration-75 active:scale-98 ${
+//                                         isActive
+//                                             ? "text-brand bg-brand/5"
+//                                             : "text-gray-600 hover:text-brand"
+//                                     }`}
+//                                 >
+//                                     {isProfileTab ? (
+//                                         <ProfileIcon
+//                                             size={24}
+//                                             className="transition-transform duration-75"
+//                                         />
+//                                     ) : (
+//                                         <Icon
+//                                             size={24}
+//                                             className="transition-transform duration-75"
+//                                         />
+//                                     )}
+//                                     <span className="text-xs font-medium transition-transform duration-75">
+//                                         {tab.label}
+//                                     </span>
+//                                     {isActive && (
+//                                         <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-brand rounded-b-full transition-all duration-200" />
+//                                     )}
+//                                 </button>
+//                             );
+//                         })}
+//                     </div>
+//                 </footer>
+//             )}
+
+//             <StorePickerDrawer />
+//         </div>
+//     );
+// }
+
 "use client";
 import {
     useEffect,
@@ -8,18 +1180,14 @@ import {
     useCallback,
 } from "react";
 import {
-    User,
-    ShoppingCart,
-    Clock,
-    BarChart3,
-    Bell,
     ArrowLeft,
     ChevronsUpDown,
-    CalendarClock,
-    ClipboardList,
-    ListChecks,
-    Receipt,
     ReceiptText,
+    StoreIcon,
+    ChartNoAxesCombinedIcon,
+    InboxIcon,
+    MoreHorizontal,
+    UserCircle,
 } from "lucide-react";
 import { useStores } from "@/lib/hooks/stores/useStores";
 import Image from "next/image";
@@ -32,7 +1200,6 @@ import { useStore } from "@/lib/context/StoreContext";
 import { StorePickerDrawer } from "./StorePickerDrawer";
 import { navigation } from "@tea-pos/utils/navigation";
 import useNotifications from "@/lib/hooks/notifications/useNotifications";
-import { useProfileIcon } from "@/lib/context/ProfileIconContext";
 import { useIsIPhonePWA } from "@/lib/usePWA";
 
 export interface Assignment {
@@ -66,6 +1233,7 @@ export default function MobileLayoutClient({
     // ─── Auth ────────────────────────────────────────────────────────
     const {
         profile,
+        avatarUrl,
         isLoading: profileLoading,
         mutate: refreshProfile,
     } = useAuth();
@@ -73,7 +1241,6 @@ export default function MobileLayoutClient({
     // ─── Stores & permissions ─────────────────────────────────────────
     const { data: storesData, isLoading: storesLoading } = useStores();
     const { selectedStore, setIsPickerOpen, isPickerOpen } = useStore();
-    const { ProfileIcon } = useProfileIcon();
     const isIPhonePWA = useIsIPhonePWA();
 
     const user = useMemo(
@@ -96,7 +1263,6 @@ export default function MobileLayoutClient({
 
     const { data: notificationsData } = useNotifications();
     const unreadCount = notificationsData?.unreadCount ?? 0;
-    const badgeCount = unreadCount > 99 ? "99+" : unreadCount;
 
     const isLoading = useMemo(() => {
         if (authRetryCount >= 3) return false;
@@ -111,8 +1277,8 @@ export default function MobileLayoutClient({
             [
                 {
                     path: url("/mobile/pos"),
-                    label: "POS",
-                    icon: ShoppingCart,
+                    label: "Today",
+                    icon: StoreIcon,
                     show: canSell,
                     matchPaths: [url("/mobile/pos")],
                 },
@@ -129,7 +1295,7 @@ export default function MobileLayoutClient({
                 {
                     path: url("/mobile/analytics"),
                     label: "Analytics",
-                    icon: BarChart3,
+                    icon: ChartNoAxesCombinedIcon,
                     show: canManage,
                     matchPaths: [
                         url("/mobile/analytics"),
@@ -137,18 +1303,18 @@ export default function MobileLayoutClient({
                     ],
                 },
                 {
-                    path: url("/mobile/tasks"),
-                    label: "Tasks",
-                    icon: ListChecks,
-                    show: canSell || canManage,
-                    matchPaths: [url("/mobile/tasks")],
+                    path: url("/mobile/inbox"),
+                    label: "Inbox",
+                    icon: InboxIcon,
+                    show: true,
+                    matchPaths: [url("/mobile/inbox")],
                 },
                 {
-                    path: url("/mobile/profile"),
-                    label: "You",
-                    icon: User,
+                    path: url("/mobile/more"),
+                    label: "More",
+                    icon: MoreHorizontal,
                     show: true,
-                    matchPaths: [url("/mobile/profile")],
+                    matchPaths: [url("/mobile/more")],
                 },
             ].filter((tab) => tab.show),
         [canSell, canManage, url],
@@ -156,18 +1322,14 @@ export default function MobileLayoutClient({
 
     // ─── Path helpers ─────────────────────────────────────────────────
     const getCurrentPageTitle = useCallback((path: string): string | null => {
-        if (path.endsWith("/mobile/pos")) return "POS";
+        if (path.endsWith("/mobile/pos")) return "Home";
         if (path.endsWith("/mobile/orders")) return "Orders";
         if (path.endsWith("/mobile/orders/chart")) return "Daily Chart";
         if (path.endsWith("/mobile/analytics")) return "Analytics";
         if (path.endsWith("/mobile/analytics/chart")) return "Monthly Chart";
-        if (path.endsWith("/mobile/tasks")) return "Tasks";
-        if (path.endsWith("/mobile/profile")) return "Profile";
-        if (path.endsWith("/mobile/profile/stores")) return "Assigned Stores";
-        if (path.endsWith("/mobile/profile/personal"))
-            return "Personal Details";
-        if (path.endsWith("/mobile/profile/map"))
-            return "Feedback Location History";
+        if (path.endsWith("/mobile/inbox")) return "Inbox";
+        if (path.endsWith("/mobile/more")) return "More";
+        if (path.endsWith("/mobile/account")) return "Account";
         if (path.endsWith("/mobile/notifications")) return "Notifications";
         if (
             path.includes("/mobile/notifications/") &&
@@ -181,13 +1343,13 @@ export default function MobileLayoutClient({
 
     const isSubPage = useCallback(
         (path: string) =>
-            path.includes("/mobile/profile/") ||
             path.endsWith("/mobile/orders/chart") ||
             path.endsWith("/mobile/analytics/chart") ||
             path.endsWith("/mobile/notifications") ||
             path.includes("/mobile/notifications/") ||
             path.endsWith("/mobile/analytics/daily/close") ||
-            path.endsWith("/mobile/analytics/daily/open"),
+            path.endsWith("/mobile/analytics/daily/open") ||
+            path.endsWith("/mobile/account"),
         [],
     );
 
@@ -200,8 +1362,6 @@ export default function MobileLayoutClient({
 
     const getParentPath = useCallback(
         (path: string) => {
-            if (path.includes("/mobile/profile/"))
-                return url("/mobile/profile");
             if (path.endsWith("/mobile/orders/chart"))
                 return url("/mobile/orders");
             if (path.endsWith("/mobile/analytics/chart"))
@@ -212,6 +1372,7 @@ export default function MobileLayoutClient({
                 return url("/mobile/notifications");
             if (path.includes("/mobile/analytics/daily/"))
                 return url("/mobile/analytics");
+            if (path.endsWith("/mobile/account")) return url("/mobile/more");
             return url("/mobile");
         },
         [url],
@@ -235,8 +1396,10 @@ export default function MobileLayoutClient({
 
     useEffect(() => {
         if (optimisticPath && pathname === optimisticPath) {
-            setOptimisticPath(null);
-            setIsTransitioning(false);
+            setTimeout(() => {
+                setOptimisticPath(null);
+                setIsTransitioning(false);
+            }, 0);
         }
     }, [pathname, optimisticPath]);
 
@@ -246,15 +1409,21 @@ export default function MobileLayoutClient({
         router.prefetch(url("/mobile/orders"));
         router.prefetch(url("/mobile/analytics"));
         router.prefetch(url("/mobile/shift"));
-        router.prefetch(url("/mobile/profile"));
+        router.prefetch(url("/mobile/account"));
     }, [tabs, router, url]);
 
     useEffect(() => {
+        // Reset retry count as soon as profile is available
+        if (profile) {
+            setTimeout(() => setAuthRetryCount(0), 0);
+            return;
+        }
+
         let mounted = true;
         const checkAuthState = async () => {
-            if ((profileLoading || !profile) && authRetryCount < 3) {
+            if (authRetryCount < 3) {
                 const timer = setTimeout(async () => {
-                    if (mounted && (profileLoading || !profile)) {
+                    if (mounted) {
                         await refreshProfile();
                         setAuthRetryCount((prev) => prev + 1);
                     }
@@ -262,15 +1431,13 @@ export default function MobileLayoutClient({
                 return () => clearTimeout(timer);
             }
         };
-        checkAuthState();
+
+        const cleanupPromise = checkAuthState();
         return () => {
             mounted = false;
+            cleanupPromise.then((fn) => fn?.());
         };
-    }, [profileLoading, profile, refreshProfile, authRetryCount]);
-
-    useEffect(() => {
-        if (profile) setAuthRetryCount(0);
-    }, [profile]);
+    }, [profile, refreshProfile, authRetryCount]);
 
     useEffect(() => {
         const el = scrollContainerRef.current;
@@ -287,14 +1454,22 @@ export default function MobileLayoutClient({
 
     // ─── Derived state ────────────────────────────────────────────────
     const currentPath = optimisticPath || pathname;
-    const isProfilePage = currentPath.endsWith("/mobile/profile");
     const currentTitle = getCurrentPageTitle(currentPath);
     const currentIsSubPage = isSubPage(currentPath);
 
+    const rootTabPaths = [
+        url("/mobile/pos"),
+        url("/mobile/orders"),
+        url("/mobile/analytics"),
+        url("/mobile/inbox"),
+        url("/mobile/more"),
+    ];
+    const showAccountIcon = rootTabPaths.some((p) => currentPath === p);
+
     const isFullscreenPage = false;
-    const isInlineHeader =
-        currentPath.endsWith("/mobile/analytics/daily/close") ||
-        currentPath.endsWith("/mobile/profile/map");
+    const isInlineHeader = currentPath.endsWith(
+        "/mobile/analytics/daily/close",
+    );
 
     const scrollPaddingTop = isFullscreenPage
         ? "pt-0"
@@ -302,7 +1477,7 @@ export default function MobileLayoutClient({
           ? "pt-16"
           : currentIsSubPage
             ? "pt-27"
-            : "pt-17";
+            : "pt-19";
 
     // ─── Early returns ────────────────────────────────────────────────
     if (isLoading) {
@@ -382,135 +1557,135 @@ export default function MobileLayoutClient({
     return (
         <div className="h-dvh flex flex-col bg-gray-50 select-none overflow-hidden">
             {/* Header — hidden on fullscreen pages */}
-            {!isFullscreenPage && (
-                <header className="fixed top-0 left-0 right-0 z-40 bg-gray-50 p-4 py-3">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            {currentIsSubPage ? (
-                                isInlineHeader ? (
-                                    <div className="flex items-center gap-1">
-                                        <button
-                                            onClick={() =>
-                                                handleNavClick(
-                                                    getParentPath(currentPath),
-                                                )
-                                            }
-                                            className="text-gray-900 active:scale-95 pr-2 pl-0 py-1"
-                                        >
-                                            <ArrowLeft
-                                                size={28}
-                                                strokeWidth={2}
-                                            />
-                                        </button>
-                                        {currentTitle && (
-                                            <p className="text-xl font-semibold tracking-tight text-gray-900">
-                                                {currentTitle}
-                                            </p>
-                                        )}
-                                    </div>
-                                ) : isChartPage(currentPath) ? (
-                                    <div className="flex flex-col gap-2">
-                                        <button
-                                            onClick={() =>
-                                                handleNavClick(
-                                                    getParentPath(currentPath),
-                                                )
-                                            }
-                                            className="text-gray-900 active:scale-95 self-start pr-2 pl-0 py-1"
-                                        >
-                                            <ArrowLeft
-                                                size={28}
-                                                strokeWidth={2}
-                                            />
-                                        </button>
-                                        <div className="flex items-center gap-2">
-                                            <p className="text-2xl font-semibold tracking-tight text-gray-900">
-                                                {currentTitle}
-                                            </p>
-                                            {selectedStore && (
-                                                <button
-                                                    onClick={() =>
-                                                        setIsPickerOpen(true)
-                                                    }
-                                                    className="flex items-center mt-1 gap-0.5 active:scale-95"
-                                                >
-                                                    <p className="text-lg text-brand font-bold">
-                                                        {selectedStore.name}
-                                                    </p>
-                                                    <ChevronsUpDown
-                                                        size={14}
-                                                        strokeWidth={3}
-                                                        className="text-brand"
-                                                    />
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="flex flex-col gap-2">
-                                        <button
-                                            onClick={() =>
-                                                handleNavClick(
-                                                    getParentPath(currentPath),
-                                                )
-                                            }
-                                            className="text-gray-900 active:scale-95 self-start pr-2 pl-0 py-1"
-                                        >
-                                            <ArrowLeft
-                                                size={28}
-                                                strokeWidth={2}
-                                            />
-                                        </button>
+
+            <header className="fixed top-0 left-0 right-0 z-40 bg-gray-50 p-4 py-3">
+                <div className="flex items-center justify-between">
+                    {/* Left — title + store picker */}
+                    <div className="flex items-center gap-2">
+                        {currentIsSubPage ? (
+                            isInlineHeader ? (
+                                <div className="flex items-center gap-1">
+                                    <button
+                                        onClick={() =>
+                                            handleNavClick(
+                                                getParentPath(currentPath),
+                                            )
+                                        }
+                                        className="text-gray-900 active:scale-95 pr-2 pl-0 py-1"
+                                    >
+                                        <ArrowLeft size={28} strokeWidth={2} />
+                                    </button>
+                                    {currentTitle && (
+                                        <p className="text-xl font-semibold tracking-tight text-gray-900">
+                                            {currentTitle}
+                                        </p>
+                                    )}
+                                </div>
+                            ) : isChartPage(currentPath) ? (
+                                <div className="flex flex-col gap-2">
+                                    <button
+                                        onClick={() =>
+                                            handleNavClick(
+                                                getParentPath(currentPath),
+                                            )
+                                        }
+                                        className="text-gray-900 active:scale-95 self-start pr-2 pl-0 py-1"
+                                    >
+                                        <ArrowLeft size={28} strokeWidth={2} />
+                                    </button>
+                                    <div className="flex items-center gap-2">
                                         <p className="text-2xl font-semibold tracking-tight text-gray-900">
                                             {currentTitle}
                                         </p>
+                                        {selectedStore && (
+                                            <button
+                                                onClick={() =>
+                                                    setIsPickerOpen(true)
+                                                }
+                                                className="flex items-center mt-1 gap-0.5 active:scale-95"
+                                            >
+                                                <p className="text-lg text-brand font-bold">
+                                                    {selectedStore.name}
+                                                </p>
+                                                <ChevronsUpDown
+                                                    size={14}
+                                                    strokeWidth={3}
+                                                    className="text-brand"
+                                                />
+                                            </button>
+                                        )}
                                     </div>
-                                )
-                            ) : (
-                                <div className="flex items-center gap-2">
-                                    <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-                                        {currentTitle}
-                                    </h1>
-                                    {selectedStore && !isProfilePage && (
-                                        <button
-                                            onClick={() =>
-                                                setIsPickerOpen(true)
-                                            }
-                                            className="flex items-center mt-1.5 active:scale-98"
-                                        >
-                                            <p className="text-xl font-semibold text-brand">
-                                                {selectedStore.name}
-                                            </p>
-                                            <ChevronsUpDown
-                                                size={16}
-                                                strokeWidth={3}
-                                                className="text-brand"
-                                            />
-                                        </button>
-                                    )}
                                 </div>
-                            )}
-                        </div>
-
-                        {isProfilePage && (
-                            <button
-                                onClick={() =>
-                                    handleNavClick(url("/mobile/notifications"))
-                                }
-                                className="relative p-1.5 rounded-xl active:scale-95"
-                                aria-label="Notifications"
-                            >
-                                <Bell size={28} className="text-black" />
-                                {unreadCount > 0 && (
-                                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1">
-                                        {badgeCount}
-                                    </span>
+                            ) : (
+                                <div className="flex flex-col gap-2">
+                                    <button
+                                        onClick={() =>
+                                            handleNavClick(
+                                                getParentPath(currentPath),
+                                            )
+                                        }
+                                        className="text-gray-900 active:scale-95 self-start pr-2 pl-0 py-1"
+                                    >
+                                        <ArrowLeft size={28} strokeWidth={2} />
+                                    </button>
+                                    <p className="text-2xl font-semibold tracking-tight text-gray-900">
+                                        {currentTitle}
+                                    </p>
+                                </div>
+                            )
+                        ) : (
+                            <div className="flex items-center gap-2">
+                                <h1 className="text-[32px] font-bold tracking-tight text-gray-900">
+                                    {currentTitle}
+                                </h1>
+                                {selectedStore && (
+                                    <button
+                                        onClick={() => setIsPickerOpen(true)}
+                                        className="flex items-center mt-2 active:scale-98"
+                                    >
+                                        <p className="text-xl font-semibold text-brand">
+                                            {selectedStore.name}
+                                        </p>
+                                        <ChevronsUpDown
+                                            size={16}
+                                            strokeWidth={3}
+                                            className="text-brand"
+                                        />
+                                    </button>
                                 )}
-                            </button>
+                            </div>
                         )}
                     </div>
-                </header>
-            )}
+
+                    {/* Right — account icon (root tabs only) */}
+                    {showAccountIcon && (
+                        <button
+                            onClick={() =>
+                                handleNavClick(url("/mobile/account"))
+                            }
+                            className="p-1.5 rounded-xl active:scale-95 "
+                            aria-label="Account"
+                        >
+                            {avatarUrl ? (
+                                <div className="rounded-full border-2 border-brand">
+                                    <Image
+                                        src={avatarUrl}
+                                        alt="Account"
+                                        width={32}
+                                        height={32}
+                                        className="rounded-full object-cover"
+                                    />
+                                </div>
+                            ) : (
+                                <UserCircle
+                                    size={28}
+                                    className="text-gray-700"
+                                />
+                            )}
+                        </button>
+                    )}
+                </div>
+            </header>
 
             {/* Scroll container */}
             <div
@@ -536,8 +1711,6 @@ export default function MobileLayoutClient({
                             const Icon = tab.icon;
                             const isActive =
                                 tab.matchPaths.includes(currentPath);
-                            const isProfileTab =
-                                tab.path === url("/mobile/profile");
 
                             return (
                                 <button
@@ -549,17 +1722,10 @@ export default function MobileLayoutClient({
                                             : "text-gray-600 hover:text-brand"
                                     }`}
                                 >
-                                    {isProfileTab ? (
-                                        <ProfileIcon
-                                            size={22}
-                                            className="transition-transform duration-75"
-                                        />
-                                    ) : (
-                                        <Icon
-                                            size={22}
-                                            className="transition-transform duration-75"
-                                        />
-                                    )}
+                                    <Icon
+                                        size={24}
+                                        className="transition-transform duration-75"
+                                    />
                                     <span className="text-xs font-medium transition-transform duration-75">
                                         {tab.label}
                                     </span>

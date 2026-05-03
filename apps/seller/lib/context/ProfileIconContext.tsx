@@ -4,7 +4,7 @@ import {
     getIconById,
     getStoredIconId,
     PROFILE_ICON_KEY,
-} from "@/app/[tenantSlug]/mobile/profile/_components/IconPickerDrawer";
+} from "@/app/[tenantSlug]/mobile/more/_components/IconPickerDrawer";
 import type { LucideIcon } from "lucide-react";
 
 type ProfileIconContextType = {

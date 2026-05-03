@@ -17,7 +17,7 @@ const withPWA = withPWAInit({
                 urlPattern: /\/_next\/data\/.*/i,
                 handler: "NetworkFirst",
                 options: {
-                    cacheName: "next-data",
+                    cacheName: `next-data-${version}`,
                     expiration: {
                         maxEntries: 32,
                         maxAgeSeconds: 60 * 5,
@@ -29,7 +29,7 @@ const withPWA = withPWAInit({
                 urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/.*/i,
                 handler: "NetworkFirst",
                 options: {
-                    cacheName: "supabase-api",
+                    cacheName: `supabase-api-${version}`,
                     expiration: {
                         maxEntries: 50,
                         maxAgeSeconds: 60 * 5,
@@ -41,7 +41,7 @@ const withPWA = withPWAInit({
                 urlPattern: /^https:\/\/i\.ibb\.co\.com\/.*/i,
                 handler: "CacheFirst",
                 options: {
-                    cacheName: "product-images",
+                    cacheName: `product-images-${version}`,
                     expiration: {
                         maxEntries: 200,
                         maxAgeSeconds: 60 * 60 * 24 * 30,
@@ -52,7 +52,7 @@ const withPWA = withPWAInit({
                 urlPattern: /\/_next\/static\/.*/i,
                 handler: "CacheFirst",
                 options: {
-                    cacheName: "next-static",
+                    cacheName: `next-static-${version}`,
                     expiration: {
                         maxAgeSeconds: 60 * 60 * 24 * 365,
                     },
@@ -63,6 +63,8 @@ const withPWA = withPWAInit({
 });
 
 const nextConfig: NextConfig = {
+    reactCompiler: true,
+    allowedDevOrigins: ["busked-florentina-ducally.ngrok-free.dev"],
     env: {
         NEXT_PUBLIC_APP_VERSION: version,
     },
@@ -76,9 +78,19 @@ const nextConfig: NextConfig = {
                 protocol: "https",
                 hostname: "i.ibb.co",
             },
+            {
+                protocol: "https",
+                hostname: "lh3.googleusercontent.com",
+            },
         ],
     },
-    transpilePackages: ["@tea-pos/ui", "@tea-pos/db", "@tea-pos/features", "@tea-pos/services", "@tea-pos/utils"],
+    transpilePackages: [
+        "@tea-pos/ui",
+        "@tea-pos/db",
+        "@tea-pos/features",
+        "@tea-pos/services",
+        "@tea-pos/utils",
+    ],
     async headers() {
         return [
             {
@@ -100,4 +112,6 @@ const nextConfig: NextConfig = {
     },
 };
 
-export default withPWA(nextConfig);
+export default process.env.NODE_ENV === "development"
+    ? nextConfig
+    : withPWA(nextConfig as Parameters<typeof withPWA>[0]);
