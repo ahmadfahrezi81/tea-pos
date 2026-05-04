@@ -11,8 +11,22 @@ const ALLOWED_ROLES = ["USER", "ADMIN"];
 
 const USER_COOKIE_TTL = 60 * 60 * 24 * 7; // 7 days
 const TENANT_COOKIE_TTL = 60 * 60 * 24; // 24h
+const TENANT_ACCESS_TTL = 60 * 60; // 1h
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function setTenantAccessCookie(
+    response: NextResponse,
+    key: string,
+) {
+    response.cookies.set("x-tenant-access", key, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: TENANT_ACCESS_TTL,
+        path: "/",
+    });
+}
 
 function setUserCookie(
     response: NextResponse,
@@ -20,10 +34,11 @@ function setUserCookie(
     role: string,
     fullName = "",
     email = "",
+    avatarUrl = "",
 ) {
     response.cookies.set(
         "x-user-info",
-        JSON.stringify({ id: userId, role, fullName, email }),
+        JSON.stringify({ id: userId, role, fullName, email, avatarUrl }),
         {
             httpOnly: false,
             secure: process.env.NODE_ENV === "production",
@@ -116,6 +131,7 @@ export async function proxy(request: NextRequest) {
 
     // Set user cookie — use cached role to skip profiles DB call on warm requests
     if (user) {
+        const avatarUrl = (user.user_metadata?.avatar_url as string) ?? "";
         const cached = request.cookies.get("x-user-info")?.value;
         const cachedRole = cached ? JSON.parse(cached).role : null;
 
@@ -127,6 +143,7 @@ export async function proxy(request: NextRequest) {
                 cachedRole,
                 cachedData.fullName ?? "",
                 cachedData.email ?? "",
+                avatarUrl,
             );
         } else {
             const { data: profile } = await supabase
@@ -140,6 +157,7 @@ export async function proxy(request: NextRequest) {
                 profile?.role ?? "USER",
                 profile?.full_name ?? "",
                 profile?.email ?? "",
+                avatarUrl,
             );
         }
     }
@@ -186,6 +204,13 @@ export async function proxy(request: NextRequest) {
     if (role && !ALLOWED_ROLES.includes(role))
         return redirect("/unauthorized?reason=no-access", request);
 
+    // Skip DB call if we already verified this user+tenant combo recently
+    const tenantAccessKey = `${user.id}:${tenantId}`;
+    if (request.cookies.get("x-tenant-access")?.value === tenantAccessKey) {
+        setTenantAccessCookie(response, tenantAccessKey);
+        return response;
+    }
+
     // Verify user belongs to this tenant
     const { data: userTenantAssignment } = await supabase
         .from("user_tenant_assignments")
@@ -194,7 +219,10 @@ export async function proxy(request: NextRequest) {
         .eq("tenant_id", tenantId)
         .single();
 
-    if (userTenantAssignment) return response;
+    if (userTenantAssignment) {
+        setTenantAccessCookie(response, tenantAccessKey);
+        return response;
+    }
 
     // User doesn't belong here — find their valid tenant and redirect
     const { data: validAssignment } = await supabase

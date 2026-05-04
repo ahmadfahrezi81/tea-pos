@@ -32,7 +32,9 @@ interface MobileLayoutClientProps {
     children: ReactNode;
 }
 
-export default function MobileLayoutClient({ children }: MobileLayoutClientProps) {
+export default function MobileLayoutClient({
+    children,
+}: MobileLayoutClientProps) {
     const router = useRouter();
     const pathname = usePathname();
     const { url } = useTenantSlug();
@@ -42,16 +44,33 @@ export default function MobileLayoutClient({ children }: MobileLayoutClientProps
     const [authRetryCount, setAuthRetryCount] = useState(0);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-    const { profile, avatarUrl, isLoading: profileLoading, mutate: refreshProfile } = useAuth();
+    const {
+        profile,
+        avatarUrl,
+        isLoading: profileLoading,
+        mutate: refreshProfile,
+    } = useAuth();
     const { data: storesData } = useStores();
     const { selectedStore, setIsPickerOpen, isPickerOpen } = useStore();
     const isIPhonePWA = useIsIPhonePWA();
 
     const storesReady = !!storesData;
-    const user = useMemo(() => (profile ? { id: profile.id } : null), [profile]);
-    const assignments = useMemo(() => storesData?.assignments ?? {}, [storesData?.assignments]);
-    const canSell = useMemo(() => !!user && hasSellerRole(user.id, assignments), [user, assignments]);
-    const canManage = useMemo(() => !!user && hasManagerRole(user.id, assignments), [user, assignments]);
+    const user = useMemo(
+        () => (profile ? { id: profile.id } : null),
+        [profile],
+    );
+    const assignments = useMemo(
+        () => storesData?.assignments ?? {},
+        [storesData?.assignments],
+    );
+    const canSell = useMemo(
+        () => !!user && hasSellerRole(user.id, assignments),
+        [user, assignments],
+    );
+    const canManage = useMemo(
+        () => !!user && hasManagerRole(user.id, assignments),
+        [user, assignments],
+    );
 
     const isLoading = useMemo(() => {
         if (authRetryCount >= 3) return false;
@@ -64,7 +83,7 @@ export default function MobileLayoutClient({ children }: MobileLayoutClientProps
             [
                 {
                     path: url("/mobile/pos"),
-                    label: "Today",
+                    label: "Home",
                     icon: StoreIcon,
                     show: canSell,
                     matchPaths: [url("/mobile/pos")],
@@ -74,14 +93,20 @@ export default function MobileLayoutClient({ children }: MobileLayoutClientProps
                     label: "Orders",
                     icon: ReceiptText,
                     show: canSell || canManage,
-                    matchPaths: [url("/mobile/orders"), url("/mobile/orders/chart")],
+                    matchPaths: [
+                        url("/mobile/orders"),
+                        url("/mobile/orders/chart"),
+                    ],
                 },
                 {
                     path: url("/mobile/analytics"),
                     label: "Analytics",
                     icon: ChartNoAxesCombinedIcon,
                     show: canManage,
-                    matchPaths: [url("/mobile/analytics"), url("/mobile/analytics/chart")],
+                    matchPaths: [
+                        url("/mobile/analytics"),
+                        url("/mobile/analytics/chart"),
+                    ],
                 },
                 {
                     path: url("/mobile/inbox"),
@@ -111,7 +136,11 @@ export default function MobileLayoutClient({ children }: MobileLayoutClientProps
         if (path.endsWith("/mobile/more")) return "More";
         if (path.endsWith("/mobile/account")) return "Account";
         if (path.endsWith("/mobile/notifications")) return "Notifications";
-        if (path.includes("/mobile/notifications/") && path.endsWith("/weather")) return "Weather Forecast";
+        if (
+            path.includes("/mobile/notifications/") &&
+            path.endsWith("/weather")
+        )
+            return "Weather Forecast";
         if (path.endsWith("/mobile/analytics/daily/close")) return "Close Day";
         if (path.endsWith("/mobile/analytics/daily/open")) return "Open Store";
         return "Mobile";
@@ -131,11 +160,16 @@ export default function MobileLayoutClient({ children }: MobileLayoutClientProps
 
     const getParentPath = useCallback(
         (path: string) => {
-            if (path.endsWith("/mobile/orders/chart")) return url("/mobile/orders");
-            if (path.endsWith("/mobile/analytics/chart")) return url("/mobile/analytics");
-            if (path.endsWith("/mobile/notifications")) return url("/mobile/pos");
-            if (path.includes("/mobile/notifications/")) return url("/mobile/notifications");
-            if (path.includes("/mobile/analytics/daily/")) return url("/mobile/analytics");
+            if (path.endsWith("/mobile/orders/chart"))
+                return url("/mobile/orders");
+            if (path.endsWith("/mobile/analytics/chart"))
+                return url("/mobile/analytics");
+            if (path.endsWith("/mobile/notifications"))
+                return url("/mobile/pos");
+            if (path.includes("/mobile/notifications/"))
+                return url("/mobile/notifications");
+            if (path.includes("/mobile/analytics/daily/"))
+                return url("/mobile/analytics");
             if (path.endsWith("/mobile/account")) return url("/mobile/more");
             return url("/mobile");
         },
@@ -216,7 +250,9 @@ export default function MobileLayoutClient({ children }: MobileLayoutClientProps
     const currentPath = optimisticPath || pathname;
     const currentTitle = getCurrentPageTitle(currentPath);
     const currentIsSubPage = isSubPage(currentPath);
-    const isInlineHeader = currentPath.endsWith("/mobile/analytics/daily/close");
+    const isInlineHeader = currentPath.endsWith(
+        "/mobile/analytics/daily/close",
+    );
 
     const rootTabPaths = [
         url("/mobile/pos"),
@@ -281,7 +317,8 @@ export default function MobileLayoutClient({ children }: MobileLayoutClientProps
                         Authentication Required
                     </h2>
                     <p className="text-gray-600 mb-6 text-sm">
-                        Unable to load your profile. Please check your connection and try again.
+                        Unable to load your profile. Please check your
+                        connection and try again.
                     </p>
                     <div className="flex gap-3 justify-center">
                         <button

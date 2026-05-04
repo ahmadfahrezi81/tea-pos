@@ -3,7 +3,13 @@
 import { useState } from "react";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
-import { MapPin, StoreIcon, Building2, ChevronRight, Rocket } from "lucide-react";
+import {
+    MapPin,
+    StoreIcon,
+    Building2,
+    ChevronRight,
+    Rocket,
+} from "lucide-react";
 import { useStore } from "@/lib/context/StoreContext";
 import { useFastOrderMode } from "@/lib/context/FastOrderModeContext";
 import { navigation } from "@tea-pos/utils/navigation";
@@ -42,15 +48,14 @@ const SettingsRow = ({
                 <p className="text-xs text-gray-500 truncate">{sublabel}</p>
             )}
         </div>
-        {right ?? (
-            !disabled && (
+        {right ??
+            (!disabled && (
                 <ChevronRight
                     size={20}
                     strokeWidth={2.5}
                     className="text-brand/90"
                 />
-            )
-        )}
+            ))}
     </button>
 );
 
@@ -118,7 +123,9 @@ export default function MoreMenu() {
                     icon={<Building2 size={20} className="text-gray-900" />}
                     label="Assigned Stores"
                     sublabel={`You're assigned in ${assignedStores.length} ${assignedStores.length !== 1 ? "stores" : "store"}`}
-                    onClick={() => navigation.push(url("/mobile/profile/stores"))}
+                    onClick={() =>
+                        navigation.push(url("/mobile/profile/stores"))
+                    }
                 />
                 <SettingsRow
                     icon={<MapPin size={20} className="text-gray-900" />}
