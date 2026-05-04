@@ -136,7 +136,7 @@ export default function MobileLayoutClient({
         if (path.endsWith("/mobile/inbox")) return "Inbox";
         if (path.endsWith("/mobile/more")) return "More";
         if (path.endsWith("/mobile/more/stores")) return "Assigned Stores";
-        if (path.endsWith("/mobile/more/personal")) return "Personal Details";
+        if (path.endsWith("/mobile/account/details")) return "Personal Details";
         if (path.endsWith("/mobile/more/map")) return "Map";
         if (path.endsWith("/mobile/account")) return "Account";
         if (path.endsWith("/mobile/notifications")) return "Notifications";
@@ -160,8 +160,8 @@ export default function MobileLayoutClient({
             path.endsWith("/mobile/analytics/daily/open") ||
             path.endsWith("/mobile/account") ||
             path.endsWith("/mobile/more/stores") ||
-            path.endsWith("/mobile/more/personal") ||
-            path.endsWith("/mobile/more/map"),
+            path.endsWith("/mobile/more/map") ||
+            path.endsWith("/mobile/account/details"),
         [],
     );
 
@@ -178,6 +178,7 @@ export default function MobileLayoutClient({
             if (path.includes("/mobile/analytics/daily/"))
                 return url("/mobile/analytics");
             if (path.endsWith("/mobile/account")) return lastRootTabRef.current;
+            if (path.endsWith("/mobile/account/details")) return url("/mobile/account");
             if (path.includes("/mobile/more/")) return url("/mobile/more");
             return url("/mobile");
         },
@@ -227,7 +228,7 @@ export default function MobileLayoutClient({
         router.prefetch(url("/mobile/analytics"));
         router.prefetch(url("/mobile/account"));
         router.prefetch(url("/mobile/more/stores"));
-        router.prefetch(url("/mobile/more/personal"));
+        router.prefetch(url("/mobile/account/details"));
         router.prefetch(url("/mobile/more/map"));
     }, [tabs, router, url]);
 

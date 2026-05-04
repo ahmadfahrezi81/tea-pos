@@ -114,7 +114,7 @@ export default function AccountProfile() {
                     icon={<Pencil size={20} className="text-gray-900" />}
                     label="Personal Details"
                     sublabel="View your account info"
-                    onClick={() => navigation.push(url("/mobile/more/personal"))}
+                    onClick={() => navigation.push(url("/mobile/account/details"))}
                 />
                 <SettingsRow
                     icon={<Bell size={20} className="text-gray-900" />}
