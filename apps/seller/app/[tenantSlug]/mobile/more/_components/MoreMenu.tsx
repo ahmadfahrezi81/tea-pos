@@ -123,9 +123,7 @@ export default function MoreMenu() {
                     icon={<Building2 size={20} className="text-gray-900" />}
                     label="Assigned Stores"
                     sublabel={`You're assigned in ${assignedStores.length} ${assignedStores.length !== 1 ? "stores" : "store"}`}
-                    onClick={() =>
-                        navigation.push(url("/mobile/profile/stores"))
-                    }
+                    onClick={() => navigation.push(url("/mobile/more/stores"))}
                 />
                 <SettingsRow
                     icon={<MapPin size={20} className="text-gray-900" />}

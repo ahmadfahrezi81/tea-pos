@@ -226,7 +226,7 @@ export function CustomerFeedbackDrawer({
                             <button
                                 onClick={() => {
                                     handleClose();
-                                    navigation.push(url("/mobile/profile/map"));
+                                    navigation.push(url("/mobile/more/map"));
                                 }}
                                 className="p-1.5 rounded-full text-gray-900 hover:bg-gray-100 -mr-2"
                             >

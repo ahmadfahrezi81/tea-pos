@@ -43,6 +43,7 @@ export default function MobileLayoutClient({
     const [isTransitioning, setIsTransitioning] = useState(false);
     const [authRetryCount, setAuthRetryCount] = useState(0);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const lastRootTabRef = useRef<string>(url("/mobile/more"));
 
     const {
         profile,
@@ -134,6 +135,9 @@ export default function MobileLayoutClient({
         if (path.endsWith("/mobile/analytics/chart")) return "Monthly Chart";
         if (path.endsWith("/mobile/inbox")) return "Inbox";
         if (path.endsWith("/mobile/more")) return "More";
+        if (path.endsWith("/mobile/more/stores")) return "Assigned Stores";
+        if (path.endsWith("/mobile/more/personal")) return "Personal Details";
+        if (path.endsWith("/mobile/more/map")) return "Map";
         if (path.endsWith("/mobile/account")) return "Account";
         if (path.endsWith("/mobile/notifications")) return "Notifications";
         if (
@@ -154,7 +158,10 @@ export default function MobileLayoutClient({
             path.includes("/mobile/notifications/") ||
             path.endsWith("/mobile/analytics/daily/close") ||
             path.endsWith("/mobile/analytics/daily/open") ||
-            path.endsWith("/mobile/account"),
+            path.endsWith("/mobile/account") ||
+            path.endsWith("/mobile/more/stores") ||
+            path.endsWith("/mobile/more/personal") ||
+            path.endsWith("/mobile/more/map"),
         [],
     );
 
@@ -170,7 +177,8 @@ export default function MobileLayoutClient({
                 return url("/mobile/notifications");
             if (path.includes("/mobile/analytics/daily/"))
                 return url("/mobile/analytics");
-            if (path.endsWith("/mobile/account")) return url("/mobile/more");
+            if (path.endsWith("/mobile/account")) return lastRootTabRef.current;
+            if (path.includes("/mobile/more/")) return url("/mobile/more");
             return url("/mobile");
         },
         [url],
@@ -185,6 +193,19 @@ export default function MobileLayoutClient({
         },
         [pathname, router],
     );
+
+    useEffect(() => {
+        const rootTabs = [
+            url("/mobile/pos"),
+            url("/mobile/orders"),
+            url("/mobile/analytics"),
+            url("/mobile/inbox"),
+            url("/mobile/more"),
+        ];
+        if (rootTabs.includes(pathname)) {
+            lastRootTabRef.current = pathname;
+        }
+    }, [pathname, url]);
 
     useEffect(() => {
         navigation.register(handleNavClick);
@@ -204,8 +225,10 @@ export default function MobileLayoutClient({
         router.prefetch(url("/mobile/notifications"));
         router.prefetch(url("/mobile/orders"));
         router.prefetch(url("/mobile/analytics"));
-        router.prefetch(url("/mobile/shift"));
         router.prefetch(url("/mobile/account"));
+        router.prefetch(url("/mobile/more/stores"));
+        router.prefetch(url("/mobile/more/personal"));
+        router.prefetch(url("/mobile/more/map"));
     }, [tabs, router, url]);
 
     useEffect(() => {
