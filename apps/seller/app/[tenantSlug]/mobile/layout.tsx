@@ -3,7 +3,6 @@ import MobileLayoutClient from "./components/MobileLayoutClient";
 import InactivityRefreshPopup from "@/components/shared/InactivityRefreshPopup";
 import { StoreProvider } from "@/lib/context/StoreContext";
 import { FastOrderModeProvider } from "@/lib/context/FastOrderModeContext";
-import { ProfileIconProvider } from "@/lib/context/ProfileIconContext";
 import { ToastProvider } from "@/lib/context/ToastContext";
 
 interface MobileLayoutProps {
@@ -14,14 +13,12 @@ export default function MobileLayout({ children }: MobileLayoutProps) {
     return (
         <StoreProvider>
             <FastOrderModeProvider>
-                <ProfileIconProvider>
-                    <ToastProvider>
-                        <MobileLayoutClient>
-                            {children}
-                            <InactivityRefreshPopup />
-                        </MobileLayoutClient>
-                    </ToastProvider>
-                </ProfileIconProvider>
+                <ToastProvider>
+                    <MobileLayoutClient>
+                        {children}
+                        <InactivityRefreshPopup />
+                    </MobileLayoutClient>
+                </ToastProvider>
             </FastOrderModeProvider>
         </StoreProvider>
     );

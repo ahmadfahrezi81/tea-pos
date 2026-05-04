@@ -1,6 +1,5 @@
-// app/mobile/more/page.tsx
-import MobileProfile from "./_components/MobileProfile";
+import MoreMenu from "./_components/MoreMenu";
 
 export default function MorePage() {
-    return <MobileProfile />;
+    return <MoreMenu />;
 }

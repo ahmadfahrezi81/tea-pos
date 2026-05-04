@@ -1,3 +1,5 @@
+import AccountProfile from "./_components/AccountProfile";
+
 export default function AccountPage() {
-    return <h1>Account page</h1>;
+    return <AccountProfile />;
 }

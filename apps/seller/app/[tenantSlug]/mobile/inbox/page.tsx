@@ -1,9 +1,5 @@
-// app/mobile/inbox/page.tsx
+import EmptyInbox from "./_components/EmptyInbox";
 
-export default function MorePage() {
-    return (
-        <>
-            <h1>test</h1>
-        </>
-    );
+export default function InboxPage() {
+    return <EmptyInbox />;
 }
