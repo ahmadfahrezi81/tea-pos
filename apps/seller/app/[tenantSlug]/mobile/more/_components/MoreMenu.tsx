@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
-import { MapPin, StoreIcon, Building2, ChevronRight } from "lucide-react";
-import { Icon } from "@iconify/react";
+import { MapPin, StoreIcon, Building2, ChevronRight, Rocket } from "lucide-react";
 import { useStore } from "@/lib/context/StoreContext";
 import { useFastOrderMode } from "@/lib/context/FastOrderModeContext";
 import { navigation } from "@tea-pos/utils/navigation";
@@ -96,7 +95,7 @@ export default function MoreMenu() {
             </h3>
             <div className="bg-white rounded-xl p-4 py-1 space-y-1 shadow-sm">
                 <SettingsRow
-                    icon={<Icon icon="fluent-emoji:rocket" width="20" height="20" />}
+                    icon={<Rocket size={20} className="text-gray-900" />}
                     label="Fast Order Mode"
                     sublabel="Faster POS experience"
                     onClick={toggleFastOrderMode}
