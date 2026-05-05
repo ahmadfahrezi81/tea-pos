@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { navigation } from "@tea-pos/utils/navigation";
-k;
 
 // ============================================================================
 // SETTINGS ROW
