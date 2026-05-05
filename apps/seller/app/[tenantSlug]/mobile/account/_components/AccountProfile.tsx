@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { navigation } from "@tea-pos/utils/navigation";
+k;
 
 // ============================================================================
 // SETTINGS ROW
@@ -48,7 +49,11 @@ const SettingsRow = ({
             )}
         </div>
         {!disabled && (
-            <ChevronRight size={20} strokeWidth={2.5} className="text-brand/90" />
+            <ChevronRight
+                size={20}
+                strokeWidth={2.5}
+                className="text-brand/90"
+            />
         )}
     </button>
 );
@@ -63,9 +68,14 @@ export default function AccountProfile() {
     const { profile, avatarUrl } = useAuth();
 
     const handleLogout = useCallback(async () => {
-        const shouldLogout = window.confirm("Are you sure you want to log out?");
+        const shouldLogout = window.confirm(
+            "Are you sure you want to log out?",
+        );
         if (shouldLogout) {
-            await fetch("/api/auth/signout", { method: "POST", credentials: "include" });
+            await fetch("/api/auth/signout", {
+                method: "POST",
+                credentials: "include",
+            });
             router.push("/login");
         }
     }, [router]);
@@ -101,7 +111,9 @@ export default function AccountProfile() {
                     <p className="text-xl font-semibold text-gray-900 leading-tight truncate">
                         {profile.fullName}
                     </p>
-                    <p className="text-sm text-gray-500 truncate">{profile.email}</p>
+                    <p className="text-sm text-gray-500 truncate">
+                        {profile.email}
+                    </p>
                 </div>
             </div>
 
@@ -114,7 +126,9 @@ export default function AccountProfile() {
                     icon={<Pencil size={20} className="text-gray-900" />}
                     label="Personal Details"
                     sublabel="View your account info"
-                    onClick={() => navigation.push(url("/mobile/account/details"))}
+                    onClick={() =>
+                        navigation.push(url("/mobile/account/details"))
+                    }
                 />
                 <SettingsRow
                     icon={<Bell size={20} className="text-gray-900" />}
