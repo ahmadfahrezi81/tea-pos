@@ -1,6 +1,7 @@
 "use client";
 import { ArrowLeft, ChevronsUpDown, UserCircle } from "lucide-react";
 import Image from "next/image";
+import { resolveRoute } from "../config/routes";
 
 interface MobileHeaderProps {
     currentPath: string;
@@ -14,17 +15,6 @@ interface MobileHeaderProps {
     onAccount: () => void;
 }
 
-function isChartPage(path: string) {
-    return (
-        path.endsWith("/mobile/orders/chart") ||
-        path.endsWith("/mobile/analytics/chart")
-    );
-}
-
-function isInlineHeaderPage(path: string) {
-    return path.endsWith("/mobile/analytics/daily/close");
-}
-
 export function MobileHeader({
     currentPath,
     currentTitle,
@@ -36,8 +26,8 @@ export function MobileHeader({
     onStorePicker,
     onAccount,
 }: MobileHeaderProps) {
-    const isInlineHeader = isInlineHeaderPage(currentPath);
-    const isChart = isChartPage(currentPath);
+    const isInlineHeader = resolveRoute(currentPath)?.inlineHeader ?? false;
+    const isChart = resolveRoute(currentPath)?.isChart ?? false;
 
     return (
         <header className="fixed top-0 left-0 right-0 z-40 bg-gray-50 p-4 py-3">
@@ -131,7 +121,7 @@ export function MobileHeader({
                         aria-label="Account"
                     >
                         {avatarUrl ? (
-                            <div className="rounded-full border-2 border-brand">
+                            <div className="rounded-full border-2 border-brand/20">
                                 <Image
                                     src={avatarUrl}
                                     alt="Account"

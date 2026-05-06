@@ -16,10 +16,8 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useStores } from "@/lib/hooks/stores/useStores";
-import { hasManagerRole, hasSellerRole } from "@tea-pos/utils/roleUtils";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/context/AuthContext";
-import VersionInfo from "@/components/shared/VersionInfo";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { useStore } from "@/lib/context/StoreContext";
 import { StorePickerDrawer } from "./StorePickerDrawer";
@@ -27,6 +25,7 @@ import { navigation } from "@tea-pos/utils/navigation";
 import { useIsIPhonePWA } from "@/lib/usePWA";
 import { MobileHeader } from "./MobileHeader";
 import { MobileFooterNav } from "./MobileFooterNav";
+import { resolveRoute } from "../config/routes";
 
 interface MobileLayoutClientProps {
     children: ReactNode;
@@ -39,149 +38,83 @@ export default function MobileLayoutClient({
     const pathname = usePathname();
     const { url } = useTenantSlug();
 
+    const [shellReady, setShellReady] = useState(false);
     const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
     const [isTransitioning, setIsTransitioning] = useState(false);
-    const [authRetryCount, setAuthRetryCount] = useState(0);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const lastRootTabRef = useRef<string>(url("/mobile/more"));
 
-    const {
-        profile,
-        avatarUrl,
-        isLoading: profileLoading,
-        mutate: refreshProfile,
-    } = useAuth();
+    const { profile, avatarUrl, mutate: refreshProfile } = useAuth();
     const { data: storesData } = useStores();
     const { selectedStore, setIsPickerOpen, isPickerOpen } = useStore();
     const isIPhonePWA = useIsIPhonePWA();
 
     const storesReady = !!storesData;
-    const user = useMemo(
-        () => (profile ? { id: profile.id } : null),
-        [profile],
-    );
-    const assignments = useMemo(
-        () => storesData?.assignments ?? {},
-        [storesData?.assignments],
-    );
-    const canSell = useMemo(
-        () => !!user && hasSellerRole(user.id, assignments),
-        [user, assignments],
-    );
-    const canManage = useMemo(
-        () => !!user && hasManagerRole(user.id, assignments),
-        [user, assignments],
-    );
 
-    const isLoading = useMemo(() => {
-        if (authRetryCount >= 3) return false;
-        if (profileLoading || !profile || !storesReady) return true;
-        return false;
-    }, [profile, profileLoading, authRetryCount, storesReady]);
+    useEffect(() => {
+        if (profile) {
+            setShellReady(true);
+        }
+    }, [profile]);
 
     const tabs = useMemo(
-        () =>
-            [
-                {
-                    path: url("/mobile/pos"),
-                    label: "Home",
-                    icon: StoreIcon,
-                    show: canSell,
-                    matchPaths: [url("/mobile/pos")],
-                },
-                {
-                    path: url("/mobile/orders"),
-                    label: "Orders",
-                    icon: ReceiptText,
-                    show: canSell || canManage,
-                    matchPaths: [
-                        url("/mobile/orders"),
-                        url("/mobile/orders/chart"),
-                    ],
-                },
-                {
-                    path: url("/mobile/analytics"),
-                    label: "Analytics",
-                    icon: ChartNoAxesCombinedIcon,
-                    show: canManage,
-                    matchPaths: [
-                        url("/mobile/analytics"),
-                        url("/mobile/analytics/chart"),
-                    ],
-                },
-                {
-                    path: url("/mobile/inbox"),
-                    label: "Inbox",
-                    icon: InboxIcon,
-                    show: true,
-                    matchPaths: [url("/mobile/inbox")],
-                },
-                {
-                    path: url("/mobile/more"),
-                    label: "More",
-                    icon: MoreHorizontal,
-                    show: true,
-                    matchPaths: [url("/mobile/more")],
-                },
-            ].filter((tab) => tab.show),
-        [canSell, canManage, url],
+        () => [
+            {
+                path: url("/mobile/pos"),
+                label: "Home",
+                icon: StoreIcon,
+                matchPaths: [url("/mobile/pos")],
+            },
+            {
+                path: url("/mobile/orders"),
+                label: "Orders",
+                icon: ReceiptText,
+                matchPaths: [
+                    url("/mobile/orders"),
+                    url("/mobile/orders/chart"),
+                ],
+            },
+            {
+                path: url("/mobile/analytics"),
+                label: "Analytics",
+                icon: ChartNoAxesCombinedIcon,
+                matchPaths: [
+                    url("/mobile/analytics"),
+                    url("/mobile/analytics/chart"),
+                ],
+            },
+            {
+                path: url("/mobile/inbox"),
+                label: "Inbox",
+                icon: InboxIcon,
+                matchPaths: [url("/mobile/inbox")],
+            },
+            {
+                path: url("/mobile/more"),
+                label: "More",
+                icon: MoreHorizontal,
+                matchPaths: [url("/mobile/more")],
+            },
+        ],
+        [url],
     );
 
-    const getCurrentPageTitle = useCallback((path: string): string | null => {
-        if (path.endsWith("/mobile/pos")) return "Home";
-        if (path.endsWith("/mobile/orders")) return "Orders";
-        if (path.endsWith("/mobile/orders/chart")) return "Daily Chart";
-        if (path.endsWith("/mobile/analytics")) return "Analytics";
-        if (path.endsWith("/mobile/analytics/chart")) return "Monthly Chart";
-        if (path.endsWith("/mobile/inbox")) return "Inbox";
-        if (path.endsWith("/mobile/more")) return "More";
-        if (path.endsWith("/mobile/more/stores")) return "Assigned Stores";
-        if (path.endsWith("/mobile/account/details")) return "Personal Details";
-        if (path.endsWith("/mobile/more/map")) return "Map";
-        if (path.endsWith("/mobile/account")) return "Account";
-        if (path.endsWith("/mobile/notifications")) return "Notifications";
-        if (
-            path.includes("/mobile/notifications/") &&
-            path.endsWith("/weather")
-        )
-            return "Weather Forecast";
-        if (path.endsWith("/mobile/analytics/daily/close")) return "Close Day";
-        if (path.endsWith("/mobile/analytics/daily/open")) return "Open Store";
-        return "Mobile";
-    }, []);
+    const getCurrentPageTitle = useCallback(
+        (path: string): string | null => resolveRoute(path)?.title ?? "Mobile",
+        [],
+    );
 
     const isSubPage = useCallback(
-        (path: string) =>
-            path.endsWith("/mobile/orders/chart") ||
-            path.endsWith("/mobile/analytics/chart") ||
-            path.endsWith("/mobile/notifications") ||
-            path.includes("/mobile/notifications/") ||
-            path.endsWith("/mobile/analytics/daily/close") ||
-            path.endsWith("/mobile/analytics/daily/open") ||
-            path.endsWith("/mobile/account") ||
-            path.endsWith("/mobile/more/stores") ||
-            path.endsWith("/mobile/more/map") ||
-            path.endsWith("/mobile/account/details"),
+        (path: string) => resolveRoute(path)?.subPage ?? false,
         [],
     );
 
     const getParentPath = useCallback(
         (path: string) => {
-            if (path.endsWith("/mobile/orders/chart"))
-                return url("/mobile/orders");
-            if (path.endsWith("/mobile/analytics/chart"))
-                return url("/mobile/analytics");
-            if (path.endsWith("/mobile/notifications"))
-                return url("/mobile/pos");
-            if (path.includes("/mobile/notifications/"))
-                return url("/mobile/notifications");
-            if (path.includes("/mobile/analytics/daily/"))
-                return url("/mobile/analytics");
-            if (path.endsWith("/mobile/account")) return lastRootTabRef.current;
-            if (path.endsWith("/mobile/account/details"))
-                return url("/mobile/account");
-            if (path.includes("/mobile/more/")) return url("/mobile/more");
-            return url("/mobile");
+            const route = resolveRoute(path);
+            if (!route?.parent) return url("/mobile");
+            if (route.parent === "lastRootTab") return lastRootTabRef.current;
+            return url(route.parent);
         },
         [url],
     );
@@ -223,41 +156,16 @@ export default function MobileLayoutClient({
     }, [pathname, optimisticPath]);
 
     useEffect(() => {
-        tabs.forEach((tab) => router.prefetch(tab.path));
         router.prefetch(url("/mobile/notifications"));
-        router.prefetch(url("/mobile/orders"));
-        router.prefetch(url("/mobile/analytics"));
         router.prefetch(url("/mobile/account"));
         router.prefetch(url("/mobile/more/stores"));
         router.prefetch(url("/mobile/account/details"));
         router.prefetch(url("/mobile/more/map"));
-    }, [tabs, router, url]);
+    }, []);
 
     useEffect(() => {
-        if (profile) {
-            setTimeout(() => setAuthRetryCount(0), 0);
-            return;
-        }
-
-        let mounted = true;
-        const checkAuthState = async () => {
-            if (authRetryCount < 3) {
-                const timer = setTimeout(async () => {
-                    if (mounted) {
-                        await refreshProfile();
-                        setAuthRetryCount((prev) => prev + 1);
-                    }
-                }, 3000);
-                return () => clearTimeout(timer);
-            }
-        };
-
-        const cleanupPromise = checkAuthState();
-        return () => {
-            mounted = false;
-            cleanupPromise.then((fn) => fn?.());
-        };
-    }, [profile, refreshProfile, authRetryCount]);
+        tabs.forEach((tab) => router.prefetch(tab.path));
+    }, [tabs]);
 
     useEffect(() => {
         const el = scrollContainerRef.current;
@@ -275,9 +183,7 @@ export default function MobileLayoutClient({
     const currentPath = optimisticPath || pathname;
     const currentTitle = getCurrentPageTitle(currentPath);
     const currentIsSubPage = isSubPage(currentPath);
-    const isInlineHeader = currentPath.endsWith(
-        "/mobile/analytics/daily/close",
-    );
+    const isInlineHeader = resolveRoute(currentPath)?.inlineHeader ?? false;
 
     const rootTabPaths = [
         url("/mobile/pos"),
@@ -294,7 +200,7 @@ export default function MobileLayoutClient({
           ? "pt-27"
           : "pt-19";
 
-    if (isLoading) {
+    if (!shellReady) {
         return (
             <div className="h-dvh overflow-hidden bg-white flex flex-col items-center justify-center">
                 <div className="text-center" role="status" aria-live="polite">
@@ -316,11 +222,6 @@ export default function MobileLayoutClient({
                             Loading ...
                         </span>
                     </div>
-                    {authRetryCount > 0 && (
-                        <div className="mt-2 text-xs text-brand">
-                            Connecting... ({authRetryCount}/3)
-                        </div>
-                    )}
                 </div>
             </div>
         );

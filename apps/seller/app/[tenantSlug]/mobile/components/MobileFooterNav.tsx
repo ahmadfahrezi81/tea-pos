@@ -28,7 +28,7 @@ export function MobileFooterNav({
     if (!storesReady) return null;
 
     return (
-        <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 animate-in slide-in-from-bottom-3 duration-200">
+        <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
             <div className={wrapperClass}>
                 {tabs.map((tab) => {
                     const Icon = tab.icon;
