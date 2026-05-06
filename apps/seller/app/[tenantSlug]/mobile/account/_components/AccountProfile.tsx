@@ -117,9 +117,6 @@ export default function AccountProfile() {
             </div>
 
             {/* Account Settings */}
-            <h3 className="text-lg font-semibold text-gray-800 mb-1">
-                Account
-            </h3>
             <div className="bg-white rounded-xl p-4 py-1 space-y-1 shadow-sm">
                 <SettingsRow
                     icon={<Pencil size={20} className="text-gray-900" />}

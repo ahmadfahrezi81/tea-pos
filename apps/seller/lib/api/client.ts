@@ -6,3 +6,13 @@ export async function apiFetch<T>(url: string, options?: RequestInit): Promise<T
     }
     return res.json() as Promise<T>;
 }
+
+export function buildParams(params: Record<string, unknown>): URLSearchParams {
+    return new URLSearchParams(
+        Object.fromEntries(
+            Object.entries(params)
+                .filter(([, v]) => v !== undefined && v !== null)
+                .map(([k, v]) => [k, String(v)]),
+        ),
+    );
+}

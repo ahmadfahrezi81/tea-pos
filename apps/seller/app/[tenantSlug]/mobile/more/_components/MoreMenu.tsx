@@ -127,7 +127,7 @@ export default function MoreMenu() {
                 />
                 <SettingsRow
                     icon={<MapPin size={20} className="text-gray-900" />}
-                    label="Customer Feedback"
+                    label="Location Feedback"
                     sublabel="Log feedback with a location"
                     onClick={() => setShowFeedbackDrawer(true)}
                 />

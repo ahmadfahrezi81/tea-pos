@@ -81,7 +81,6 @@ export default function FeedbackHistory() {
         groups.forEach((group) => {
             const representative = group[0];
             const count = group.length;
-            const isCluster = count > 1;
 
             const el = document.createElement("div");
             el.style.cssText = `
@@ -90,7 +89,7 @@ export default function FeedbackHistory() {
                 padding: 0 6px;
                 background: var(--brand, #3b82f6);
                 border: 2.5px solid white;
-                border-radius: ${isCluster ? "14px" : "50%"};
+                border-radius: 14px;
                 cursor: pointer;
                 box-shadow: 0 2px 6px rgba(0,0,0,0.2);
                 display: flex;
@@ -102,9 +101,7 @@ export default function FeedbackHistory() {
                 font-family: system-ui, sans-serif;
             `;
 
-            el.innerHTML = isCluster
-                ? `${count}`
-                : `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>`;
+            el.innerHTML = `${count}`;
 
             const marker = new mapboxgl.Marker(el)
                 .setLngLat([representative.longitude, representative.latitude])
@@ -141,11 +138,11 @@ export default function FeedbackHistory() {
 
             {/* List */}
             {isLoading ? (
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-2.5">
                     {[1, 2, 3].map((i) => (
                         <div
                             key={i}
-                            className="h-16 bg-white rounded-2xl animate-pulse"
+                            className="h-24 bg-white rounded-2xl animate-pulse"
                         />
                     ))}
                 </div>
@@ -155,7 +152,7 @@ export default function FeedbackHistory() {
                     <p className="text-sm">No feedback submitted yet</p>
                 </div>
             ) : (
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-2.5">
                     {feedbacks.map((fb) => (
                         <button
                             key={fb.id}
@@ -166,24 +163,31 @@ export default function FeedbackHistory() {
                                     duration: 600,
                                 });
                             }}
-                            className="w-full bg-white rounded-2xl shadow-sm flex items-start gap-3 px-4 py-3 active:bg-gray-50 text-left"
+                            className="w-full bg-white rounded-2xl shadow-sm flex items-start gap-3 px-4 py-4 active:bg-gray-50 text-left"
                         >
-                            <div className="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center shrink-0 mt-0.5">
-                                <MapPin size={14} className="text-brand" />
+                            <div className="w-9 h-9 rounded-full bg-brand/10 flex items-center justify-center shrink-0 mt-0.5">
+                                <MapPin size={15} className="text-brand" />
                             </div>
                             <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between gap-2">
-                                    <p className="text-sm font-semibold text-gray-900 truncate">
+                                <div className="flex items-start justify-between gap-2 mb-0.5">
+                                    <p className="text-sm font-bold text-gray-900 leading-snug">
                                         {fb.locationDisplay}
                                     </p>
-                                    <span className="text-xs text-gray-400 shrink-0">
+                                    <span className="text-xs text-gray-400 shrink-0 pt-0.5">
                                         {formatDate(fb.createdAt)}
                                     </span>
                                 </div>
-                                <p className="text-xs text-gray-500 truncate">
-                                    {fb.userName ?? "Unknown"}
-                                    {fb.notes ? ` · ${fb.notes}` : ""}
+                                <p className="text-xs text-gray-400 truncate">
+                                    {fb.locationName}
                                 </p>
+                                <p className="text-xs font-semibold text-gray-600 mt-2">
+                                    {fb.userName ?? "Unknown"}
+                                </p>
+                                {fb.notes && (
+                                    <p className="text-xs text-gray-500 mt-0.5 leading-relaxed line-clamp-2">
+                                        {fb.notes}
+                                    </p>
+                                )}
                             </div>
                         </button>
                     ))}

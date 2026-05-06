@@ -1,4 +1,4 @@
-import { apiFetch } from "./client";
+import { apiFetch, buildParams } from "./client";
 import type { ListDailySummariesQuery, CreateDailySummaryInput, UpdateDailySummaryInput } from "@tea-pos/features/summaries/schema";
 import { DailySummaryListResponse, CreateDailySummaryResponse, UpdateDailySummaryResponse } from "@tea-pos/features/summaries/schema";
 import type { ListSummaryPhotosQuery } from "@tea-pos/features/summaries/photos-schema";
@@ -6,7 +6,7 @@ import { ListSummaryPhotosResponse, UploadSummaryPhotoResponse, DeleteSummaryPho
 
 export const summariesApi = {
     list: async (params: Partial<ListDailySummariesQuery>) => {
-        const sp = new URLSearchParams(params as Record<string, string>);
+        const sp = buildParams(params as Record<string, unknown>);
         return DailySummaryListResponse.parse(await apiFetch<unknown>(`/api/summaries?${sp}`));
     },
     create: async (input: CreateDailySummaryInput) => {
@@ -29,7 +29,7 @@ export const summariesApi = {
         );
     },
     listPhotos: async (params: Partial<ListSummaryPhotosQuery>) => {
-        const sp = new URLSearchParams(params as Record<string, string>);
+        const sp = buildParams(params as Record<string, unknown>);
         return ListSummaryPhotosResponse.parse(await apiFetch<unknown>(`/api/summaries/photo?${sp}`));
     },
     uploadPhoto: async (formData: FormData) => {

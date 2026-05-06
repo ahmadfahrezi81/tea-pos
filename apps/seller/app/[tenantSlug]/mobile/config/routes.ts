@@ -64,7 +64,7 @@ export const mobileRoutes = {
         parent: "/mobile/more",
     },
     "/mobile/more/map": {
-        title: "Map",
+        title: "Location Feedback",
         subPage: true,
         inlineHeader: false,
         isChart: false,

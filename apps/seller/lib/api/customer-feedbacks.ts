@@ -1,10 +1,10 @@
-import { apiFetch } from "./client";
+import { apiFetch, buildParams } from "./client";
 import type { ListCustomerFeedbacksQuery, CreateCustomerFeedbackInput } from "@tea-pos/features/customer-feedbacks/schema";
 import { ListCustomerFeedbacksResponse, CreateCustomerFeedbackResponse } from "@tea-pos/features/customer-feedbacks/schema";
 
 export const feedbacksApi = {
     list: async (params: Partial<ListCustomerFeedbacksQuery>) => {
-        const sp = new URLSearchParams(params as Record<string, string>);
+        const sp = buildParams(params as Record<string, unknown>);
         return ListCustomerFeedbacksResponse.parse(await apiFetch<unknown>(`/api/customer-feedbacks?${sp}`));
     },
     create: async (input: CreateCustomerFeedbackInput) => {

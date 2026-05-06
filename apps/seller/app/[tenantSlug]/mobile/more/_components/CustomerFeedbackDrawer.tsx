@@ -48,8 +48,9 @@ async function searchLocations(query: string): Promise<MapboxFeature[]> {
         proximity: `${BOGOR_LNG},${BOGOR_LAT}`,
         country: "ID",
         language: "id",
-        limit: "5",
-        types: "district,place,locality,neighborhood",
+        limit: "6",
+        types: "place,locality,neighborhood,address",
+        bbox: "95.0,-11.0,141.0,6.0",
     });
 
     const res = await fetch(
@@ -74,6 +75,7 @@ function MiniMap({
 }) {
     const containerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<mapboxgl.Map | null>(null);
+    const markerRef = useRef<mapboxgl.Marker | null>(null);
     const initializedRef = useRef(false);
 
     useEffect(() => {
@@ -90,6 +92,8 @@ function MiniMap({
         });
 
         return () => {
+            markerRef.current?.remove();
+            markerRef.current = null;
             mapRef.current?.remove();
             mapRef.current = null;
             initializedRef.current = false;
@@ -97,7 +101,22 @@ function MiniMap({
     }, []);
 
     useEffect(() => {
-        if (!mapRef.current || !shouldFly) return;
+        if (!mapRef.current) return;
+
+        if (!shouldFly) {
+            markerRef.current?.remove();
+            markerRef.current = null;
+            return;
+        }
+
+        if (markerRef.current) {
+            markerRef.current.setLngLat([lng, lat]);
+        } else {
+            markerRef.current = new mapboxgl.Marker({ color: "#3b82f6" })
+                .setLngLat([lng, lat])
+                .addTo(mapRef.current);
+        }
+
         mapRef.current.flyTo({
             center: [lng, lat],
             zoom: 13,

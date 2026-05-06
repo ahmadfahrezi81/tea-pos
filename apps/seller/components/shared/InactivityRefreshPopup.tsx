@@ -48,7 +48,7 @@ export default function RefreshOnStaleData() {
         <>
             <div className="fixed inset-0 z-40" onClick={handleDismiss} />
 
-            <div className="fixed bottom-4 right-4 z-50">
+            <div className="fixed bottom-8 right-4 z-50">
                 <div
                     className="bg-white p-3 rounded-xl border border-gray-200 shadow-lg relative w-[280px] sm:w-[320px]"
                     onClick={(e) => e.stopPropagation()}
