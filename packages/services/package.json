@@ -1,0 +1,27 @@
+{
+  "name": "@tea-pos/services",
+  "version": "0.0.1",
+  "private": true,
+  "exports": {
+    "./analytics": "./analytics.ts",
+    "./customer-feedbacks": "./customer-feedbacks.ts",
+    "./expenses": "./expenses.ts",
+    "./notifications": "./notifications.ts",
+    "./orders": "./orders.ts",
+    "./products": "./products.ts",
+    "./profiles": "./profiles.ts",
+    "./stores": "./stores.ts",
+    "./summaries": "./summaries.ts",
+    "./weather": "./weather.ts"
+  },
+  "dependencies": {
+    "@tea-pos/features": "workspace:*",
+    "@tea-pos/utils": "workspace:*"
+  },
+  "peerDependencies": {
+    "@supabase/supabase-js": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20"
+  }
+}

@@ -12,22 +12,19 @@
         "resolveJsonModule": true,
         "isolatedModules": true,
         "jsx": "preserve",
-        "incremental": true,
-        "plugins": [
-            {
-                "name": "next"
-            }
-        ],
         "paths": {
-            "@/*": ["./*"]
-        }
+            "@tea-pos/ui/*": ["./packages/ui/*"],
+            "@tea-pos/db/*": ["./packages/db/*"],
+            "@tea-pos/features/*": ["./packages/features/*"],
+            "@tea-pos/services/*": ["./packages/services/*"],
+            "@tea-pos/utils/*": ["./packages/utils/*"],
+        },
     },
     "include": [
-        "next-env.d.ts",
-        "**/*.ts",
-        "**/*.tsx",
-        ".next/types/**/*.ts",
-        ".next/dev/types/**/*.ts"
+        "packages/**/*.ts",
+        "packages/**/*.tsx",
+        "apps/**/*.ts",
+        "apps/**/*.tsx",
     ],
-    "exclude": ["node_modules"]
+    "exclude": ["node_modules", "**/node_modules", "**/.next"],
 }
