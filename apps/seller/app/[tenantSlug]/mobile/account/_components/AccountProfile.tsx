@@ -5,14 +5,7 @@ import { useAuth } from "@/lib/context/AuthContext";
 import VersionInfo from "@/components/shared/VersionInfo";
 import { useRouter } from "next/navigation";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
-import {
-    Pencil,
-    Bell,
-    Globe,
-    Wrench,
-    ChevronRight,
-    UserCircle,
-} from "lucide-react";
+import { Pencil, Bell, Globe, ChevronRight, UserCircle } from "lucide-react";
 import Image from "next/image";
 import { navigation } from "@tea-pos/utils/navigation";
 
@@ -79,13 +72,7 @@ export default function AccountProfile() {
         }
     }, [router]);
 
-    const handleAdminDashboard = useCallback(() => {
-        window.open(url("/admin"), "_blank", "noopener,noreferrer");
-    }, [url]);
-
     if (!profile) return null;
-
-    const isAdmin = profile.role === "ADMIN";
 
     return (
         <div className="min-h-screen space-y-4">
@@ -136,14 +123,6 @@ export default function AccountProfile() {
                     label="Language"
                     disabled
                 />
-                {isAdmin && (
-                    <SettingsRow
-                        icon={<Wrench size={20} className="text-gray-900" />}
-                        label="Admin Dashboard"
-                        sublabel="Manage your store and settings"
-                        onClick={handleAdminDashboard}
-                    />
-                )}
             </div>
 
             {/* Logout + Version */}
