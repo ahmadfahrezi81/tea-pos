@@ -6,7 +6,7 @@ const withPWA = withPWAInit({
     dest: "public",
     disable: process.env.NODE_ENV === "development",
     cacheOnFrontEndNav: true,
-    aggressiveFrontEndNavCaching: true,
+    aggressiveFrontEndNavCaching: false,
     reloadOnOnline: true,
     cacheStartUrl: true,
     dynamicStartUrl: true,
@@ -45,16 +45,6 @@ const withPWA = withPWAInit({
                     expiration: {
                         maxEntries: 200,
                         maxAgeSeconds: 60 * 60 * 24 * 30,
-                    },
-                },
-            },
-            {
-                urlPattern: /\/_next\/static\/.*/i,
-                handler: "CacheFirst",
-                options: {
-                    cacheName: `next-static-${version}`,
-                    expiration: {
-                        maxAgeSeconds: 60 * 60 * 24 * 365,
                     },
                 },
             },

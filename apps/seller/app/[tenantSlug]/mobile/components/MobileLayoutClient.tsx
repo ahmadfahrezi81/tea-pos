@@ -75,9 +75,9 @@ export default function MobileLayoutClient({
 
     const isLoading = useMemo(() => {
         if (authRetryCount >= 3) return false;
-        if (profileLoading || !profile) return true;
+        if (profileLoading || !profile || !storesReady) return true;
         return false;
-    }, [profile, profileLoading, authRetryCount]);
+    }, [profile, profileLoading, authRetryCount, storesReady]);
 
     const tabs = useMemo(
         () =>
@@ -178,7 +178,8 @@ export default function MobileLayoutClient({
             if (path.includes("/mobile/analytics/daily/"))
                 return url("/mobile/analytics");
             if (path.endsWith("/mobile/account")) return lastRootTabRef.current;
-            if (path.endsWith("/mobile/account/details")) return url("/mobile/account");
+            if (path.endsWith("/mobile/account/details"))
+                return url("/mobile/account");
             if (path.includes("/mobile/more/")) return url("/mobile/more");
             return url("/mobile");
         },
@@ -299,10 +300,10 @@ export default function MobileLayoutClient({
                 <div className="text-center" role="status" aria-live="polite">
                     <div className="mb-8">
                         <Image
-                            src="/LEMONI-512x512.png"
+                            src="/icons/icon-192x192.png"
                             alt="Logo"
-                            width={80}
-                            height={80}
+                            width={70}
+                            height={70}
                             priority
                             className="rounded-xl shadow-2xl mx-auto"
                         />
@@ -311,7 +312,9 @@ export default function MobileLayoutClient({
                         <div className="loading-bar" />
                     </div>
                     <div className="mt-4 text-xs text-gray-600 text-center">
-                        <VersionInfo />
+                        <span className="font-mono text-xs opacity-90">
+                            Loading ...
+                        </span>
                     </div>
                     {authRetryCount > 0 && (
                         <div className="mt-2 text-xs text-brand">

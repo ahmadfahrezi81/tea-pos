@@ -1,19 +1,36 @@
 import "./globals.css";
-import { Metadata } from "next";
+import { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import { SWRConfig } from "swr";
 import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "@/lib/context/AuthContext";
 import { FeaturesProvider } from "@/lib/context/features-provider";
 
+export const viewport: Viewport = {
+    themeColor: [
+        { color: "#ffffff", media: "(prefers-color-scheme: light)" },
+        { color: "#ffffff", media: "(prefers-color-scheme: dark)" },
+    ],
+};
+
 export const metadata: Metadata = {
     title: "Tea POS",
     description: "Point of Sale System",
     manifest: "/manifest.json",
+    icons: {
+        icon: [
+            { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+            { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
+        ],
+        apple: [{ url: "/icons/icon-512x512.png" }],
+    },
     appleWebApp: {
         capable: true,
         statusBarStyle: "default",
         title: "Tea POS",
+    },
+    other: {
+        "mobile-web-app-capable": "yes",
     },
 };
 
@@ -33,28 +50,6 @@ export default async function RootLayout({
 
     return (
         <html lang="en" suppressHydrationWarning>
-            <head>
-                <meta
-                    name="theme-color"
-                    content="#ffffff"
-                    media="(prefers-color-scheme: light)"
-                />
-                <meta
-                    name="theme-color"
-                    content="#ffffff"
-                    media="(prefers-color-scheme: dark)"
-                />
-                <meta name="mobile-web-app-capable" content="yes" />
-                <meta name="apple-mobile-web-app-capable" content="yes" />
-                <meta
-                    name="apple-mobile-web-app-status-bar-style"
-                    content="default"
-                />
-                <meta name="apple-mobile-web-app-title" content="Tea POS" />
-                <link rel="icon" href="/icons/icon-192x192.png" sizes="192x192" type="image/png" />
-                <link rel="icon" href="/icons/icon-512x512.png" sizes="512x512" type="image/png" />
-                <link rel="apple-touch-icon" href="/icons/icon-512x512.png" />
-            </head>
             <body>
                 <SWRConfig
                     value={{ dedupingInterval: 5000, revalidateOnFocus: false }}
