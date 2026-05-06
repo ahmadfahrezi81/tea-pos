@@ -1,41 +1,14 @@
 // lib/hooks/summaries/useSummaryPhotosById.ts
 import useSWR from "swr";
-import { ListSummaryPhotosResponse } from "@tea-pos/features/summaries/photos-schema";
-
-const fetchPhotos = async (url: string): Promise<ListSummaryPhotosResponse> => {
-    const res = await fetch(url);
-    if (!res.ok) {
-        let errMsg = `Failed to fetch photos: ${res.status}`;
-        try {
-            const body = await res.json();
-            if (body?.error) errMsg += ` - ${body.error}`;
-        } catch {
-            // ignore
-        }
-        throw new Error(errMsg);
-    }
-
-    const json = await res.json();
-    const parsed = ListSummaryPhotosResponse.safeParse(json);
-    if (!parsed.success) {
-        console.error(
-            "[useSummaryPhotosById] Invalid response:",
-            parsed.error.format(),
-        );
-        throw new Error("Invalid photos response shape");
-    }
-
-    return parsed.data;
-};
+import { summariesApi } from "@/lib/api/summaries";
+import type { ListSummaryPhotosResponse } from "@tea-pos/features/summaries/photos-schema";
 
 export const useSummaryPhotosById = (summaryId?: string | null) => {
-    const key = summaryId
-        ? `/api/summaries/photo?dailySummaryId=${summaryId}`
-        : null;
+    const key = summaryId ? `summary-photos-${summaryId}` : null;
 
     const { data, error, mutate } = useSWR<ListSummaryPhotosResponse>(
         key,
-        fetchPhotos,
+        () => summariesApi.listPhotos({ dailySummaryId: summaryId! }),
         {
             revalidateOnFocus: false,
             revalidateOnMount: true,

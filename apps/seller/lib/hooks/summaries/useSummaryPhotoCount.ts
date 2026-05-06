@@ -1,28 +1,19 @@
 import useSWR from "swr";
-
-const fetchPhotoCount = async (url: string): Promise<number> => {
-    const res = await fetch(url);
-    if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(
-            body?.error ?? `Failed to fetch photo count: ${res.status}`,
-        );
-    }
-    const json = await res.json();
-    return json.count as number;
-};
+import { summariesApi } from "@/lib/api/summaries";
 
 export const useSummaryPhotoCount = (summaryId?: string | null) => {
-    const key = summaryId
-        ? `/api/summaries/photo/count?dailySummaryId=${summaryId}`
-        : null;
+    const key = summaryId ? `summary-photo-count-${summaryId}` : null;
 
-    const { data, error, mutate } = useSWR<number>(key, fetchPhotoCount, {
-        revalidateOnFocus: false,
-        revalidateOnMount: true,
-        revalidateIfStale: false,
-        dedupingInterval: 5_000,
-    });
+    const { data, error, mutate } = useSWR<number>(
+        key,
+        () => summariesApi.getPhotoCount(summaryId!).then((r) => r.count),
+        {
+            revalidateOnFocus: false,
+            revalidateOnMount: true,
+            revalidateIfStale: false,
+            dedupingInterval: 5_000,
+        },
+    );
 
     return {
         count: data ?? 0,

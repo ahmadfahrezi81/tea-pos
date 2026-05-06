@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { createClient } from "@/lib/supabase";
+import { paymentsApi } from "@/lib/api/payments";
 import type {
     CreateQrisPaymentInput,
     CreateQrisPaymentResponse,
@@ -61,20 +61,14 @@ export function useQrisPayment({
 
     // ── Poll payment status ──────────────────────────────────────────────────
     const pollPaymentStatus = useCallback(
-        (pid: string, storeId: string) => {
+        (paymentId: string, storeId: string) => {
             cleanup();
-
-            const supabase = createClient();
 
             intervalRef.current = setInterval(async () => {
                 try {
-                    const { data } = await supabase
-                        .from("payments")
-                        .select("status")
-                        .eq("id", pid)
-                        .single();
+                    const { status: paymentStatus } = await paymentsApi.getQrisStatus(paymentId);
 
-                    if (data?.status === "succeeded") {
+                    if (paymentStatus === "succeeded") {
                         cleanup();
                         setStatus("succeeded");
                         mutate(
@@ -83,12 +77,9 @@ export function useQrisPayment({
                                 .slice(0, 10)}`,
                         );
                         onSuccessRef.current();
-                    } else if (
-                        data?.status === "expired" ||
-                        data?.status === "failed"
-                    ) {
+                    } else if (paymentStatus === "expired" || paymentStatus === "failed") {
                         cleanup();
-                        setStatus(data.status as QrisPaymentStatus);
+                        setStatus(paymentStatus);
                     }
                 } catch (err) {
                     console.error("Polling error:", err);
@@ -120,18 +111,7 @@ export function useQrisPayment({
                 })),
             };
 
-            const response = await fetch("/api/payments/qris", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
-            });
-
-            const data: CreateQrisPaymentResponse = await response.json();
-
-            if (!response.ok || !data.success) {
-                setStatus("failed");
-                return;
-            }
+            const data: CreateQrisPaymentResponse = await paymentsApi.createQris(payload);
 
             setQrString(data.qrString);
             setAmount(data.amount);
@@ -152,11 +132,7 @@ export function useQrisPayment({
         if (!xenditQrId || !amount) return;
 
         try {
-            await fetch("/api/payments/qris/simulate", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ xenditQrId, amount }),
-            });
+            await paymentsApi.simulateQris(xenditQrId, amount);
         } catch (error) {
             console.error("Simulate error:", error);
         }

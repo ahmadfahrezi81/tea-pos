@@ -128,7 +128,7 @@ export default function MobilePersonalDetails() {
                         />
                         <FieldRow
                             label="Member Since"
-                            value={formatDate(profile?.createdAt)}
+                            value={formatDate(profile?.createdAt ?? null)}
                         />
                     </>
                 )}

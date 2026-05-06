@@ -9,6 +9,34 @@ import {
 } from "@tea-pos/features/payments/schema";
 
 // ============================================================================
+// GET /api/payments/qris?paymentId=...
+// ============================================================================
+export async function GET(request: NextRequest) {
+    try {
+        const supabase = await createRouteHandlerClient();
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+        const paymentId = new URL(request.url).searchParams.get("paymentId");
+        if (!paymentId) return NextResponse.json({ error: "paymentId is required" }, { status: 400 });
+
+        const { data, error } = await supabase
+            .from("payments")
+            .select("status")
+            .eq("id", paymentId)
+            .eq("user_id", user.id)
+            .single();
+
+        if (error || !data) return NextResponse.json({ error: "Payment not found" }, { status: 404 });
+
+        return NextResponse.json({ status: data.status });
+    } catch (error) {
+        console.error(error);
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    }
+}
+
+// ============================================================================
 // POST /api/payments/qris
 // ============================================================================
 export async function POST(request: NextRequest) {

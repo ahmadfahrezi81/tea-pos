@@ -1,9 +1,6 @@
 // lib/hooks/summaries/useSummaryPhotos.ts
-import {
-    SummaryPhotoResponse,
-    PhotoType,
-    PhotoQuantity,
-} from "@tea-pos/features/summaries/photos-schema";
+import { summariesApi } from "@/lib/api/summaries";
+import type { SummaryPhotoResponse, PhotoType, PhotoQuantity } from "@tea-pos/features/summaries/photos-schema";
 
 interface UploadPhotoParams {
     file: File;
@@ -15,7 +12,6 @@ interface UploadPhotoParams {
 }
 
 export function useSummaryPhotos() {
-    // ─── Upload ────────────────────────────────────────────────────────
     const uploadPhoto = async ({
         file,
         dailySummaryId,
@@ -32,54 +28,20 @@ export function useSummaryPhotos() {
         if (expenseId) formData.append("expenseId", expenseId);
         if (quantity) formData.append("quantity", JSON.stringify(quantity));
 
-        const res = await fetch("/api/summaries/photo", {
-            method: "POST",
-            body: formData,
-        });
-
-        if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(errorData.error ?? "Failed to upload photo");
-        }
-
-        const json = await res.json();
-        return json.photo as SummaryPhotoResponse;
+        const result = await summariesApi.uploadPhoto(formData);
+        return result.photo;
     };
 
-    // ─── Delete ────────────────────────────────────────────────────────
     const deletePhoto = async (id: string): Promise<void> => {
-        const res = await fetch(`/api/summaries/photo?id=${id}`, {
-            method: "DELETE",
-        });
-
-        if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(errorData.error ?? "Failed to delete photo");
-        }
+        await summariesApi.deletePhoto(id);
     };
 
-    // ─── Update quantity ───────────────────────────────────────────
     const updatePhotoQuantity = async (
         id: string,
         quantity: { value: number; unit: string } | null,
     ): Promise<void> => {
-        const res = await fetch("/api/summaries/photo", {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id, quantity }),
-        });
-
-        if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(
-                errorData.error ?? "Failed to update photo quantity",
-            );
-        }
+        await summariesApi.updatePhoto(id, quantity);
     };
 
-    return {
-        uploadPhoto,
-        deletePhoto,
-        updatePhotoQuantity,
-    };
+    return { uploadPhoto, deletePhoto, updatePhotoQuantity };
 }
