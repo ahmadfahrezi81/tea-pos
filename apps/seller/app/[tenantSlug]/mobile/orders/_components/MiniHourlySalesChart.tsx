@@ -1,6 +1,6 @@
 "use client";
 import { useMemo, useRef, useEffect } from "react";
-import useHourlySales from "@/lib/hooks/analytics/useHourlySales";
+import type { HourlySalesData } from "@/lib/hooks/analytics/useHourlySales";
 import {
     Area,
     AreaChart,
@@ -18,6 +18,7 @@ import { navigation } from "@tea-pos/utils/navigation";
 interface Props {
     storeId: string;
     date: string;
+    hourlySales: HourlySalesData[];
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -53,8 +54,7 @@ const CustomTooltip = ({ active, payload }: any) => {
     );
 };
 
-export default function MiniHourlySalesChart({ storeId, date }: Props) {
-    const { data: hourlySales = [], isLoading } = useHourlySales(storeId, date);
+export default function MiniHourlySalesChart({ storeId, date, hourlySales }: Props) {
     const scrollRef = useRef<HTMLDivElement>(null);
     const brandColor = useBrandColor();
 
@@ -97,19 +97,6 @@ export default function MiniHourlySalesChart({ storeId, date }: Props) {
             behavior: "smooth",
         });
     }, [peakIndex, hourlySales]);
-
-    if (isLoading) {
-        return (
-            <div
-                className="border-t border-gray-100 bg-gray-200 rounded-xl animate-pulse relative"
-                style={{ height: 170 }}
-            >
-                <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-6 h-6 border-3 border-brand border-t-transparent rounded-full animate-spin" />
-                </div>
-            </div>
-        );
-    }
 
     if (hourlySales.length === 0) return null;
 

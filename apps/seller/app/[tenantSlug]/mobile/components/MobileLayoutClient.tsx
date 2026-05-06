@@ -332,10 +332,10 @@ export default function MobileLayoutClient({
                 <div className="text-center">
                     <div className="mb-6">
                         <Image
-                            src="/LEMONI-512x512.png"
+                            src="/icons/icon-192x192.png"
                             alt="Logo"
-                            width={80}
-                            height={80}
+                            width={70}
+                            height={70}
                             priority
                             className="rounded-xl shadow-2xl mx-auto"
                         />
@@ -360,9 +360,6 @@ export default function MobileLayoutClient({
                         >
                             Retry
                         </button>
-                    </div>
-                    <div className="mt-6 text-xs text-gray-500">
-                        <VersionInfo />
                     </div>
                 </div>
             </div>

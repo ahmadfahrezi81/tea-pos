@@ -44,6 +44,8 @@ const formatFullTimestamp = (dateString: string) => {
 
 const formatDateForInput = (date: Date) => date.toISOString().split("T")[0];
 
+const TZ_OFFSET = Number(process.env.NEXT_PUBLIC_TIMEZONE_OFFSET ?? 7);
+
 export default function MobileOrders() {
     const { selectedStoreId } = useStore();
 
@@ -55,6 +57,30 @@ export default function MobileOrders() {
         selectedStoreId,
         selectedDate,
     );
+
+    const hourlySales = useMemo(() => {
+        if (orders.length === 0) return [];
+
+        const hourlyData: Record<string, number> = {};
+        for (const order of orders) {
+            if (!order.createdAt) continue;
+            const localHour = new Date(
+                new Date(order.createdAt + "Z").getTime() + TZ_OFFSET * 3_600_000,
+            ).getUTCHours();
+            const key = `${localHour.toString().padStart(2, "0")}:00`;
+            hourlyData[key] = (hourlyData[key] ?? 0) +
+                order.orderItems.reduce((s, item) => s + item.quantity, 0);
+        }
+
+        const slots = Array.from({ length: 24 }, (_, h) => ({
+            hour: `${h.toString().padStart(2, "0")}:00`,
+            cups: hourlyData[`${h.toString().padStart(2, "0")}:00`] ?? 0,
+        }));
+
+        const first = slots.findIndex((d) => d.cups > 0);
+        const last = slots.findLastIndex((d) => d.cups > 0);
+        return first === -1 ? [] : slots.slice(Math.max(0, first - 1), Math.min(23, last + 1) + 1);
+    }, [orders]);
 
     const ordersWithNumbers = useMemo(
         () =>
@@ -154,6 +180,7 @@ export default function MobileOrders() {
             <MiniHourlySalesChart
                 storeId={selectedStoreId}
                 date={selectedDate}
+                hourlySales={hourlySales}
             />
 
             {/* Orders List */}
