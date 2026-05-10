@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Volumes/DevSSD/Projects/Personal/tea-pos/packages/features/summaries/**)",
+      "Read(//Volumes/DevSSD/Projects/Personal/tea-pos/packages/features/profiles/**)",
+      "Read(//Volumes/DevSSD/Projects/Personal/tea-pos/packages/features/shared/**)"
+    ]
+  }
+}

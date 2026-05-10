@@ -49,20 +49,17 @@ This is a **monorepo for a multi-tenant Point-of-Sale (POS) system** for tea sho
 
 ```
 ├── apps/
-│   ├── seller/          # Seller-facing mobile app (POS, orders, profile, QR)
-│   ├── admin/           # Admin/manager web dashboard (analytics, stores, products, expenses, weather, maps)
+│   ├── seller/          # Seller-facing mobile PWA (POS, orders, analytics, profile)
+│   ├── admin/           # Admin/manager web dashboard (currently undergoing refactor)
 │
 ├── packages/
-│   ├── db/              # Supabase auto-gen types (types.ts) + table aliases
+│   ├── db/              # Supabase auto-gen types (types.ts)
 │   ├── features/        # Zod schemas organized by domain (tenants, orders, products, etc.)
 │   ├── ui/              # Shared Radix UI components (buttons, dialogs, tables, etc.)
-│   ├── services/        # Business logic (notifications, weather, customer feedbacks)
+│   ├── services/        # Business logic — DB access, external APIs (no React, no HTTP)
 │   ├── utils/           # Shared utilities (formatting, navigation, schema helpers)
 │
-├── app/                 # Root Next.js app (mainly auth routes & tenant routing)
-│   ├── (auth)/login
-│   ├── [tenantSlug]/    # Tenant layout + context (auth guard, RLS enforcement)
-│   └── api/analytics    # Shared API endpoints
+├── supabase/            # Supabase project config and temp files
 ```
 
 ### Multi-Tenancy Architecture
@@ -105,14 +102,19 @@ This is a **monorepo for a multi-tenant Point-of-Sale (POS) system** for tea sho
 - `profiles` — User metadata (role, full name, email, phone)
 - `user_tenant_assignments` — Role per user per tenant
 - `user_store_assignments` — Role per user per store
+- `tenant_invites` — Pending invitations to join a tenant
 - `stores` — Individual tea shop locations
 - `products` — Inventory
+- `product_categories` — Product groupings
 - `orders` + `order_items` — Transaction history
+- `payments` — Payment records
 - `daily_summaries` — Cash reconciliation per seller per day
+- `daily_summary_photos` — Photos attached to a daily summary
 - `expenses` — Cost tracking
 - `customer_feedbacks` — Geotagged feedback with weather + location
-- `notifications` — System notifications
-- Others: `payments`, `weather`, `product_categories`
+- `notification_events` — System notification payloads
+- `notification_reads` — Per-user read receipts for notifications
+- `weather_hourly` — Cached hourly weather forecast data
 
 ### Auth & Session Management
 
@@ -145,14 +147,47 @@ Mobile-first POS system for cashiers and sellers.
 
 **Tech Stack:**
 - PWA with Workbox caching (offline support)
-- iCon support via Iconify Fluent Emoji
+- Iconify Fluent Emoji icon support
 - QR code generation (react-qr-code)
 - Image compression for uploads
+- Recharts for analytics charts
+- Leaflet + Mapbox for customer feedback map
+- Vaul for drawer/sheet components
+- Sonner for toast notifications
 
-**Routes:**
+**Routes (mobile):**
 - `/{tenantSlug}/mobile/pos` — Point-of-sale interface
-- `/{tenantSlug}/mobile/profile` — Seller/user profile
-- `/login`, `/signup` — Auth routes
+- `/{tenantSlug}/mobile/orders` — Order history; `/orders/chart` for hourly chart
+- `/{tenantSlug}/mobile/analytics` — Daily summary dashboard
+  - `/analytics/chart` — Sales trend charts (daily, day-of-week, product)
+  - `/analytics/daily/close` — End-of-day closing flow (cash count, photos, notes)
+- `/{tenantSlug}/mobile/inbox` — Notifications inbox
+- `/{tenantSlug}/mobile/notifications/[id]/weather` — Weather notification detail
+- `/{tenantSlug}/mobile/more` — Profile + settings hub
+  - `/more/map` — Customer feedback map
+  - `/more/stores` — Stores list
+- `/{tenantSlug}/mobile/account` — Account profile; `/account/details` for edit
+- `/{tenantSlug}/mobile/tasks` — Tasks progress tracker
+- `/(auth)/login` — Auth
+
+**API Routes** (`apps/seller/app/api/`):
+- `orders` / `orders/list` — CRUD + paginated list
+- `products`, `stores`, `profiles` — Standard CRUD
+- `summaries`, `summaries/breakdown`, `summaries/photo`, `summaries/photo/count` — Daily summary + photo management
+- `expenses` — Expense tracking
+- `analytics/daily-sales`, `hourly-sales`, `day-of-week-sales`, `product-sales` — Aggregated analytics
+- `payments/qris`, `/simulate`, `/webhook` — QRIS payment flow (feature-flagged)
+- `customer-feedbacks` — Geo-tagged feedback
+- `notifications`, `notifications/[id]/read` — Notification management
+- `weather` — Current weather
+- `cron/weather/fetch`, `/notify`, `/realtime` — Cron-triggered weather jobs
+- `version` — App version info
+
+**Lib structure:**
+- `lib/api/` — Typed API clients (one file per domain, calls `fetch()` only)
+- `lib/hooks/` — SWR hooks organized by domain (call api clients only)
+- `lib/context/` — React contexts: Auth, Store, FastOrderMode, ProfileIcon, Toast, Features
+- `lib/supabase/` — Supabase client helpers (server + admin)
 
 **Key Patterns:**
 - Turbopack dev server (`pnpm dev:seller`)
@@ -162,26 +197,22 @@ Mobile-first POS system for cashiers and sellers.
 
 #### **Admin App** (`apps/admin`)
 
-Manager/admin web dashboard for business operations.
+Manager/admin web dashboard for business operations. **Currently undergoing refactor — do not use as a pattern reference.**
 
 **Tech Stack:**
 - Recharts for sales analytics
 - Leaflet + Mapbox for geo-visualization
-- Analytics dashboard with hourly/daily summaries
 - OpenAPI schema export (zod-to-openapi)
 
 **Routes:**
-- `/{tenantSlug}/admin/dashboard` — Overview KPIs
+- `/{tenantSlug}/admin` — Overview dashboard
 - `/{tenantSlug}/admin/products` — Inventory management
 - `/{tenantSlug}/admin/orders` — Sales history
 - `/{tenantSlug}/admin/stores` — Location/branch management
-- `/{tenantSlug}/admin/analytics` — Sales trends, weather correlation
-- `/{tenantSlug}/admin/expenses` — Cost tracking
-
-**Key Patterns:**
-- Server components for data-heavy pages (fetch profile, list stores/products server-side)
-- Client components for interactive charts and forms
-- Middleware redirects based on user role
+- `/{tenantSlug}/admin/users` — User management
+- `/{tenantSlug}/admin/pos` — Admin POS view
+- `/{tenantSlug}/admin/settings` — Tenant settings
+- `/{tenantSlug}/admin/[storeId]` — Per-store drill-down (orders, pos, users)
 
 ### Shared Packages
 
@@ -190,18 +221,20 @@ Manager/admin web dashboard for business operations.
 Zod schema definitions for all domain entities. Structure: `{domain}/{schema,openapi}.ts`
 
 Domains:
-- **tenants** — Workspace creation/management
-- **orders** — Sales transactions
-- **products** + **product_categories** — Inventory
-- **stores** — Branch/location data
-- **users** + **profiles** — User info (generated from auth)
-- **payments** — Payment method enum
+- **tenants** — Workspace creation/management; includes `invites-schema.ts` and `user-assignments-schema.ts`
+- **orders** — Sales transactions; includes `order-list-schema.ts` for paginated list response
+- **products** — Inventory; includes `categories-schema.ts` for product categories
+- **stores** — Branch/location data; includes `user-assignments-schema.ts` for store user roles
+- **summaries** — Daily cash reconciliation and photo records; includes `photos-schema.ts`
+- **profiles** — Seller profile info
+- **users** — Auth user info
+- **payments** — Payment method enum + QRIS schemas
 - **expenses** — Cost entries
-- **analytics** — Summarized metrics
-- **customer_feedbacks** — Location-tagged reviews
+- **analytics** — Aggregated sales metrics (hourly, daily, product, day-of-week)
+- **customer-feedbacks** — Location-tagged reviews
 - **notifications** — System alerts
-- **weather** — Weather codes
-- **shared** — Common schemas (UUID, timestamp, error responses), feature flags, version
+- **weather** — Weather codes and forecast schemas
+- **shared** — Common schemas (UUID, timestamp, error responses), feature flags (`isEnabled()`), version, photo slot types
 
 #### **`packages/ui`**
 
@@ -210,7 +243,6 @@ Radix UI component library (buttons, dialogs, tables, avatars, etc.) + Tailwind 
 #### **`packages/db`**
 
 - `types.ts` — Supabase auto-generated TypeScript types (regenerate with `pnpm types:db`)
-- `aliases.ts` — Convenience exports for common types
 
 #### **`packages/utils`**
 
@@ -224,10 +256,57 @@ Radix UI component library (buttons, dialogs, tables, avatars, etc.) + Tailwind 
 
 #### **`packages/services`**
 
-Business logic services:
-- `weather.ts` — Tomorrow.io API integration (forecasts, current conditions)
-- `notifications.ts` — Alert system
-- `customer-feedbacks.ts` — Feedback + geo-location scoring
+Business logic services — each receives a `SupabaseClient` as first argument. No HTTP, no React.
+- `orders.ts` — Create orders, list with filters, attach items
+- `products.ts` — List products by tenant/store
+- `stores.ts` — List and look up stores
+- `summaries.ts` — Daily summary creation, update, breakdown; photo management
+- `expenses.ts` — Create and list expenses
+- `analytics.ts` — Aggregate sales by hour, day, product
+- `profiles.ts` — Fetch and update seller profiles
+- `notifications.ts` — Create, list, mark-read alerts
+- `customer-feedbacks.ts` — Submit feedback with geo-location scoring
+- `weather.ts` — Tomorrow.io API integration (forecasts, current conditions, cron jobs)
+
+### Layered Architecture Pattern
+
+The seller app enforces a strict 5-layer architecture. Each layer has one job and must not reach past the next layer.
+
+```
+service     packages/services/*.ts
+    ↓
+api route   apps/seller/app/api/**/route.ts
+    ↓
+api client  apps/seller/lib/api/*.ts
+    ↓
+hook        apps/seller/lib/hooks/**/*.ts
+    ↓
+component   apps/seller/app/**/…/page.tsx  or  _components/
+```
+
+**Layer rules:**
+
+| Layer | Job | May use | Must NOT use |
+|---|---|---|---|
+| **service** | DB queries, external API calls, business logic | `SupabaseClient`, `process.env`, `fetch()` to external APIs | React, `next/headers`, `apiFetch` |
+| **api route** | Auth check, validate input, call service, return response | service functions, Zod schemas, `NextResponse` | Raw Supabase queries, business logic |
+| **api client** | Wrap each API route in a typed function | `apiFetch()`, `buildParams()`, Zod `.parse()` | SWR, `useState`, React |
+| **hook** | Manage UI state and data lifecycle | api client functions, SWR `useSWR`/`mutate` | `fetch()` directly, Supabase, business logic |
+| **component** | Render UI | hooks, context | api clients, Supabase, `fetch()`, business logic |
+
+**Real examples (all in `apps/seller`):**
+
+- Service: `packages/services/orders.ts` — `listOrders(supabase, params)`, pure DB logic
+- Route: `app/api/orders/route.ts` — validates `ListOrdersQuery`, calls `listOrders`, returns JSON
+- API client: `lib/api/orders.ts` — `ordersApi.list(params)` calls `/api/orders`, Zod-parses response
+- Hook: `lib/hooks/orders/useStoreOrders.ts` — SWR key on `storeId+date`, calls `ordersApi.list`
+- Component: `app/[tenantSlug]/mobile/orders/_components/MobileOrders.tsx` — calls `useStoreOrders`
+
+**Note on server components:** Layouts and `page.tsx` files that are server components (no `"use client"`) may call `createRouteHandlerClient()` directly to fetch initial data for SSR — this is expected and correct. The no-Supabase-in-components rule applies to client components only.
+
+**Known violations / in-progress:**
+- `useQrisPayment.ts` correctly calls `paymentsApi` (api client layer) — conforms to the pattern.
+- Any hook file that imports from `@supabase/*` directly is a violation.
 
 ### Data Fetching & State
 
@@ -363,8 +442,9 @@ Direct Supabase client calls via `@supabase/supabase-js` in components and servi
 
 ### Feature Flags
 - Read from `NEXT_PUBLIC_FEATURES` env var as comma-separated list
-- Check in components with utility from `packages/features/shared/features.ts`
-- Example: `if (features.includes('qris')) { /* show QRIS payments */ }`
+- Use `isEnabled(feature)` from `packages/features/shared/features.ts`
+- Available flags: `"qris"` (QRIS payment flow), `"new-dashboard"`, `"export-pdf"`
+- Example: `if (isEnabled('qris')) { /* show QRIS payments */ }`
 
 ### Timezone Handling
 - All timestamps in DB are UTC
@@ -378,7 +458,9 @@ Direct Supabase client calls via `@supabase/supabase-js` in components and servi
 - `.env` — Environment variables (Supabase, API keys, feature flags)
 - `turbo.json` — Turbo build config and task pipelines
 - `apps/seller/middleware.ts` — Auth/tenant routing logic
+- `apps/seller/lib/api/client.ts` — `apiFetch()` and `buildParams()` used by all API clients
 - `packages/features/shared/common-schema.ts` — Base Zod schemas (UUID, timestamp, error)
+- `packages/features/shared/features.ts` — `isEnabled()` feature flag helper
 - `packages/db/types.ts` — Auto-gen Supabase types (read-only, regenerate with `pnpm types:db`)
 - `pnpm-workspace.yaml` — Workspace configuration
 
