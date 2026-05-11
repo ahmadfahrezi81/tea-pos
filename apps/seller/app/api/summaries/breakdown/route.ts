@@ -1,19 +1,19 @@
-import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { getServiceClient } from "@/lib/supabase/service";
 import { getCurrentTenantId } from "@tea-pos/utils/server-config/tenant";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { getSummaryBreakdown } from "@tea-pos/services/summaries";
+import { ok, badRequest, handleError } from "@/lib/api/response";
 
 export async function GET(request: NextRequest) {
     try {
-        const supabase = await createRouteHandlerClient();
+        const supabase = getServiceClient();
         const tenantId = await getCurrentTenantId();
         const summaryId = new URL(request.url).searchParams.get("summaryId");
-        if (!summaryId) return NextResponse.json({ error: "summaryId is required" }, { status: 400 });
+        if (!summaryId) return badRequest("summaryId is required");
 
         const data = await getSummaryBreakdown(supabase, { tenantId, summaryId });
-        return NextResponse.json(data);
+        return ok(data);
     } catch (error) {
-        const status = (error as { status?: number }).status ?? 500;
-        return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status });
+        return handleError("GET /api/summaries/breakdown", error);
     }
 }

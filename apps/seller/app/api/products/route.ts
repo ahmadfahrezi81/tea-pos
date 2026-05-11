@@ -1,22 +1,23 @@
-import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { getServiceClient } from "@/lib/supabase/service";
 import { getCurrentTenantId } from "@tea-pos/utils/server-config/tenant";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { ListProductsQuery, ProductListResponse } from "@tea-pos/features/products/schema";
 import { listProducts } from "@tea-pos/services/products";
+import { ok, badRequest, err, handleError } from "@/lib/api/response";
 
 export async function GET(request: NextRequest) {
     try {
-        const supabase = await createRouteHandlerClient();
+        const supabase = getServiceClient();
         const tenantId = await getCurrentTenantId();
         const query = ListProductsQuery.safeParse(Object.fromEntries(new URL(request.url).searchParams));
-        if (!query.success) return NextResponse.json({ error: "Invalid query parameters" }, { status: 400 });
+        if (!query.success) return badRequest("Invalid query parameters");
 
         const data = await listProducts(supabase, { tenantId, ...query.data });
         const parsed = ProductListResponse.safeParse({ products: data });
-        if (!parsed.success) return NextResponse.json({ error: "Invalid response shape" }, { status: 500 });
+        if (!parsed.success) return err("Invalid response shape");
 
-        return NextResponse.json(parsed.data);
+        return ok(parsed.data);
     } catch (error) {
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+        return handleError("GET /api/products", error);
     }
 }

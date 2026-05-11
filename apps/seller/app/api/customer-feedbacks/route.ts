@@ -1,31 +1,19 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { NextRequest } from "next/server";
+import { getServiceClient } from "@/lib/supabase/service";
+import { getRequestUser } from "@/lib/auth/get-request-user";
 import { getCurrentTenantId } from "@tea-pos/utils/server-config/tenant";
-import {
-    createCustomerFeedback,
-    listCustomerFeedbacks,
-} from "@tea-pos/services/customer-feedbacks";
+import { createCustomerFeedback, listCustomerFeedbacks } from "@tea-pos/services/customer-feedbacks";
 import {
     CreateCustomerFeedbackInput,
     ListCustomerFeedbacksQuery,
 } from "@tea-pos/features/customer-feedbacks/schema";
-
-// ─── GET /api/customer-feedbacks ─────────────────────────────────────────────
+import { ok, badRequest, err, unauthorized, handleError } from "@/lib/api/response";
 
 export async function GET(request: NextRequest) {
     try {
-        const supabase = await createRouteHandlerClient();
-        const {
-            data: { user },
-            error: userError,
-        } = await supabase.auth.getUser();
-
-        if (userError || !user) {
-            return NextResponse.json(
-                { error: "Unauthorized" },
-                { status: 401 },
-            );
-        }
+        const user = await getRequestUser();
+        if (!user) return unauthorized();
+        const supabase = getServiceClient();
 
         const { searchParams } = new URL(request.url);
         const parsed = ListCustomerFeedbacksQuery.safeParse({
@@ -34,83 +22,36 @@ export async function GET(request: NextRequest) {
             limit: searchParams.get("limit") ?? undefined,
             offset: searchParams.get("offset") ?? undefined,
         });
+        if (!parsed.success) return badRequest("Invalid query params");
 
-        if (!parsed.success) {
-            return NextResponse.json(
-                {
-                    error: "Invalid query params",
-                    details: parsed.error.format(),
-                },
-                { status: 400 },
-            );
-        }
+        const { data, total, error } = await listCustomerFeedbacks(supabase, parsed.data);
+        if (error) return err(error as string);
 
-        const { data, total, error } = await listCustomerFeedbacks(
-            supabase,
-            parsed.data,
-        );
-
-        if (error) return NextResponse.json({ error }, { status: 500 });
-
-        return NextResponse.json({ feedbacks: data, total });
+        return ok({ feedbacks: data, total });
     } catch (error) {
-        console.error("[GET /api/customer-feedbacks]", error);
-        return NextResponse.json(
-            { error: "Internal server error" },
-            { status: 500 },
-        );
+        return handleError("GET /api/customer-feedbacks", error);
     }
 }
 
-// ─── POST /api/customer-feedbacks ────────────────────────────────────────────
-
 export async function POST(request: NextRequest) {
     try {
-        const supabase = await createRouteHandlerClient();
-        const {
-            data: { user },
-            error: userError,
-        } = await supabase.auth.getUser();
-
-        if (userError || !user) {
-            return NextResponse.json(
-                { error: "Unauthorized" },
-                { status: 401 },
-            );
-        }
-
+        const user = await getRequestUser();
+        if (!user) return unauthorized();
+        const supabase = getServiceClient();
         const tenantId = await getCurrentTenantId();
 
-        const body = await request.json();
-        const parsed = CreateCustomerFeedbackInput.safeParse(body);
-
-        if (!parsed.success) {
-            return NextResponse.json(
-                {
-                    error: "Invalid request body",
-                    details: parsed.error.format(),
-                },
-                { status: 400 },
-            );
-        }
+        const parsed = CreateCustomerFeedbackInput.safeParse(await request.json());
+        if (!parsed.success) return badRequest("Invalid request body");
 
         const { data, error } = await createCustomerFeedback(supabase, {
             input: parsed.data,
             tenantId,
             userId: user.id,
         });
+        if (error) return err(error as string);
 
-        if (error) return NextResponse.json({ error }, { status: 500 });
-
-        return NextResponse.json(
-            { success: true, feedback: data },
-            { status: 201 },
-        );
+        return ok({ success: true, feedback: data }, 201);
     } catch (error) {
-        console.error("[POST /api/customer-feedbacks]", error);
-        return NextResponse.json(
-            { error: "Internal server error" },
-            { status: 500 },
-        );
+        return handleError("POST /api/customer-feedbacks", error);
     }
 }

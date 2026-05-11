@@ -1,6 +1,6 @@
-import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { getServiceClient } from "@/lib/supabase/service";
 import { getCurrentTenantId } from "@tea-pos/utils/server-config/tenant";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import {
     UploadSummaryPhotoInput, UploadSummaryPhotoResponse,
     DeleteSummaryPhotoResponse, ListSummaryPhotosQuery, ListSummaryPhotosResponse,
@@ -9,30 +9,26 @@ import {
     listSummaryPhotos, uploadSummaryPhoto, updateSummaryPhoto,
     deleteSummaryPhoto, validatePhotoFile,
 } from "@tea-pos/services/summaries";
-
-function errResponse(error: unknown) {
-    const status = (error as { status?: number }).status ?? 500;
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status });
-}
+import { ok, badRequest, err, handleError } from "@/lib/api/response";
 
 export async function GET(request: NextRequest) {
     try {
-        const supabase = await createRouteHandlerClient();
+        const supabase = getServiceClient();
         const tenantId = await getCurrentTenantId();
         const query = ListSummaryPhotosQuery.safeParse(Object.fromEntries(new URL(request.url).searchParams));
-        if (!query.success) return NextResponse.json({ error: "Invalid query parameters" }, { status: 400 });
+        if (!query.success) return badRequest("Invalid query parameters");
 
         const photos = await listSummaryPhotos(supabase, { tenantId, ...query.data });
         const parsed = ListSummaryPhotosResponse.safeParse({ photos });
-        if (!parsed.success) return NextResponse.json({ error: "Invalid response shape" }, { status: 500 });
+        if (!parsed.success) return err("Invalid response shape");
 
-        return NextResponse.json(parsed.data);
-    } catch (error) { return errResponse(error); }
+        return ok(parsed.data);
+    } catch (error) { return handleError("GET /api/summaries/photo", error); }
 }
 
 export async function POST(request: NextRequest) {
     try {
-        const supabase = await createRouteHandlerClient();
+        const supabase = getServiceClient();
         const tenantId = await getCurrentTenantId();
 
         const formData = await request.formData();
@@ -42,7 +38,7 @@ export async function POST(request: NextRequest) {
         let quantity = null;
         if (quantityRaw) {
             try { quantity = JSON.parse(quantityRaw); }
-            catch { return NextResponse.json({ error: "Invalid quantity format" }, { status: 400 }); }
+            catch { return badRequest("Invalid quantity format"); }
         }
 
         const input = UploadSummaryPhotoInput.safeParse({
@@ -52,11 +48,11 @@ export async function POST(request: NextRequest) {
             expenseId: (formData.get("expenseId") as string | null) ?? undefined,
             quantity: quantity ?? undefined,
         });
-        if (!input.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
-        if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 });
+        if (!input.success) return badRequest("Invalid input");
+        if (!file) return badRequest("No file provided");
 
         const fileError = validatePhotoFile(file);
-        if (fileError) return NextResponse.json({ error: fileError }, { status: 400 });
+        if (fileError) return badRequest(fileError);
 
         const photo = await uploadSummaryPhoto(supabase, {
             tenantId,
@@ -70,35 +66,35 @@ export async function POST(request: NextRequest) {
         });
 
         const parsed = UploadSummaryPhotoResponse.safeParse({ success: true, photo });
-        if (!parsed.success) return NextResponse.json({ error: "Invalid response shape" }, { status: 500 });
+        if (!parsed.success) return err("Invalid response shape");
 
-        return NextResponse.json(parsed.data, { status: 201 });
-    } catch (error) { return errResponse(error); }
+        return ok(parsed.data, 201);
+    } catch (error) { return handleError("POST /api/summaries/photo", error); }
 }
 
 export async function PATCH(request: NextRequest) {
     try {
-        const supabase = await createRouteHandlerClient();
+        const supabase = getServiceClient();
         const tenantId = await getCurrentTenantId();
         const { id, quantity } = await request.json();
-        if (!id) return NextResponse.json({ error: "Photo ID is required" }, { status: 400 });
+        if (!id) return badRequest("Photo ID is required");
 
         const photo = await updateSummaryPhoto(supabase, { tenantId, id, quantity });
-        return NextResponse.json({ success: true, photo });
-    } catch (error) { return errResponse(error); }
+        return ok({ success: true, photo });
+    } catch (error) { return handleError("PATCH /api/summaries/photo", error); }
 }
 
 export async function DELETE(request: NextRequest) {
     try {
-        const supabase = await createRouteHandlerClient();
+        const supabase = getServiceClient();
         const tenantId = await getCurrentTenantId();
         const id = new URL(request.url).searchParams.get("id");
-        if (!id) return NextResponse.json({ error: "Photo ID is required" }, { status: 400 });
+        if (!id) return badRequest("Photo ID is required");
 
         const photo = await deleteSummaryPhoto(supabase, { tenantId, id });
         const parsed = DeleteSummaryPhotoResponse.safeParse({ success: true, photo });
-        if (!parsed.success) return NextResponse.json({ error: "Invalid response shape" }, { status: 500 });
+        if (!parsed.success) return err("Invalid response shape");
 
-        return NextResponse.json(parsed.data);
-    } catch (error) { return errResponse(error); }
+        return ok(parsed.data);
+    } catch (error) { return handleError("DELETE /api/summaries/photo", error); }
 }

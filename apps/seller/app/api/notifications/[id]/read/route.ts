@@ -1,23 +1,19 @@
-import { createRouteHandlerClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { getServiceClient } from "@/lib/supabase/service";
+import { getRequestUser } from "@/lib/auth/get-request-user";
+import { NextRequest } from "next/server";
 import { MarkOneReadResponse } from "@tea-pos/features/notifications/schema";
+import { ok, badRequest, err, unauthorized, handleError } from "@/lib/api/response";
 
 export async function PATCH(
     _request: NextRequest,
     { params }: { params: Promise<{ id: string }> },
 ) {
     try {
-        const supabase = await createRouteHandlerClient();
+        const user = await getRequestUser();
+        if (!user) return unauthorized();
+
+        const supabase = getServiceClient();
         const { id } = await params;
-
-        const {
-            data: { user },
-            error: userError,
-        } = await supabase.auth.getUser();
-        if (userError || !user) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
         const readAt = new Date().toISOString();
 
         const { error } = await supabase.from("notification_reads").upsert(
@@ -30,23 +26,17 @@ export async function PATCH(
             { onConflict: "event_id,recipient_id" },
         );
 
-        if (error) {
-            return NextResponse.json({ error: error.message }, { status: 400 });
-        }
+        if (error) return badRequest(error.message);
 
         const parsed = MarkOneReadResponse.safeParse({
             success: true,
             notificationEventId: id,
             readAt,
         });
+        if (!parsed.success) return err("Invalid response shape");
 
-        if (!parsed.success) {
-            return NextResponse.json({ error: "Invalid response shape" }, { status: 500 });
-        }
-
-        return NextResponse.json(parsed.data);
+        return ok(parsed.data);
     } catch (error) {
-        console.error("Notification read PATCH error:", error);
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+        return handleError("PATCH /api/notifications/[id]/read", error);
     }
 }

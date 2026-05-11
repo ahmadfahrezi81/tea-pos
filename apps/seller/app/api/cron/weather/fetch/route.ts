@@ -1,10 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import {
     getTodayLocalDateStr,
     getCurrentLocalHour,
     upsertWeatherHour,
 } from "@tea-pos/services/weather";
-import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { getServiceClient } from "@/lib/supabase/service";
+import { ok, err, unauthorized } from "@/lib/api/response";
+import { logger } from "@/lib/utils/logger";
 
 const TZ_OFFSET = parseInt(process.env.TIMEZONE_OFFSET ?? "7");
 
@@ -18,42 +20,22 @@ const LOCATION = {
 export async function GET(request: NextRequest) {
     try {
         const authHeader = request.headers.get("authorization");
-        if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-            return NextResponse.json(
-                { error: "Unauthorized" },
-                { status: 401 },
-            );
-        }
+        if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) return unauthorized();
 
-        const supabase = await createRouteHandlerClient();
+        const supabase = getServiceClient();
         const apiKey = process.env.TOMORROW_IO_API_KEY;
-        if (!apiKey) {
-            return NextResponse.json(
-                { error: "Missing TOMORROW_IO_API_KEY" },
-                { status: 500 },
-            );
-        }
+        if (!apiKey) return err("Missing TOMORROW_IO_API_KEY");
 
         const weatherRes = await fetch(
             `https://api.tomorrow.io/v4/weather/forecast?location=${LOCATION.lat},${LOCATION.lng}&timesteps=1h&apikey=${apiKey}`,
         );
 
-        if (!weatherRes.ok) {
-            return NextResponse.json(
-                { error: "Failed to fetch weather data from Tomorrow.io" },
-                { status: 500 },
-            );
-        }
+        if (!weatherRes.ok) return err("Failed to fetch weather data from Tomorrow.io");
 
         const weatherData = await weatherRes.json();
         const hourlyData = weatherData?.timelines?.hourly;
 
-        if (!hourlyData || hourlyData.length === 0) {
-            return NextResponse.json(
-                { error: "No hourly forecast data available" },
-                { status: 500 },
-            );
-        }
+        if (!hourlyData || hourlyData.length === 0) return err("No hourly forecast data available");
 
         const todayDateStr = getTodayLocalDateStr();
         const currentLocalHour = getCurrentLocalHour();
@@ -92,7 +74,6 @@ export async function GET(request: NextRequest) {
                 }) => {
                     if (utcDate > cutoffTime) return false;
                     if (localDateStr === todayDateStr) {
-                        // skip current hour — owned by realtime cron
                         return localHour > currentLocalHour;
                     }
                     return true;
@@ -145,14 +126,11 @@ export async function GET(request: NextRequest) {
 
         const failed = results.filter((r) => r.status === "rejected");
         failed.forEach((r) =>
-            console.error(
-                "[cron] upsert failed:",
-                (r as PromiseRejectedResult).reason,
-            ),
+            logger.error("GET /api/cron/weather/fetch upsert failed", (r as PromiseRejectedResult).reason),
         );
         const succeeded = results.length - failed.length;
 
-        return NextResponse.json({
+        return ok({
             success: true,
             date: todayDateStr,
             hoursUpserted: succeeded,
@@ -161,10 +139,7 @@ export async function GET(request: NextRequest) {
             hoursFailed: failed.length,
         });
     } catch (error) {
-        console.error("[cron/weather/fetch]", error);
-        return NextResponse.json(
-            { error: "Internal server error" },
-            { status: 500 },
-        );
+        logger.error("GET /api/cron/weather/fetch", error);
+        return err("Internal server error");
     }
 }

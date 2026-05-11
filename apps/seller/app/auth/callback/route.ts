@@ -1,4 +1,4 @@
-import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { getSSRClient } from "@/lib/supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
     const code = searchParams.get("code");
 
     if (code) {
-        const supabase = await createRouteHandlerClient();
+        const supabase = await getSSRClient();
         const { data, error } =
             await supabase.auth.exchangeCodeForSession(code);
 

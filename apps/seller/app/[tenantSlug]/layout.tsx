@@ -1,4 +1,4 @@
-import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { getSSRClient } from "@/lib/supabase/ssr";
 import { notFound, redirect } from "next/navigation";
 import { TenantProvider } from "./TenantProvider";
 import Link from "next/link";
@@ -11,7 +11,7 @@ export default async function TenantLayout({
     params: Promise<{ tenantSlug: string }>;
 }) {
     const { tenantSlug } = await params;
-    const supabase = await createRouteHandlerClient();
+    const supabase = await getSSRClient();
 
     // Fetch tenant info
     const { data: tenant, error: tenantError } = await supabase

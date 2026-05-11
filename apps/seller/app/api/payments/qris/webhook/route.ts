@@ -1,48 +1,35 @@
-// app/api/payments/qris/webhook/route.ts
-import { createAdminClient } from "@/lib/supabase/admin";
-import { NextRequest, NextResponse } from "next/server";
+import { getServiceClient } from "@/lib/supabase/service";
+import { NextRequest } from "next/server";
 import { XenditQrisWebhookPayload } from "@tea-pos/features/payments/schema";
+import { ok, badRequest, unauthorized } from "@/lib/api/response";
+import { logger } from "@/lib/utils/logger";
 
-// ============================================================================
-// POST /api/payments/qris/webhook
-// Xendit calls this when a QR payment is paid
-// ============================================================================
 export async function POST(request: NextRequest) {
     try {
-        // verify webhook token
         const webhookToken = request.headers.get("x-callback-token");
         if (webhookToken !== process.env.XENDIT_WEBHOOK_TOKEN) {
-            console.error("Invalid webhook token");
-            return NextResponse.json(
-                { error: "Unauthorized" },
-                { status: 401 },
-            );
+            logger.error("POST /api/payments/qris/webhook invalid token");
+            return unauthorized();
         }
 
         const body = await request.json();
-
-        console.log("Webhook body:", JSON.stringify(body, null, 2)); // ← add here
+        logger.info("POST /api/payments/qris/webhook", body);
 
         const result = XenditQrisWebhookPayload.safeParse(body);
         if (!result.success) {
-            console.error("Webhook payload invalid:", result.error);
-            return NextResponse.json(
-                { error: "Invalid payload" },
-                { status: 400 },
-            );
+            logger.error("POST /api/payments/qris/webhook invalid payload", result.error);
+            return badRequest("Invalid payload");
         }
 
         const { qr_id, status, amount } = result.data.data;
 
-        // only process SUCCEEDED
         if (status !== "SUCCEEDED") {
-            return NextResponse.json({ success: true });
+            return ok({ success: true });
         }
 
-        const adminSupabase = createAdminClient();
+        const supabase = getServiceClient();
 
-        // fetch payment row
-        const { data: payment, error: paymentError } = await adminSupabase
+        const { data: payment, error: paymentError } = await supabase
             .from("payments")
             .select("*")
             .eq("xendit_qr_id", qr_id)
@@ -50,12 +37,10 @@ export async function POST(request: NextRequest) {
             .single();
 
         if (paymentError || !payment) {
-            console.error("Payment not found for qr_id:", qr_id);
-            // return 200 to Xendit anyway — don't retry
-            return NextResponse.json({ success: true });
+            logger.error("POST /api/payments/qris/webhook payment not found", { qr_id });
+            return ok({ success: true });
         }
 
-        // parse pending_items
         const pendingItems = payment.pending_items as Array<{
             productId: string;
             quantity: number;
@@ -63,12 +48,11 @@ export async function POST(request: NextRequest) {
         }> | null;
 
         if (!pendingItems || pendingItems.length === 0) {
-            console.error("No pending items for payment:", payment.id);
-            return NextResponse.json({ success: true });
+            logger.error("POST /api/payments/qris/webhook no pending items", { paymentId: payment.id });
+            return ok({ success: true });
         }
 
-        // create order
-        const { data: orderData, error: orderError } = await adminSupabase
+        const { data: orderData, error: orderError } = await supabase
             .from("orders")
             .insert({
                 store_id: payment.store_id,
@@ -81,14 +65,11 @@ export async function POST(request: NextRequest) {
             .single();
 
         if (orderError || !orderData) {
-            console.error("Order creation failed:", orderError);
-            return NextResponse.json(
-                { error: "Order creation failed" },
-                { status: 500 },
-            );
+            logger.error("POST /api/payments/qris/webhook order creation failed", orderError);
+            // always 200 to Xendit
+            return ok({ success: true });
         }
 
-        // create order_items
         const orderItems = pendingItems.map((item) => ({
             order_id: orderData.id,
             product_id: item.productId,
@@ -98,18 +79,12 @@ export async function POST(request: NextRequest) {
             tenant_id: payment.tenant_id,
         }));
 
-        const { error: itemsError } = await adminSupabase
-            .from("order_items")
-            .insert(orderItems);
-
+        const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
         if (itemsError) {
-            console.error("Order items creation failed:", itemsError);
-            // order exists but items failed — log and continue
-            // in production you'd want to alert on this
+            logger.error("POST /api/payments/qris/webhook order items failed", itemsError);
         }
 
-        // update payment — link order_id, clear pending_items, mark succeeded
-        const { error: updateError } = await adminSupabase
+        const { error: updateError } = await supabase
             .from("payments")
             .update({
                 status: "succeeded",
@@ -120,13 +95,13 @@ export async function POST(request: NextRequest) {
             .eq("id", payment.id);
 
         if (updateError) {
-            console.error("Payment update failed:", updateError);
+            logger.error("POST /api/payments/qris/webhook payment update failed", updateError);
         }
 
-        return NextResponse.json({ success: true });
+        return ok({ success: true });
     } catch (error) {
-        console.error("Webhook error:", error);
-        // always return 200 to Xendit to prevent retries on our bugs
-        return NextResponse.json({ success: true });
+        logger.error("POST /api/payments/qris/webhook", error);
+        // always 200 to Xendit to prevent retries on our bugs
+        return ok({ success: true });
     }
 }

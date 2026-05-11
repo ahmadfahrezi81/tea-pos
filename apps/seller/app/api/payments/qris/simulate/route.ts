@@ -1,40 +1,22 @@
-// app/api/payments/qris/simulate/route.ts
-import { createRouteHandlerClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { getRequestUser } from "@/lib/auth/get-request-user";
+import { NextRequest } from "next/server";
 import { z } from "zod";
+import { ok, badRequest, err, unauthorized, handleError } from "@/lib/api/response";
+import { logger } from "@/lib/utils/logger";
 
 const SimulateInput = z.object({
     xenditQrId: z.string(),
     amount: z.number(),
 });
 
-// ============================================================================
-// POST /api/payments/qris/simulate
-// Staging only — triggered from UI via feature flag (qris)
-// ============================================================================
 export async function POST(request: NextRequest) {
     try {
-        const supabase = await createRouteHandlerClient();
-
-        const {
-            data: { user },
-            error: userError,
-        } = await supabase.auth.getUser();
-        if (userError || !user) {
-            return NextResponse.json(
-                { error: "Unauthorized" },
-                { status: 401 },
-            );
-        }
+        const user = await getRequestUser();
+        if (!user) return unauthorized();
 
         const body = await request.json();
         const result = SimulateInput.safeParse(body);
-        if (!result.success) {
-            return NextResponse.json(
-                { error: "Validation failed", details: result.error.format() },
-                { status: 400 },
-            );
-        }
+        if (!result.success) return badRequest("Validation failed");
 
         const { xenditQrId, amount } = result.data;
 
@@ -45,29 +27,19 @@ export async function POST(request: NextRequest) {
                 headers: {
                     "Content-Type": "application/json",
                     "api-version": "2022-07-31",
-                    Authorization: `Basic ${Buffer.from(
-                        `${process.env.XENDIT_API_KEY}:`,
-                    ).toString("base64")}`,
+                    Authorization: `Basic ${Buffer.from(`${process.env.XENDIT_API_KEY}:`).toString("base64")}`,
                 },
                 body: JSON.stringify({ amount }),
             },
         );
 
         if (!xenditResponse.ok) {
-            const xenditError = await xenditResponse.json();
-            console.error("Xendit simulate error:", xenditError);
-            return NextResponse.json(
-                { error: "Simulate failed" },
-                { status: 502 },
-            );
+            logger.error("POST /api/payments/qris/simulate Xendit error", await xenditResponse.json());
+            return err("Simulate failed", 502);
         }
 
-        return NextResponse.json({ success: true });
+        return ok({ success: true });
     } catch (error) {
-        console.error(error);
-        return NextResponse.json(
-            { error: "Internal server error" },
-            { status: 500 },
-        );
+        return handleError("POST /api/payments/qris/simulate", error);
     }
 }

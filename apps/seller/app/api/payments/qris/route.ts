@@ -1,24 +1,22 @@
-// app/api/payments/qris/route.ts
-import { createRouteHandlerClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getServiceClient } from "@/lib/supabase/service";
+import { getRequestUser } from "@/lib/auth/get-request-user";
 import { getCurrentTenantId } from "@tea-pos/utils/server-config/tenant";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import {
     CreateQrisPaymentInput,
     CreateQrisPaymentResponse,
 } from "@tea-pos/features/payments/schema";
+import { ok, badRequest, err, unauthorized, handleError } from "@/lib/api/response";
+import { logger } from "@/lib/utils/logger";
 
-// ============================================================================
-// GET /api/payments/qris?paymentId=...
-// ============================================================================
 export async function GET(request: NextRequest) {
     try {
-        const supabase = await createRouteHandlerClient();
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const user = await getRequestUser();
+        if (!user) return unauthorized();
+        const supabase = getServiceClient();
 
         const paymentId = new URL(request.url).searchParams.get("paymentId");
-        if (!paymentId) return NextResponse.json({ error: "paymentId is required" }, { status: 400 });
+        if (!paymentId) return badRequest("paymentId is required");
 
         const { data, error } = await supabase
             .from("payments")
@@ -27,47 +25,27 @@ export async function GET(request: NextRequest) {
             .eq("user_id", user.id)
             .single();
 
-        if (error || !data) return NextResponse.json({ error: "Payment not found" }, { status: 404 });
+        if (error || !data) return err("Payment not found", 404);
 
-        return NextResponse.json({ status: data.status });
+        return ok({ status: data.status });
     } catch (error) {
-        console.error(error);
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+        return handleError("GET /api/payments/qris", error);
     }
 }
 
-// ============================================================================
-// POST /api/payments/qris
-// ============================================================================
 export async function POST(request: NextRequest) {
     try {
-        const supabase = await createRouteHandlerClient();
+        const user = await getRequestUser();
+        if (!user) return unauthorized();
+        const supabase = getServiceClient();
         const currentTenantId = await getCurrentTenantId();
         const body = await request.json();
 
         const result = CreateQrisPaymentInput.safeParse(body);
-        if (!result.success) {
-            return NextResponse.json(
-                { error: "Validation failed", details: result.error.format() },
-                { status: 400 },
-            );
-        }
+        if (!result.success) return badRequest("Validation failed");
 
         const { storeId, items } = result.data;
 
-        // auth
-        const {
-            data: { user },
-            error: userError,
-        } = await supabase.auth.getUser();
-        if (userError || !user) {
-            return NextResponse.json(
-                { error: "Unauthorized" },
-                { status: 401 },
-            );
-        }
-
-        // verify store belongs to tenant
         const { data: store, error: storeError } = await supabase
             .from("stores")
             .select("id, tenant_id")
@@ -75,14 +53,8 @@ export async function POST(request: NextRequest) {
             .eq("tenant_id", currentTenantId)
             .single();
 
-        if (storeError || !store) {
-            return NextResponse.json(
-                { error: "Store not found or access denied" },
-                { status: 404 },
-            );
-        }
+        if (storeError || !store) return err("Store not found or access denied", 404);
 
-        // seller role check
         const { data: storeAccess } = await supabase
             .from("user_store_assignments")
             .select("id")
@@ -91,14 +63,8 @@ export async function POST(request: NextRequest) {
             .eq("role", "seller")
             .single();
 
-        if (!storeAccess) {
-            return NextResponse.json(
-                { error: "Access denied - seller role required" },
-                { status: 403 },
-            );
-        }
+        if (!storeAccess) return err("Access denied - seller role required", 403);
 
-        // validate products belong to tenant and are active
         const productIds = items.map((i) => i.productId);
         const { data: products, error: productsError } = await supabase
             .from("products")
@@ -107,63 +73,34 @@ export async function POST(request: NextRequest) {
             .eq("tenant_id", currentTenantId)
             .eq("is_active", true);
 
-        if (
-            productsError ||
-            !products ||
-            products.length !== productIds.length
-        ) {
-            return NextResponse.json(
-                { error: "Some products are invalid or inactive" },
-                { status: 400 },
-            );
+        if (productsError || !products || products.length !== productIds.length) {
+            return badRequest("Some products are invalid or inactive");
         }
 
-        // validate prices match DB
         const productMap = new Map(products.map((p) => [p.id, p.price]));
         for (const item of items) {
             const dbPrice = productMap.get(item.productId);
-            if (dbPrice === undefined) {
-                return NextResponse.json(
-                    { error: `Product ${item.productId} not found` },
-                    { status: 400 },
-                );
-            }
-            if (Math.abs(dbPrice - item.unitPrice) > 0.01) {
-                return NextResponse.json(
-                    { error: `Price mismatch for product ${item.productId}` },
-                    { status: 400 },
-                );
-            }
+            if (dbPrice === undefined) return badRequest(`Product ${item.productId} not found`);
+            if (Math.abs(dbPrice - item.unitPrice) > 0.01) return badRequest(`Price mismatch for product ${item.productId}`);
         }
 
-        // calculate total
-        const totalAmount = items.reduce(
-            (sum, i) => sum + i.unitPrice * i.quantity,
-            0,
-        );
+        const totalAmount = items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
 
-        // expire any existing pending payments for this user+store
-        // so old QRs don't linger
-        const adminSupabase = createAdminClient();
-        await adminSupabase
+        await supabase
             .from("payments")
             .update({ status: "expired" })
             .eq("user_id", user.id)
             .eq("store_id", storeId)
             .eq("status", "pending");
 
-        // unique reference id
         const referenceId = `tea-pos-${storeId.slice(0, 8)}-${Date.now()}`;
 
-        // call Xendit
         const xenditResponse = await fetch("https://api.xendit.co/qr_codes", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "api-version": "2022-07-31",
-                Authorization: `Basic ${Buffer.from(
-                    `${process.env.XENDIT_API_KEY}:`,
-                ).toString("base64")}`,
+                Authorization: `Basic ${Buffer.from(`${process.env.XENDIT_API_KEY}:`).toString("base64")}`,
             },
             body: JSON.stringify({
                 reference_id: referenceId,
@@ -174,18 +111,13 @@ export async function POST(request: NextRequest) {
         });
 
         if (!xenditResponse.ok) {
-            const xenditError = await xenditResponse.json();
-            console.error("Xendit error:", xenditError);
-            return NextResponse.json(
-                { error: "Failed to create QR payment" },
-                { status: 502 },
-            );
+            logger.error("POST /api/payments/qris Xendit error", await xenditResponse.json());
+            return err("Failed to create QR payment", 502);
         }
 
         const xenditData = await xenditResponse.json();
 
-        // insert payment row with pending_items
-        const { data: paymentData, error: paymentError } = await adminSupabase
+        const { data: paymentData, error: paymentError } = await supabase
             .from("payments")
             .insert({
                 xendit_qr_id: xenditData.id,
@@ -207,11 +139,8 @@ export async function POST(request: NextRequest) {
             .single();
 
         if (paymentError || !paymentData) {
-            console.error("Payment insert error:", paymentError);
-            return NextResponse.json(
-                { error: "Failed to store payment" },
-                { status: 500 },
-            );
+            logger.error("POST /api/payments/qris payment insert", paymentError);
+            return err("Failed to store payment");
         }
 
         const response = {
@@ -226,19 +155,12 @@ export async function POST(request: NextRequest) {
 
         const parsed = CreateQrisPaymentResponse.safeParse(response);
         if (!parsed.success) {
-            console.error("Response validation failed:", parsed.error);
-            return NextResponse.json(
-                { error: "Invalid response shape" },
-                { status: 500 },
-            );
+            logger.error("POST /api/payments/qris response validation", parsed.error);
+            return err("Invalid response shape");
         }
 
-        return NextResponse.json(parsed.data, { status: 201 });
+        return ok(parsed.data, 201);
     } catch (error) {
-        console.error(error);
-        return NextResponse.json(
-            { error: "Internal server error" },
-            { status: 500 },
-        );
+        return handleError("POST /api/payments/qris", error);
     }
 }
