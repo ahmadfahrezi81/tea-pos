@@ -1,10 +1,15 @@
+import { getSSRClient } from "@/lib/supabase/ssr";
 import { ok, handleError } from "@/lib/api/response";
 
 export async function POST() {
     try {
+        const supabase = await getSSRClient();
+        await supabase.auth.signOut();
+
         const response = ok({ success: true });
         response.cookies.set("x-user-info", "", { path: "/", maxAge: 0 });
         response.cookies.set("x-tenant-id", "", { path: "/", maxAge: 0 });
+        response.cookies.set("x-tenant-access", "", { path: "/", maxAge: 0 });
         return response;
     } catch (error) {
         return handleError("POST /api/auth/signout", error);
