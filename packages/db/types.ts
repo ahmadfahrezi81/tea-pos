@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "13.0.4"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -798,7 +798,6 @@ export type Database = {
           created_at: string | null
           id: string
           is_default: boolean
-          role: string
           store_id: string
           user_id: string
         }
@@ -806,7 +805,6 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_default?: boolean
-          role?: string
           store_id: string
           user_id: string
         }
@@ -814,7 +812,6 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_default?: boolean
-          role?: string
           store_id?: string
           user_id?: string
         }
@@ -839,21 +836,18 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
-          role: string
           tenant_id: string
           user_id: string
         }
         Insert: {
           created_at?: string | null
           id?: string
-          role: string
           tenant_id: string
           user_id: string
         }
         Update: {
           created_at?: string | null
           id?: string
-          role?: string
           tenant_id?: string
           user_id?: string
         }
@@ -924,7 +918,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      user_tenant_ids: { Args: never; Returns: string[] }
     }
     Enums: {
       [_ in never]: never

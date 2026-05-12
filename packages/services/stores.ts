@@ -6,7 +6,7 @@ import { toCamelKeys } from "@tea-pos/utils/schemas";
 export async function listUserStores(supabase: SupabaseClient, { tenantId, userId }: { tenantId: string; userId: string }) {
     const { data: assignments, error: assignmentsError } = await supabase
         .from("user_store_assignments")
-        .select("user_id, store_id, role, is_default")
+        .select("user_id, store_id, is_default")
         .eq("user_id", userId);
 
     if (assignmentsError) throw assignmentsError;
@@ -21,10 +21,10 @@ export async function listUserStores(supabase: SupabaseClient, { tenantId, userI
     if (storesError) throw storesError;
     if (usersError) throw usersError;
 
-    const assignmentsByStore: Record<string, Array<{ user_id: string; role: string; is_default: boolean }>> = {};
+    const assignmentsByStore: Record<string, Array<{ user_id: string; is_default: boolean }>> = {};
     (assignments ?? []).forEach((a) => {
         if (!assignmentsByStore[a.store_id]) assignmentsByStore[a.store_id] = [];
-        assignmentsByStore[a.store_id].push({ user_id: a.user_id, role: a.role, is_default: a.is_default });
+        assignmentsByStore[a.store_id].push({ user_id: a.user_id, is_default: a.is_default });
     });
 
     return {

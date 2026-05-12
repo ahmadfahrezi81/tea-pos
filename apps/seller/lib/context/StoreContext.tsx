@@ -2,10 +2,6 @@
 import { createContext, useContext, useState, useMemo } from "react";
 import { useStores } from "@/lib/hooks/stores/useStores";
 import { useAuth } from "@/lib/context/AuthContext";
-import {
-    hasSellerRoleInStore,
-    hasManagerRoleInStore,
-} from "@tea-pos/utils/roleUtils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -43,15 +39,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         [storesData],
     );
 
-    const assignedStores = useMemo(
-        () =>
-            stores.filter(
-                (store) =>
-                    hasSellerRoleInStore(userId, store.id, assignments) ||
-                    hasManagerRoleInStore(userId, store.id, assignments),
-            ),
-        [stores, assignments, userId],
-    );
+    const assignedStores = stores;
 
     const defaultStoreId = useMemo(() => {
         const found = stores.find((store) =>
@@ -103,7 +91,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             isPickerOpen,
             setIsPickerOpen,
         }),
-        [resolvedStoreId, selectedStore, assignedStores, stores, isPickerOpen],
+        [resolvedStoreId, selectedStore, stores, isPickerOpen],
     );
 
     return (

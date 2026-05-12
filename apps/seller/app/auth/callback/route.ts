@@ -22,19 +22,7 @@ export async function GET(request: NextRequest) {
                 : tenantsData;
 
             if (firstTenant?.slug) {
-                const { data: storeAssignments } = await supabase
-                    .from("user_store_assignments")
-                    .select("role")
-                    .eq("user_id", data.user.id);
-
-                const hasSeller = storeAssignments?.some(
-                    (a) => a.role === "seller",
-                );
-                const targetPath = hasSeller
-                    ? `/${firstTenant.slug}/mobile/pos`
-                    : `/${firstTenant.slug}/mobile/profile`;
-
-                const redirectUrl = new URL(targetPath, origin);
+                const redirectUrl = new URL(`/${firstTenant.slug}/mobile/pos`, origin);
                 return NextResponse.redirect(redirectUrl);
             }
         }

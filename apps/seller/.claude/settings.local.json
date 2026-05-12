@@ -3,7 +3,12 @@
     "allow": [
       "Read(//Volumes/DevSSD/Projects/Personal/tea-pos/packages/features/summaries/**)",
       "Read(//Volumes/DevSSD/Projects/Personal/tea-pos/packages/features/profiles/**)",
-      "Read(//Volumes/DevSSD/Projects/Personal/tea-pos/packages/features/shared/**)"
+      "Read(//Volumes/DevSSD/Projects/Personal/tea-pos/packages/features/shared/**)",
+      "Bash(xargs ls)",
+      "Read(//Volumes/DevSSD/Projects/Personal/tea-pos/**)",
+      "Bash(pnpm --filter @tea-pos/services exec tsc --noEmit)",
+      "Bash(pnpm --filter @tea-pos/features exec tsc --noEmit)",
+      "Bash(npx tsc *)"
     ]
   }
 }

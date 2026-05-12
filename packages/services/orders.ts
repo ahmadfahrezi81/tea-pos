@@ -66,10 +66,9 @@ export async function createOrder(supabase: SupabaseClient, params: CreateOrderP
         .select("id")
         .eq("user_id", userId)
         .eq("store_id", storeId)
-        .eq("role", "seller")
         .single();
 
-    if (!storeAccess) throw new Error("Access denied - seller role required for this store");
+    if (!storeAccess) throw new Error("Access denied - not assigned to this store");
 
     const productIds = items.map((i) => i.productId);
     const { data: products, error: productsError } = await supabase

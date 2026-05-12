@@ -118,44 +118,9 @@ export default function MobileProfileStores() {
                                         {store.name}
                                     </span>
 
-                                    {assignments[store.id] ? (
-                                        <div className="flex gap-2 flex-wrap justify-end">
-                                            {assignments[store.id].map(
-                                                (assignment, index: number) => (
-                                                    <span
-                                                        key={index}
-                                                        className="flex items-center space-x-2"
-                                                    >
-                                                        <span
-                                                            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                                assignment.role ===
-                                                                "manager"
-                                                                    ? "bg-blue-100 text-blue-700"
-                                                                    : assignment.role ===
-                                                                        "seller"
-                                                                      ? "bg-green-100 text-green-700"
-                                                                      : "bg-gray-100 text-gray-700"
-                                                            }`}
-                                                        >
-                                                            {assignment.role
-                                                                .charAt(0)
-                                                                .toUpperCase() +
-                                                                assignment.role.slice(
-                                                                    1,
-                                                                )}
-                                                        </span>
-                                                        {assignment.isDefault && (
-                                                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                                                Default
-                                                            </span>
-                                                        )}
-                                                    </span>
-                                                ),
-                                            )}
-                                        </div>
-                                    ) : (
-                                        <span className="text-xs text-gray-400">
-                                            No roles assigned
+                                    {assignments[store.id]?.some((a) => a.isDefault) && (
+                                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                            Default
                                         </span>
                                     )}
                                 </div>
