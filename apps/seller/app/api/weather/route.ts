@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { NextRequest } from "next/server";
+import { getServiceClient } from "@/lib/supabase/service";
+import { getRequestUser } from "@/lib/auth/get-request-user";
 import {
     getTodayLocalDateStr,
     getWeatherForDate,
@@ -7,18 +8,15 @@ import {
     WeatherHourlyRow,
 } from "@tea-pos/services/weather";
 import { WeatherHourlyResponse } from "@tea-pos/features/weather/schema";
-
-// ─── Shared helper ────────────────────────────────────────────────────────────
+import { ok, err, unauthorized, handleError } from "@/lib/api/response";
+import { logger } from "@/lib/utils/logger";
 
 function buildPayload(hourly: WeatherHourlyRow[], date: string) {
-    let tempMax = -Infinity,
-        tempMin = Infinity,
-        maxPrecip = 0;
+    let tempMax = -Infinity, tempMin = Infinity, maxPrecip = 0;
     for (const h of hourly) {
         if (h.temperature > tempMax) tempMax = h.temperature;
         if (h.temperature < tempMin) tempMin = h.temperature;
-        if (h.precipitationProbability > maxPrecip)
-            maxPrecip = h.precipitationProbability;
+        if (h.precipitationProbability > maxPrecip) maxPrecip = h.precipitationProbability;
     }
     return {
         date,
@@ -34,31 +32,17 @@ function buildPayload(hourly: WeatherHourlyRow[], date: string) {
 function validateAndRespond(hourly: WeatherHourlyRow[], date: string) {
     const parsed = WeatherHourlyResponse.safeParse(buildPayload(hourly, date));
     if (!parsed.success) {
-        console.error("[GET /api/weather] Validation failed:", parsed.error);
-        return NextResponse.json(
-            { error: "Invalid response shape", details: parsed.error.format() },
-            { status: 500 },
-        );
+        logger.error("GET /api/weather validation failed", parsed.error);
+        return err("Invalid response shape");
     }
-    return NextResponse.json(parsed.data);
+    return ok(parsed.data);
 }
-
-// ─── GET /api/weather ─────────────────────────────────────────────────────────
 
 export async function GET(request: NextRequest) {
     try {
-        const supabase = await createRouteHandlerClient();
-        const {
-            data: { user },
-            error: userError,
-        } = await supabase.auth.getUser();
-
-        if (userError || !user) {
-            return NextResponse.json(
-                { error: "Unauthorized" },
-                { status: 401 },
-            );
-        }
+        const user = await getRequestUser();
+        if (!user) return unauthorized();
+        const supabase = getServiceClient();
 
         const { searchParams } = new URL(request.url);
         const hoursParam = searchParams.get("hours");
@@ -66,37 +50,19 @@ export async function GET(request: NextRequest) {
 
         if (hoursParam !== null) {
             const hours = Math.min(parseInt(hoursParam), 48);
-            const { data: hourly, error } = await getWeatherNextHours(
-                supabase,
-                hours,
-            );
-
-            if (error) return NextResponse.json({ error }, { status: 500 });
-            if (!hourly?.length)
-                return NextResponse.json(
-                    { error: "No weather data found" },
-                    { status: 404 },
-                );
-
+            const { data: hourly, error } = await getWeatherNextHours(supabase, hours);
+            if (error) return err(error as string);
+            if (!hourly?.length) return err("No weather data found", 404);
             return validateAndRespond(hourly, hourly[0].date);
         }
 
         const date = dateParam ?? getTodayLocalDateStr();
         const { data: hourly, error } = await getWeatherForDate(supabase, date);
-
-        if (error) return NextResponse.json({ error }, { status: 500 });
-        if (!hourly?.length)
-            return NextResponse.json(
-                { error: "No weather data found for this date" },
-                { status: 404 },
-            );
+        if (error) return err(error as string);
+        if (!hourly?.length) return err("No weather data found for this date", 404);
 
         return validateAndRespond(hourly, date);
     } catch (error) {
-        console.error("[GET /api/weather]", error);
-        return NextResponse.json(
-            { error: "Internal server error" },
-            { status: 500 },
-        );
+        return handleError("GET /api/weather", error);
     }
 }

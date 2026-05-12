@@ -3,30 +3,24 @@ import { NextResponse, type NextRequest } from "next/server";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const RESERVED_SLUGS = ["api", "login", "docs", "_next", "unauthorized"];
-
+const RESERVED_SLUGS = new Set([
+    "api",
+    "login",
+    "docs",
+    "_next",
+    "unauthorized",
+]);
 const STATIC_PREFIXES = ["/_next", "/api", "/auth", "/icons", "/manifest"];
 
-const ALLOWED_ROLES = ["USER", "ADMIN"];
+// Roles allowed to access the seller app.
+// DRIVER and SUPPLIER have their own separate apps.
+const ALLOWED_ROLES = new Set(["USER", "ADMIN"]);
 
 const USER_COOKIE_TTL = 60 * 60 * 24 * 7; // 7 days
 const TENANT_COOKIE_TTL = 60 * 60 * 24; // 24h
 const TENANT_ACCESS_TTL = 60 * 60; // 1h
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function setTenantAccessCookie(
-    response: NextResponse,
-    key: string,
-) {
-    response.cookies.set("x-tenant-access", key, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: TENANT_ACCESS_TTL,
-        path: "/",
-    });
-}
 
 function setUserCookie(
     response: NextResponse,
@@ -49,7 +43,17 @@ function setUserCookie(
     );
 }
 
-const redirect = (path: string, req: NextRequest) =>
+function setTenantAccessCookie(response: NextResponse, key: string) {
+    response.cookies.set("x-tenant-access", key, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: TENANT_ACCESS_TTL,
+        path: "/",
+    });
+}
+
+const redirectTo = (path: string, req: NextRequest) =>
     NextResponse.redirect(new URL(path, req.url));
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
@@ -57,7 +61,7 @@ const redirect = (path: string, req: NextRequest) =>
 export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
-    // Skip static assets
+    // Skip static assets early — no auth needed
     if (
         STATIC_PREFIXES.some((p) => pathname.startsWith(p)) ||
         pathname === "/favicon.ico"
@@ -92,10 +96,9 @@ export async function proxy(request: NextRequest) {
     );
 
     const tenantSlug = pathname.split("/").filter(Boolean)[0];
-    const shouldResolveTenant =
-        tenantSlug && !RESERVED_SLUGS.includes(tenantSlug);
+    const shouldResolveTenant = tenantSlug && !RESERVED_SLUGS.has(tenantSlug);
 
-    // ── Tenant + auth in parallel ─────────────────────────────────────────────
+    // ── Auth + tenant lookup in parallel ─────────────────────────────────────
     const [
         {
             data: { user },
@@ -112,7 +115,7 @@ export async function proxy(request: NextRequest) {
             : Promise.resolve({ data: null }),
     ]);
 
-    // Cache tenant ID in cookie
+    // ── Tenant cookie ─────────────────────────────────────────────────────────
     const tenantId =
         tenantResult.data?.id ??
         request.cookies.get("x-tenant-id")?.value ??
@@ -129,32 +132,25 @@ export async function proxy(request: NextRequest) {
         response.cookies.delete("x-tenant-id");
     }
 
-    // Set user cookie — use cached role to skip profiles DB call on warm requests
+    // ── Role resolution ───────────────────────────────────────────────────────
+    // Always fetch fresh from DB — role changes must take effect immediately.
+    // No fallback: unknown or missing role = denied.
+    let resolvedRole: string | null = null;
     if (user) {
         const avatarUrl = (user.user_metadata?.avatar_url as string) ?? "";
-        const cached = request.cookies.get("x-user-info")?.value;
-        const cachedRole = cached ? JSON.parse(cached).role : null;
+        const { data: profile } = await supabase
+            .from("profiles")
+            .select("role, full_name, email")
+            .eq("id", user.id)
+            .single();
 
-        if (cachedRole) {
-            const cachedData = JSON.parse(cached!);
+        resolvedRole = profile?.role ?? null;
+
+        if (resolvedRole) {
             setUserCookie(
                 response,
                 user.id,
-                cachedRole,
-                cachedData.fullName ?? "",
-                cachedData.email ?? "",
-                avatarUrl,
-            );
-        } else {
-            const { data: profile } = await supabase
-                .from("profiles")
-                .select("role, full_name, email")
-                .eq("id", user.id)
-                .single();
-            setUserCookie(
-                response,
-                user.id,
-                profile?.role ?? "USER",
+                resolvedRole,
                 profile?.full_name ?? "",
                 profile?.email ?? "",
                 avatarUrl,
@@ -172,46 +168,45 @@ export async function proxy(request: NextRequest) {
             .eq("user_id", user.id);
 
         if (!tenantAssignments?.length)
-            return redirect("/unauthorized?reason=no-tenant", request);
+            return redirectTo("/unauthorized?reason=no-tenant", request);
 
         const firstTenant = Array.isArray(tenantAssignments[0].tenants)
             ? tenantAssignments[0].tenants[0]
             : tenantAssignments[0].tenants;
 
         if (!firstTenant?.slug)
-            return redirect("/unauthorized?reason=invalid-tenant", request);
+            return redirectTo("/unauthorized?reason=invalid-tenant", request);
 
-        return redirect(`/${firstTenant.slug}/mobile/pos`, request);
+        return redirectTo(`/${firstTenant.slug}/mobile/pos`, request);
     }
 
     // ── /{tenant}/mobile root ─────────────────────────────────────────────────
     if (pathname === `/${tenantSlug}/mobile`) {
-        if (!user) return redirect("/login", request);
-        return redirect(`/${tenantSlug}/mobile/pos`, request);
+        if (!user) return redirectTo("/login", request);
+        return redirectTo(`/${tenantSlug}/mobile/pos`, request);
     }
 
     // ── Protect mobile routes ─────────────────────────────────────────────────
     const isProtected = pathname.startsWith(`/${tenantSlug}/mobile`);
-
     if (!isProtected) return response;
-    if (!user) return redirect("/login", request);
+
+    if (!user) return redirectTo("/login", request);
     if (!tenantId)
-        return redirect("/unauthorized?reason=tenant-not-found", request);
+        return redirectTo("/unauthorized?reason=tenant-not-found", request);
 
-    // Check role is allowed
-    const cached = request.cookies.get("x-user-info")?.value;
-    const role = cached ? JSON.parse(cached).role : null;
-    if (role && !ALLOWED_ROLES.includes(role))
-        return redirect("/unauthorized?reason=no-access", request);
+    // Role check — must pass before anything else, no exceptions
+    if (!resolvedRole || !ALLOWED_ROLES.has(resolvedRole))
+        return redirectTo("/unauthorized?reason=no-access", request);
 
-    // Skip DB call if we already verified this user+tenant combo recently
+    // ── Tenant access cache ───────────────────────────────────────────────────
+    // Role check already passed above — safe to use cache now
     const tenantAccessKey = `${user.id}:${tenantId}`;
     if (request.cookies.get("x-tenant-access")?.value === tenantAccessKey) {
         setTenantAccessCookie(response, tenantAccessKey);
         return response;
     }
 
-    // Verify user belongs to this tenant
+    // ── Verify tenant membership ──────────────────────────────────────────────
     const { data: userTenantAssignment } = await supabase
         .from("user_tenant_assignments")
         .select("id")
@@ -224,7 +219,7 @@ export async function proxy(request: NextRequest) {
         return response;
     }
 
-    // User doesn't belong here — find their valid tenant and redirect
+    // User doesn't belong to this tenant — redirect to their valid one
     const { data: validAssignment } = await supabase
         .from("user_tenant_assignments")
         .select("tenant_id, tenants(slug)")
@@ -233,16 +228,16 @@ export async function proxy(request: NextRequest) {
         .single();
 
     if (!validAssignment?.tenants)
-        return redirect("/unauthorized?reason=no-access", request);
+        return redirectTo("/unauthorized?reason=no-access", request);
 
     const validTenant = Array.isArray(validAssignment.tenants)
         ? validAssignment.tenants[0]
         : validAssignment.tenants;
 
     if (!validTenant?.slug)
-        return redirect("/unauthorized?reason=invalid-tenant", request);
+        return redirectTo("/unauthorized?reason=invalid-tenant", request);
 
-    return redirect(`/${validTenant.slug}/mobile/pos`, request);
+    return redirectTo(`/${validTenant.slug}/mobile/pos`, request);
 }
 
 export const config = {

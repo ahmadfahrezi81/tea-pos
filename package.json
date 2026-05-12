@@ -1,27 +1,27 @@
 {
-  "name": "tea-pos",
-  "version": "3.10.2",
-  "private": true,
-  "scripts": {
-    "dev": "turbo dev",
-    "build": "turbo build",
-    "lint": "turbo lint",
-    "dev:admin": "turbo dev --filter=@tea-pos/admin",
-    "dev:seller": "turbo dev --filter=@tea-pos/seller",
-    "types:db": "dotenv -e .env -- pnpm dlx supabase gen types typescript --project-id urzoiliisayupuvmaris --schema public > packages/db/types.ts"
-  },
-  "devDependencies": {
-    "dotenv-cli": "^10.0.0",
-    "supabase": "^2.45.5",
-    "turbo": "latest",
-    "typescript": "^5"
-  },
-  "engines": {
-    "node": ">=18"
-  },
-  "packageManager": "pnpm@9.0.0",
-  "dependencies": {
-    "react": "19.2.5",
-    "react-dom": "19.2.5"
-  }
+    "name": "tea-pos",
+    "version": "3.10.2",
+    "private": true,
+    "scripts": {
+        "dev": "turbo dev",
+        "build": "turbo build",
+        "lint": "turbo lint",
+        "dev:admin": "turbo dev --filter=@tea-pos/admin",
+        "dev:seller": "turbo dev --filter=@tea-pos/seller",
+        "types:db": "dotenv -e .env -- pnpm dlx supabase gen types typescript --project-id obmingbnnftplafhyker --schema public > packages/db/types.ts"
+    },
+    "devDependencies": {
+        "dotenv-cli": "^10.0.0",
+        "supabase": "^2.45.5",
+        "turbo": "latest",
+        "typescript": "^5"
+    },
+    "engines": {
+        "node": ">=18"
+    },
+    "packageManager": "pnpm@9.0.0",
+    "dependencies": {
+        "react": "19.2.5",
+        "react-dom": "19.2.5"
+    }
 }

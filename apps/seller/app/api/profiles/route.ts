@@ -1,18 +1,17 @@
-import { createRouteHandlerClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import { getServiceClient } from "@/lib/supabase/service";
+import { getRequestUser } from "@/lib/auth/get-request-user";
 import { ProfileResponse } from "@tea-pos/features/profiles/schema";
 import { getProfile } from "@tea-pos/services/profiles";
+import { ok, unauthorized, handleError } from "@/lib/api/response";
 
 export async function GET() {
     try {
-        const supabase = await createRouteHandlerClient();
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
+        const user = await getRequestUser();
+        if (!user) return unauthorized();
+        const supabase = getServiceClient();
         const data = await getProfile(supabase, { userId: user.id });
-        return NextResponse.json(ProfileResponse.parse(data));
+        return ok(ProfileResponse.parse(data));
     } catch (error) {
-        const status = (error as { status?: number }).status ?? 500;
-        return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status });
+        return handleError("GET /api/profiles", error);
     }
 }

@@ -1,25 +1,21 @@
-import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { getServiceClient } from "@/lib/supabase/service";
 import { getCurrentTenantId } from "@tea-pos/utils/server-config/tenant";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import {
     ListAllOrdersQuery,
     AllOrdersListResponse,
 } from "@tea-pos/features/orders/order-list-schema";
 import { toCamelKeys } from "@tea-pos/utils/schemas";
+import { ok, badRequest, err, handleError } from "@/lib/api/response";
 
 export async function GET(request: NextRequest) {
     try {
-        const supabase = await createRouteHandlerClient();
+        const supabase = getServiceClient();
         const currentTenantId = await getCurrentTenantId();
         const { searchParams } = new URL(request.url);
 
         const queryResult = ListAllOrdersQuery.safeParse(Object.fromEntries(searchParams));
-        if (!queryResult.success) {
-            return NextResponse.json(
-                { error: "Invalid query parameters", details: queryResult.error.format() },
-                { status: 400 },
-            );
-        }
+        if (!queryResult.success) return badRequest("Invalid query parameters");
 
         const { storeIds, date, productIds } = queryResult.data;
 
@@ -57,9 +53,7 @@ export async function GET(request: NextRequest) {
         }
 
         const { data, error } = await query;
-        if (error) {
-            return NextResponse.json({ error: error.message }, { status: 400 });
-        }
+        if (error) return err(error.message, 400);
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let filteredData = (data || []) as any[];
@@ -99,16 +93,10 @@ export async function GET(request: NextRequest) {
 
         const camelData = toCamelKeys(transformedData);
         const parsed = AllOrdersListResponse.safeParse({ orders: camelData });
-        if (!parsed.success) {
-            return NextResponse.json(
-                { error: "Invalid response shape", details: parsed.error.format() },
-                { status: 500 },
-            );
-        }
+        if (!parsed.success) return err("Invalid response shape");
 
-        return NextResponse.json(parsed.data);
+        return ok(parsed.data);
     } catch (error) {
-        console.error("Orders list GET error:", error);
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+        return handleError("GET /api/orders/list", error);
     }
 }

@@ -1,11 +1,9 @@
 "use client";
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useMemo } from "react";
 import { useStores } from "@/lib/hooks/stores/useStores";
 import { useAuth } from "@/lib/context/AuthContext";
-import {
-    hasSellerRoleInStore,
-    hasManagerRoleInStore,
-} from "@tea-pos/utils/roleUtils";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 type Store = {
     id: string;
@@ -23,29 +21,39 @@ type StoreContextType = {
     setIsPickerOpen: (v: boolean) => void;
 };
 
+// ─── Context ──────────────────────────────────────────────────────────────────
+
 const StoreContext = createContext<StoreContextType | null>(null);
+
+// ─── Provider ─────────────────────────────────────────────────────────────────
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
     const { profile } = useAuth();
     const { data: storesData } = useStores();
-    const stores = storesData?.stores ?? [];
-    const assignments = storesData?.assignments ?? {};
 
-    const assignedStores = stores.filter(
-        (store) =>
-            hasSellerRoleInStore(profile?.id ?? "", store.id, assignments) ||
-            hasManagerRoleInStore(profile?.id ?? "", store.id, assignments),
+    const userId = profile?.id ?? "";
+
+    const stores = useMemo(() => storesData?.stores ?? [], [storesData]);
+    const assignments = useMemo(
+        () => storesData?.assignments ?? {},
+        [storesData],
     );
 
-    const defaultStore = stores.find((store) =>
-        assignments[store.id]?.some(
-            (a) => a.userId === profile?.id && a.isDefault,
-        ),
-    );
+    const assignedStores = stores;
+
+    const defaultStoreId = useMemo(() => {
+        const found = stores.find((store) =>
+            assignments[store.id]?.some(
+                (a) => a.userId === userId && a.isDefault,
+            ),
+        );
+        return found?.id ?? null;
+    }, [stores, assignments, userId]);
 
     const [selectedStoreId, setSelectedStoreIdRaw] = useState<string>(() => {
         if (typeof window === "undefined") return "";
-        return localStorage.getItem("selectedStoreId") ?? "";
+        const stored = localStorage.getItem("selectedStoreId") ?? "";
+        return stored;
     });
 
     const [isPickerOpen, setIsPickerOpen] = useState(false);
@@ -55,30 +63,43 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setSelectedStoreIdRaw(id);
     };
 
-    useEffect(() => {
-        if (!selectedStoreId && defaultStore) {
-            setSelectedStoreId(defaultStore.id);
+    // If stored ID doesn't match any known store, use default.
+    // Handles env switches (staging vs prod) and removed stores.
+    const resolvedStoreId = useMemo(() => {
+        if (!storesData) return selectedStoreId;
+        const isValid = stores.some((s) => s.id === selectedStoreId);
+        if (isValid) return selectedStoreId;
+        if (defaultStoreId) {
+            localStorage.setItem("selectedStoreId", defaultStoreId);
+            return defaultStoreId;
         }
-    }, [defaultStore, selectedStoreId]);
+        return selectedStoreId;
+    }, [storesData, stores, selectedStoreId, defaultStoreId]);
 
-    const selectedStore = stores.find((s) => s.id === selectedStoreId) ?? null;
+    const selectedStore = useMemo(
+        () => stores.find((s) => s.id === resolvedStoreId) ?? null,
+        [stores, resolvedStoreId],
+    );
+
+    const value = useMemo(
+        () => ({
+            selectedStoreId: resolvedStoreId,
+            setSelectedStoreId,
+            selectedStore,
+            assignedStores,
+            stores,
+            isPickerOpen,
+            setIsPickerOpen,
+        }),
+        [resolvedStoreId, selectedStore, stores, isPickerOpen],
+    );
 
     return (
-        <StoreContext.Provider
-            value={{
-                selectedStoreId,
-                setSelectedStoreId,
-                selectedStore,
-                assignedStores,
-                stores,
-                isPickerOpen,
-                setIsPickerOpen,
-            }}
-        >
-            {children}
-        </StoreContext.Provider>
+        <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
     );
 }
+
+// ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useStore(): StoreContextType {
     const context = useContext(StoreContext);

@@ -1,4 +1,4 @@
-import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { getSSRClient } from "@/lib/supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
     const code = searchParams.get("code");
 
     if (code) {
-        const supabase = await createRouteHandlerClient();
+        const supabase = await getSSRClient();
         const { data, error } =
             await supabase.auth.exchangeCodeForSession(code);
 
@@ -22,19 +22,7 @@ export async function GET(request: NextRequest) {
                 : tenantsData;
 
             if (firstTenant?.slug) {
-                const { data: storeAssignments } = await supabase
-                    .from("user_store_assignments")
-                    .select("role")
-                    .eq("user_id", data.user.id);
-
-                const hasSeller = storeAssignments?.some(
-                    (a) => a.role === "seller",
-                );
-                const targetPath = hasSeller
-                    ? `/${firstTenant.slug}/mobile/pos`
-                    : `/${firstTenant.slug}/mobile/profile`;
-
-                const redirectUrl = new URL(targetPath, origin);
+                const redirectUrl = new URL(`/${firstTenant.slug}/mobile/pos`, origin);
                 return NextResponse.redirect(redirectUrl);
             }
         }

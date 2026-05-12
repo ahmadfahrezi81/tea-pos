@@ -91,7 +91,6 @@ export const ListStoresQuery = z
 export const StoreAssignmentResponse = z
     .object({
         userId: UUIDSchema,
-        role: z.string(),
         isDefault: z.boolean(),
     })
     .openapi({ title: "StoreAssignmentResponse" });

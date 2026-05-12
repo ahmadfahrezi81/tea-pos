@@ -3,7 +3,7 @@
     "version": "0.0.1",
     "private": true,
     "scripts": {
-        "types:db": "dotenv -e ../../.env -- pnpm dlx supabase gen types typescript --project-id urzoiliisayupuvmaris --schema public > types.ts"
+        "types:db": "dotenv -e ../../.env -- pnpm dlx supabase gen types typescript --project-id obmingbnnftplafhyker --schema public > types.ts"
     },
     "exports": {
         "./types": "./types.ts"

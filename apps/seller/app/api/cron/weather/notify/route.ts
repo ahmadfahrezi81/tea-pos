@@ -1,66 +1,40 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { format } from "date-fns";
-import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { getServiceClient } from "@/lib/supabase/service";
 import { createNotification } from "@tea-pos/services/notifications";
 import {
     getTodayLocalDateStr,
     getWeatherForDate,
     buildRainLine,
 } from "@tea-pos/services/weather";
+import { ok, err, unauthorized } from "@/lib/api/response";
+import { logger } from "@/lib/utils/logger";
 
-// ============================================================================
-// GET /api/cron/weather/notify
-// Runs 3x/day — reads latest weather from DB and sends reminder notification.
-// ============================================================================
 export async function GET(request: NextRequest) {
     try {
-        // ─── Auth ─────────────────────────────────────────────────────
         const authHeader = request.headers.get("authorization");
-        if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-            return NextResponse.json(
-                { error: "Unauthorized" },
-                { status: 401 },
-            );
-        }
+        if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) return unauthorized();
 
-        // ─── Init supabase ─────────────────────────────────────────────
-        const supabase = await createRouteHandlerClient();
+        const supabase = getServiceClient();
 
-        // ─── Read today's weather from DB ──────────────────────────────
         const todayDateStr = getTodayLocalDateStr();
-        const { data: hourly, error: weatherError } = await getWeatherForDate(
-            supabase,
-            todayDateStr,
-        );
+        const { data: hourly, error: weatherError } = await getWeatherForDate(supabase, todayDateStr);
 
         if (weatherError || !hourly || hourly.length === 0) {
-            return NextResponse.json(
-                { error: "No weather data available for today" },
-                { status: 500 },
-            );
+            return err("No weather data available for today");
         }
 
-        // ─── Build notification content ────────────────────────────────
         const temps = hourly.map((h) => h.temperature);
-        const maxRain = Math.max(
-            ...hourly.map((h) => h.precipitationProbability),
-        );
+        const maxRain = Math.max(...hourly.map((h) => h.precipitationProbability));
         const prettyDate = format(new Date(todayDateStr), "EEE, MMM d");
         const { title, body } = buildRainLine(maxRain, prettyDate);
 
-        // ─── Fetch all tenants ─────────────────────────────────────────
         const { data: tenants, error: tenantsError } = await supabase
             .from("tenants")
             .select("id");
 
-        if (tenantsError || !tenants) {
-            return NextResponse.json(
-                { error: "Failed to fetch tenants" },
-                { status: 500 },
-            );
-        }
+        if (tenantsError || !tenants) return err("Failed to fetch tenants");
 
-        // ─── Send one notification per tenant ──────────────────────────
         const results = await Promise.allSettled(
             tenants.map((tenant) =>
                 createNotification(supabase, {
@@ -79,20 +53,19 @@ export async function GET(request: NextRequest) {
         );
 
         const failed = results.filter((r) => r.status === "rejected").length;
-        const succeeded = results.filter(
-            (r) => r.status === "fulfilled",
-        ).length;
+        const succeeded = results.filter((r) => r.status === "fulfilled").length;
 
-        return NextResponse.json({
+        if (failed > 0) {
+            logger.error(`GET /api/cron/weather/notify ${failed} tenant(s) failed`);
+        }
+
+        return ok({
             success: true,
             date: todayDateStr,
             summary: `${succeeded} tenant(s) notified, ${failed} failed`,
         });
     } catch (error) {
-        console.error("[cron/weather/notify]", error);
-        return NextResponse.json(
-            { error: "Internal server error" },
-            { status: 500 },
-        );
+        logger.error("GET /api/cron/weather/notify", error);
+        return err("Internal server error");
     }
 }
