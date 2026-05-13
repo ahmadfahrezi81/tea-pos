@@ -3,7 +3,7 @@
 import { Drawer } from "vaul";
 import { Plus, Minus, ShoppingCart, X, Trash2, RefreshCw } from "lucide-react";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
-import type { CartItem } from "./MobilePOS";
+import type { CartItem } from "@/lib/hooks/orders/useCart";
 import { useState, useEffect, useMemo, memo, useCallback } from "react";
 import { QrisCode } from "./QrisCode";
 import { useQrisPayment } from "@/lib/hooks/payments/useQrisPayment";

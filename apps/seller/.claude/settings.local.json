@@ -8,7 +8,8 @@
       "Read(//Volumes/DevSSD/Projects/Personal/tea-pos/**)",
       "Bash(pnpm --filter @tea-pos/services exec tsc --noEmit)",
       "Bash(pnpm --filter @tea-pos/features exec tsc --noEmit)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(git *)"
     ]
   }
 }

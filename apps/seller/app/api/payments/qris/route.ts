@@ -60,10 +60,9 @@ export async function POST(request: NextRequest) {
             .select("id")
             .eq("user_id", user.id)
             .eq("store_id", storeId)
-            .eq("role", "seller")
             .single();
 
-        if (!storeAccess) return err("Access denied - seller role required", 403);
+        if (!storeAccess) return err("Access denied", 403);
 
         const productIds = items.map((i) => i.productId);
         const { data: products, error: productsError } = await supabase

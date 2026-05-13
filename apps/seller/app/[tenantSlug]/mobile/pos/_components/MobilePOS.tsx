@@ -1,37 +1,26 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, memo } from "react";
+import { useMemo, memo } from "react";
 import Image from "next/image";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
-import {
-    CreateOrderInput,
-    CreateOrderResponse,
-} from "@tea-pos/features/orders/schema";
-import { mutate } from "swr";
 import { useProducts } from "@/lib/hooks/products/useProducts";
+import { useCart } from "@/lib/hooks/orders/useCart";
 import { useStore } from "@/lib/context/StoreContext";
 import { useFastOrderMode } from "@/lib/context/FastOrderModeContext";
-import { useToast } from "@/lib/context/ToastContext";
 import type { ProductResponse } from "@tea-pos/features/products/schema";
-import type { Product } from "@tea-pos/features/products/schema";
 import { format } from "date-fns";
 import { WeatherDrawer } from "./WeatherDrawer";
 import { WeatherButton } from "./WeatherButton";
 import { CartDrawer } from "./CartDrawer";
 import { useIsIPhonePWA } from "@/lib/usePWA";
-import { PillSwitcher } from "./PillSwitcher";
-
-export interface CartItem {
-    product: ProductResponse;
-    quantity: number;
-}
+import { useState } from "react";
 
 // ─── Product Card ─────────────────────────────────────────────────────────────
 
 interface ProductCardProps {
     product: ProductResponse;
     quantityInCart: number;
-    onAdd: (product: Product) => void;
+    onAdd: (product: ProductResponse) => void;
     dimmed?: boolean;
 }
 
@@ -107,147 +96,32 @@ export default function MobilePOS() {
     const { selectedStoreId } = useStore();
     const { fastOrderMode } = useFastOrderMode();
     const { data: products = [], isLoading: productsLoading } = useProducts();
-    const { showToast } = useToast();
-
     const isIPhonePWA = useIsIPhonePWA();
-
-    const [cart, setCart] = useState<CartItem[]>([]);
-    const [processing, setProcessing] = useState(false);
-    const [showCart, setShowCart] = useState(false);
-    const [showOthers, setShowOthers] = useState(false);
     const [isWeatherOpen, setIsWeatherOpen] = useState(false);
 
-    const addToCart = useCallback((product: Product) => {
-        setCart((prev) => {
-            const existing = prev.find(
-                (item) => item.product.id === product.id,
-            );
-            if (existing) {
-                return prev.map((item) =>
-                    item.product.id === product.id
-                        ? { ...item, quantity: item.quantity + 1 }
-                        : item,
-                );
-            }
-            return [...prev, { product, quantity: 1 }];
-        });
-    }, []);
+    const {
+        cart,
+        showCart,
+        total,
+        itemCount,
+        cartQuantityMap,
+        isProcessing,
+        addToCart,
+        updateQuantity,
+        removeFromCart,
+        clearCart,
+        openCart,
+        closeCart,
+        processOrder,
+    } = useCart(selectedStoreId);
 
-    const updateQuantity = useCallback(
-        (productId: string, quantity: number) => {
-            setCart((prev) =>
-                quantity <= 0
-                    ? prev.filter((item) => item.product.id !== productId)
-                    : prev.map((item) =>
-                          item.product.id === productId
-                              ? { ...item, quantity }
-                              : item,
-                      ),
-            );
-        },
-        [],
-    );
-
-    const removeFromCart = useCallback((productId: string) => {
-        setCart((prev) => prev.filter((item) => item.product.id !== productId));
-    }, []);
-
-    const clearCart = useCallback(() => setCart([]), []);
-    const closeCart = useCallback(() => setShowCart(false), []);
-    const openCart = useCallback(() => setShowCart(true), []);
-
-    const total = useMemo(
-        () =>
-            cart.reduce(
-                (sum, item) => sum + item.product.price * item.quantity,
-                0,
-            ),
-        [cart],
-    );
-
-    const itemCount = useMemo(
-        () => cart.reduce((count, item) => count + item.quantity, 0),
-        [cart],
-    );
-
-    const cartQuantityMap = useMemo(() => {
-        const map: Record<string, number> = {};
-        for (const item of cart) {
-            map[item.product.id] = item.quantity;
-        }
-        return map;
-    }, [cart]);
-
-    const processOrder = useCallback(async () => {
-        if (!selectedStoreId || cart.length === 0) {
-            showToast("No store selected or cart is empty", "error");
-            return;
-        }
-
-        setProcessing(true);
-
-        const payload: CreateOrderInput = {
-            storeId: selectedStoreId,
-            items: cart.map((item) => ({
-                productId: item.product.id,
-                quantity: item.quantity,
-                unitPrice: item.product.price,
-            })),
-        };
-
-        try {
-            const response = await fetch("/api/orders", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
-            });
-
-            const data: CreateOrderResponse = await response.json();
-
-            if (data.success) {
-                showToast(
-                    "Order confirmed!",
-                    "success",
-                    `${itemCount} items · ${formatRupiah(data.totalAmount)}`,
-                );
-                setCart([]);
-                closeCart();
-                mutate(
-                    `orders-${selectedStoreId}-${new Date().toISOString().slice(0, 10)}`,
-                );
-            } else {
-                showToast("Failed to process order", "error");
-            }
-        } catch (error) {
-            showToast("Error processing order", "error");
-            console.error(error);
-        } finally {
-            setProcessing(false);
-        }
-    }, [selectedStoreId, cart, showToast, closeCart, itemCount]);
-
-    const mainProducts = useMemo(
-        () =>
-            [...products]
-                .filter((p) => p.isMain)
-                .sort((a, b) => a.price - b.price),
+    const sortedProducts = useMemo(
+        () => [...products].sort((a, b) => {
+            if (a.isMain !== b.isMain) return a.isMain ? -1 : 1;
+            return a.price - b.price;
+        }),
         [products],
     );
-
-    const otherProducts = useMemo(
-        () =>
-            [...products]
-                .filter((p) => !p.isMain)
-                .sort((a, b) => a.price - b.price),
-        [products],
-    );
-
-    useEffect(() => {
-        document.body.style.overflow = showCart ? "hidden" : "unset";
-        return () => {
-            document.body.style.overflow = "unset";
-        };
-    }, [showCart]);
 
     const greeting = useMemo(() => {
         const hour = new Date().getHours();
@@ -273,9 +147,7 @@ export default function MobilePOS() {
             {/* Greeting */}
             <div className="flex items-center justify-between">
                 <div>
-                    <p className="text-xl font-bold text-gray-900">
-                        {greeting}
-                    </p>
+                    <p className="text-xl font-bold text-gray-900">{greeting}</p>
                     <p className="text-base font-medium text-gray-600">
                         {format(new Date(), "EE, dd MMMM")}
                     </p>
@@ -285,9 +157,9 @@ export default function MobilePOS() {
                 </div>
             </div>
 
-            {/* Main Products Grid */}
+            {/* Products Grid */}
             <div className="grid grid-cols-2 gap-3">
-                {[...mainProducts, ...otherProducts].map((product) => (
+                {sortedProducts.map((product) => (
                     <ProductCard
                         key={product.id}
                         product={product}
@@ -304,9 +176,7 @@ export default function MobilePOS() {
                 >
                     <div className="flex items-center justify-between max-w-md mx-auto">
                         <div className="flex-1">
-                            <p className="text-sm text-gray-600">
-                                {itemCount} items
-                            </p>
+                            <p className="text-sm text-gray-600">{itemCount} items</p>
                             <p className="text-lg font-bold text-gray-900">
                                 {formatRupiah(total)}
                             </p>
@@ -318,18 +188,14 @@ export default function MobilePOS() {
                                         onClick={clearCart}
                                         className="flex items-center gap-1 bg-red-500 px-4 py-2 rounded-lg font-medium"
                                     >
-                                        <span className="font-bold text-white">
-                                            Clear All
-                                        </span>
+                                        <span className="font-bold text-white">Clear All</span>
                                     </button>
                                     <button
                                         onClick={processOrder}
-                                        disabled={processing}
+                                        disabled={isProcessing}
                                         className="px-4 py-2 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 disabled:opacity-50 flex items-center gap-1.5"
                                     >
-                                        {processing
-                                            ? "Processing..."
-                                            : "Confirm Order"}
+                                        {isProcessing ? "Processing..." : "Confirm Order"}
                                     </button>
                                 </>
                             ) : (
@@ -355,7 +221,7 @@ export default function MobilePOS() {
                     onUpdateQuantity={updateQuantity}
                     onRemoveFromCart={removeFromCart}
                     onProcessOrder={processOrder}
-                    processing={processing}
+                    processing={isProcessing}
                     selectedStoreId={selectedStoreId}
                 />
             )}
