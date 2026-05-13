@@ -157,6 +157,15 @@ component    apps/seller/app/**/page.tsx or _components/
 
 **Exception:** Server components (`page.tsx`, layouts without `"use client"`) may call Supabase directly for SSR data fetching — this is correct.
 
+**Activity logging in services:** Use `createLogger` from `packages/services/activity-logs.ts` — never call `logActivity` directly. Create once per function with shared context, then call the returned `log()` for each event. It is fire-and-forget; failures are swallowed and never propagate.
+
+```ts
+const log = createLogger(supabase, { tenantId, userId, storeId });
+log("order_created", { refId: id, refTable: "orders", metadata: { ... } });
+```
+
+Any API route that calls a mutating service must call `getRequestUser()` and pass `userId` down — the service layer needs it for logging.
+
 **Real examples:**
 
 - `packages/services/orders.ts` → `listOrders(supabase, params)`
@@ -200,7 +209,7 @@ component    apps/seller/app/**/page.tsx or _components/
 - `customer_feedbacks` — Geotagged feedback
 - `notification_events` + `notification_reads` — Notifications
 - `weather_hourly` — Cached weather forecasts
-- `activity_logs` — Audit trail of user actions (order_created, daily_summary_closed, photo_uploaded, expense_created)
+- `activity_logs` — Audit trail of user actions. Known types: `order_created`, `store_open`, `daily_summary_closed`, `balance_updated`, `photo_uploaded`, `photo_deleted`, `photo_quantity_updated`, `expense_created`, `expense_updated`, `expense_deleted`, `customer_feedback_submitted`
 
 ---
 
