@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { toCamelKeys, toSnakeKeys } from "@tea-pos/utils/schemas";
+import { createLogger } from "./activity-logs";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -254,6 +255,13 @@ export async function createSummary(supabase: SupabaseClient, params: CreateSumm
 
     if (summaryError || !summaryData) throw new Error(summaryError?.message ?? "Daily summary insert failed");
 
+    const log = createLogger(supabase, { tenantId: store.tenant_id, userId: sellerId, storeId });
+    log("store_open", {
+        refId: (summaryData as { id: string }).id,
+        refTable: "daily_summaries",
+        metadata: { date, opening_balance: opening },
+    });
+
     return toCamelKeys(summaryData);
 }
 
@@ -261,6 +269,7 @@ export async function createSummary(supabase: SupabaseClient, params: CreateSumm
 
 export interface UpdateSummaryParams {
     tenantId: string;
+    userId: string;
     id: string;
     openingBalance?: number;
     openingCashBreakdown?: unknown;
@@ -271,7 +280,7 @@ export interface UpdateSummaryParams {
 }
 
 export async function updateSummary(supabase: SupabaseClient, params: UpdateSummaryParams) {
-    const { tenantId, id, openingBalance, openingCashBreakdown, actualCash, closingCashBreakdown, notes, closedAt } = params;
+    const { tenantId, userId, id, openingBalance, openingCashBreakdown, actualCash, closingCashBreakdown, notes, closedAt } = params;
 
     const { data: current, error: fetchError } = await supabase
         .from("daily_summaries")
@@ -349,6 +358,23 @@ export async function updateSummary(supabase: SupabaseClient, params: UpdateSumm
         .single();
 
     if (updateError || !summaryData) throw new Error(updateError?.message ?? "Daily summary not found");
+
+    const raw = summaryData as { store_id: string; total_sales: number; variance: number | null };
+    const log = createLogger(supabase, { tenantId, userId, storeId: raw.store_id });
+
+    if (closedAt && !current.closed_at) {
+        log("daily_summary_closed", {
+            refId: id,
+            refTable: "daily_summaries",
+            metadata: { total_sales: raw.total_sales, variance: raw.variance },
+        });
+    } else if (openingBalance !== undefined) {
+        log("balance_updated", {
+            refId: id,
+            refTable: "daily_summaries",
+            metadata: { opening_balance: openingBalance },
+        });
+    }
 
     return toCamelKeys(summaryData);
 }
@@ -437,6 +463,7 @@ export async function listSummaryPhotos(supabase: SupabaseClient, params: ListSu
 
 export interface UploadSummaryPhotoParams {
     tenantId: string;
+    userId: string;
     dailySummaryId: string;
     storeId: string;
     type: string;
@@ -453,7 +480,7 @@ export function validatePhotoFile(file: File): string | null {
 }
 
 export async function uploadSummaryPhoto(supabase: SupabaseClient, params: UploadSummaryPhotoParams) {
-    const { tenantId, dailySummaryId, storeId, type, fileBuffer, fileType, expenseId, quantity } = params;
+    const { tenantId, userId, dailySummaryId, storeId, type, fileBuffer, fileType, expenseId, quantity } = params;
 
     const { data: summary, error: summaryError } = await supabase
         .from("daily_summaries")
@@ -494,12 +521,19 @@ export async function uploadSummaryPhoto(supabase: SupabaseClient, params: Uploa
         throw new Error("Failed to save photo record");
     }
 
+    const log = createLogger(supabase, { tenantId, userId, storeId });
+    log("photo_uploaded", {
+        refId: (photoData as { id: string }).id,
+        refTable: "daily_summary_photos",
+        metadata: { photo_url: urlData.publicUrl, slot: type, quantity: quantity ?? null },
+    });
+
     return toCamelKeys(photoData);
 }
 
 export async function updateSummaryPhoto(
     supabase: SupabaseClient,
-    { tenantId, id, quantity }: { tenantId: string; id: string; quantity?: unknown },
+    { tenantId, userId, id, quantity }: { tenantId: string; userId: string; id: string; quantity?: unknown },
 ) {
     const { data: photo, error: fetchError } = await supabase
         .from("daily_summary_photos")
@@ -520,12 +554,19 @@ export async function updateSummaryPhoto(
 
     if (updateError || !updated) throw new Error("Failed to update photo");
 
+    const raw = updated as { id: string; store_id: string };
+    createLogger(supabase, { tenantId, userId, storeId: raw.store_id })("photo_quantity_updated", {
+        refId: raw.id,
+        refTable: "daily_summary_photos",
+        metadata: { quantity: quantity ?? null },
+    });
+
     return toCamelKeys(updated);
 }
 
 export async function deleteSummaryPhoto(
     supabase: SupabaseClient,
-    { tenantId, id }: { tenantId: string; id: string },
+    { tenantId, userId, id }: { tenantId: string; userId: string; id: string },
 ) {
     const { data: photo, error: fetchError } = await supabase
         .from("daily_summary_photos")
@@ -548,6 +589,13 @@ export async function deleteSummaryPhoto(
         .eq("tenant_id", tenantId);
 
     if (deleteError) throw new Error(deleteError.message);
+
+    const raw = photo as { store_id: string; url: string; type: string };
+    createLogger(supabase, { tenantId, userId, storeId: raw.store_id })("photo_deleted", {
+        refId: id,
+        refTable: "daily_summary_photos",
+        metadata: { photo_url: raw.url, slot: raw.type },
+    });
 
     return toCamelKeys(photo);
 }

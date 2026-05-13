@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { toCamelKeys, toSnakeKeys } from "@tea-pos/utils/schemas";
+import { createLogger } from "./activity-logs";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -139,6 +140,18 @@ export async function createOrder(
         .from("order_items")
         .insert(orderItemsPayload);
     if (itemsError) throw new Error(itemsError.message);
+
+    const totalCups = items.reduce((sum, i) => sum + i.quantity, 0);
+    const log = createLogger(supabase, { tenantId: store.tenant_id, userId, storeId });
+    log("order_created", {
+        refId: orderData.id as string,
+        refTable: "orders",
+        metadata: {
+            total_amount: totalAmount,
+            total_cups: totalCups,
+            payment_method: orderData.payment_method,
+        },
+    });
 
     return { orderId: orderData.id as string, totalAmount };
 }

@@ -3,6 +3,7 @@ import type {
     CreateCustomerFeedbackInput,
     CustomerFeedbackResponse,
 } from "@tea-pos/features/customer-feedbacks/schema";
+import { createLogger } from "./activity-logs";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -66,7 +67,13 @@ export async function createCustomerFeedback(
             return { data: null, error: error.message };
         }
 
-        return { data: mapRow(data as Record<string, unknown>) };
+        const mapped = mapRow(data as Record<string, unknown>);
+        createLogger(supabase, { tenantId, userId })("customer_feedback_submitted", {
+            refId: mapped.id,
+            refTable: "customer_feedbacks",
+            metadata: { location_name: input.locationName, has_notes: !!input.notes },
+        });
+        return { data: mapped };
     } catch (err) {
         console.error("[createCustomerFeedback] Unexpected error:", err);
         return { data: null, error: "Unexpected error creating feedback" };

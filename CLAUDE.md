@@ -200,6 +200,7 @@ component    apps/seller/app/**/page.tsx or _components/
 - `customer_feedbacks` — Geotagged feedback
 - `notification_events` + `notification_reads` — Notifications
 - `weather_hourly` — Cached weather forecasts
+- `activity_logs` — Audit trail of user actions (order_created, daily_summary_closed, photo_uploaded, expense_created)
 
 ---
 

@@ -7,7 +7,8 @@ import {
     UpdateDailySummaryInput, UpdateDailySummaryResponse,
 } from "@tea-pos/features/summaries/schema";
 import { listSummaries, createSummary, updateSummary } from "@tea-pos/services/summaries";
-import { ok, badRequest, err, handleError } from "@/lib/api/response";
+import { ok, badRequest, err, unauthorized, handleError } from "@/lib/api/response";
+import { getRequestUser } from "@/lib/auth/get-request-user";
 
 export async function GET(request: NextRequest) {
     try {
@@ -44,12 +45,14 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
     try {
+        const user = await getRequestUser();
+        if (!user) return unauthorized();
         const supabase = getServiceClient();
         const tenantId = await getCurrentTenantId();
         const body = UpdateDailySummaryInput.safeParse(await request.json());
         if (!body.success) return badRequest("Validation failed");
 
-        const summary = await updateSummary(supabase, { tenantId, ...body.data });
+        const summary = await updateSummary(supabase, { tenantId, userId: user.id, ...body.data });
         const parsed = UpdateDailySummaryResponse.safeParse(summary);
         if (!parsed.success) return err("Invalid response shape");
 
