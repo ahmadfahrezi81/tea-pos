@@ -32,11 +32,8 @@ export const CreateDailySummaryInput = z
         storeId: UUIDSchema.openapi({
             description: "ID of the store",
         }),
-        sellerId: UUIDSchema.openapi({
-            description: "ID of the seller managing this summary",
-        }),
-        managerId: UUIDSchema.nullable().optional().openapi({
-            description: "ID of the manager (optional)",
+        openedBy: UUIDSchema.openapi({
+            description: "ID of the user opening this summary",
         }),
         date: z
             .string()
@@ -107,8 +104,8 @@ export const DailySummaryResponse = z
     .object({
         id: UUIDSchema,
         storeId: UUIDSchema,
-        sellerId: UUIDSchema,
-        managerId: UUIDSchema.nullable(),
+        openedBy: UUIDSchema,
+        closedBy: UUIDSchema.nullable(),
         date: z.string(),
         openingBalance: z.number(),
         openingCashBreakdown: CashBreakdown.nullable().optional(),
@@ -125,8 +122,8 @@ export const DailySummaryResponse = z
         tenantId: UUIDSchema,
         createdAt: z.string().nullable(),
         stores: z.object({ name: z.string() }).nullable().optional(),
-        manager: z.object({ fullName: z.string() }).nullable().optional(),
-        seller: z.object({ fullName: z.string() }).nullable().optional(),
+        openedByUser: z.object({ fullName: z.string() }).nullable().optional(),
+        closedByUser: z.object({ fullName: z.string() }).nullable().optional(),
         expenses: z.array(ExpenseResponse).optional().openapi({
             description: "Expenses for this summary (only populated for today)",
         }),

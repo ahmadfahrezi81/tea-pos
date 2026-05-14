@@ -7,11 +7,11 @@ export function PillSwitcher() {
     const pathname = usePathname();
     const { tenantSlug } = useParams<{ tenantSlug: string }>();
 
-    const base = `/${tenantSlug}/mobile/pos`;
+    const base = `/${tenantSlug}/mobile/home/pos`;
 
     const tabs = [
         { label: "Sell", href: base },
-        { label: "Manage", href: `${base}/manage` },
+        { label: "Manage", href: `/${tenantSlug}/mobile/home/manage` },
     ];
 
     const isActive = (href: string) =>

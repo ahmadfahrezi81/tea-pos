@@ -30,6 +30,7 @@ import { navigation } from "@tea-pos/utils/navigation";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { useSummaryPhotoCount } from "@/lib/hooks/summaries/useSummaryPhotoCount";
 import { useToast } from "@/lib/context/ToastContext";
+import { useSession } from "@/lib/hooks/sessions/useSession";
 
 import dynamic from "next/dynamic";
 const MiniDailySalesChart = dynamic(
@@ -91,10 +92,12 @@ export default function MobileAnalytics() {
         data: summariesData,
         isLoading: summariesLoading,
         error: summariesError,
-        createSummary,
+        mutate: mutateSummaries,
         updateSummary,
         createExpenses,
     } = useSummaries(selectedStoreId, selectedMonth);
+
+    const { openStore } = useSession(selectedStoreId);
 
     const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
 
@@ -160,13 +163,8 @@ export default function MobileAnalytics() {
     const handleOpenStoreToday = async () => {
         if (!selectedStoreId || !profile) return;
         try {
-            await createSummary({
-                storeId: selectedStoreId,
-                sellerId: profile.id,
-                managerId: profile.id,
-                date: todayStr,
-                openingBalance: 0,
-            });
+            await openStore({ date: todayStr, openingBalance: 0 });
+            await mutateSummaries();
             setShowOpenStorePopup(false);
             showToast("Store opened!", "success");
         } catch (error) {

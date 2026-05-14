@@ -157,6 +157,8 @@ component    apps/seller/app/**/page.tsx or _components/
 
 **Exception:** Server components (`page.tsx`, layouts without `"use client"`) may call Supabase directly for SSR data fetching — this is correct.
 
+**Opening a store:** Use `openStore()` from `packages/services/sessions.ts` — this is the single entry point that creates `daily_summary` first, then `store_session` with the returned ID. Never create them separately or in parallel. The old `POST /api/summaries` still works for legacy compatibility but new UI should use `POST /api/sessions`.
+
 **Activity logging in services:** Use `createLogger` from `packages/services/activity-logs.ts` — never call `logActivity` directly. Create once per function with shared context, then call the returned `log()` for each event. It is fire-and-forget; failures are swallowed and never propagate.
 
 ```ts
@@ -204,12 +206,16 @@ Any API route that calls a mutating service must call `getRequestUser()` and pas
 - `products` + `product_categories` — Inventory
 - `orders` + `order_items` — Transactions
 - `payments` — Payment records
-- `daily_summaries` + `daily_summary_photos` — Cash reconciliation
+- `daily_summaries` + `daily_summary_photos` — Cash reconciliation. Uses `opened_by` + `closed_by` (profile IDs); `seller_id`/`manager_id` no longer exist
+- `store_sessions` — POS ownership windows. One active session per store enforced by partial unique index. Sessions chain via `previous_session_id`. Created by `openStore()` immediately after `daily_summaries`
+- `commission_configs` — Flat rate per cup per user. `user_id IS NULL` = tenant-wide default fallback
+- `payroll_periods` — Weekly pay cycles (Monday–Sunday) per tenant
+- `payroll_entries` — One row per user per daily summary on close. `rate_per_cup` snapshotted at creation so historical entries are immutable to future rate changes
 - `expenses` — Cost tracking
 - `customer_feedbacks` — Geotagged feedback
 - `notification_events` + `notification_reads` — Notifications
 - `weather_hourly` — Cached weather forecasts
-- `activity_logs` — Audit trail of user actions. Known types: `order_created`, `store_open`, `daily_summary_closed`, `balance_updated`, `photo_uploaded`, `photo_deleted`, `photo_quantity_updated`, `expense_created`, `expense_updated`, `expense_deleted`, `customer_feedback_submitted`
+- `activity_logs` — Audit trail of user actions. Known types: `order_created`, `store_open`, `daily_summary_closed`, `balance_updated`, `photo_uploaded`, `photo_deleted`, `photo_quantity_updated`, `expense_created`, `expense_updated`, `expense_deleted`, `customer_feedback_submitted`, `session_transferred`, `session_ended`, `commission_config_updated`, `payroll_entry_updated`, `payroll_period_updated`
 
 ---
 

@@ -7,12 +7,40 @@ export type RouteConfig = {
 };
 
 export const mobileRoutes = {
-    "/mobile/pos": {
+    "/mobile/home/pos": {
         title: "Home",
         subPage: false,
         inlineHeader: false,
         isChart: false,
         parent: null,
+    },
+    "/mobile/home/manage": {
+        title: "Home",
+        subPage: false,
+        inlineHeader: false,
+        isChart: false,
+        parent: null,
+    },
+    "/mobile/home/manage/open": {
+        title: "Open Store",
+        subPage: true,
+        inlineHeader: false,
+        isChart: false,
+        parent: "/mobile/home/manage",
+    },
+    "/mobile/home/manage/close": {
+        title: "Close Day",
+        subPage: true,
+        inlineHeader: false,
+        isChart: false,
+        parent: "/mobile/home/manage",
+    },
+    "/mobile/home/manage/expense": {
+        title: "Expenses",
+        subPage: true,
+        inlineHeader: false,
+        isChart: false,
+        parent: "/mobile/home/manage",
     },
     "/mobile/orders": {
         title: "Orders",
@@ -89,7 +117,7 @@ export const mobileRoutes = {
         subPage: true,
         inlineHeader: false,
         isChart: false,
-        parent: "/mobile/pos",
+        parent: "/mobile/home/pos",
     },
     // Dynamic: any notification detail page (e.g. /mobile/notifications/{id})
     "/mobile/notifications/*": {
@@ -122,6 +150,10 @@ export const mobileRoutes = {
         parent: "/mobile/analytics",
     },
 } satisfies Record<string, RouteConfig>;
+
+export const rootTabSuffixes = Object.entries(mobileRoutes)
+    .filter(([, c]) => !c.subPage && c.parent === null)
+    .map(([path]) => path);
 
 export const resolveRoute = (path: string): RouteConfig | null => {
     // Static routes: exact suffix match, skip wildcard keys

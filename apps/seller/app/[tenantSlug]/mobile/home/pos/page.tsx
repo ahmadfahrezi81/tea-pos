@@ -1,6 +1,5 @@
-// app/mobile/pos/page.tsx
 import MobilePOS from "./_components/MobilePOS";
 
-export default function POSPage() {
+export default function HomePOSPage() {
     return <MobilePOS />;
 }

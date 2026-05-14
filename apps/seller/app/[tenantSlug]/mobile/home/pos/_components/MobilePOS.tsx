@@ -8,12 +8,9 @@ import { useCart } from "@/lib/hooks/orders/useCart";
 import { useStore } from "@/lib/context/StoreContext";
 import { useFastOrderMode } from "@/lib/context/FastOrderModeContext";
 import type { ProductResponse } from "@tea-pos/features/products/schema";
-import { format } from "date-fns";
-import { WeatherDrawer } from "./WeatherDrawer";
-import { WeatherButton } from "./WeatherButton";
 import { CartDrawer } from "./CartDrawer";
 import { useIsIPhonePWA } from "@/lib/usePWA";
-import { useState } from "react";
+import { AtAGlance } from "../../_components/AtAGlance";
 
 // ─── Product Card ─────────────────────────────────────────────────────────────
 
@@ -97,7 +94,6 @@ export default function MobilePOS() {
     const { fastOrderMode } = useFastOrderMode();
     const { data: products = [], isLoading: productsLoading } = useProducts();
     const isIPhonePWA = useIsIPhonePWA();
-    const [isWeatherOpen, setIsWeatherOpen] = useState(false);
 
     const {
         cart,
@@ -123,13 +119,6 @@ export default function MobilePOS() {
         [products],
     );
 
-    const greeting = useMemo(() => {
-        const hour = new Date().getHours();
-        if (hour < 12) return "Good Morning";
-        if (hour < 17) return "Good Afternoon";
-        return "Good Evening";
-    }, []);
-
     if (productsLoading) {
         return (
             <div
@@ -144,18 +133,7 @@ export default function MobilePOS() {
 
     return (
         <div className="flex flex-col gap-4 pb-24">
-            {/* Greeting */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <p className="text-xl font-bold text-gray-900">{greeting}</p>
-                    <p className="text-base font-medium text-gray-600">
-                        {format(new Date(), "EE, dd MMMM")}
-                    </p>
-                </div>
-                <div className="flex items-center gap-2">
-                    <WeatherButton onClick={() => setIsWeatherOpen(true)} />
-                </div>
-            </div>
+            <AtAGlance />
 
             {/* Products Grid */}
             <div className="grid grid-cols-2 gap-3">
@@ -226,11 +204,6 @@ export default function MobilePOS() {
                 />
             )}
 
-            {/* Weather Drawer */}
-            <WeatherDrawer
-                isOpen={isWeatherOpen}
-                onClose={() => setIsWeatherOpen(false)}
-            />
         </div>
     );
 }

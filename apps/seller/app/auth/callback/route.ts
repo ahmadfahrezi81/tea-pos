@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
                 : tenantsData;
 
             if (firstTenant?.slug) {
-                const redirectUrl = new URL(`/${firstTenant.slug}/mobile/pos`, origin);
+                const redirectUrl = new URL(`/${firstTenant.slug}/mobile/home/pos`, origin);
                 return NextResponse.redirect(redirectUrl);
             }
         }

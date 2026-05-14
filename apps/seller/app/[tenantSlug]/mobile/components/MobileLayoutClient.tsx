@@ -25,7 +25,7 @@ import { navigation } from "@tea-pos/utils/navigation";
 import { useIsIPhonePWA } from "@/lib/usePWA";
 import { MobileHeader } from "./MobileHeader";
 import { MobileFooterNav } from "./MobileFooterNav";
-import { resolveRoute } from "../config/routes";
+import { resolveRoute, rootTabSuffixes } from "../config/routes";
 
 interface MobileLayoutClientProps {
     children: ReactNode;
@@ -60,10 +60,13 @@ export default function MobileLayoutClient({
     const tabs = useMemo(
         () => [
             {
-                path: url("/mobile/pos"),
+                path: url("/mobile/home/pos"),
                 label: "Home",
                 icon: StoreIcon,
-                matchPaths: [url("/mobile/pos")],
+                matchPaths: [
+                    url("/mobile/home/pos"),
+                    url("/mobile/home/manage"),
+                ],
             },
             {
                 path: url("/mobile/orders"),
@@ -99,25 +102,7 @@ export default function MobileLayoutClient({
         [url],
     );
 
-    const getCurrentPageTitle = useCallback(
-        (path: string): string | null => resolveRoute(path)?.title ?? "Mobile",
-        [],
-    );
-
-    const isSubPage = useCallback(
-        (path: string) => resolveRoute(path)?.subPage ?? false,
-        [],
-    );
-
-    const getParentPath = useCallback(
-        (path: string) => {
-            const route = resolveRoute(path);
-            if (!route?.parent) return url("/mobile");
-            if (route.parent === "lastRootTab") return lastRootTabRef.current;
-            return url(route.parent);
-        },
-        [url],
-    );
+    const rootTabPaths = useMemo(() => rootTabSuffixes.map(url), [url]);
 
     const handleNavClick = useCallback(
         (path: string) => {
@@ -130,17 +115,10 @@ export default function MobileLayoutClient({
     );
 
     useEffect(() => {
-        const rootTabs = [
-            url("/mobile/pos"),
-            url("/mobile/orders"),
-            url("/mobile/analytics"),
-            url("/mobile/inbox"),
-            url("/mobile/more"),
-        ];
-        if (rootTabs.includes(pathname)) {
+        if (rootTabPaths.includes(pathname)) {
             lastRootTabRef.current = pathname;
         }
-    }, [pathname, url]);
+    }, [pathname, rootTabPaths]);
 
     useEffect(() => {
         navigation.register(handleNavClick);
@@ -156,6 +134,8 @@ export default function MobileLayoutClient({
     }, [pathname, optimisticPath]);
 
     useEffect(() => {
+        router.prefetch(url("/mobile/home/pos"));
+        router.prefetch(url("/mobile/home/manage"));
         router.prefetch(url("/mobile/notifications"));
         router.prefetch(url("/mobile/account"));
         router.prefetch(url("/mobile/more/stores"));
@@ -181,17 +161,16 @@ export default function MobileLayoutClient({
     }, [isPickerOpen]);
 
     const currentPath = optimisticPath || pathname;
-    const currentTitle = getCurrentPageTitle(currentPath);
-    const currentIsSubPage = isSubPage(currentPath);
-    const isInlineHeader = resolveRoute(currentPath)?.inlineHeader ?? false;
-
-    const rootTabPaths = [
-        url("/mobile/pos"),
-        url("/mobile/orders"),
-        url("/mobile/analytics"),
-        url("/mobile/inbox"),
-        url("/mobile/more"),
-    ];
+    const currentRoute = resolveRoute(currentPath);
+    const currentTitle = currentRoute?.title ?? "Mobile";
+    const currentIsSubPage = currentRoute?.subPage ?? false;
+    const isInlineHeader = currentRoute?.inlineHeader ?? false;
+    const parentSuffix = currentRoute?.parent;
+    const parentPath = !parentSuffix
+        ? url("/mobile")
+        : parentSuffix === "lastRootTab"
+          ? lastRootTabRef.current
+          : url(parentSuffix);
     const showAccountIcon = rootTabPaths.some((p) => currentPath === p);
 
     const scrollPaddingTop = isInlineHeader
@@ -276,7 +255,7 @@ export default function MobileLayoutClient({
                 selectedStore={selectedStore}
                 showAccountIcon={showAccountIcon}
                 avatarUrl={avatarUrl}
-                onBack={() => handleNavClick(getParentPath(currentPath))}
+                onBack={() => handleNavClick(parentPath)}
                 onStorePicker={() => setIsPickerOpen(true)}
                 onAccount={() => handleNavClick(url("/mobile/account"))}
             />

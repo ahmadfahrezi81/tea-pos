@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { toCamelKeys, toSnakeKeys } from "@tea-pos/utils/schemas";
+import { toCamelKeys } from "@tea-pos/utils/schemas";
 import { createLogger } from "./activity-logs";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -90,8 +90,8 @@ export async function listSummaries(supabase: SupabaseClient, params: ListSummar
         .from("daily_summaries")
         .select(
             `*, stores(name),
-            manager:profiles!daily_summaries_manager_id_fkey(full_name),
-            seller:profiles!daily_summaries_seller_id_fkey(full_name)`,
+            opened_by_user:profiles!daily_summaries_opened_by_fkey(full_name),
+            closed_by_user:profiles!daily_summaries_closed_by_fkey(full_name)`,
         )
         .eq("store_id", storeId)
         .eq("tenant_id", tenantId)
@@ -186,15 +186,14 @@ export async function listSummaries(supabase: SupabaseClient, params: ListSummar
 export interface CreateSummaryParams {
     tenantId: string;
     storeId: string;
-    sellerId: string;
-    managerId?: string | null;
+    openedBy: string;
     date: string;
     openingBalance?: number;
     openingCashBreakdown?: unknown;
 }
 
 export async function createSummary(supabase: SupabaseClient, params: CreateSummaryParams) {
-    const { tenantId, storeId, sellerId, managerId, date, openingBalance, openingCashBreakdown } = params;
+    const { tenantId, storeId, openedBy, date, openingBalance, openingCashBreakdown } = params;
 
     const { data: store, error: storeError } = await supabase
         .from("stores")
@@ -234,28 +233,26 @@ export async function createSummary(supabase: SupabaseClient, params: CreateSumm
 
     const { data: summaryData, error: summaryError } = await supabase
         .from("daily_summaries")
-        .insert(
-            toSnakeKeys({
-                storeId,
-                sellerId,
-                managerId: managerId ?? null,
-                date,
-                openingBalance: opening,
-                openingCashBreakdown: openingCashBreakdown ?? null,
-                totalSales,
-                totalOrders,
-                totalCups,
-                totalExpenses: 0,
-                expectedCash: opening + totalSales,
-                tenantId: store.tenant_id,
-            }),
-        )
+        .insert({
+            store_id: storeId,
+            tenant_id: store.tenant_id,
+            opened_by: openedBy,
+            closed_by: openedBy,
+            date,
+            opening_balance: opening,
+            opening_cash_breakdown: openingCashBreakdown ?? null,
+            total_sales: totalSales,
+            total_orders: totalOrders,
+            total_cups: totalCups,
+            total_expenses: 0,
+            expected_cash: opening + totalSales,
+        })
         .select()
         .single();
 
     if (summaryError || !summaryData) throw new Error(summaryError?.message ?? "Daily summary insert failed");
 
-    const log = createLogger(supabase, { tenantId: store.tenant_id, userId: sellerId, storeId });
+    const log = createLogger(supabase, { tenantId: store.tenant_id, userId: openedBy, storeId });
     log("store_open", {
         refId: (summaryData as { id: string }).id,
         refTable: "daily_summaries",
@@ -305,6 +302,11 @@ export async function updateSummary(supabase: SupabaseClient, params: UpdateSumm
 
     if (openingBalance !== undefined) {
         updates.expected_cash = openingBalance + current.total_sales - current.total_expenses;
+    }
+
+    // Record who closed the summary
+    if (closedAt && !current.closed_at) {
+        updates.closed_by = userId;
     }
 
     // Lock in final totals on close

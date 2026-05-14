@@ -104,13 +104,13 @@ export const DetailsDrawer = ({
                                         <strong>Store:</strong> {storeName}
                                     </p>
                                     <p>
-                                        <strong>Seller:</strong>{" "}
-                                        {summary.seller?.fullName}
+                                        <strong>Opened by:</strong>{" "}
+                                        {summary.openedByUser?.fullName}
                                     </p>
-                                    {summary.manager?.fullName && (
+                                    {summary.closedByUser?.fullName && (
                                         <p>
-                                            <strong>Manager:</strong>{" "}
-                                            {summary.manager.fullName}
+                                            <strong>Closed by:</strong>{" "}
+                                            {summary.closedByUser.fullName}
                                         </p>
                                     )}
                                 </div>

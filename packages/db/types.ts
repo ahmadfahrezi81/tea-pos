@@ -65,6 +65,48 @@ export type Database = {
           },
         ]
       }
+      commission_configs: {
+        Row: {
+          created_at: string | null
+          effective_date: string
+          id: string
+          rate_per_cup: number
+          tenant_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          effective_date: string
+          id?: string
+          rate_per_cup: number
+          tenant_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          effective_date?: string
+          id?: string
+          rate_per_cup?: number
+          tenant_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_configs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_configs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_feedbacks: {
         Row: {
           created_at: string
@@ -120,16 +162,16 @@ export type Database = {
         Row: {
           actual_cash: number | null
           closed_at: string | null
+          closed_by: string | null
           closing_cash_breakdown: Json | null
           created_at: string | null
           date: string
           expected_cash: number
           id: string
-          manager_id: string | null
           notes: string | null
+          opened_by: string
           opening_balance: number
           opening_cash_breakdown: Json | null
-          seller_id: string
           store_id: string
           tenant_id: string | null
           total_cups: number
@@ -141,16 +183,16 @@ export type Database = {
         Insert: {
           actual_cash?: number | null
           closed_at?: string | null
+          closed_by?: string | null
           closing_cash_breakdown?: Json | null
           created_at?: string | null
           date: string
           expected_cash?: number
           id?: string
-          manager_id?: string | null
           notes?: string | null
+          opened_by: string
           opening_balance?: number
           opening_cash_breakdown?: Json | null
-          seller_id: string
           store_id: string
           tenant_id?: string | null
           total_cups?: number
@@ -162,16 +204,16 @@ export type Database = {
         Update: {
           actual_cash?: number | null
           closed_at?: string | null
+          closed_by?: string | null
           closing_cash_breakdown?: Json | null
           created_at?: string | null
           date?: string
           expected_cash?: number
           id?: string
-          manager_id?: string | null
           notes?: string | null
+          opened_by?: string
           opening_balance?: number
           opening_cash_breakdown?: Json | null
-          seller_id?: string
           store_id?: string
           tenant_id?: string | null
           total_cups?: number
@@ -182,15 +224,15 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "daily_summaries_manager_id_fkey"
-            columns: ["manager_id"]
+            foreignKeyName: "daily_summaries_closed_by_fkey"
+            columns: ["closed_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "daily_summaries_seller_id_fkey"
-            columns: ["seller_id"]
+            foreignKeyName: "daily_summaries_opened_by_fkey"
+            columns: ["opened_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -593,6 +635,122 @@ export type Database = {
           },
         ]
       }
+      payroll_entries: {
+        Row: {
+          created_at: string | null
+          daily_summary_id: string
+          date: string
+          gross_pay: number
+          id: string
+          payroll_period_id: string
+          rate_per_cup: number
+          status: string
+          store_id: string
+          tenant_id: string
+          total_cups: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          daily_summary_id: string
+          date: string
+          gross_pay: number
+          id?: string
+          payroll_period_id: string
+          rate_per_cup: number
+          status?: string
+          store_id: string
+          tenant_id: string
+          total_cups?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          daily_summary_id?: string
+          date?: string
+          gross_pay?: number
+          id?: string
+          payroll_period_id?: string
+          rate_per_cup?: number
+          status?: string
+          store_id?: string
+          tenant_id?: string
+          total_cups?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_entries_daily_summary_id_fkey"
+            columns: ["daily_summary_id"]
+            isOneToOne: false
+            referencedRelation: "daily_summaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_entries_payroll_period_id_fkey"
+            columns: ["payroll_period_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_periods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_entries_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_entries_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_entries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_periods: {
+        Row: {
+          created_at: string | null
+          end_date: string
+          id: string
+          start_date: string
+          status: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          end_date: string
+          id?: string
+          start_date: string
+          status?: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string | null
+          end_date?: string
+          id?: string
+          start_date?: string
+          status?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_periods_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_categories: {
         Row: {
           created_at: string | null
@@ -720,6 +878,84 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      store_sessions: {
+        Row: {
+          claim_code: string
+          created_at: string | null
+          daily_summary_id: string
+          ended_at: string | null
+          id: string
+          previous_session_id: string | null
+          started_at: string
+          status: string
+          store_id: string
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          claim_code: string
+          created_at?: string | null
+          daily_summary_id: string
+          ended_at?: string | null
+          id?: string
+          previous_session_id?: string | null
+          started_at?: string
+          status?: string
+          store_id: string
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          claim_code?: string
+          created_at?: string | null
+          daily_summary_id?: string
+          ended_at?: string | null
+          id?: string
+          previous_session_id?: string | null
+          started_at?: string
+          status?: string
+          store_id?: string
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_sessions_daily_summary_id_fkey"
+            columns: ["daily_summary_id"]
+            isOneToOne: false
+            referencedRelation: "daily_summaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_sessions_previous_session_id_fkey"
+            columns: ["previous_session_id"]
+            isOneToOne: false
+            referencedRelation: "store_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_sessions_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_sessions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       stores: {
         Row: {
