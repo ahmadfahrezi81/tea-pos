@@ -10,7 +10,7 @@ export function PillSwitcher() {
     const base = `/${tenantSlug}/mobile/home/pos`;
 
     const tabs = [
-        { label: "Sell", href: base },
+        { label: "POS", href: base },
         { label: "Manage", href: `/${tenantSlug}/mobile/home/manage` },
     ];
 
@@ -18,15 +18,15 @@ export function PillSwitcher() {
         href === base ? pathname === base : pathname.startsWith(href);
 
     return (
-        <div className="flex items-center bg-gray-100 rounded-full p-1 self-start">
+        <div className="flex items-center bg-slate-200 rounded-2xl p-1.5 self-start">
             {tabs.map((tab) => (
                 <Link
                     key={tab.href}
                     href={tab.href}
-                    className={`px-5 py-1.5 rounded-full text-sm font-semibold transition-all duration-200 ${
+                    className={`px-3.5 py-0.5 rounded-lg text-lg font-semibold transition-all duration-200 ${
                         isActive(tab.href)
-                            ? "bg-white text-gray-900 shadow-sm"
-                            : "text-gray-500"
+                            ? "bg-white text-slate-950"
+                            : "text-slate-600"
                     }`}
                 >
                     {tab.label}

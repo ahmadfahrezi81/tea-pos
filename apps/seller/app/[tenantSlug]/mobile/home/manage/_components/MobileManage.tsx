@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
-import { AtAGlance } from "../../_components/AtAGlance";
 import { WeatherButton } from "../../pos/_components/WeatherButton";
 import { WeatherDrawer } from "../../pos/_components/WeatherDrawer";
 import { ChevronRight, CheckCircle, DollarSign, XCircle } from "lucide-react";
@@ -14,8 +13,6 @@ export default function MobileManage() {
 
     return (
         <div className="flex flex-col gap-4 pb-24">
-            <AtAGlance />
-
             {/* Weather card */}
             <div className="bg-white rounded-xl shadow-sm p-4 flex items-center justify-between">
                 <div>

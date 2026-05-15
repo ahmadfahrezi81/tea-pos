@@ -247,7 +247,7 @@ export default function MobileLayoutClient({
     }
 
     return (
-        <div className="h-dvh flex flex-col bg-gray-50 select-none overflow-hidden">
+        <div className="h-dvh flex flex-col bg-slate-100 select-none overflow-hidden">
             <MobileHeader
                 currentPath={currentPath}
                 currentTitle={currentTitle}
@@ -262,7 +262,7 @@ export default function MobileLayoutClient({
 
             <div
                 ref={scrollContainerRef}
-                className={`flex-1 overflow-y-auto bg-gray-50 p-4 pb-28 ${scrollPaddingTop}`}
+                className={`flex-1 overflow-y-auto p-4 pb-28 ${scrollPaddingTop}`}
             >
                 {isTransitioning ? (
                     <div className="absolute inset-0 flex items-center justify-center animate-pulse">

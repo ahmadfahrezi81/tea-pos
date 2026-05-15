@@ -30,7 +30,7 @@ export function MobileHeader({
     const isChart = resolveRoute(currentPath)?.isChart ?? false;
 
     return (
-        <header className="fixed top-0 left-0 right-0 z-40 bg-gray-50 p-4 py-3">
+        <header className="fixed top-0 left-0 right-0 z-40 bg-slate-100 p-4 py-3">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     {isSubPage ? (
@@ -92,7 +92,7 @@ export function MobileHeader({
                         )
                     ) : (
                         <div className="flex items-center gap-2">
-                            <h1 className="text-[32px] font-bold tracking-tight text-gray-900">
+                            <h1 className="text-4xl font-bold tracking-tight text-gray-900">
                                 {currentTitle}
                             </h1>
                             {selectedStore && (
@@ -125,8 +125,8 @@ export function MobileHeader({
                                 <Image
                                     src={avatarUrl}
                                     alt="Account"
-                                    width={32}
-                                    height={32}
+                                    width={36}
+                                    height={36}
                                     className="rounded-full object-cover"
                                 />
                             </div>

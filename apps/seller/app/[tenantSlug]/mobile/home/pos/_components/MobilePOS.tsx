@@ -10,7 +10,6 @@ import { useFastOrderMode } from "@/lib/context/FastOrderModeContext";
 import type { ProductResponse } from "@tea-pos/features/products/schema";
 import { CartDrawer } from "./CartDrawer";
 import { useIsIPhonePWA } from "@/lib/usePWA";
-import { AtAGlance } from "../../_components/AtAGlance";
 
 // ─── Product Card ─────────────────────────────────────────────────────────────
 
@@ -133,8 +132,6 @@ export default function MobilePOS() {
 
     return (
         <div className="flex flex-col gap-4 pb-24">
-            <AtAGlance />
-
             {/* Products Grid */}
             <div className="grid grid-cols-2 gap-3">
                 {sortedProducts.map((product) => (
