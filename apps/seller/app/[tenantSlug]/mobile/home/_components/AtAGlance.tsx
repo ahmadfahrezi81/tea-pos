@@ -54,7 +54,10 @@ function getCurrentProgress(
     const current = getCurrentMinutes(currentTime);
     const open = timeToMinutes(openTime);
     const close = timeToMinutes(closeTime);
-    return Math.min(Math.max(((current - open) / (close - open)) * 100, 0), 100);
+    return Math.min(
+        Math.max(((current - open) / (close - open)) * 100, 0),
+        100,
+    );
 }
 
 interface TooltipPortalProps {
@@ -171,7 +174,7 @@ export function AtAGlance({
             >
                 <div
                     style={{ width: BAR_WIDTH }}
-                    className="relative px-4 py-4 pb-10"
+                    className="relative px-4 py-4 pb-6"
                 >
                     <div className="relative flex items-center">
                         {/* Open icon */}
@@ -180,7 +183,9 @@ export function AtAGlance({
                             className="absolute -left-4 z-20 w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center border-2 border-gray-50 cursor-pointer"
                             onClick={() =>
                                 setTooltip(
-                                    tooltip === "Store Open" ? null : "Store Open",
+                                    tooltip === "Store Open"
+                                        ? null
+                                        : "Store Open",
                                 )
                             }
                         >
