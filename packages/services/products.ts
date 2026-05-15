@@ -19,7 +19,8 @@ export async function listProducts(supabase: SupabaseClient, params: ListProduct
         .from("products")
         .select(`*, product_categories(id, name)`)
         .eq("tenant_id", tenantId)
-        .order("name");
+        .order("popularity_rank", { ascending: true, nullsFirst: false })
+        .order("price", { ascending: true });
 
     if (status) {
         query = query.eq("status", status);

@@ -794,8 +794,8 @@ export type Database = {
           image_path: string | null
           image_url: string | null
           is_active: boolean | null
-          is_main: boolean
           name: string
+          popularity_rank: number | null
           price: number
           status: string | null
           tenant_id: string | null
@@ -808,8 +808,8 @@ export type Database = {
           image_path?: string | null
           image_url?: string | null
           is_active?: boolean | null
-          is_main?: boolean
           name: string
+          popularity_rank?: number | null
           price: number
           status?: string | null
           tenant_id?: string | null
@@ -822,8 +822,8 @@ export type Database = {
           image_path?: string | null
           image_url?: string | null
           is_active?: boolean | null
-          is_main?: boolean
           name?: string
+          popularity_rank?: number | null
           price?: number
           status?: string | null
           tenant_id?: string | null

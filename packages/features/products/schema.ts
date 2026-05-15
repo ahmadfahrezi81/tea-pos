@@ -32,10 +32,6 @@ export const CreateProductInput = z
             description: "Product status",
             example: "active",
         }),
-        isMain: z.boolean().optional().openapi({
-            description: "Whether this is a main/featured product (legacy)",
-            example: false,
-        }),
     })
     .openapi({ title: "CreateProductInput" });
 
@@ -66,10 +62,6 @@ export const UpdateProductInput = z
         isActive: z.boolean().optional().openapi({
             description: "Whether the product is active/available (legacy)",
             example: true,
-        }),
-        isMain: z.boolean().optional().openapi({
-            description: "Whether this is a main/featured product (legacy)",
-            example: false,
         }),
     })
     .openapi({ title: "UpdateProductInput" });
@@ -114,7 +106,7 @@ export const ProductResponse = z
         categoryName: z.string().nullable(), // NEW: Added for joined data
         status: z.string().nullable(),
         isActive: z.boolean().nullable(),
-        isMain: z.boolean(),
+        popularityRank: z.number().int().nullable(),
         tenantId: UUIDSchema,
         createdAt: z.string().nullable(),
         updatedAt: z.string().nullable(),

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, memo } from "react";
+import { memo } from "react";
 import Image from "next/image";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 import { useProducts } from "@/lib/hooks/products/useProducts";
@@ -110,15 +110,6 @@ export default function MobilePOS() {
         processOrder,
     } = useCart(selectedStoreId);
 
-    const sortedProducts = useMemo(
-        () =>
-            [...products].sort((a, b) => {
-                if (a.isMain !== b.isMain) return a.isMain ? -1 : 1;
-                return a.price - b.price;
-            }),
-        [products],
-    );
-
     if (productsLoading) {
         return (
             <div
@@ -135,7 +126,7 @@ export default function MobilePOS() {
         <div className="flex flex-col gap-4 pb-24">
             {/* Products Grid */}
             <div className="grid grid-cols-2 gap-3">
-                {sortedProducts.map((product) => (
+                {products.map((product) => (
                     <ProductCard
                         key={product.id}
                         product={product}

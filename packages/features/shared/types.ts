@@ -79,7 +79,6 @@ export interface Database {
                     image_url?: string; // new
                     created_at: string;
                     updated_at: string;
-                    is_main: boolean; // Add this line
                 };
                 Insert: {
                     id?: string;
