@@ -28,7 +28,7 @@ const ProductCard = memo(function ProductCard({
 }: ProductCardProps) {
     return (
         <div
-            className={`bg-white rounded-xl shadow-sm overflow-hidden select-none relative cursor-pointer hover:shadow-md ${dimmed ? "opacity-90" : ""}`}
+            className={`bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden select-none relative cursor-pointer hover:shadow-md ${dimmed ? "opacity-90" : ""}`}
             style={{
                 transform: "translateZ(0)",
                 transition: "transform 150ms ease, box-shadow 200ms ease",
@@ -78,7 +78,7 @@ const ProductCard = memo(function ProductCard({
                         </div>
                     </div>
                 )}
-                <div className="text-center text-brand text-xs font-medium py-1.5 rounded-lg border-brand border">
+                <div className="text-center text-brand text-sm font-medium py-1.5 rounded-lg border border-brand">
                     Tap to add
                 </div>
             </div>

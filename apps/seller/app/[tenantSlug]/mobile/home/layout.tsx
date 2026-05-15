@@ -18,12 +18,12 @@ export default function HomeLayout({
         <div className="flex flex-col gap-4">
             {isHomeRoot && <AtAGlance />}
             {sectionLabel && (
-                <div className="flex items-center gap-8">
-                    <div className="flex-1 h-0.75 bg-slate-700 rounded-full" />
+                <div className="flex items-center gap-3">
+                    <div className="w-2 h-0.5 bg-slate-600 rounded-full shrink-0" />
                     <span className="text-lg font-bold text-slate-950 tracking-widest shrink-0">
                         {sectionLabel}
                     </span>
-                    <div className="flex-1 h-0.75 bg-slate-700 rounded-full" />
+                    <div className="flex-1 h-0.5 bg-slate-600 rounded-full" />
                 </div>
             )}
             <div
