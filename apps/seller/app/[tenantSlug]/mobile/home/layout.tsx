@@ -19,7 +19,7 @@ export default function HomeLayout({
             {isHomeRoot && <AtAGlance />}
             {sectionLabel && (
                 <div className="flex items-center gap-3">
-                    <div className="w-2 h-0.5 bg-slate-600 rounded-full shrink-0" />
+                    <div className="w-1.5 h-0.5 bg-slate-600 rounded-full shrink-0" />
                     <span className="text-lg font-bold text-slate-950 tracking-widest shrink-0">
                         {sectionLabel}
                     </span>

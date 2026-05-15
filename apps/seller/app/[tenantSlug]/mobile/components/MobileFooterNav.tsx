@@ -44,10 +44,10 @@ export function MobileFooterNav({
                             }`}
                         >
                             <Icon
-                                size={24}
+                                size={25}
                                 className="transition-transform duration-75"
                             />
-                            <span className="text-xs font-medium transition-transform duration-75">
+                            <span className="text-sm font-medium transition-transform duration-75">
                                 {tab.label}
                             </span>
                             {isActive && (
