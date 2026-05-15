@@ -111,10 +111,11 @@ export default function MobilePOS() {
     } = useCart(selectedStoreId);
 
     const sortedProducts = useMemo(
-        () => [...products].sort((a, b) => {
-            if (a.isMain !== b.isMain) return a.isMain ? -1 : 1;
-            return a.price - b.price;
-        }),
+        () =>
+            [...products].sort((a, b) => {
+                if (a.isMain !== b.isMain) return a.isMain ? -1 : 1;
+                return a.price - b.price;
+            }),
         [products],
     );
 
@@ -151,7 +152,9 @@ export default function MobilePOS() {
                 >
                     <div className="flex items-center justify-between max-w-md mx-auto">
                         <div className="flex-1">
-                            <p className="text-sm text-gray-600">{itemCount} items</p>
+                            <p className="text-sm text-gray-600">
+                                {itemCount} items
+                            </p>
                             <p className="text-lg font-bold text-gray-900">
                                 {formatRupiah(total)}
                             </p>
@@ -163,14 +166,18 @@ export default function MobilePOS() {
                                         onClick={clearCart}
                                         className="flex items-center gap-1 bg-red-500 px-4 py-2 rounded-lg font-medium"
                                     >
-                                        <span className="font-bold text-white">Clear All</span>
+                                        <span className="font-bold text-white">
+                                            Clear All
+                                        </span>
                                     </button>
                                     <button
                                         onClick={processOrder}
                                         disabled={isProcessing}
                                         className="px-4 py-2 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 disabled:opacity-50 flex items-center gap-1.5"
                                     >
-                                        {isProcessing ? "Processing..." : "Confirm Order"}
+                                        {isProcessing
+                                            ? "Processing..."
+                                            : "Confirm Order"}
                                     </button>
                                 </>
                             ) : (
@@ -200,7 +207,6 @@ export default function MobilePOS() {
                     selectedStoreId={selectedStoreId}
                 />
             )}
-
         </div>
     );
 }
