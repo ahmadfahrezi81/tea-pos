@@ -1,3 +1,15 @@
+import {
+    ShoppingCart,
+    ReceiptText,
+    ChartNoAxesCombinedIcon,
+    InboxIcon,
+    MoreHorizontal,
+    Layers,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+
+// ─── Route Metadata ───────────────────────────────────────────────────────────
+
 export type RouteConfig = {
     title: string;
     subPage: boolean;
@@ -8,14 +20,14 @@ export type RouteConfig = {
 
 export const mobileRoutes = {
     "/mobile/home/pos": {
-        title: "Home",
+        title: "POS",
         subPage: false,
         inlineHeader: false,
         isChart: false,
         parent: null,
     },
     "/mobile/home/manage": {
-        title: "Home",
+        title: "Manage",
         subPage: false,
         inlineHeader: false,
         isChart: false,
@@ -119,7 +131,6 @@ export const mobileRoutes = {
         isChart: false,
         parent: "/mobile/home/pos",
     },
-    // Dynamic: any notification detail page (e.g. /mobile/notifications/{id})
     "/mobile/notifications/*": {
         title: "Mobile",
         subPage: true,
@@ -127,7 +138,6 @@ export const mobileRoutes = {
         isChart: false,
         parent: "/mobile/notifications",
     },
-    // Dynamic: weather sub-page of a notification (e.g. /mobile/notifications/{id}/weather)
     "/mobile/notifications/*/weather": {
         title: "Weather Forecast",
         subPage: true,
@@ -156,13 +166,11 @@ export const rootTabSuffixes = Object.entries(mobileRoutes)
     .map(([path]) => path);
 
 export const resolveRoute = (path: string): RouteConfig | null => {
-    // Static routes: exact suffix match, skip wildcard keys
     const key = Object.keys(mobileRoutes).find(
         (k) => !k.includes("*") && path.endsWith(k),
     );
     if (key) return mobileRoutes[key as keyof typeof mobileRoutes];
 
-    // Dynamic notification sub-routes
     if (path.includes("/mobile/notifications/")) {
         if (path.endsWith("/weather"))
             return mobileRoutes["/mobile/notifications/*/weather"];
@@ -170,4 +178,60 @@ export const resolveRoute = (path: string): RouteConfig | null => {
     }
 
     return null;
+};
+
+// ─── Tab Groups ───────────────────────────────────────────────────────────────
+
+export type TabVariant = {
+    pathContains: string;
+    label: string;
+    icon: LucideIcon;
+};
+
+export type TabDef = {
+    pathSuffix: string;
+    label: string;
+    icon: LucideIcon;
+    matchSuffixes: string[];
+    variant?: TabVariant;
+};
+
+export const tabGroups: { global: TabDef[] } = {
+    global: [
+        {
+            pathSuffix: "/mobile/home/pos",
+            label: "POS",
+            icon: ShoppingCart,
+            matchSuffixes: ["/mobile/home/pos", "/mobile/home/manage"],
+            variant: {
+                pathContains: "/mobile/home/manage",
+                label: "Manage",
+                icon: Layers,
+            },
+        },
+        {
+            pathSuffix: "/mobile/orders",
+            label: "Orders",
+            icon: ReceiptText,
+            matchSuffixes: ["/mobile/orders", "/mobile/orders/chart"],
+        },
+        {
+            pathSuffix: "/mobile/analytics",
+            label: "Analytics",
+            icon: ChartNoAxesCombinedIcon,
+            matchSuffixes: ["/mobile/analytics", "/mobile/analytics/chart"],
+        },
+        {
+            pathSuffix: "/mobile/inbox",
+            label: "Inbox",
+            icon: InboxIcon,
+            matchSuffixes: ["/mobile/inbox"],
+        },
+        {
+            pathSuffix: "/mobile/more",
+            label: "More",
+            icon: MoreHorizontal,
+            matchSuffixes: ["/mobile/more"],
+        },
+    ],
 };

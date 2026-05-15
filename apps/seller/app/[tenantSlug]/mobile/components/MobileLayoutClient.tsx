@@ -7,13 +7,6 @@ import {
     useRef,
     useCallback,
 } from "react";
-import {
-    ReceiptText,
-    StoreIcon,
-    ChartNoAxesCombinedIcon,
-    InboxIcon,
-    MoreHorizontal,
-} from "lucide-react";
 import Image from "next/image";
 import { useStores } from "@/lib/hooks/stores/useStores";
 import { useRouter, usePathname } from "next/navigation";
@@ -25,7 +18,7 @@ import { navigation } from "@tea-pos/utils/navigation";
 import { useIsIPhonePWA } from "@/lib/usePWA";
 import { MobileHeader } from "./MobileHeader";
 import { MobileFooterNav } from "./MobileFooterNav";
-import { resolveRoute, rootTabSuffixes } from "../config/routes";
+import { resolveRoute, rootTabSuffixes, tabGroups } from "../config/navigation";
 
 interface MobileLayoutClientProps {
     children: ReactNode;
@@ -56,51 +49,6 @@ export default function MobileLayoutClient({
             setShellReady(true);
         }
     }, [profile]);
-
-    const tabs = useMemo(
-        () => [
-            {
-                path: url("/mobile/home/pos"),
-                label: "Home",
-                icon: StoreIcon,
-                matchPaths: [
-                    url("/mobile/home/pos"),
-                    url("/mobile/home/manage"),
-                ],
-            },
-            {
-                path: url("/mobile/orders"),
-                label: "Orders",
-                icon: ReceiptText,
-                matchPaths: [
-                    url("/mobile/orders"),
-                    url("/mobile/orders/chart"),
-                ],
-            },
-            {
-                path: url("/mobile/analytics"),
-                label: "Analytics",
-                icon: ChartNoAxesCombinedIcon,
-                matchPaths: [
-                    url("/mobile/analytics"),
-                    url("/mobile/analytics/chart"),
-                ],
-            },
-            {
-                path: url("/mobile/inbox"),
-                label: "Inbox",
-                icon: InboxIcon,
-                matchPaths: [url("/mobile/inbox")],
-            },
-            {
-                path: url("/mobile/more"),
-                label: "More",
-                icon: MoreHorizontal,
-                matchPaths: [url("/mobile/more")],
-            },
-        ],
-        [url],
-    );
 
     const rootTabPaths = useMemo(() => rootTabSuffixes.map(url), [url]);
 
@@ -144,10 +92,6 @@ export default function MobileLayoutClient({
     }, []);
 
     useEffect(() => {
-        tabs.forEach((tab) => router.prefetch(tab.path));
-    }, [tabs]);
-
-    useEffect(() => {
         const el = scrollContainerRef.current;
         if (!el) return;
         if (isPickerOpen) {
@@ -161,6 +105,28 @@ export default function MobileLayoutClient({
     }, [isPickerOpen]);
 
     const currentPath = optimisticPath || pathname;
+
+    const tabs = useMemo(
+        () =>
+            tabGroups.global.map((tab) => {
+                const v =
+                    tab.variant && currentPath.includes(tab.variant.pathContains)
+                        ? tab.variant
+                        : null;
+                return {
+                    path: url(tab.pathSuffix),
+                    label: v?.label ?? tab.label,
+                    icon: v?.icon ?? tab.icon,
+                    matchPaths: tab.matchSuffixes.map(url),
+                };
+            }),
+        [currentPath, url],
+    );
+
+    useEffect(() => {
+        tabs.forEach((tab) => router.prefetch(tab.path));
+    }, [tabs]);
+
     const currentRoute = resolveRoute(currentPath);
     const currentTitle = currentRoute?.title ?? "Mobile";
     const currentIsSubPage = currentRoute?.subPage ?? false;

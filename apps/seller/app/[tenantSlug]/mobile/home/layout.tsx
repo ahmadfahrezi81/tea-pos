@@ -12,20 +12,10 @@ export default function HomeLayout({
     const isPos = pathname.endsWith("/home/pos");
     const isManage = pathname.endsWith("/home/manage");
     const isHomeRoot = isPos || isManage;
-    const sectionLabel = isPos ? "POS" : isManage ? "Manage" : null;
 
     return (
         <div className="flex flex-col gap-4">
             {isHomeRoot && <AtAGlance />}
-            {sectionLabel && (
-                <div className="flex items-center gap-3">
-                    <div className="w-1.5 h-0.5 bg-slate-600 rounded-full shrink-0" />
-                    <span className="text-lg font-bold text-slate-950 tracking-widest shrink-0">
-                        {sectionLabel}
-                    </span>
-                    <div className="flex-1 h-0.5 bg-slate-600 rounded-full" />
-                </div>
-            )}
             <div
                 key={pathname}
                 className="animate-in fade-in duration-150 ease-out"

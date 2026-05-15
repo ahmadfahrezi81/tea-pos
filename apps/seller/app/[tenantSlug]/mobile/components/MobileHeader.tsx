@@ -1,7 +1,7 @@
 "use client";
 import { ArrowLeft, ChevronsUpDown, UserCircle } from "lucide-react";
 import Image from "next/image";
-import { resolveRoute } from "../config/routes";
+import { resolveRoute } from "../config/navigation";
 
 interface MobileHeaderProps {
     currentPath: string;

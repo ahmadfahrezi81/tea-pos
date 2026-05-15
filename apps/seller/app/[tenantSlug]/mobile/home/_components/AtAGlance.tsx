@@ -171,7 +171,7 @@ export function AtAGlance({
             >
                 <div
                     style={{ width: BAR_WIDTH }}
-                    className="relative px-4 py-4 pb-6"
+                    className="relative px-4 py-4 pb-8"
                 >
                     <div className="relative flex items-center">
                         {/* Open icon */}

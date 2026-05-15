@@ -18,7 +18,7 @@ export function PillSwitcher() {
         href === base ? pathname === base : pathname.startsWith(href);
 
     return (
-        <div className="flex items-center bg-slate-200 rounded-2xl p-1.5 self-start">
+        <div className="flex items-center bg-slate-200 rounded-2xl p-1 self-start">
             {tabs.map((tab) => (
                 <Link
                     key={tab.href}

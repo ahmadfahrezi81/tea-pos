@@ -139,7 +139,7 @@ export default function MobilePOS() {
             {/* Sticky Bottom Bar */}
             {cart.length > 0 && (
                 <div
-                    className={`fixed ${isIPhonePWA ? "bottom-[105px]" : "bottom-[73px]"} left-0 right-0 bg-white border-y border-gray-400 p-4 z-40`}
+                    className={`fixed ${isIPhonePWA ? "bottom-[98px]" : "bottom-[66px]"} left-0 right-0 bg-white border-y border-gray-400 p-4 z-40`}
                 >
                     <div className="flex items-center justify-between max-w-md mx-auto">
                         <div className="flex-1">
