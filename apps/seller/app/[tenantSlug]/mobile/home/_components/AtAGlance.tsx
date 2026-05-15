@@ -154,9 +154,6 @@ export function AtAGlance({
             {/* Header */}
             <div className="pb-3 flex items-start justify-between">
                 <div>
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
-                        Right now
-                    </p>
                     <p className="text-xl font-bold text-gray-900 tracking-tight">
                         {greeting}
                     </p>
