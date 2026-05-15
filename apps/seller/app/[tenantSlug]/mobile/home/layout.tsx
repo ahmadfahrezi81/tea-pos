@@ -20,7 +20,7 @@ export default function HomeLayout({
             {sectionLabel && (
                 <div className="flex items-center gap-8">
                     <div className="flex-1 h-0.75 bg-slate-700 rounded-full" />
-                    <span className="text-lg font-semibold text-slate-950 tracking-widest shrink-0">
+                    <span className="text-lg font-bold text-slate-950 tracking-widest shrink-0">
                         {sectionLabel}
                     </span>
                     <div className="flex-1 h-0.75 bg-slate-700 rounded-full" />
