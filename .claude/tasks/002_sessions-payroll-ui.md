@@ -6,12 +6,14 @@ Phase 1–3 (schema, services, API, hooks) are fully implemented and type-check 
 This file covers the UI layer only — wiring the existing hooks into components.
 
 **Key hooks available:**
+
 - `useSession(storeId)` — `session`, `openStore()`, `transferSession(claimCode)`, `endSession(sessionId)`
 - `useTodayCups(storeId, userId, date)` — `totalCups`, `estimatedEarnings`, `ratePerCup`
 - `usePayrollPeriods(params?)` — `periods`, `updatePeriodStatus()`
 - `usePayrollEntries(params?)` — `entries`, `updateEntryStatus()`
 
 **Key context already available in components:**
+
 - `useStore()` → `selectedStoreId`, `selectedStore`
 - `useProfile()` (or profile from auth context) → `profile.id`, `profile.fullName`
 - Today's date string: use `getTodayStr()` pattern (UTC+7) from existing code
@@ -25,6 +27,7 @@ This file covers the UI layer only — wiring the existing hooks into components
 Currently `handleOpenStoreToday` (~line 160) calls `createSummary({ storeId, openedBy, date })` directly via `useSummaries`. Replace this with `useSession(selectedStoreId).openStore(...)`.
 
 **What to change:**
+
 1. Import `useSession` and call it with `selectedStoreId`
 2. Replace `handleOpenStoreToday` body — call `session.openStore({ date: todayStr, openingBalance: 0 })`
 3. After success, call `mutateSummaries()` so the analytics view refreshes (the session hook already updates its own state)
@@ -42,15 +45,16 @@ The POS should block ordering if there is no active session, or if the active se
 
 **States to handle:**
 
-| State | What to show |
-|-------|-------------|
-| No store selected | Existing "select a store" state |
-| Loading session | Skeleton / spinner |
-| No active session | "Store is closed" — show **Open Store** button |
+| State                          | What to show                                                               |
+| ------------------------------ | -------------------------------------------------------------------------- |
+| No store selected              | Existing "select a store" state                                            |
+| Loading session                | Skeleton / spinner                                                         |
+| No active session              | "Store is closed" — show **Open Store** button                             |
 | Active session, different user | "POS is held by [name]" — show **Claim Session** button (enter claim code) |
-| Active session, current user | Normal POS UI — show claim code chip somewhere accessible |
+| Active session, current user   | Normal POS UI — show claim code chip somewhere accessible                  |
 
 **Implementation steps:**
+
 1. Call `useSession(selectedStoreId)` at the top of `MobilePOS`
 2. If `session === null` → show a locked state with "Open Store" CTA that opens the existing open store flow (or a simplified modal inline)
 3. If `session.userId !== profile.id` → show a "claimed by another user" state with a **Claim** button
@@ -71,8 +75,9 @@ Add a small widget visible when today's summary is open, showing the current use
 **Hook:** `useTodayCups(selectedStoreId, profile.id, todayStr)`
 
 **Widget content:**
+
 - Cups sold today: `totalCups`
-- Estimated earnings: `formatRupiah(estimatedEarnings)` 
+- Estimated earnings: `formatRupiah(estimatedEarnings)`
 - Rate: `formatRupiah(ratePerCup)` / cup (small secondary text)
 
 **When to show:** Only when `todaySummary` exists and is not yet closed (`!closedAt`). If `ratePerCup === 0` (no commission config set), show cups only — omit earnings line.
@@ -88,6 +93,7 @@ Add a small widget visible when today's summary is open, showing the current use
 A simple read-only list view of payroll periods and their entries. Managers can approve entries.
 
 **Layout:**
+
 ```
 Payroll Periods
   ┌─────────────────────────┐
@@ -105,6 +111,7 @@ Entries for selected period:
 ```
 
 **Hooks:**
+
 - `usePayrollPeriods()` → list all periods
 - `usePayrollEntries({ periodId })` → entries for selected period
 - `updateEntryStatus(id, 'approved')` → approve button handler
