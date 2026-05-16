@@ -960,33 +960,39 @@ export type Database = {
       stores: {
         Row: {
           address: string | null
+          close_time: string
           created_at: string | null
           id: string
           latitude: number | null
           longitude: number | null
           name: string
+          open_time: string
           status: string
           tenant_id: string | null
           updated_at: string | null
         }
         Insert: {
           address?: string | null
+          close_time?: string
           created_at?: string | null
           id?: string
           latitude?: number | null
           longitude?: number | null
           name: string
+          open_time?: string
           status?: string
           tenant_id?: string | null
           updated_at?: string | null
         }
         Update: {
           address?: string | null
+          close_time?: string
           created_at?: string | null
           id?: string
           latitude?: number | null
           longitude?: number | null
           name?: string
+          open_time?: string
           status?: string
           tenant_id?: string | null
           updated_at?: string | null

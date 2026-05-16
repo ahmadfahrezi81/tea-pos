@@ -112,6 +112,8 @@ export const StoreResponse = z
         longitude: z.number().nullable().optional(),
         status: StoreStatus,
         tenantId: UUIDSchema,
+        openTime: z.string().default("08:00"),
+        closeTime: z.string().default("22:00"),
         createdAt: z.string().nullable(),
         updatedAt: z.string().nullable(),
     })

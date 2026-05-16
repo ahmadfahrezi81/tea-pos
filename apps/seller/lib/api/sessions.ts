@@ -1,6 +1,9 @@
 import { apiFetch, buildParams } from "./client";
-import type { OpenStoreInput, TransferSessionInput, GetActiveSessionQuery } from "@tea-pos/features/sessions/schema";
-import { OpenStoreResponse, StoreSessionResponse } from "@tea-pos/features/sessions/schema";
+import type {
+    OpenStoreInput, TransferSessionInput, GetActiveSessionQuery,
+    GetGateStateQuery, ResumeSessionInput,
+} from "@tea-pos/features/sessions/schema";
+import { OpenStoreResponse, StoreSessionResponse, GateStateResponse, ResumeSessionResponse } from "@tea-pos/features/sessions/schema";
 
 export const sessionsApi = {
     getActive: async (params: GetActiveSessionQuery) => {
@@ -11,9 +14,24 @@ export const sessionsApi = {
         });
     },
 
+    getGateState: async (params: GetGateStateQuery) => {
+        const sp = buildParams(params as Record<string, unknown>);
+        return GateStateResponse.parse(await apiFetch<unknown>(`/api/sessions/gate?${sp}`));
+    },
+
     open: async (input: OpenStoreInput) => {
         return OpenStoreResponse.parse(
             await apiFetch<unknown>("/api/sessions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(input),
+            }),
+        );
+    },
+
+    resume: async (input: ResumeSessionInput) => {
+        return ResumeSessionResponse.parse(
+            await apiFetch<unknown>("/api/sessions/resume", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(input),

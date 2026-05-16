@@ -23,9 +23,9 @@ export const OpenStoreInput = z
 export const TransferSessionInput = z
     .object({
         storeId: UUIDSchema.openapi({ description: "Store whose session to transfer" }),
-        claimCode: z.string().length(6).openapi({
-            description: "6-character claim code of the active session",
-            example: "A1B2C3",
+        claimCode: z.string().regex(/^\d{2}$/, "Must be a 2-digit number").openapi({
+            description: "2-digit claim code of the active session",
+            example: "42",
         }),
     })
     .openapi({ title: "TransferSessionInput" });
@@ -35,6 +35,19 @@ export const GetActiveSessionQuery = z
         storeId: UUIDSchema.openapi({ description: "Store ID to query active session for" }),
     })
     .openapi({ title: "GetActiveSessionQuery" });
+
+export const GetGateStateQuery = z
+    .object({
+        storeId: UUIDSchema.openapi({ description: "Store ID to query gate state for" }),
+    })
+    .openapi({ title: "GetGateStateQuery" });
+
+export const ResumeSessionInput = z
+    .object({
+        storeId: UUIDSchema.openapi({ description: "Store to resume session for" }),
+        summaryId: UUIDSchema.openapi({ description: "Existing open daily summary ID" }),
+    })
+    .openapi({ title: "ResumeSessionInput" });
 
 // ============================================================================
 // RESPONSE SCHEMAS
@@ -56,6 +69,21 @@ export const StoreSessionResponse = z
     })
     .openapi({ title: "StoreSessionResponse" });
 
+export const GateStateResponse = z
+    .discriminatedUnion("gate", [
+        z.object({ gate: z.literal("no_summary") }),
+        z.object({ gate: z.literal("no_session"), summaryId: UUIDSchema }),
+        z.object({ gate: z.literal("open"), session: StoreSessionResponse }),
+        z.object({ gate: z.literal("closed"), summaryId: UUIDSchema, closedAt: z.string() }),
+    ])
+    .openapi({ title: "GateStateResponse" });
+
+export const ResumeSessionResponse = z
+    .object({
+        session: StoreSessionResponse,
+    })
+    .openapi({ title: "ResumeSessionResponse" });
+
 export const OpenStoreResponse = z
     .object({
         session: StoreSessionResponse,
@@ -76,5 +104,9 @@ export const OpenStoreResponse = z
 export type OpenStoreInput = z.infer<typeof OpenStoreInput>;
 export type TransferSessionInput = z.infer<typeof TransferSessionInput>;
 export type GetActiveSessionQuery = z.infer<typeof GetActiveSessionQuery>;
+export type GetGateStateQuery = z.infer<typeof GetGateStateQuery>;
+export type ResumeSessionInput = z.infer<typeof ResumeSessionInput>;
 export type StoreSessionResponse = z.infer<typeof StoreSessionResponse>;
+export type GateStateResponse = z.infer<typeof GateStateResponse>;
+export type ResumeSessionResponse = z.infer<typeof ResumeSessionResponse>;
 export type OpenStoreResponse = z.infer<typeof OpenStoreResponse>;

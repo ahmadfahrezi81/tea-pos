@@ -8,6 +8,7 @@ import {
 } from "@tea-pos/features/summaries/schema";
 import { listSummaries, createSummary, updateSummary } from "@tea-pos/services/summaries";
 import { createPayrollEntries } from "@tea-pos/services/payroll";
+import { endSessionsForSummary } from "@tea-pos/services/sessions";
 import { ok, badRequest, err, unauthorized, handleError } from "@/lib/api/response";
 import { getRequestUser } from "@/lib/auth/get-request-user";
 
@@ -62,16 +63,16 @@ export async function PUT(request: NextRequest) {
 
         const summary = await updateSummary(supabase, { tenantId, userId: user.id, ...body.data });
 
-        // Trigger payroll entries when closing the summary
         if (body.data.closedAt) {
             const s = summary as { id: string; storeId: string; date: string };
+            await endSessionsForSummary(supabase, { tenantId, dailySummaryId: s.id });
             createPayrollEntries(supabase, {
                 tenantId,
                 storeId: s.storeId,
                 dailySummaryId: s.id,
                 date: s.date,
                 triggeredByUserId: user.id,
-            }).catch((e) => console.error("createPayrollEntries failed:", e));
+            }).catch((e) => console.error("[payroll] createPayrollEntries failed:", e));
         }
 
         const parsed = UpdateDailySummaryResponse.safeParse(summary);

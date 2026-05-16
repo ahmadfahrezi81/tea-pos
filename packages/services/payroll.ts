@@ -61,6 +61,14 @@ export async function createPayrollEntries(
 ) {
     const { tenantId, storeId, dailySummaryId, date, triggeredByUserId } = params;
 
+    const { count: existingCount } = await supabase
+        .from("payroll_entries")
+        .select("id", { count: "exact", head: true })
+        .eq("daily_summary_id", dailySummaryId)
+        .eq("tenant_id", tenantId);
+
+    if ((existingCount ?? 0) > 0) return [];
+
     const { data: sessions, error: sessionsError } = await supabase
         .from("store_sessions")
         .select("*")

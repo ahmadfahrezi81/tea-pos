@@ -3,7 +3,93 @@ import { toCamelKeys } from "@tea-pos/utils/schemas";
 import { createLogger } from "./activity-logs";
 
 function generateClaimCode(): string {
-    return Math.random().toString(36).substring(2, 8).toUpperCase();
+    return String(Math.floor(Math.random() * 90) + 10);
+}
+
+// ─── Gate state ───────────────────────────────────────────────────────────────
+
+export interface GetStoreGateStateParams {
+    tenantId: string;
+    storeId: string;
+    date: string;
+}
+
+export async function getStoreGateState(supabase: SupabaseClient, params: GetStoreGateStateParams) {
+    const { tenantId, storeId, date } = params;
+
+    const { data: summary, error: summaryError } = await supabase
+        .from("daily_summaries")
+        .select("id, closed_at")
+        .eq("store_id", storeId)
+        .eq("tenant_id", tenantId)
+        .eq("date", date)
+        .maybeSingle();
+
+    if (summaryError) throw summaryError;
+    if (!summary) return { gate: "no_summary" as const };
+    if (summary.closed_at) return { gate: "closed" as const, summaryId: summary.id, closedAt: summary.closed_at };
+
+    const { data: session, error: sessionError } = await supabase
+        .from("store_sessions")
+        .select("*")
+        .eq("store_id", storeId)
+        .eq("tenant_id", tenantId)
+        .eq("status", "active")
+        .maybeSingle();
+
+    if (sessionError) throw sessionError;
+    if (!session) return { gate: "no_session" as const, summaryId: summary.id };
+
+    return { gate: "open" as const, session: toCamelKeys(session) };
+}
+
+// ─── Resume session ────────────────────────────────────────────────────────────
+// Creates a new session linked to an existing open summary (no_session edge case).
+
+export interface ResumeSessionParams {
+    tenantId: string;
+    storeId: string;
+    userId: string;
+    summaryId: string;
+}
+
+export async function resumeSession(supabase: SupabaseClient, params: ResumeSessionParams) {
+    const { tenantId, storeId, userId, summaryId } = params;
+
+    const { data: summary, error: summaryError } = await supabase
+        .from("daily_summaries")
+        .select("id, closed_at")
+        .eq("id", summaryId)
+        .eq("store_id", storeId)
+        .eq("tenant_id", tenantId)
+        .maybeSingle();
+
+    if (summaryError) throw summaryError;
+    if (!summary) throw Object.assign(new Error("Summary not found"), { status: 404 });
+    if (summary.closed_at) throw Object.assign(new Error("Summary is already closed"), { status: 409 });
+
+    const { data: sessionData, error: sessionError } = await supabase
+        .from("store_sessions")
+        .insert({
+            tenant_id: tenantId,
+            store_id: storeId,
+            daily_summary_id: summaryId,
+            user_id: userId,
+            claim_code: generateClaimCode(),
+        })
+        .select()
+        .single();
+
+    if (sessionError || !sessionData) throw new Error(sessionError?.message ?? "Failed to create session");
+
+    const log = createLogger(supabase, { tenantId, userId, storeId });
+    log("store_open", {
+        refId: summaryId,
+        refTable: "daily_summaries",
+        metadata: { resumed: true },
+    });
+
+    return { session: toCamelKeys(sessionData) };
 }
 
 // ─── Open store ───────────────────────────────────────────────────────────────
@@ -133,7 +219,7 @@ export async function transferSession(supabase: SupabaseClient, params: Transfer
         throw Object.assign(new Error("No active session found"), { status: 404 });
 
     const session = activeSession as { id: string; claim_code: string; daily_summary_id: string };
-    if (session.claim_code !== claimCode.toUpperCase())
+    if (session.claim_code !== claimCode)
         throw Object.assign(new Error("Invalid claim code"), { status: 403 });
 
     const { error: endError } = await supabase
@@ -167,6 +253,21 @@ export async function transferSession(supabase: SupabaseClient, params: Transfer
     });
 
     return toCamelKeys(newSession);
+}
+
+// ─── End sessions for a summary ──────────────────────────────────────────────
+// Called automatically when a daily_summary is closed. Not a user action.
+
+export async function endSessionsForSummary(
+    supabase: SupabaseClient,
+    { tenantId, dailySummaryId }: { tenantId: string; dailySummaryId: string },
+) {
+    await supabase
+        .from("store_sessions")
+        .update({ ended_at: new Date().toISOString(), status: "ended" })
+        .eq("daily_summary_id", dailySummaryId)
+        .eq("tenant_id", tenantId)
+        .eq("status", "active");
 }
 
 // ─── End session ──────────────────────────────────────────────────────────────
