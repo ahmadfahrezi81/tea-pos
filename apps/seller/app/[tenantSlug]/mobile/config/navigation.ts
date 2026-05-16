@@ -145,13 +145,6 @@ export const mobileRoutes = {
         isChart: false,
         parent: "/mobile/notifications",
     },
-    "/mobile/analytics/daily/close": {
-        title: "Close Day",
-        subPage: true,
-        inlineHeader: true,
-        isChart: false,
-        parent: "/mobile/analytics",
-    },
     "/mobile/analytics/daily/open": {
         title: "Open Store",
         subPage: true,

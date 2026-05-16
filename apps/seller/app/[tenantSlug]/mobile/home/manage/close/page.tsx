@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { useStore } from "@/lib/context/StoreContext";
 import { useSummaries } from "@/lib/hooks/summaries/useDailySummaries";
 import { useSummaryPhotos } from "@/lib/hooks/summaries/useSummaryPhotos";
@@ -10,16 +11,16 @@ import {
     SlottedPhoto,
     SavedSlottedPhoto,
 } from "@tea-pos/features/summaries/photos-schema";
-import { DailyStepHeader } from "../../../analytics/daily/_components/DailyStepHeader";
-import { SinglePhotoStep } from "../../../analytics/daily/_components/SinglePhotoStep";
+import { DailyStepHeader } from "../_components/daily/DailyStepHeader";
+import { SinglePhotoStep } from "../_components/daily/SinglePhotoStep";
 import { PHOTO_SLOTS } from "@tea-pos/features/shared/photo-slots";
-import { NotesStep } from "../../../analytics/daily/_components/NotesStep";
-import { ReviewStep } from "../../../analytics/daily/_components/ReviewStep";
-import { SimpleCashStep } from "../../../analytics/daily/_components/SimpleCashStep";
+import { ReviewStep } from "../_components/daily/ReviewStep";
+import { SimpleCashStep } from "../_components/daily/SimpleCashStep";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/lib/context/ToastContext";
+import { isEnabled } from "@tea-pos/features/shared/features";
 
 // ============================================================================
 // CONSTANTS
@@ -32,14 +33,12 @@ const STEPS = [
     { label: "Cups" },
     { label: "Waste" },
     { label: "Cash" },
-    { label: "Notes" },
     { label: "Review" },
 ];
 
 const PHOTO_STEP_COUNT = 5;
 const STEP_CASH = 5;
-const STEP_NOTES = 6;
-const STEP_REVIEW = 7;
+const STEP_REVIEW = 6;
 
 const QUANTITY_REQUIRED_SLOTS: PhotoType[] = ["closing:cups", "closing:tea"];
 
@@ -48,12 +47,19 @@ const QUANTITY_REQUIRED_SLOTS: PhotoType[] = ["closing:cups", "closing:tea"];
 // ============================================================================
 
 export default function ManageCloseDayPage() {
+    const searchParams = useSearchParams();
     const { url } = useTenantSlug();
     const { selectedStoreId, selectedStore } = useStore();
     const { showToast } = useToast();
 
+    const paramSummaryId = searchParams.get("summaryId");
+    const paramMonth = searchParams.get("month");
+
     const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
-    const currentMonth = useMemo(() => new Date().toISOString().slice(0, 7), []);
+    const currentMonth = useMemo(
+        () => paramMonth ?? new Date().toISOString().slice(0, 7),
+        [paramMonth],
+    );
 
     const {
         data: summariesData,
@@ -63,8 +69,11 @@ export default function ManageCloseDayPage() {
     } = useSummaries(selectedStoreId, currentMonth);
 
     const summary = useMemo(
-        () => summariesData?.summaries.find((s) => s.date === todayStr && !s.closedAt),
-        [summariesData?.summaries, todayStr],
+        () =>
+            paramSummaryId
+                ? summariesData?.summaries.find((s) => s.id === paramSummaryId)
+                : summariesData?.summaries.find((s) => s.date === todayStr && !s.closedAt),
+        [summariesData?.summaries, paramSummaryId, todayStr],
     );
     const summaryId = summary?.id ?? null;
 
@@ -101,12 +110,10 @@ export default function ManageCloseDayPage() {
     >({});
     const [actualCash, setActualCash] = useState(0);
     const [cashConfirmed, setCashConfirmed] = useState(false);
-    const [notes, setNotes] = useState("");
     const [confirmed, setConfirmed] = useState(false);
 
     useEffect(() => {
         if (!summary) return;
-        if (summary.notes) setNotes(summary.notes);
         if (summary.actualCash) setActualCash(summary.actualCash);
     }, [summary?.id]);
 
@@ -223,26 +230,12 @@ export default function ManageCloseDayPage() {
             setIsUploading(false);
         }
 
-        if (currentStep === STEP_NOTES && summaryId) {
-            setIsUploading(true);
-            try {
-                await updateSummary(summaryId, { notes: notes || null });
-                await mutatePhotos();
-            } catch (err) {
-                setError(err instanceof Error ? err.message : "Failed to save notes");
-                setIsUploading(false);
-                return;
-            }
-            setIsUploading(false);
-        }
-
         goToStep(currentStep + 1);
     }, [
         currentStep,
         photos,
         quantities,
         actualCash,
-        notes,
         summaryId,
         selectedStoreId,
         uploadPhoto,
@@ -262,19 +255,18 @@ export default function ManageCloseDayPage() {
         try {
             await updateSummary(summaryId, {
                 actualCash,
-                notes: notes || null,
                 closedAt: new Date().toISOString(),
             });
             if (STEP_KEY) localStorage.removeItem(STEP_KEY);
             showToast("Day closed successfully!", "success");
-            navigation.push(url("/mobile/home/manage"));
+            navigation.push(url(paramSummaryId ? "/mobile/analytics" : "/mobile/home/manage"));
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to close day");
             showToast(err instanceof Error ? err.message : "Failed to close day", "error");
         } finally {
             setIsSubmitting(false);
         }
-    }, [summaryId, summary, actualCash, notes, updateSummary, url, STEP_KEY]);
+    }, [summaryId, summary, actualCash, updateSummary, url, STEP_KEY, paramSummaryId]);
 
     const handleSavedPhotoDelete = useCallback(
         async (id: string) => {
@@ -295,9 +287,13 @@ export default function ManageCloseDayPage() {
     if (!summaryId || !summary) {
         return (
             <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
-                <p className="text-gray-500 text-sm">No open summary found for today.</p>
+                <p className="text-gray-500 text-sm">No open summary found.</p>
                 <button
-                    onClick={() => navigation.push(url("/mobile/home/manage"))}
+                    onClick={() =>
+                        navigation.push(
+                            url(paramSummaryId ? "/mobile/analytics" : "/mobile/home/manage"),
+                        )
+                    }
                     className="mt-4 text-brand text-sm font-medium"
                 >
                     Go back
@@ -320,10 +316,12 @@ export default function ManageCloseDayPage() {
         : false;
     const currentStepHasQuantity = currentSlot ? !!getSlotQuantity(currentSlot.type) : true;
 
+    const skipPhotos = isEnabled("skip-photos");
+
     const nextDisabled =
         isBusy ||
-        (currentStep < PHOTO_STEP_COUNT && !currentStepHasPhoto) ||
-        (currentStepNeedsQuantity && !currentStepHasQuantity) ||
+        (currentStep < PHOTO_STEP_COUNT && !currentStepHasPhoto && !skipPhotos) ||
+        (currentStepNeedsQuantity && !currentStepHasQuantity && !skipPhotos) ||
         (currentStep === STEP_CASH && !cashConfirmed) ||
         (currentStep === STEP_REVIEW && !confirmed);
 
@@ -364,15 +362,12 @@ export default function ManageCloseDayPage() {
                         onConfirmedChange={setCashConfirmed}
                     />
                 )}
-                {currentStep === STEP_NOTES && (
-                    <NotesStep notes={notes} onNotesChange={setNotes} />
-                )}
                 {currentStep === STEP_REVIEW && (
                     <ReviewStep
                         summary={summary}
                         photos={photos}
                         savedPhotos={savedPhotos}
-                        notes={notes}
+                        notes=""
                         storeName={storeName}
                         onConfirmChange={setConfirmed}
                     />

@@ -426,6 +426,138 @@ The `notes` column stays nullable in the DB. It just won't be set from the close
 
 ---
 
+## Ticket 4c — Skip-photos feature flag (staging/testing)
+
+**Context:** The opening photo (T1) and closing photos (close day wizard) are required in production as proof. On staging they're a friction point — every test run requires picking a photo just to advance. This ticket makes photos bypassable via an existing-style feature flag.
+
+**Files:**
+- `packages/features/shared/features.ts` — register `skip-photos` flag
+- `apps/seller/app/[tenantSlug]/mobile/home/manage/open/page.tsx` — make photo optional when flag is on
+- `apps/seller/app/[tenantSlug]/mobile/home/manage/close/page.tsx` — skip photo requirement in `nextDisabled`
+- `apps/seller/app/[tenantSlug]/mobile/analytics/daily/close/page.tsx` — same
+
+**Changes:**
+
+1. In `features.ts`, add `'skip-photos'` to the known flags list (wherever `qris`, `new-dashboard`, `export-pdf` are defined).
+
+2. In `open/page.tsx`:
+   - Import `isEnabled` from features
+   - When `isEnabled('skip-photos')`: remove photo from `canSubmit` (photo becomes optional, not blocking)
+   - Hide the "Required" badge on the photo section when flag is on, replace with "(optional)"
+   - Still upload the photo if one was selected — flag only removes the gate, not the feature
+
+3. In both close day pages (`manage/close` and `analytics/daily/close`):
+   - Import `isEnabled`
+   - In `nextDisabled`: wrap the `currentStep < PHOTO_STEP_COUNT && !currentStepHasPhoto` condition with `&& !isEnabled('skip-photos')`
+   - No other changes — quantity inputs, cash step, review all stay required
+
+**Staging activation:**
+```
+NEXT_PUBLIC_FEATURES="qris,skip-photos"
+```
+Production `.env` omits `skip-photos` — no prod impact.
+
+---
+
+## Ticket 4d — AtAGlance: activity log event markers on timeline
+
+**Context:** The timeline track is currently a pure progress bar — it shows how far through the day you are but nothing about what actually happened. `activity_logs` already captures every meaningful store action with a timestamp. This ticket plots those events as positioned markers on the track so the timeline tells the story of the day at a glance.
+
+**Design intent:** Each event is a small dot (or icon placeholder) at the correct time position on the track. Tapping shows a tooltip with the event label and time. Icons are a stub map for now — future sessions can swap dots for proper lucide icons per type without touching the data layer.
+
+**No migration needed.** `activity_logs` already has everything.
+
+**Event types to display (curated, not the full audit log):**
+
+| `activity_logs.event_type` | Label shown |
+|---|---|
+| `store_open` | Store opened |
+| `session_transferred` | Session handed over |
+| `expense_created` | Expense added |
+| `daily_summary_closed` | Store closed |
+
+---
+
+### Files to create / change
+
+**1. New API route — `apps/seller/app/api/activity-logs/route.ts`**
+
+`GET /api/activity-logs?storeId=&date=`
+
+- Auth + tenant as usual
+- Query `activity_logs` where `store_id = storeId`, `tenant_id`, and `created_at` falls within the given date (UTC+7 day boundaries)
+- Filter `event_type IN ('store_open', 'session_transferred', 'expense_created', 'daily_summary_closed')`
+- Return array of `{ id, eventType, createdAt, userId }`  — no raw metadata, nothing sensitive
+
+**2. New schema — `packages/features/activity-logs/schema.ts`** (or add to an existing shared schema)
+
+```ts
+export const ActivityLogEvent = z.object({
+  id: z.string(),
+  eventType: z.string(),
+  createdAt: z.string(),
+  userId: z.string().nullable(),
+});
+export type ActivityLogEvent = z.infer<typeof ActivityLogEvent>;
+
+export const ListActivityLogsQuery = z.object({
+  storeId: UUIDSchema,
+  date: z.string(), // YYYY-MM-DD
+});
+```
+
+**3. New API client method — `apps/seller/lib/api/activity-logs.ts`**
+
+```ts
+export const activityLogsApi = {
+  list: (params: { storeId: string; date: string }) =>
+    apiFetch<ActivityLogEvent[]>("/api/activity-logs", { params }),
+};
+```
+
+**4. New hook — `apps/seller/lib/hooks/activity-logs/useStoreActivityLogs.ts`**
+
+```ts
+export function useStoreActivityLogs(storeId?: string, date?: string) {
+  const { data = [], ...rest } = useSWR(
+    storeId && date ? `activity-logs-${storeId}-${date}` : null,
+    () => activityLogsApi.list({ storeId: storeId!, date: date! }),
+    { revalidateOnFocus: false, dedupingInterval: 10000 },
+  );
+  return { events: data, ...rest };
+}
+```
+
+**5. Update `AtAGlance` — accept and render event markers**
+
+Add `events?: ActivityLogEvent[]` prop. In the track render, after the segmented bar, overlay a positioned marker for each event:
+
+```ts
+// Icon stub — swap dot for lucide icon per type in a future session
+const EVENT_ICON: Record<string, string> = {
+  store_open:             "🟢",  // replace with actual icon component
+  session_transferred:    "🔄",
+  expense_created:        "💸",
+  daily_summary_closed:   "🔒",
+};
+```
+
+Position: `left = ((eventMinutes - open) / (close - open)) * 100` — same formula as progress. Render as a small absolute-positioned dot/chip on the track. Tapping shows the existing `TooltipPortal` pattern with `"{label} · {HH:MM}"`.
+
+Events outside the open→close window are clamped to the edges or hidden.
+
+**6. Update `HomeLayout`**
+
+Call `useStoreActivityLogs(selectedStoreId, todayStr)` and pass `events` down to `AtAGlance`.
+
+---
+
+### Future: History view
+
+The same `activity_logs` table + the same API route (with a date range instead of single date) powers a future "History" screen showing big actions across days. No schema changes needed when that ticket comes — just a different query param and a list UI instead of a timeline UI.
+
+---
+
 ## Ticket 5 (FINAL) — Remove store management from Analytics
 
 **Context:** `home/manage/close/page.tsx` and `home/manage/expense/page.tsx` already fully exist. The only issue: `home/manage/close/page.tsx` imports its shared step components from `analytics/daily/_components/`. Those need a new home before analytics is cleaned up.

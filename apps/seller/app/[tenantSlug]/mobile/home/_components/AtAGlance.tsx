@@ -4,6 +4,9 @@ import { useRef, useEffect, useState, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Lock, LockOpen } from "lucide-react";
 import { PillSwitcher } from "./PillSwitcher";
+import type { TimelineEventResponse } from "@tea-pos/features/activity-logs/schema";
+
+// ─── Time helpers ─────────────────────────────────────────────────────────────
 
 function timeToMinutes(time: string): number {
     const [h, m] = time.split(":").map(Number);
@@ -28,7 +31,7 @@ function formatTimeShort(minutes: number): string {
     const h = Math.floor(minutes / 60) % 24;
     const ampm = h >= 12 ? "PM" : "AM";
     const display = h % 12 === 0 ? 12 : h % 12;
-    return `${display} ${ampm}`;
+    return `${display} ${ampm}`;
 }
 
 function formatDate(): string {
@@ -54,11 +57,45 @@ function getCurrentProgress(
     const current = getCurrentMinutes(currentTime);
     const open = timeToMinutes(openTime);
     const close = timeToMinutes(closeTime);
-    return Math.min(
-        Math.max(((current - open) / (close - open)) * 100, 0),
-        100,
-    );
+    return Math.min(Math.max(((current - open) / (close - open)) * 100, 0), 100);
 }
+
+// ─── Event marker helpers ─────────────────────────────────────────────────────
+
+function createdAtToLocalMinutes(createdAt: string): number {
+    const tz = parseInt(process.env.NEXT_PUBLIC_TIMEZONE_OFFSET ?? "7", 10);
+    const localMs = new Date(createdAt).getTime() + tz * 3600 * 1000;
+    const d = new Date(localMs);
+    return d.getUTCHours() * 60 + d.getUTCMinutes();
+}
+
+function formatEventTime(createdAt: string): string {
+    const tz = parseInt(process.env.NEXT_PUBLIC_TIMEZONE_OFFSET ?? "7", 10);
+    const localMs = new Date(createdAt).getTime() + tz * 3600 * 1000;
+    const d = new Date(localMs);
+    const h = d.getUTCHours();
+    const m = d.getUTCMinutes();
+    const ampm = h >= 12 ? "PM" : "AM";
+    const display = h % 12 === 0 ? 12 : h % 12;
+    return `${display}:${String(m).padStart(2, "0")} ${ampm}`;
+}
+
+// Stub maps — swap dot colors / add lucide icons per type in a future session
+const EVENT_COLOR: Record<string, string> = {
+    store_open: "bg-green-500",
+    session_transferred: "bg-blue-500",
+    expense_created: "bg-orange-400",
+    daily_summary_closed: "bg-gray-500",
+};
+
+const EVENT_LABEL: Record<string, string> = {
+    store_open: "Store opened",
+    session_transferred: "Session handed over",
+    expense_created: "Expense added",
+    daily_summary_closed: "Store closed",
+};
+
+// ─── Tooltip portal ───────────────────────────────────────────────────────────
 
 interface TooltipPortalProps {
     label: string;
@@ -98,10 +135,13 @@ function TooltipPortal({
     );
 }
 
+// ─── AtAGlance ────────────────────────────────────────────────────────────────
+
 interface AtAGlanceProps {
     openTime?: string;
     closeTime?: string;
     currentTime?: string;
+    events?: TimelineEventResponse[];
 }
 
 const BAR_WIDTH = 900;
@@ -110,6 +150,7 @@ export function AtAGlance({
     openTime = "10:00",
     closeTime = "22:00",
     currentTime,
+    events = [],
 }: AtAGlanceProps) {
     const progress = getCurrentProgress(openTime, closeTime, currentTime);
     const open = timeToMinutes(openTime);
@@ -121,6 +162,7 @@ export function AtAGlance({
     const openIconRef = useRef<HTMLDivElement>(null);
     const closeIconRef = useRef<HTMLDivElement>(null);
     const [tooltip, setTooltip] = useState<string | null>(null);
+    const [activeEventId, setActiveEventId] = useState<string | null>(null);
 
     const greeting = useMemo(() => getGreeting(), []);
 
@@ -144,7 +186,10 @@ export function AtAGlance({
     useEffect(() => {
         const container = scrollRef.current;
         if (!container) return;
-        const handleScroll = () => setTooltip(null);
+        const handleScroll = () => {
+            setTooltip(null);
+            setActiveEventId(null);
+        };
         container.addEventListener("scroll", handleScroll, { passive: true });
         return () => container.removeEventListener("scroll", handleScroll);
     }, []);
@@ -180,17 +225,11 @@ export function AtAGlance({
                             className="absolute -left-4 z-20 w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center border-2 border-gray-50 cursor-pointer"
                             onClick={() =>
                                 setTooltip(
-                                    tooltip === "Store Open"
-                                        ? null
-                                        : "Store Open",
+                                    tooltip === "Store Open" ? null : "Store Open",
                                 )
                             }
                         >
-                            <LockOpen
-                                size={22}
-                                strokeWidth={2}
-                                className="text-white"
-                            />
+                            <LockOpen size={22} strokeWidth={2} className="text-white" />
                         </div>
                         {tooltip === "Store Open" && (
                             <TooltipPortal
@@ -202,44 +241,67 @@ export function AtAGlance({
 
                         {/* Track — segmented per hour */}
                         <div className="w-full flex items-center gap-1">
-                            {Array.from({ length: totalMinutes / 60 }).map(
-                                (_, i) => {
-                                    const segmentStart =
-                                        (i / (totalMinutes / 60)) * 100;
-                                    const segmentEnd =
-                                        ((i + 1) / (totalMinutes / 60)) * 100;
-                                    const isFull = progress >= segmentEnd;
-                                    const isPartial =
-                                        progress > segmentStart &&
-                                        progress < segmentEnd;
-                                    const fillPct = isPartial
-                                        ? ((progress - segmentStart) /
-                                              (segmentEnd - segmentStart)) *
-                                          100
-                                        : 0;
+                            {Array.from({ length: totalMinutes / 60 }).map((_, i) => {
+                                const segmentStart = (i / (totalMinutes / 60)) * 100;
+                                const segmentEnd = ((i + 1) / (totalMinutes / 60)) * 100;
+                                const isFull = progress >= segmentEnd;
+                                const isPartial =
+                                    progress > segmentStart && progress < segmentEnd;
+                                const fillPct = isPartial
+                                    ? ((progress - segmentStart) /
+                                          (segmentEnd - segmentStart)) *
+                                      100
+                                    : 0;
 
-                                    return (
-                                        <div
-                                            key={i}
-                                            className="flex-1 h-2.5 bg-gray-200 rounded-full overflow-hidden"
-                                        >
-                                            {(isFull || isPartial) && (
-                                                <div
-                                                    className="h-full bg-blue-600 rounded-full transition-all duration-500 ease-out relative overflow-hidden"
-                                                    style={{
-                                                        width: isFull
-                                                            ? "100%"
-                                                            : `${fillPct}%`,
-                                                    }}
-                                                >
-                                                    <div className="absolute top-0.5 left-1 right-1 h-0.5 rounded-full bg-white/20" />
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                },
-                            )}
+                                return (
+                                    <div
+                                        key={i}
+                                        className="flex-1 h-2.5 bg-gray-200 rounded-full overflow-hidden"
+                                    >
+                                        {(isFull || isPartial) && (
+                                            <div
+                                                className="h-full bg-blue-600 rounded-full transition-all duration-500 ease-out relative overflow-hidden"
+                                                style={{
+                                                    width: isFull ? "100%" : `${fillPct}%`,
+                                                }}
+                                            >
+                                                <div className="absolute top-0.5 left-1 right-1 h-0.5 rounded-full bg-white/20" />
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
+
+                        {/* Event markers */}
+                        {events.map((event) => {
+                            const mins = createdAtToLocalMinutes(event.createdAt);
+                            const pos = Math.min(
+                                Math.max(((mins - open) / (close - open)) * 100, 0),
+                                100,
+                            );
+                            const isActive = activeEventId === event.id;
+                            return (
+                                <div
+                                    key={event.id}
+                                    className="absolute top-1/2 -translate-y-1/2 z-10"
+                                    style={{ left: `${pos}%` }}
+                                >
+                                    {isActive && (
+                                        <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-2 py-0.5 rounded-md whitespace-nowrap pointer-events-none z-30">
+                                            {EVENT_LABEL[event.type] ?? event.type} ·{" "}
+                                            {formatEventTime(event.createdAt)}
+                                        </div>
+                                    )}
+                                    <button
+                                        onClick={() =>
+                                            setActiveEventId(isActive ? null : event.id)
+                                        }
+                                        className={`w-3.5 h-3.5 rounded-full border-2 border-white shadow-md ${EVENT_COLOR[event.type] ?? "bg-gray-400"}`}
+                                    />
+                                </div>
+                            );
+                        })}
 
                         {/* Close icon */}
                         <div
@@ -247,17 +309,11 @@ export function AtAGlance({
                             className="absolute -right-4 z-20 w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center border-2 border-gray-50 cursor-pointer"
                             onClick={() =>
                                 setTooltip(
-                                    tooltip === "Store Close"
-                                        ? null
-                                        : "Store Close",
+                                    tooltip === "Store Close" ? null : "Store Close",
                                 )
                             }
                         >
-                            <Lock
-                                size={22}
-                                strokeWidth={2}
-                                className="text-gray-400"
-                            />
+                            <Lock size={22} strokeWidth={2} className="text-gray-400" />
                         </div>
                         {tooltip === "Store Close" && (
                             <TooltipPortal
@@ -277,23 +333,21 @@ export function AtAGlance({
 
                     {/* Time labels */}
                     <div className="relative w-full mt-5 px-0">
-                        {Array.from({ length: totalMinutes / 60 + 1 }).map(
-                            (_, i) => {
-                                if (i === totalMinutes / 60) return null;
-                                const pct = (i / (totalMinutes / 60)) * 100;
-                                const mins = open + i * 60;
-                                const label = formatTimeShort(mins);
-                                return (
-                                    <span
-                                        key={i}
-                                        className="absolute text-xs text-gray-500 -translate-x-1/2"
-                                        style={{ left: `${pct}%` }}
-                                    >
-                                        {label}
-                                    </span>
-                                );
-                            },
-                        )}
+                        {Array.from({ length: totalMinutes / 60 + 1 }).map((_, i) => {
+                            if (i === totalMinutes / 60) return null;
+                            const pct = (i / (totalMinutes / 60)) * 100;
+                            const mins = open + i * 60;
+                            const label = formatTimeShort(mins);
+                            return (
+                                <span
+                                    key={i}
+                                    className="absolute text-xs text-gray-500 -translate-x-1/2"
+                                    style={{ left: `${pct}%` }}
+                                >
+                                    {label}
+                                </span>
+                            );
+                        })}
                     </div>
                 </div>
             </div>

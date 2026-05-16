@@ -9,6 +9,8 @@ type Store = {
     id: string;
     name: string;
     status: "active" | "fake" | "inactive";
+    openTime: string;
+    closeTime: string;
 };
 
 type StoreContextType = {

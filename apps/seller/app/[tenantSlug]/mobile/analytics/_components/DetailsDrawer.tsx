@@ -5,7 +5,7 @@ import { formatFullIndonesiaTimestamp } from "@tea-pos/utils/server-config/timez
 import CopyableField from "@/components/shared/CopyableField";
 import { DailySummary } from "@tea-pos/features/summaries/schema";
 import { Expense } from "@tea-pos/features/expenses/schema";
-import { SummaryPhotoThumbnail } from "@/app/[tenantSlug]/mobile/analytics/daily/_components/SummaryPhotoThumbnail";
+import { SummaryPhotoThumbnail } from "@/app/[tenantSlug]/mobile/home/manage/_components/daily/SummaryPhotoThumbnail";
 import { PHOTO_SLOTS } from "@tea-pos/features/shared/photo-slots";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 import { useSummaryPhotosById } from "@/lib/hooks/summaries/useSummaryPhotosById";

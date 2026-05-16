@@ -2,6 +2,16 @@ import { z } from "zod";
 import { UUIDSchema } from "../shared/common-schema";
 
 // ============================================================================
+// QUERY SCHEMAS
+// ============================================================================
+
+export const ListActivityLogsQuery = z.object({
+    storeId: UUIDSchema,
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+export type ListActivityLogsQuery = z.infer<typeof ListActivityLogsQuery>;
+
+// ============================================================================
 // ENUMS
 // ============================================================================
 
@@ -55,6 +65,14 @@ export const ActivityLogResponse = z
         createdAt: z.string(),
     })
     .openapi({ title: "ActivityLogResponse" });
+
+// Curated subset for timeline display — no sensitive metadata exposed
+export const TimelineEventResponse = z.object({
+    id: UUIDSchema,
+    type: ActivityLogType,
+    createdAt: z.string(),
+});
+export type TimelineEventResponse = z.infer<typeof TimelineEventResponse>;
 
 export const ActivityLogListResponse = z
     .object({

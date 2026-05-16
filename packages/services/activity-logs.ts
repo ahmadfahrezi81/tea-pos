@@ -1,6 +1,43 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ActivityLogType } from "@tea-pos/features/activity-logs/schema";
 
+// ─── Timeline event types — curated subset shown in AtAGlance ─────────────────
+
+const TIMELINE_EVENT_TYPES: ActivityLogType[] = [
+    "store_open",
+    "session_transferred",
+    "expense_created",
+    "daily_summary_closed",
+];
+
+export async function listStoreActivityLogs(
+    supabase: SupabaseClient,
+    { tenantId, storeId, date }: { tenantId: string; storeId: string; date: string },
+) {
+    const tz = parseInt(process.env.TIMEZONE_OFFSET ?? "7", 10);
+    const [year, month, day] = date.split("-").map(Number);
+    const dayStartMs = Date.UTC(year, month - 1, day) - tz * 3600 * 1000;
+    const dayStart = new Date(dayStartMs).toISOString();
+    const dayEnd = new Date(dayStartMs + 24 * 3600 * 1000 - 1).toISOString();
+
+    const { data, error } = await supabase
+        .from("activity_logs")
+        .select("id, type, created_at")
+        .eq("tenant_id", tenantId)
+        .eq("store_id", storeId)
+        .in("type", TIMELINE_EVENT_TYPES)
+        .gte("created_at", dayStart)
+        .lte("created_at", dayEnd)
+        .order("created_at", { ascending: true });
+
+    if (error) throw error;
+    return (data ?? []).map((row) => ({
+        id: row.id,
+        type: row.type as ActivityLogType,
+        createdAt: row.created_at,
+    }));
+}
+
 interface LogContext {
     tenantId: string;
     userId: string;
