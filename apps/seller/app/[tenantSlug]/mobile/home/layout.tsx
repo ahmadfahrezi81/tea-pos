@@ -3,8 +3,10 @@
 import { useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { AtAGlance } from "./_components/AtAGlance";
+import { TakeOverCard } from "./_components/TakeOverCard";
 import { useStore } from "@/lib/context/StoreContext";
 import { useSession } from "@/lib/hooks/sessions/useSession";
+import { useAuth } from "@/lib/context/AuthContext";
 import { useStoreActivityLogs } from "@/lib/hooks/activity-logs/useStoreActivityLogs";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
@@ -21,7 +23,8 @@ export default function HomeLayout({
     const isHomeRoot = isPos || isManage;
 
     const { selectedStoreId, selectedStore } = useStore();
-    const { gate } = useSession(selectedStoreId);
+    const { gate, session, transferSession } = useSession(selectedStoreId);
+    const { profile } = useAuth();
     const { url } = useTenantSlug();
 
     const todayStr = useMemo(() => {
@@ -31,9 +34,10 @@ export default function HomeLayout({
 
     const { events } = useStoreActivityLogs(selectedStoreId || undefined, todayStr);
 
+    const isPosInUse = isPos && gate === "open" && session?.userId !== profile?.id;
     const showGate =
         isHomeRoot &&
-        (gate === "no_summary" || gate === "no_session" || gate === "closed");
+        (gate === "no_summary" || gate === "no_session" || gate === "closed" || isPosInUse);
 
     return (
         <div className="flex flex-col gap-4 relative min-h-[70vh]">
@@ -58,7 +62,9 @@ export default function HomeLayout({
             {showGate && (
                 <div className="fixed inset-0 flex items-center justify-center p-4 z-50 pointer-events-none">
                     <div className="pointer-events-auto w-full max-w-xs">
-                        {gate === "closed" ? (
+                        {isPosInUse ? (
+                            <TakeOverCard onTransfer={transferSession} />
+                        ) : gate === "closed" ? (
                             <div className="bg-white rounded-2xl shadow-lg p-6 text-center">
                                 <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <Lock size={24} className="text-gray-400" />

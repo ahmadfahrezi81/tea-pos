@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { Lock, LockOpen } from "lucide-react";
 import { PillSwitcher } from "./PillSwitcher";
 import type { TimelineEventResponse } from "@tea-pos/features/activity-logs/schema";
+import { EVENT_COLOR, EVENT_LABEL, formatEventTime } from "@/lib/constants/activity-log-events";
 
 // ─── Time helpers ─────────────────────────────────────────────────────────────
 
@@ -69,31 +70,6 @@ function createdAtToLocalMinutes(createdAt: string): number {
     return d.getUTCHours() * 60 + d.getUTCMinutes();
 }
 
-function formatEventTime(createdAt: string): string {
-    const tz = parseInt(process.env.NEXT_PUBLIC_TIMEZONE_OFFSET ?? "7", 10);
-    const localMs = new Date(createdAt).getTime() + tz * 3600 * 1000;
-    const d = new Date(localMs);
-    const h = d.getUTCHours();
-    const m = d.getUTCMinutes();
-    const ampm = h >= 12 ? "PM" : "AM";
-    const display = h % 12 === 0 ? 12 : h % 12;
-    return `${display}:${String(m).padStart(2, "0")} ${ampm}`;
-}
-
-// Stub maps — swap dot colors / add lucide icons per type in a future session
-const EVENT_COLOR: Record<string, string> = {
-    store_open: "bg-green-500",
-    session_transferred: "bg-blue-500",
-    expense_created: "bg-orange-400",
-    daily_summary_closed: "bg-gray-500",
-};
-
-const EVENT_LABEL: Record<string, string> = {
-    store_open: "Store opened",
-    session_transferred: "Session handed over",
-    expense_created: "Expense added",
-    daily_summary_closed: "Store closed",
-};
 
 // ─── Tooltip portal ───────────────────────────────────────────────────────────
 

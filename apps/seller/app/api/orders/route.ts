@@ -9,7 +9,8 @@ import {
     CreateOrderResponse,
 } from "@tea-pos/features/orders/schema";
 import { listOrders, createOrder } from "@tea-pos/services/orders";
-import { ok, badRequest, err, unauthorized, handleError } from "@/lib/api/response";
+import { getActiveSession } from "@tea-pos/services/sessions";
+import { ok, badRequest, err, unauthorized, forbidden, handleError } from "@/lib/api/response";
 
 export async function GET(request: NextRequest) {
     try {
@@ -37,6 +38,11 @@ export async function POST(request: NextRequest) {
 
         const body = CreateOrderInput.safeParse(await request.json());
         if (!body.success) return badRequest("Validation failed");
+
+        const activeSession = await getActiveSession(supabase, { tenantId, storeId: body.data.storeId });
+        if (!activeSession || activeSession.userId !== user.id) {
+            return forbidden("You do not hold the active session for this store");
+        }
 
         const result = await createOrder(supabase, { tenantId, userId: user.id, ...body.data });
         const parsed = CreateOrderResponse.safeParse({ success: true, ...result });

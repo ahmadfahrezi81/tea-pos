@@ -370,6 +370,77 @@ export type Database = {
           },
         ]
       }
+      incident_reports: {
+        Row: {
+          category: string
+          created_at: string
+          daily_summary_id: string | null
+          description: string
+          id: string
+          photo_url: string | null
+          status: string
+          store_id: string
+          tenant_id: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          daily_summary_id?: string | null
+          description: string
+          id?: string
+          photo_url?: string | null
+          status?: string
+          store_id: string
+          tenant_id: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          daily_summary_id?: string | null
+          description?: string
+          id?: string
+          photo_url?: string | null
+          status?: string
+          store_id?: string
+          tenant_id?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_reports_daily_summary_id_fkey"
+            columns: ["daily_summary_id"]
+            isOneToOne: false
+            referencedRelation: "daily_summaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incident_reports_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incident_reports_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incident_reports_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_events: {
         Row: {
           body: string
@@ -1003,6 +1074,74 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supply_requests: {
+        Row: {
+          created_at: string
+          daily_summary_id: string | null
+          id: string
+          notes: string | null
+          photo_url: string | null
+          status: string
+          store_id: string
+          tenant_id: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          daily_summary_id?: string | null
+          id?: string
+          notes?: string | null
+          photo_url?: string | null
+          status?: string
+          store_id: string
+          tenant_id: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          daily_summary_id?: string | null
+          id?: string
+          notes?: string | null
+          photo_url?: string | null
+          status?: string
+          store_id?: string
+          tenant_id?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supply_requests_daily_summary_id_fkey"
+            columns: ["daily_summary_id"]
+            isOneToOne: false
+            referencedRelation: "daily_summaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supply_requests_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supply_requests_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supply_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

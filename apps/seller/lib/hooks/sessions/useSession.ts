@@ -10,7 +10,7 @@ export function useSession(storeId?: string) {
     const { data, error, mutate, isLoading } = useSWR<GateStateResponse>(
         key,
         () => sessionsApi.getGateState({ storeId: storeId! }),
-        { revalidateOnFocus: false, dedupingInterval: 5000 },
+        { revalidateOnFocus: false, dedupingInterval: 5000, refreshInterval: 20000 },
     );
 
     const openStore = async (input: Omit<OpenStoreInput, "storeId">) => {
@@ -41,6 +41,11 @@ export function useSession(storeId?: string) {
     return {
         gate: data?.gate ?? null,
         session: data?.gate === "open" ? data.session : null,
+        summaryId:
+            data?.gate === "open" ? data.session.dailySummaryId
+            : data?.gate === "no_session" ? data.summaryId
+            : data?.gate === "closed" ? data.summaryId
+            : null,
         isLoading,
         error,
         mutate,

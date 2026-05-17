@@ -189,18 +189,27 @@ export default function MobileAnalytics() {
                                     <div className="p-3 bg-white space-y-3">
                                         <div className="flex justify-between items-start mb-3">
                                             <div className="flex-1">
-                                                <button
+                                                <div
                                                     onClick={() => {
                                                         setSelectedSummary(summaryWithExtras);
                                                         setShowDetailsModal(true);
                                                     }}
-                                                    className="text-left hover:text-blue-600 transition-colors"
+                                                    className="text-left hover:text-blue-600 transition-colors cursor-pointer"
                                                 >
                                                     <h3 className="text-lg font-semibold text-gray-800 hover:text-blue-600">
                                                         {formatDate(summary.date)}
                                                     </h3>
                                                     <PhotoCountLabel summaryId={summary.id} />
-                                                </button>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            navigation.push(url(`/mobile/analytics/daily/${summary.id}/events?storeId=${selectedStoreId}&date=${summary.date}`));
+                                                        }}
+                                                        className="text-sm text-blue-500 mt-0.5 block"
+                                                    >
+                                                        View day activity →
+                                                    </button>
+                                                </div>
                                             </div>
                                             <div className="text-right">
                                                 {summary.closedAt ? (

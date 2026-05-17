@@ -1,18 +1,16 @@
 "use client";
 
-import { memo, useState } from "react";
+import { memo } from "react";
 import Image from "next/image";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 import { useProducts } from "@/lib/hooks/products/useProducts";
 import { useCart } from "@/lib/hooks/orders/useCart";
 import { useStore } from "@/lib/context/StoreContext";
-import { useSession } from "@/lib/hooks/sessions/useSession";
-import { useAuth } from "@/lib/context/AuthContext";
 import { useFastOrderMode } from "@/lib/context/FastOrderModeContext";
 import type { ProductResponse } from "@tea-pos/features/products/schema";
 import { CartDrawer } from "./CartDrawer";
 import { useIsIPhonePWA } from "@/lib/usePWA";
-import { Lock, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 // ─── Product Card ─────────────────────────────────────────────────────────────
 
@@ -20,18 +18,16 @@ interface ProductCardProps {
     product: ProductResponse;
     quantityInCart: number;
     onAdd: (product: ProductResponse) => void;
-    dimmed?: boolean;
 }
 
 const ProductCard = memo(function ProductCard({
     product,
     quantityInCart,
     onAdd,
-    dimmed = false,
 }: ProductCardProps) {
     return (
         <div
-            className={`bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden select-none relative cursor-pointer hover:shadow-md ${dimmed ? "opacity-90" : ""}`}
+            className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden select-none relative cursor-pointer hover:shadow-md"
             style={{
                 transform: "translateZ(0)",
                 transition: "transform 150ms ease, box-shadow 200ms ease",
@@ -89,72 +85,10 @@ const ProductCard = memo(function ProductCard({
     );
 });
 
-// ─── Gate Overlay — POS take-over flow only ───────────────────────────────────
-
-function TakeOverCard({ onTransfer }: { onTransfer: (code: string) => Promise<unknown> }) {
-    const [claimCode, setClaimCode] = useState("");
-    const [transferError, setTransferError] = useState<string | null>(null);
-    const [isTransferring, setIsTransferring] = useState(false);
-
-    const handleTakeOver = async () => {
-        if (claimCode.length !== 2) return;
-        setIsTransferring(true);
-        setTransferError(null);
-        try {
-            await onTransfer(claimCode);
-        } catch (err) {
-            setTransferError(err instanceof Error ? err.message : "Invalid code");
-        } finally {
-            setIsTransferring(false);
-        }
-    };
-
-    return (
-        <div className="bg-white rounded-2xl shadow-lg p-6 w-full max-w-xs text-center mx-auto">
-            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Lock size={24} className="text-gray-500" />
-            </div>
-            <p className="font-semibold text-gray-900 text-lg">POS is in use</p>
-            <p className="text-sm text-gray-500 mt-1.5 mb-5">
-                Ask the current seller for their 2-digit code to take over.
-            </p>
-            <input
-                type="text"
-                inputMode="numeric"
-                maxLength={2}
-                value={claimCode}
-                onChange={(e) => {
-                    const v = e.target.value.replace(/\D/g, "").slice(0, 2);
-                    setClaimCode(v);
-                    setTransferError(null);
-                }}
-                placeholder="––"
-                className="w-20 text-center text-3xl font-bold font-mono tracking-widest border-b-2 border-gray-300 focus:border-brand focus:outline-none bg-transparent mx-auto block mb-4"
-            />
-            {transferError && (
-                <p className="text-xs text-red-500 mb-3">{transferError}</p>
-            )}
-            <button
-                onClick={handleTakeOver}
-                disabled={claimCode.length !== 2 || isTransferring}
-                className="w-full bg-brand text-white py-3 rounded-xl font-semibold text-sm active:scale-95 transition-transform disabled:opacity-40"
-            >
-                {isTransferring ? (
-                    <Loader2 size={16} className="animate-spin mx-auto" />
-                ) : (
-                    "Take Over"
-                )}
-            </button>
-        </div>
-    );
-}
-
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function MobilePOS() {
     const { selectedStoreId } = useStore();
-    const { gate, session, transferSession } = useSession(selectedStoreId);
-    const { profile } = useAuth();
     const { fastOrderMode } = useFastOrderMode();
     const { data: products = [], isLoading: productsLoading } = useProducts();
     const isIPhonePWA = useIsIPhonePWA();
@@ -175,11 +109,6 @@ export default function MobilePOS() {
         processOrder,
     } = useCart(selectedStoreId);
 
-    const showOverlay =
-        gate === "open" &&
-        session?.userId !== undefined &&
-        session.userId !== profile?.id;
-
     if (productsLoading) {
         return (
             <div
@@ -194,30 +123,20 @@ export default function MobilePOS() {
 
     return (
         <div className="flex flex-col gap-4 pb-24">
-            {/* Products Grid — dimmed behind overlay */}
-            <div className="relative">
-                <div className={showOverlay ? "opacity-20 pointer-events-none select-none" : ""}>
-                    <div className="grid grid-cols-2 gap-3">
-                        {products.map((product) => (
-                            <ProductCard
-                                key={product.id}
-                                product={product}
-                                quantityInCart={cartQuantityMap[product.id] ?? 0}
-                                onAdd={addToCart}
-                            />
-                        ))}
-                    </div>
-                </div>
-
-                {showOverlay && (
-                    <div className="absolute inset-0 flex items-center justify-center p-4">
-                        <TakeOverCard onTransfer={transferSession} />
-                    </div>
-                )}
+            {/* Products Grid */}
+            <div className="grid grid-cols-2 gap-3">
+                {products.map((product) => (
+                    <ProductCard
+                        key={product.id}
+                        product={product}
+                        quantityInCart={cartQuantityMap[product.id] ?? 0}
+                        onAdd={addToCart}
+                    />
+                ))}
             </div>
 
             {/* Sticky Bottom Bar */}
-            {cart.length > 0 && !showOverlay && (
+            {cart.length > 0 && (
                 <div
                     className={`fixed ${isIPhonePWA ? "bottom-[98px]" : "bottom-[66px]"} left-0 right-0 bg-white border-y border-gray-400 p-4 z-40`}
                 >

@@ -1,84 +1,129 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
 import { useStore } from "@/lib/context/StoreContext";
 import { useSession } from "@/lib/hooks/sessions/useSession";
-import { useToast } from "@/lib/context/ToastContext";
-import { WeatherButton } from "../../pos/_components/WeatherButton";
+import { useAuth } from "@/lib/context/AuthContext";
+import useWeather from "@/lib/hooks/weather/useWeather";
+import { getWeatherMeta, isNightHour } from "@tea-pos/utils/weatherCode";
+import { getCurrentLocalHour } from "@tea-pos/utils/time";
 import { WeatherDrawer } from "../../pos/_components/WeatherDrawer";
-import { ChevronRight, DollarSign, XCircle } from "lucide-react";
-
-function formatSessionTime(startedAt: string): string {
-    const tz = parseInt(process.env.NEXT_PUBLIC_TIMEZONE_OFFSET ?? "7", 10);
-    const local = new Date(new Date(startedAt).getTime() + tz * 3600000);
-    return local.toISOString().slice(11, 16);
-}
+import { ChevronRight, DollarSign, XCircle, Eye, EyeOff, Cloud, History, PackagePlus, AlertTriangle } from "lucide-react";
 
 export default function MobileManage() {
     const { url } = useTenantSlug();
     const { selectedStoreId } = useStore();
-    const { gate, session } = useSession(selectedStoreId);
-    const { showToast } = useToast();
+    const { gate, session, summaryId } = useSession(selectedStoreId);
+    const { profile } = useAuth();
+    const { data: weatherData } = useWeather();
     const [isWeatherOpen, setIsWeatherOpen] = useState(false);
+    const [codeRevealed, setCodeRevealed] = useState(false);
 
-    const handleCopyCode = async () => {
-        if (!session?.claimCode) return;
-        try {
-            await navigator.clipboard.writeText(session.claimCode);
-            showToast("Code copied", "success");
-        } catch {
-            showToast("Failed to copy", "error");
-        }
-    };
+    const currentLocalHour = getCurrentLocalHour();
+
+    const WeatherIcon = useMemo(() => {
+        if (!weatherData?.hourly) return null;
+        const current =
+            weatherData.hourly.find((h) => h.hour === currentLocalHour) ??
+            weatherData.hourly[0];
+        return getWeatherMeta(current.weatherCode, isNightHour(currentLocalHour)).fluentIcon;
+    }, [weatherData?.hourly, currentLocalHour]);
+
+    const todayStr = useMemo(() => {
+        const tz = parseInt(process.env.NEXT_PUBLIC_TIMEZONE_OFFSET ?? "7", 10);
+        return new Date(Date.now() + tz * 3600 * 1000).toISOString().slice(0, 10);
+    }, []);
 
     const isStoreNotOpen = gate === "no_summary" || gate === "no_session";
     const isClosed = gate === "closed";
     const dimmed = isStoreNotOpen || isClosed;
+    const hasSession = gate === "open" && !!session;
+    // Only the session owner can reveal the code
+    const isOwner = hasSession && session.userId === profile?.id;
 
     return (
         <div className="flex flex-col gap-4 pb-24">
-            {/* Top card: weather + session code */}
-            <div className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-4">
-                {/* Left — weather */}
-                <div className="flex-1 flex items-center justify-between">
-                    <div>
-                        <p className="font-medium text-gray-800">Weather Forecast</p>
-                        <p className="text-xs text-gray-500 mt-0.5">Check today&apos;s forecast</p>
+            {/* Top card: two equal tappable halves */}
+            <div className="bg-white rounded-xl shadow-sm overflow-hidden flex divide-x divide-gray-100">
+                {/* Left half — weather */}
+                <button
+                    onClick={() => setIsWeatherOpen(true)}
+                    className="flex-1 flex items-center gap-3 p-4 active:bg-gray-50 transition-colors text-left"
+                >
+                    <div className="w-12 h-12 flex items-center justify-center shrink-0">
+                        {WeatherIcon ? (
+                            <WeatherIcon width={48} height={48} />
+                        ) : (
+                            <Cloud size={28} className="text-blue-400" />
+                        )}
                     </div>
-                    <WeatherButton onClick={() => setIsWeatherOpen(true)} />
-                </div>
+                    <div>
+                        <p className="text-xs text-gray-500 font-medium">Weather</p>
+                        <p className="text-sm font-semibold text-gray-800">Forecast</p>
+                    </div>
+                </button>
 
-                {/* Divider */}
-                <div className="w-px self-stretch bg-gray-100" />
-
-                {/* Right — session code */}
-                {gate === "open" && session ? (
+                {/* Right half — claim code (owner only) */}
+                {isOwner ? (
                     <button
-                        onClick={handleCopyCode}
-                        className="flex flex-col items-end gap-0.5 active:opacity-70 transition-opacity min-w-[64px]"
+                        onClick={() => setCodeRevealed((v) => !v)}
+                        className="flex-1 flex items-center gap-3 p-4 active:bg-gray-50 transition-colors text-left"
                     >
-                        <span className="text-2xl font-bold font-mono tracking-widest text-gray-900">
-                            {session.claimCode}
-                        </span>
-                        <span className="text-xs text-gray-400">
-                            Since {formatSessionTime(session.startedAt)}
-                        </span>
+                        <div className="flex-1">
+                            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Claim Code</p>
+                            <p className="text-2xl font-bold font-mono tracking-widest text-gray-900 mt-0.5">
+                                {codeRevealed ? session.claimCode : "••"}
+                            </p>
+                        </div>
+                        <div className="text-gray-400 shrink-0">
+                            {codeRevealed ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </div>
                     </button>
                 ) : (
-                    <span className="text-gray-300 font-medium text-lg min-w-[64px] text-right">—</span>
+                    <div className="flex-1 flex items-center gap-3 p-4">
+                        <div className="flex-1">
+                            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Claim Code</p>
+                            <p className="text-lg font-medium text-gray-300 mt-0.5">—</p>
+                        </div>
+                    </div>
                 )}
             </div>
 
             {/* Store actions */}
             <div className="bg-white rounded-xl shadow-sm divide-y divide-gray-100 overflow-hidden">
+                {summaryId && (
+                    <ActionRow
+                        icon={<History size={20} className="text-gray-500" />}
+                        label="Today's Activity"
+                        sublabel="View store events for today"
+                        onClick={() =>
+                            navigation.push(
+                                url(`/mobile/analytics/daily/${summaryId}/events?storeId=${selectedStoreId}&date=${todayStr}`)
+                            )
+                        }
+                    />
+                )}
                 <ActionRow
                     icon={<DollarSign size={20} className={dimmed ? "text-gray-400" : "text-blue-600"} />}
                     label="Add Expenses"
                     sublabel={dimmed ? "Open store first" : "Log costs for today"}
                     onClick={() => navigation.push(url("/mobile/home/manage/expense"))}
                     disabled={dimmed}
+                />
+                <ActionRow
+                    icon={<PackagePlus size={20} className={dimmed ? "text-gray-400" : "text-emerald-600"} />}
+                    label="Request Supplies"
+                    sublabel={dimmed ? "Open store first" : "Cups, ice, syrup and more"}
+                    onClick={() => navigation.push(url("/mobile/home/manage/request"))}
+                    disabled={dimmed}
+                />
+                <ActionRow
+                    icon={<AlertTriangle size={20} className="text-orange-500" />}
+                    label="Report Issue"
+                    sublabel="Log an incident or problem"
+                    onClick={() => navigation.push(url("/mobile/home/manage/report"))}
                 />
                 <ActionRow
                     icon={<XCircle size={20} className={dimmed ? "text-gray-400" : "text-red-500"} />}

@@ -7,7 +7,7 @@ import { useSummaryPhotos } from "@/lib/hooks/summaries/useSummaryPhotos";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
 import { Camera, X, Loader2 } from "lucide-react";
-import imageCompression from "browser-image-compression";
+import { compressPhoto } from "@/lib/compressPhoto";
 import { isEnabled } from "@tea-pos/features/shared/features";
 
 export default function OpenStorePage() {
@@ -29,12 +29,7 @@ export default function OpenStorePage() {
         if (!file) return;
         setIsCompressing(true);
         try {
-            const compressed = await imageCompression(file, {
-                maxSizeMB: 1,
-                maxWidthOrHeight: 1920,
-                useWebWorker: true,
-                fileType: "image/jpeg",
-            });
+            const compressed = await compressPhoto(file);
             const preview = URL.createObjectURL(compressed);
             if (photo) URL.revokeObjectURL(photo.preview);
             setPhoto({ file: compressed, preview });
@@ -141,6 +136,7 @@ export default function OpenStorePage() {
                     ref={inputRef}
                     type="file"
                     accept="image/*"
+                    capture="environment"
                     className="hidden"
                     onChange={handleFileChange}
                 />

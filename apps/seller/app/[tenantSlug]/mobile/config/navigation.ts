@@ -152,6 +152,27 @@ export const mobileRoutes = {
         isChart: false,
         parent: "/mobile/analytics",
     },
+    "/mobile/analytics/daily/*/events": {
+        title: "Day Activity",
+        subPage: true,
+        inlineHeader: false,
+        isChart: false,
+        parent: "/mobile/analytics",
+    },
+    "/mobile/home/manage/request": {
+        title: "Request Supplies",
+        subPage: true,
+        inlineHeader: false,
+        isChart: false,
+        parent: "/mobile/home/manage",
+    },
+    "/mobile/home/manage/report": {
+        title: "Report Issue",
+        subPage: true,
+        inlineHeader: false,
+        isChart: false,
+        parent: "/mobile/home/manage",
+    },
 } satisfies Record<string, RouteConfig>;
 
 export const rootTabSuffixes = Object.entries(mobileRoutes)
@@ -168,6 +189,10 @@ export const resolveRoute = (path: string): RouteConfig | null => {
         if (path.endsWith("/weather"))
             return mobileRoutes["/mobile/notifications/*/weather"];
         return mobileRoutes["/mobile/notifications/*"];
+    }
+
+    if (path.includes("/mobile/analytics/daily/") && path.endsWith("/events")) {
+        return mobileRoutes["/mobile/analytics/daily/*/events"];
     }
 
     return null;
