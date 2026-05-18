@@ -208,9 +208,10 @@ Any API route that calls a mutating service must call `getRequestUser()` and pas
 - `payments` — Payment records
 - `daily_summaries` + `daily_summary_photos` — Cash reconciliation. Uses `opened_by` + `closed_by` (profile IDs); `seller_id`/`manager_id` no longer exist
 - `store_sessions` — POS ownership windows. One active session per store enforced by partial unique index. Sessions chain via `previous_session_id`. Created by `openStore()` immediately after `daily_summaries`
-- `commission_configs` — Flat rate per cup per user. `user_id IS NULL` = tenant-wide default fallback
+- `commission_configs` — Flat rate per cup per role (`USER`, `DRIVER`, `SUPPLIER`). One config per `(tenant_id, role, effective_date)`. Most recent row where `effective_date <= today` is the active rate. Currently only `USER` rate is used in payroll calculations.
 - `payroll_periods` — Weekly pay cycles (Monday–Sunday) per tenant
 - `payroll_entries` — One row per user per daily summary on close. `rate_per_cup` snapshotted at creation so historical entries are immutable to future rate changes
+- `reimbursements` — Staff expense claims (mobile data, lunch, gasoline). Submitted by staff, approved by admin. `status`: `pending → approved → rejected → paid`. `payroll_period_id` nullable — set when batching into a payroll run for payout.
 - `expenses` — Cost tracking
 - `customer_feedbacks` — Geotagged feedback
 - `notification_events` + `notification_reads` — Notifications
