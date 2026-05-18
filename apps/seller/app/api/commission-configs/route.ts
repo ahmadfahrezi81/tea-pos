@@ -18,12 +18,9 @@ export async function GET(request: NextRequest) {
         const query = GetCommissionRateQuery.safeParse(Object.fromEntries(new URL(request.url).searchParams));
         if (!query.success) return badRequest("Invalid query parameters");
 
-        const result = await getCommissionRate(supabase, { tenantId, userId: query.data.userId });
+        const result = await getCommissionRate(supabase, { tenantId, role: query.data.role });
 
-        const parsed = CommissionRateResponse.safeParse(result);
-        if (!parsed.success) return ok(result);
-
-        return ok(parsed.data);
+        return ok(CommissionRateResponse.parse(result));
     } catch (error) { return handleError("GET /api/commission-configs", error); }
 }
 

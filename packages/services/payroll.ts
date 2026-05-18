@@ -110,7 +110,7 @@ export async function createPayrollEntries(
             totalCups += sessionCups;
         }
 
-        const { rate } = await getCommissionRate(supabase, { tenantId, userId });
+        const { rate } = await getCommissionRate(supabase, { tenantId, role: "USER" });
         const grossPay = totalCups * rate;
 
         const { data: entry, error: entryError } = await supabase

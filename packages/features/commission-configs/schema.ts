@@ -1,14 +1,16 @@
 import { z } from "zod";
 import { UUIDSchema } from "../shared/common-schema";
 
+const COMMISSION_ROLES = ["USER", "DRIVER", "SUPPLIER"] as const;
+
 // ============================================================================
 // INPUT SCHEMAS
 // ============================================================================
 
 export const UpsertCommissionConfigInput = z
     .object({
-        userId: UUIDSchema.nullable().optional().openapi({
-            description: "User to configure rate for. Null = tenant-wide default.",
+        role: z.enum(COMMISSION_ROLES).openapi({
+            description: "Role this rate applies to",
         }),
         ratePerCup: z.number().min(0).openapi({
             description: "Commission amount per cup sold",
@@ -23,7 +25,7 @@ export const UpsertCommissionConfigInput = z
 
 export const GetCommissionRateQuery = z
     .object({
-        userId: UUIDSchema.openapi({ description: "User ID to get effective rate for" }),
+        role: z.enum(COMMISSION_ROLES).openapi({ description: "Role to get effective rate for" }),
     })
     .openapi({ title: "GetCommissionRateQuery" });
 
@@ -35,7 +37,7 @@ export const CommissionConfigResponse = z
     .object({
         id: UUIDSchema,
         tenantId: UUIDSchema,
-        userId: UUIDSchema.nullable(),
+        role: z.enum(COMMISSION_ROLES),
         ratePerCup: z.number(),
         effectiveDate: z.string(),
         createdAt: z.string().nullable(),
@@ -44,10 +46,8 @@ export const CommissionConfigResponse = z
 
 export const CommissionRateResponse = z
     .object({
-        rate: z.number().openapi({ description: "Effective rate per cup for the user" }),
-        config: CommissionConfigResponse.nullable().openapi({
-            description: "The config record used. Null if no config found (rate = 0).",
-        }),
+        rate: z.number().openapi({ description: "Effective rate per cup for the role" }),
+        effectiveDate: z.string().openapi({ description: "Date the rate became effective" }),
     })
     .openapi({ title: "CommissionRateResponse" });
 

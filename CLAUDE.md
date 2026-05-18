@@ -124,7 +124,7 @@ Then update Zod schemas in `packages/features` to match.
 
 **Authorization:**
 
-- `profiles.role`: `ADMIN` / `SELLER` / `MANAGER`
+- `profiles.role`: `ADMIN` / `USER` / `DRIVER` / `SUPPLIER`
 - Super admins (`ADMIN`) can access any tenant
 - Regular users checked against `user_tenant_assignments`
 - Store-level roles in `user_store_assignments`
@@ -215,7 +215,7 @@ Any API route that calls a mutating service must call `getRequestUser()` and pas
 - `customer_feedbacks` — Geotagged feedback
 - `notification_events` + `notification_reads` — Notifications
 - `weather_hourly` — Cached weather forecasts
-- `activity_logs` — Audit trail of user actions. Known types: `order_created`, `store_open`, `daily_summary_closed`, `balance_updated`, `photo_uploaded`, `photo_deleted`, `photo_quantity_updated`, `expense_created`, `expense_updated`, `expense_deleted`, `customer_feedback_submitted`, `session_transferred`, `session_ended`, `commission_config_updated`, `payroll_entry_updated`, `payroll_period_updated`
+- `activity_logs` — Audit trail of user actions. Known types: `order_created`, `store_open`, `daily_summary_closed`, `balance_updated`, `photo_uploaded`, `photo_deleted`, `photo_quantity_updated`, `expense_created`, `expense_updated`, `expense_deleted`, `customer_feedback_submitted`, `session_transferred`, `session_ended`, `commission_config_updated`, `payroll_entry_updated`, `payroll_period_updated`, `reimbursement_submitted`
 
 ---
 

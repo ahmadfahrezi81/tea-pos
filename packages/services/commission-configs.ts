@@ -3,46 +3,29 @@ import { toCamelKeys } from "@tea-pos/utils/schemas";
 import { createLogger } from "./activity-logs";
 
 // ─── Get effective rate ───────────────────────────────────────────────────────
-// User-specific rate takes priority. Falls back to tenant default (user_id IS NULL).
-// Returns rate = 0 if no config exists at all.
+// Returns the most recent config for the given tenant + role where effective_date <= today.
+// Returns rate = 0 if no config exists.
 
 export async function getCommissionRate(
     supabase: SupabaseClient,
-    { tenantId, userId }: { tenantId: string; userId: string },
+    { tenantId, role }: { tenantId: string; role: string },
 ) {
     const today = new Date().toISOString().split("T")[0];
 
-    const { data: userRate } = await supabase
+    const { data } = await supabase
         .from("commission_configs")
-        .select("*")
+        .select("rate_per_cup, effective_date")
         .eq("tenant_id", tenantId)
-        .eq("user_id", userId)
+        .eq("role", role)
         .lte("effective_date", today)
         .order("effective_date", { ascending: false })
         .limit(1)
         .maybeSingle();
 
-    if (userRate) {
-        const r = userRate as { rate_per_cup: number };
-        return { rate: r.rate_per_cup, config: toCamelKeys(userRate) };
-    }
-
-    const { data: tenantRate } = await supabase
-        .from("commission_configs")
-        .select("*")
-        .eq("tenant_id", tenantId)
-        .is("user_id", null)
-        .lte("effective_date", today)
-        .order("effective_date", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-    if (tenantRate) {
-        const r = tenantRate as { rate_per_cup: number };
-        return { rate: r.rate_per_cup, config: toCamelKeys(tenantRate) };
-    }
-
-    return { rate: 0, config: null };
+    return {
+        rate: data?.rate_per_cup ?? 0,
+        effectiveDate: data?.effective_date ?? today,
+    };
 }
 
 // ─── Upsert config ────────────────────────────────────────────────────────────
@@ -50,7 +33,7 @@ export async function getCommissionRate(
 export interface UpsertCommissionConfigParams {
     tenantId: string;
     actorId: string;
-    userId?: string | null;
+    role: string;
     ratePerCup: number;
     effectiveDate: string;
 }
@@ -59,22 +42,15 @@ export async function upsertCommissionConfig(
     supabase: SupabaseClient,
     params: UpsertCommissionConfigParams,
 ) {
-    const { tenantId, actorId, userId, ratePerCup, effectiveDate } = params;
+    const { tenantId, actorId, role, ratePerCup, effectiveDate } = params;
 
-    // Manual upsert — partial unique indexes don't work reliably with PostgREST onConflict
-    let query = supabase
+    const { data: existing } = await supabase
         .from("commission_configs")
         .select("id")
         .eq("tenant_id", tenantId)
-        .eq("effective_date", effectiveDate);
-
-    if (userId) {
-        query = query.eq("user_id", userId);
-    } else {
-        query = query.is("user_id", null);
-    }
-
-    const { data: existing } = await query.maybeSingle();
+        .eq("role", role)
+        .eq("effective_date", effectiveDate)
+        .maybeSingle();
 
     let result: unknown;
 
@@ -93,7 +69,7 @@ export async function upsertCommissionConfig(
             .from("commission_configs")
             .insert({
                 tenant_id: tenantId,
-                user_id: userId ?? null,
+                role,
                 rate_per_cup: ratePerCup,
                 effective_date: effectiveDate,
             })
@@ -108,7 +84,7 @@ export async function upsertCommissionConfig(
     log("commission_config_updated", {
         refId: (result as { id: string }).id,
         refTable: "commission_configs",
-        metadata: { target_user_id: userId ?? null, rate_per_cup: ratePerCup, effective_date: effectiveDate },
+        metadata: { role, rate_per_cup: ratePerCup, effective_date: effectiveDate },
     });
 
     return toCamelKeys(result);

@@ -71,24 +71,24 @@ export type Database = {
           effective_date: string
           id: string
           rate_per_cup: number
+          role: string
           tenant_id: string
-          user_id: string | null
         }
         Insert: {
           created_at?: string | null
           effective_date: string
           id?: string
           rate_per_cup: number
+          role?: string
           tenant_id: string
-          user_id?: string | null
         }
         Update: {
           created_at?: string | null
           effective_date?: string
           id?: string
           rate_per_cup?: number
+          role?: string
           tenant_id?: string
-          user_id?: string | null
         }
         Relationships: [
           {
@@ -96,13 +96,6 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "commission_configs_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -949,6 +942,80 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      reimbursements: {
+        Row: {
+          amount: number
+          created_at: string
+          date: string
+          id: string
+          notes: string | null
+          payroll_period_id: string | null
+          photo_url: string | null
+          status: string
+          store_id: string | null
+          tenant_id: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          date: string
+          id?: string
+          notes?: string | null
+          payroll_period_id?: string | null
+          photo_url?: string | null
+          status?: string
+          store_id?: string | null
+          tenant_id: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          payroll_period_id?: string | null
+          photo_url?: string | null
+          status?: string
+          store_id?: string | null
+          tenant_id?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reimbursements_payroll_period_id_fkey"
+            columns: ["payroll_period_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_periods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reimbursements_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reimbursements_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reimbursements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       store_sessions: {
         Row: {
