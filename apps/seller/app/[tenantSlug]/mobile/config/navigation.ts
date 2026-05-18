@@ -173,6 +173,27 @@ export const mobileRoutes = {
         isChart: false,
         parent: "/mobile/home/manage",
     },
+    "/mobile/account/earnings": {
+        title: "My Earnings",
+        subPage: true,
+        inlineHeader: true,
+        isChart: false,
+        parent: "/mobile/account",
+    },
+    "/mobile/account/earnings/*": {
+        title: "Period Detail",
+        subPage: true,
+        inlineHeader: true,
+        isChart: false,
+        parent: "/mobile/account/earnings",
+    },
+    "/mobile/account/reimbursements": {
+        title: "Reimbursements",
+        subPage: true,
+        inlineHeader: true,
+        isChart: false,
+        parent: "/mobile/account",
+    },
 } satisfies Record<string, RouteConfig>;
 
 export const rootTabSuffixes = Object.entries(mobileRoutes)
@@ -193,6 +214,10 @@ export const resolveRoute = (path: string): RouteConfig | null => {
 
     if (path.includes("/mobile/analytics/daily/") && path.endsWith("/events")) {
         return mobileRoutes["/mobile/analytics/daily/*/events"];
+    }
+
+    if (path.includes("/mobile/account/earnings/")) {
+        return mobileRoutes["/mobile/account/earnings/*"];
     }
 
     return null;

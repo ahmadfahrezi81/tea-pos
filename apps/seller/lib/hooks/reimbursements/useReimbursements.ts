@@ -1,12 +1,12 @@
 "use client";
 
 import useSWR from "swr";
-import { useProfile } from "@/lib/hooks/profile/useProfile";
+import { useAuth } from "@/lib/context/AuthContext";
 import { reimbursementsApi } from "@/lib/api/reimbursements";
 import type { ReimbursementListResponse, CreateReimbursementInput } from "@tea-pos/features/reimbursements/schema";
 
 export function useReimbursements() {
-    const { profile } = useProfile();
+    const { profile } = useAuth();
     const userId = profile?.id;
 
     const key = userId ? `reimbursements-${userId}` : null;
