@@ -37,7 +37,7 @@ export function MobileFooterNav({
                         <button
                             key={tab.path}
                             onClick={() => onTabClick(tab.path)}
-                            className={`flex-1 py-3 px-4 pb-2 flex flex-col items-center space-y-1 relative transition-all duration-75 active:scale-98 ${
+                            className={`flex-1 py-3 px-4 pb-2 flex flex-col items-center space-y-1 relative active:scale-[0.98] ${
                                 isActive
                                     ? "text-brand bg-brand/5"
                                     : "text-gray-600 hover:text-brand"
@@ -45,9 +45,9 @@ export function MobileFooterNav({
                         >
                             <Icon
                                 size={24}
-                                className="transition-transform duration-75"
+                                strokeWidth={isActive ? 2 : 1.5}
                             />
-                            <span className="text-xs font-medium transition-transform duration-75">
+                            <span className={`text-xs ${isActive ? "font-bold" : "font-medium"}`}>
                                 {tab.label}
                             </span>
                             {isActive && (

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Lock, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { Icon } from "@iconify/react";
 
 export function TakeOverCard({
     onTransfer,
@@ -26,12 +27,10 @@ export function TakeOverCard({
     };
 
     return (
-        <div className="bg-white rounded-2xl shadow-lg p-6 w-full max-w-xs text-center mx-auto">
-            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Lock size={24} className="text-gray-500" />
-            </div>
-            <p className="font-semibold text-gray-900 text-lg">POS is in use</p>
-            <p className="text-sm text-gray-500 mt-1.5 mb-5">
+        <div className="text-center w-full max-w-xs mx-auto">
+            <Icon icon="fluent-emoji:locked-with-key" width={100} height={100} className="mx-auto mb-5" />
+            <p className="font-bold text-gray-900 text-2xl tracking-tight">Session already taken</p>
+            <p className="text-base text-gray-500 mt-2 mb-7">
                 Ask the current seller for their 2-digit code to take over.
             </p>
             <input
@@ -48,15 +47,15 @@ export function TakeOverCard({
                 className="w-20 text-center text-3xl font-bold font-mono tracking-widest border-b-2 border-gray-300 focus:border-brand focus:outline-none bg-transparent mx-auto block mb-4"
             />
             {transferError && (
-                <p className="text-xs text-red-500 mb-3">{transferError}</p>
+                <p className="text-sm text-red-500 mb-3">{transferError}</p>
             )}
             <button
                 onClick={handleTakeOver}
                 disabled={claimCode.length !== 2 || isTransferring}
-                className="w-full bg-brand text-white py-3 rounded-xl font-semibold text-sm active:scale-95 transition-transform disabled:opacity-40"
+                className="w-full bg-brand text-white py-4 rounded-xl font-bold text-base active:scale-95 transition-transform disabled:opacity-40"
             >
                 {isTransferring ? (
-                    <Loader2 size={16} className="animate-spin mx-auto" />
+                    <Loader2 size={18} className="animate-spin mx-auto" />
                 ) : (
                     "Take Over"
                 )}
