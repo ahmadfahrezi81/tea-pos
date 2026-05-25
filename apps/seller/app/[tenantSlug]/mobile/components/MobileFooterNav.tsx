@@ -23,7 +23,7 @@ export function MobileFooterNav({
     isIPhonePWA,
     storesReady,
 }: MobileFooterNavProps) {
-    const wrapperClass = `flex ${isIPhonePWA ? "pb-8" : ""}`;
+    const wrapperClass = `flex p-1 ${isIPhonePWA ? "pb-8" : ""}`;
 
     if (!storesReady) return null;
 
@@ -38,21 +38,16 @@ export function MobileFooterNav({
                             key={tab.path}
                             onClick={() => onTabClick(tab.path)}
                             className={`flex-1 py-3 px-4 pb-2 flex flex-col items-center space-y-1 relative active:scale-[0.98] ${
-                                isActive
-                                    ? "text-brand bg-brand/5"
-                                    : "text-gray-600 hover:text-brand"
+                                isActive ? "text-brand bg-brand/5 rounded-2xl" : "text-gray-600 hover:text-brand"
                             }`}
                         >
                             <Icon
-                                size={24}
-                                strokeWidth={isActive ? 2 : 1.5}
+                                size={26}
+                                strokeWidth={2.2}
                             />
-                            <span className={`text-xs ${isActive ? "font-bold" : "font-medium"}`}>
+                            <span className="text-[11px] font-medium tracking-wide">
                                 {tab.label}
                             </span>
-                            {isActive && (
-                                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-brand rounded-b-full transition-all duration-200" />
-                            )}
                         </button>
                     );
                 })}

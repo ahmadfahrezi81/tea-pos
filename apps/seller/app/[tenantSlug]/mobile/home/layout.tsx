@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useLayoutEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { AtAGlance } from "./_components/AtAGlance";
 import { TakeOverCard } from "./_components/TakeOverCard";
@@ -11,6 +11,17 @@ import { useStoreActivityLogs } from "@/lib/hooks/activity-logs/useStoreActivity
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
 import { Icon } from "@iconify/react";
+import { useMobileOverlay } from "../components/MobileOverlayContext";
+
+function GateIcon({ icon }: { icon: string }) {
+    const [loaded, setLoaded] = useState(false);
+    return (
+        <div className="relative w-[100px] h-[100px] mx-auto mb-5">
+            {!loaded && <div className="absolute inset-0 rounded-2xl bg-gray-200" />}
+            <Icon icon={icon} width={100} height={100} className="absolute inset-0" onLoad={() => setLoaded(true)} />
+        </div>
+    );
+}
 
 export default function HomeLayout({
     children,
@@ -39,39 +50,47 @@ export default function HomeLayout({
         isHomeRoot &&
         (gate === "no_summary" || gate === "no_session" || gate === "closed" || isPosInUse);
 
-    if (showGate) {
+    const { setOverlay } = useMobileOverlay();
+
+    const gateContent = useMemo(() => {
+        if (!showGate) return null;
         return (
-            <div className="fixed inset-x-0 top-16 bottom-26 z-50 p-3">
-                <div className="bg-white rounded-3xl w-full h-full flex flex-col items-center justify-center p-8">
-                    {isPosInUse ? (
-                        <TakeOverCard onTransfer={transferSession} />
-                    ) : gate === "closed" ? (
-                        <div className="text-center w-full max-w-xs">
-                            <Icon icon="fluent-emoji:alarm-clock" width={100} height={100} className="mx-auto mb-5" />
-                            <p className="font-bold text-gray-900 text-2xl tracking-tight">Store is closed</p>
-                            <p className="text-base text-gray-500 mt-2">
-                                Today&apos;s session has ended.
-                            </p>
-                        </div>
-                    ) : (
-                        <div className="text-center w-full max-w-xs">
-                            <Icon icon="fluent-emoji:convenience-store" width={100} height={100} className="mx-auto mb-5" />
-                            <p className="font-bold text-gray-900 text-2xl tracking-tight">Store not open yet</p>
-                            <p className="text-base text-gray-500 mt-2 mb-7">
-                                Open the store to start taking orders today.
-                            </p>
-                            <button
-                                onClick={() => navigation.push(url("/mobile/home/manage/open"))}
-                                className="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-base active:scale-95 transition-transform"
-                            >
-                                Open Store
-                            </button>
-                        </div>
-                    )}
-                </div>
+            <div className="bg-white rounded-3xl w-full h-full flex flex-col items-center justify-center p-8">
+                {isPosInUse ? (
+                    <TakeOverCard onTransfer={transferSession} />
+                ) : gate === "closed" ? (
+                    <div className="text-center w-full max-w-xs">
+                        <GateIcon icon="fluent-emoji:alarm-clock" />
+                        <p className="font-bold text-gray-900 text-2xl tracking-tight">Store is closed</p>
+                        <p className="text-base text-gray-500 mt-2">
+                            Today&apos;s session has ended.
+                        </p>
+                    </div>
+                ) : (
+                    <div className="text-center w-full max-w-xs">
+                        <GateIcon icon="fluent-emoji:convenience-store" />
+                        <p className="font-bold text-gray-900 text-2xl tracking-tight">Store not open yet</p>
+                        <p className="text-base text-gray-500 mt-2 mb-7">
+                            Open the store to start taking orders today.
+                        </p>
+                        <button
+                            onClick={() => navigation.push(url("/mobile/home/manage/open"))}
+                            className="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-base active:scale-95 transition-transform"
+                        >
+                            Open Store
+                        </button>
+                    </div>
+                )}
             </div>
         );
-    }
+    }, [showGate, isPosInUse, gate, transferSession, url]);
+
+    useLayoutEffect(() => {
+        setOverlay(gateContent);
+        return () => setOverlay(null);
+    }, [gateContent, setOverlay]);
+
+    if (showGate) return null;
 
     return (
         <div className="flex flex-col gap-4">

@@ -1,5 +1,5 @@
 "use client";
-import {
+import React, {
     useEffect,
     ReactNode,
     useMemo,
@@ -18,6 +18,7 @@ import { navigation } from "@tea-pos/utils/navigation";
 import { useIsIPhonePWA } from "@/lib/usePWA";
 import { MobileHeader } from "./MobileHeader";
 import { MobileFooterNav } from "./MobileFooterNav";
+import { MobileOverlayContext } from "./MobileOverlayContext";
 import { resolveRoute, rootTabSuffixes, tabGroups } from "../config/navigation";
 
 interface MobileLayoutClientProps {
@@ -34,6 +35,8 @@ export default function MobileLayoutClient({
     const [shellReady, setShellReady] = useState(false);
     const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
     const [isTransitioning, setIsTransitioning] = useState(false);
+    const [overlay, setOverlayNode] = useState<ReactNode>(null);
+    const setOverlay = useCallback((node: ReactNode) => setOverlayNode(node), []);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const lastRootTabRef = useRef<string>(url("/mobile/more"));
 
@@ -213,43 +216,58 @@ export default function MobileLayoutClient({
     }
 
     return (
-        <div className="h-dvh flex flex-col bg-slate-100 select-none overflow-hidden">
-            <MobileHeader
-                currentPath={currentPath}
-                currentTitle={currentTitle}
-                isSubPage={currentIsSubPage}
-                selectedStore={selectedStore}
-                showAccountIcon={showAccountIcon}
-                avatarUrl={avatarUrl}
-                onBack={() => handleNavClick(parentPath)}
-                onStorePicker={() => setIsPickerOpen(true)}
-                onAccount={() => handleNavClick(url("/mobile/account"))}
-            />
-
+        <MobileOverlayContext.Provider value={{ setOverlay }}>
             <div
-                ref={scrollContainerRef}
-                className={`flex-1 overflow-y-auto p-4 pb-28 ${scrollPaddingTop}`}
+                className="h-dvh flex flex-col bg-gradient-to-b from-slate-100 to-slate-200 select-none overflow-hidden"
+                style={{ '--mobile-footer-h': isIPhonePWA ? '97px' : '65px' } as React.CSSProperties}
             >
-                {isTransitioning ? (
-                    <div className="absolute inset-0 flex items-center justify-center animate-pulse">
-                        <div className="w-7 h-7 border-3 border-brand border-t-transparent rounded-full animate-spin" />
-                    </div>
-                ) : (
-                    children
-                )}
-            </div>
-
-            {!currentIsSubPage && (
-                <MobileFooterNav
-                    tabs={tabs}
+                <MobileHeader
                     currentPath={currentPath}
-                    onTabClick={handleNavClick}
-                    isIPhonePWA={isIPhonePWA}
-                    storesReady={storesReady}
+                    currentTitle={currentTitle}
+                    isSubPage={currentIsSubPage}
+                    selectedStore={selectedStore}
+                    showAccountIcon={showAccountIcon}
+                    avatarUrl={avatarUrl}
+                    onBack={() => handleNavClick(parentPath)}
+                    onStorePicker={() => setIsPickerOpen(true)}
+                    onAccount={() => handleNavClick(url("/mobile/account"))}
                 />
-            )}
 
-            <StorePickerDrawer />
-        </div>
+                <div className="flex-1 relative overflow-hidden">
+                    <div
+                        ref={scrollContainerRef}
+                        className={`absolute inset-0 overflow-y-auto p-4 pb-28 ${scrollPaddingTop}`}
+                    >
+                        {isTransitioning ? (
+                            <div className="absolute inset-0 flex items-center justify-center animate-pulse">
+                                <div className="w-7 h-7 border-3 border-brand border-t-transparent rounded-full animate-spin" />
+                            </div>
+                        ) : (
+                            children
+                        )}
+                    </div>
+                    {overlay && (
+                        <div
+                            className={`absolute inset-x-0 top-0 z-10 ${scrollPaddingTop} pb-5 px-3`}
+                            style={{ bottom: 'var(--mobile-footer-h)' }}
+                        >
+                            {overlay}
+                        </div>
+                    )}
+                </div>
+
+                {!currentIsSubPage && (
+                    <MobileFooterNav
+                        tabs={tabs}
+                        currentPath={currentPath}
+                        onTabClick={handleNavClick}
+                        isIPhonePWA={isIPhonePWA}
+                        storesReady={storesReady}
+                    />
+                )}
+
+                <StorePickerDrawer />
+            </div>
+        </MobileOverlayContext.Provider>
     );
 }
