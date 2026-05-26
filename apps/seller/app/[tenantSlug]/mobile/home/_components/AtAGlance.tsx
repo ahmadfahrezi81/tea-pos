@@ -82,6 +82,7 @@ interface AtAGlanceProps {
 }
 
 const BAR_WIDTH = 900;
+const BUFFER_MINUTES = 60;
 
 export function AtAGlance({
     openTime = "10:00",
@@ -89,8 +90,8 @@ export function AtAGlance({
     currentTime,
     events = [],
 }: AtAGlanceProps) {
-    const open = timeToMinutes(openTime);
-    const close = timeToMinutes(closeTime);
+    const open = timeToMinutes(openTime) - BUFFER_MINUTES;
+    const close = timeToMinutes(closeTime) + BUFFER_MINUTES;
     const totalMinutes = close - open;
     const numHours = totalMinutes / 60;
 
@@ -188,9 +189,10 @@ export function AtAGlance({
             >
                 <div style={{ width: BAR_WIDTH }} className="relative px-4 py-4 pb-8">
                     <div className="relative flex items-center">
-                        {/* Track — variable-width pills per hour */}
+                        {/* Track — variable-width pills per hour, first/last are buffer zones */}
                         <div className="w-full flex items-center gap-1">
                             {hourFlexValues.map((flexVal, i) => {
+                                const isBuffer = i === 0 || i === numHours - 1;
                                 const segStart = cumFlex[i] / totalFlex;
                                 const segEnd = cumFlex[i + 1] / totalFlex;
                                 const isFull = progressPos >= segEnd;
@@ -204,7 +206,7 @@ export function AtAGlance({
                                     <div
                                         key={i}
                                         style={{ flex: flexVal }}
-                                        className="h-4 bg-gray-200 rounded-full overflow-hidden"
+                                        className={`h-4 rounded-full overflow-hidden ${isBuffer ? "bg-gray-200/50" : "bg-gray-200"}`}
                                     >
                                         {(isFull || isPartial) && (
                                             <div
@@ -276,23 +278,20 @@ export function AtAGlance({
                         />
                     </div>
 
-                    {/* Time labels — proportional to pill widths */}
+                    {/* Time labels — skip first and last (buffer zones) */}
                     <div className="relative w-full mt-3">
-                        {hourFlexValues.map((_, i) => (
-                            <span
-                                key={i}
-                                className="absolute text-[10px] text-gray-400 -translate-x-1/2"
-                                style={{ left: `${(cumFlex[i] / totalFlex) * 100}%` }}
-                            >
-                                {formatTimeShort(open + i * 60)}
-                            </span>
-                        ))}
-                        <span
-                            className="absolute text-[10px] text-gray-400 -translate-x-full"
-                            style={{ left: "100%" }}
-                        >
-                            {formatTimeShort(close)}
-                        </span>
+                        {hourFlexValues.map((_, i) => {
+                            if (i === 0) return null;
+                            return (
+                                <span
+                                    key={i}
+                                    className="absolute text-[10px] text-gray-400 -translate-x-1/2"
+                                    style={{ left: `${(cumFlex[i] / totalFlex) * 100}%` }}
+                                >
+                                    {formatTimeShort(open + i * 60)}
+                                </span>
+                            );
+                        })}
                     </div>
                 </div>
             </div>

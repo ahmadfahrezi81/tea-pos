@@ -9,6 +9,7 @@ import { navigation } from "@tea-pos/utils/navigation";
 import { Camera, X, Loader2 } from "lucide-react";
 import { compressPhoto } from "@/lib/compressPhoto";
 import { isEnabled } from "@tea-pos/features/shared/features";
+import { FormFooter } from "@/components/shared/FormFooter";
 
 export default function OpenStorePage() {
     const { selectedStoreId, selectedStore } = useStore();
@@ -83,7 +84,7 @@ export default function OpenStorePage() {
         (gate === "no_summary" || gate === "no_session");
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-4 pb-4">
             <div className="bg-white rounded-xl shadow-sm p-4 space-y-3">
                 <div>
                     <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Store</p>
@@ -181,20 +182,14 @@ export default function OpenStorePage() {
                 </div>
             )}
 
-            <button
-                onClick={handleSubmit}
+            <FormFooter
+                label="Open Store"
+                loadingLabel="Opening..."
+                onSubmit={handleSubmit}
                 disabled={!canSubmit}
-                className="w-full bg-green-600 text-white py-4 rounded-xl text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
-            >
-                {isSubmitting ? (
-                    <>
-                        <Loader2 size={20} className="animate-spin" />
-                        Opening...
-                    </>
-                ) : (
-                    "Open Store"
-                )}
-            </button>
+                isLoading={isSubmitting}
+                variant="green"
+            />
         </div>
     );
 }

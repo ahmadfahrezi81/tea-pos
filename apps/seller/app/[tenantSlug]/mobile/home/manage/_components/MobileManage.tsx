@@ -10,12 +10,12 @@ import useWeather from "@/lib/hooks/weather/useWeather";
 import { getWeatherMeta, isNightHour } from "@tea-pos/utils/weatherCode";
 import { getCurrentLocalHour } from "@tea-pos/utils/time";
 import { WeatherDrawer } from "../../pos/_components/WeatherDrawer";
-import { ChevronRight, DollarSign, XCircle, Eye, EyeOff, Cloud, History, PackagePlus, AlertTriangle } from "lucide-react";
+import { ChevronRight, DollarSign, XCircle, Eye, EyeOff, Cloud, PackagePlus, AlertTriangle } from "lucide-react";
 
 export default function MobileManage() {
     const { url } = useTenantSlug();
     const { selectedStoreId } = useStore();
-    const { gate, session, summaryId } = useSession(selectedStoreId);
+    const { gate, session } = useSession(selectedStoreId);
     const { profile } = useAuth();
     const { data: weatherData } = useWeather();
     const [isWeatherOpen, setIsWeatherOpen] = useState(false);
@@ -30,11 +30,6 @@ export default function MobileManage() {
             weatherData.hourly[0];
         return getWeatherMeta(current.weatherCode, isNightHour(currentLocalHour)).fluentIcon;
     }, [weatherData?.hourly, currentLocalHour]);
-
-    const todayStr = useMemo(() => {
-        const tz = parseInt(process.env.NEXT_PUBLIC_TIMEZONE_OFFSET ?? "7", 10);
-        return new Date(Date.now() + tz * 3600 * 1000).toISOString().slice(0, 10);
-    }, []);
 
     const isStoreNotOpen = gate === "no_summary" || gate === "no_session";
     const isClosed = gate === "closed";
@@ -93,17 +88,6 @@ export default function MobileManage() {
 
             {/* Store actions */}
             <div className="bg-white rounded-2xl px-4 py-1">
-                {summaryId && (
-                    <ActionRow
-                        icon={<History size={22} strokeWidth={2} className="text-gray-500" />}
-                        label="Today's Activity"
-                        onClick={() =>
-                            navigation.push(
-                                url(`/mobile/analytics/daily/${summaryId}/events?storeId=${selectedStoreId}&date=${todayStr}`)
-                            )
-                        }
-                    />
-                )}
                 <ActionRow
                     icon={<DollarSign size={22} strokeWidth={2} className={dimmed ? "text-gray-400" : "text-blue-600"} />}
                     label="Add Expenses"

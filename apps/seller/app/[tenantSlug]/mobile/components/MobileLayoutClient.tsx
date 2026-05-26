@@ -19,6 +19,7 @@ import { useIsIPhonePWA } from "@/lib/usePWA";
 import { MobileHeader } from "./MobileHeader";
 import { MobileFooterNav } from "./MobileFooterNav";
 import { MobileOverlayContext } from "./MobileOverlayContext";
+import { MobileFooterSlotContext } from "./MobileFooterSlotContext";
 import { resolveRoute, rootTabSuffixes, tabGroups } from "../config/navigation";
 
 interface MobileLayoutClientProps {
@@ -37,6 +38,8 @@ export default function MobileLayoutClient({
     const [isTransitioning, setIsTransitioning] = useState(false);
     const [overlay, setOverlayNode] = useState<ReactNode>(null);
     const setOverlay = useCallback((node: ReactNode) => setOverlayNode(node), []);
+    const [footerSlot, setFooterSlotNode] = useState<ReactNode>(null);
+    const setFooterSlot = useCallback((node: ReactNode) => setFooterSlotNode(node), []);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const lastRootTabRef = useRef<string>(url("/mobile/more"));
 
@@ -134,6 +137,7 @@ export default function MobileLayoutClient({
     const currentTitle = currentRoute?.title ?? "Mobile";
     const currentIsSubPage = currentRoute?.subPage ?? false;
     const isInlineHeader = currentRoute?.inlineHeader ?? false;
+    const hasHeaderAction = currentRoute?.headerAction === "add";
     const parentSuffix = currentRoute?.parent;
     const parentPath = !parentSuffix
         ? url("/mobile")
@@ -142,11 +146,13 @@ export default function MobileLayoutClient({
           : url(parentSuffix);
     const showAccountIcon = rootTabPaths.some((p) => currentPath === p);
 
-    const scrollPaddingTop = isInlineHeader
-        ? "pt-16"
-        : currentIsSubPage
-          ? "pt-27"
-          : "pt-19";
+    const scrollPaddingTop = hasHeaderAction
+        ? "pt-24"
+        : isInlineHeader
+          ? "pt-16"
+          : currentIsSubPage
+            ? "pt-27"
+            : "pt-19";
 
     if (!shellReady) {
         return (
@@ -216,6 +222,7 @@ export default function MobileLayoutClient({
     }
 
     return (
+        <MobileFooterSlotContext.Provider value={{ setFooterSlot }}>
         <MobileOverlayContext.Provider value={{ setOverlay }}>
             <div
                 className="h-dvh flex flex-col bg-gradient-to-b from-slate-100 to-slate-200 select-none overflow-hidden"
@@ -236,7 +243,7 @@ export default function MobileLayoutClient({
                 <div className="flex-1 relative overflow-hidden">
                     <div
                         ref={scrollContainerRef}
-                        className={`absolute inset-0 overflow-y-auto p-4 pb-28 ${scrollPaddingTop}`}
+                        className={`absolute inset-0 overflow-y-auto p-4 pb-28 flex flex-col ${scrollPaddingTop}`}
                     >
                         {isTransitioning ? (
                             <div className="absolute inset-0 flex items-center justify-center animate-pulse">
@@ -254,6 +261,11 @@ export default function MobileLayoutClient({
                             {overlay}
                         </div>
                     )}
+                    {footerSlot && (
+                        <div className="absolute bottom-0 left-0 right-0 z-20">
+                            {footerSlot}
+                        </div>
+                    )}
                 </div>
 
                 {!currentIsSubPage && (
@@ -269,5 +281,6 @@ export default function MobileLayoutClient({
                 <StorePickerDrawer />
             </div>
         </MobileOverlayContext.Provider>
+        </MobileFooterSlotContext.Provider>
     );
 }

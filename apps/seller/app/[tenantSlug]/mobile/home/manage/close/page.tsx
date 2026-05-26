@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useLayoutEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { useStore } from "@/lib/context/StoreContext";
 import { useSummaries } from "@/lib/hooks/summaries/useDailySummaries";
@@ -21,6 +21,7 @@ import { navigation } from "@tea-pos/utils/navigation";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/lib/context/ToastContext";
 import { isEnabled } from "@tea-pos/features/shared/features";
+import { useMobileFooterSlot } from "../../../components/MobileFooterSlotContext";
 
 // ============================================================================
 // CONSTANTS
@@ -302,6 +303,8 @@ export default function ManageCloseDayPage() {
         );
     }
 
+    const { setFooterSlot } = useMobileFooterSlot();
+
     const storeName = selectedStore?.name ?? "Unknown Store";
     const isFirstStep = currentStep === 0;
     const isLastStep = currentStep === STEPS.length - 1;
@@ -324,6 +327,40 @@ export default function ManageCloseDayPage() {
         (currentStepNeedsQuantity && !currentStepHasQuantity && !skipPhotos) ||
         (currentStep === STEP_CASH && !cashConfirmed) ||
         (currentStep === STEP_REVIEW && !confirmed);
+
+    useLayoutEffect(() => {
+        setFooterSlot(
+            <div className="bg-white border-t border-gray-200 p-4 pb-8 flex gap-3">
+                {!isFirstStep && (
+                    <button
+                        onClick={handleBack}
+                        disabled={isBusy}
+                        className="flex items-center justify-center px-5 py-4 rounded-xl bg-gray-100 text-gray-900 font-semibold text-base active:scale-[0.98] transition-transform disabled:opacity-50"
+                    >
+                        Previous
+                    </button>
+                )}
+                {isLastStep ? (
+                    <button
+                        onClick={handleConfirm}
+                        disabled={isBusy || !confirmed}
+                        className="flex-1 flex items-center justify-center gap-2 py-4 rounded-xl bg-red-500 text-white font-semibold text-base active:scale-[0.98] transition-transform disabled:opacity-50"
+                    >
+                        {isSubmitting ? <><Loader2 size={18} className="animate-spin" />Closing...</> : "Close Day"}
+                    </button>
+                ) : (
+                    <button
+                        onClick={handleNext}
+                        disabled={nextDisabled}
+                        className="flex-1 flex items-center justify-center gap-2 py-4 rounded-xl bg-brand text-white font-semibold text-base active:scale-[0.98] transition-transform disabled:opacity-50"
+                    >
+                        {isUploading ? <><Loader2 size={18} className="animate-spin" />Uploading...</> : "Next"}
+                    </button>
+                )}
+            </div>
+        );
+        return () => setFooterSlot(null);
+    }, [isFirstStep, isLastStep, isBusy, isSubmitting, isUploading, confirmed, nextDisabled, handleBack, handleNext, handleConfirm, setFooterSlot]);
 
     return (
         <div className="flex flex-col bg-gray-50">
@@ -380,49 +417,6 @@ export default function ManageCloseDayPage() {
                 </div>
             )}
 
-            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-3 px-4 pb-6 flex gap-3">
-                {!isFirstStep && (
-                    <button
-                        onClick={handleBack}
-                        disabled={isBusy}
-                        className="flex items-center justify-center gap-1 px-5 py-3 rounded-xl bg-gray-100 border border-gray-200 text-gray-900 font-medium text-md active:scale-95 transition-transform disabled:opacity-60"
-                    >
-                        Previous
-                    </button>
-                )}
-
-                {isLastStep ? (
-                    <button
-                        onClick={handleConfirm}
-                        disabled={isBusy || !confirmed}
-                        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-red-500 text-white font-semibold text-base active:scale-95 transition-transform disabled:opacity-30 disabled:bg-gray-300 disabled:text-gray-400"
-                    >
-                        {isSubmitting ? (
-                            <>
-                                <Loader2 size={18} className="animate-spin" />
-                                Closing...
-                            </>
-                        ) : (
-                            "Close Day"
-                        )}
-                    </button>
-                ) : (
-                    <button
-                        onClick={handleNext}
-                        disabled={nextDisabled}
-                        className="flex-1 flex items-center justify-center gap-1 py-3 rounded-xl bg-brand text-white font-semibold text-md active:scale-95 transition-transform disabled:opacity-30 disabled:bg-gray-300 disabled:text-gray-400"
-                    >
-                        {isUploading ? (
-                            <>
-                                <Loader2 size={18} className="animate-spin" />
-                                Uploading...
-                            </>
-                        ) : (
-                            "Next"
-                        )}
-                    </button>
-                )}
-            </div>
         </div>
     );
 }

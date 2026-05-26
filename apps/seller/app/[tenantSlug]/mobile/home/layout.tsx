@@ -1,27 +1,15 @@
 "use client";
 
-import { useLayoutEffect, useMemo, useState } from "react";
+import { useLayoutEffect, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { AtAGlance } from "./_components/AtAGlance";
+import { StoreGate } from "./_components/StoreGate";
 import { TakeOverCard } from "./_components/TakeOverCard";
 import { useStore } from "@/lib/context/StoreContext";
 import { useSession } from "@/lib/hooks/sessions/useSession";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useStoreActivityLogs } from "@/lib/hooks/activity-logs/useStoreActivityLogs";
-import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
-import { navigation } from "@tea-pos/utils/navigation";
-import { Icon } from "@iconify/react";
 import { useMobileOverlay } from "../components/MobileOverlayContext";
-
-function GateIcon({ icon }: { icon: string }) {
-    const [loaded, setLoaded] = useState(false);
-    return (
-        <div className="relative w-[100px] h-[100px] mx-auto mb-5">
-            {!loaded && <div className="absolute inset-0 rounded-2xl bg-gray-200" />}
-            <Icon icon={icon} width={100} height={100} className="absolute inset-0" onLoad={() => setLoaded(true)} />
-        </div>
-    );
-}
 
 export default function HomeLayout({
     children,
@@ -36,7 +24,6 @@ export default function HomeLayout({
     const { selectedStoreId, selectedStore } = useStore();
     const { gate, session, transferSession } = useSession(selectedStoreId);
     const { profile } = useAuth();
-    const { url } = useTenantSlug();
 
     const todayStr = useMemo(() => {
         const tz = parseInt(process.env.NEXT_PUBLIC_TIMEZONE_OFFSET ?? "7", 10);
@@ -55,35 +42,22 @@ export default function HomeLayout({
     const gateContent = useMemo(() => {
         if (!showGate) return null;
         return (
-            <div className="bg-white rounded-3xl w-full h-full flex flex-col items-center justify-center p-8">
-                {isPosInUse ? (
-                    <TakeOverCard onTransfer={transferSession} />
-                ) : gate === "closed" ? (
-                    <div className="text-center w-full max-w-xs">
-                        <GateIcon icon="fluent-emoji:alarm-clock" />
-                        <p className="font-bold text-gray-900 text-2xl tracking-tight">Store is closed</p>
-                        <p className="text-base text-gray-500 mt-2">
-                            Today&apos;s session has ended.
-                        </p>
-                    </div>
-                ) : (
-                    <div className="text-center w-full max-w-xs">
-                        <GateIcon icon="fluent-emoji:convenience-store" />
-                        <p className="font-bold text-gray-900 text-2xl tracking-tight">Store not open yet</p>
-                        <p className="text-base text-gray-500 mt-2 mb-7">
-                            Open the store to start taking orders today.
-                        </p>
-                        <button
-                            onClick={() => navigation.push(url("/mobile/home/manage/open"))}
-                            className="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-base active:scale-95 transition-transform"
-                        >
-                            Open Store
-                        </button>
-                    </div>
-                )}
+            <div className="flex flex-col h-full gap-4">
+                <AtAGlance
+                    openTime={selectedStore?.openTime}
+                    closeTime={selectedStore?.closeTime}
+                    events={events}
+                />
+                <div className="flex-1">
+                    <StoreGate
+                        gate={gate}
+                        isPosInUse={isPosInUse}
+                        onTransfer={transferSession}
+                    />
+                </div>
             </div>
         );
-    }, [showGate, isPosInUse, gate, transferSession, url]);
+    }, [showGate, isPosInUse, gate, transferSession, selectedStore, events]);
 
     useLayoutEffect(() => {
         setOverlay(gateContent);
@@ -93,7 +67,7 @@ export default function HomeLayout({
     if (showGate) return null;
 
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex-1 flex flex-col gap-4">
             {isHomeRoot && (
                 <AtAGlance
                     openTime={selectedStore?.openTime}
@@ -103,7 +77,7 @@ export default function HomeLayout({
             )}
             <div
                 key={pathname}
-                className="animate-in fade-in duration-150 ease-out"
+                className="flex-1 animate-in fade-in duration-150 ease-out"
             >
                 {children}
             </div>

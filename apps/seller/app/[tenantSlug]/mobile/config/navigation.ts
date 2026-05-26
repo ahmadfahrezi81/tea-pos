@@ -16,6 +16,7 @@ export type RouteConfig = {
     inlineHeader: boolean;
     isChart: boolean;
     parent: string | null | "lastRootTab";
+    headerAction?: "add";
 };
 
 export const mobileRoutes = {
@@ -50,9 +51,17 @@ export const mobileRoutes = {
     "/mobile/home/manage/expense": {
         title: "Expenses",
         subPage: true,
-        inlineHeader: false,
+        inlineHeader: true,
         isChart: false,
         parent: "/mobile/home/manage",
+        headerAction: "add",
+    },
+    "/mobile/home/manage/expense/add": {
+        title: "Add Expense",
+        subPage: true,
+        inlineHeader: true,
+        isChart: false,
+        parent: "/mobile/home/manage/expense",
     },
     "/mobile/orders": {
         title: "Orders",
@@ -162,16 +171,32 @@ export const mobileRoutes = {
     "/mobile/home/manage/request": {
         title: "Request Supplies",
         subPage: true,
-        inlineHeader: false,
+        inlineHeader: true,
         isChart: false,
         parent: "/mobile/home/manage",
+        headerAction: "add",
+    },
+    "/mobile/home/manage/request/add": {
+        title: "New Request",
+        subPage: true,
+        inlineHeader: true,
+        isChart: false,
+        parent: "/mobile/home/manage/request",
     },
     "/mobile/home/manage/report": {
         title: "Report Issue",
         subPage: true,
-        inlineHeader: false,
+        inlineHeader: true,
         isChart: false,
         parent: "/mobile/home/manage",
+        headerAction: "add",
+    },
+    "/mobile/home/manage/report/add": {
+        title: "New Report",
+        subPage: true,
+        inlineHeader: true,
+        isChart: false,
+        parent: "/mobile/home/manage/report",
     },
     "/mobile/account/earnings": {
         title: "My Earnings",
