@@ -113,7 +113,7 @@ export default function MiniDailySalesChart({
     if (chartData.length === 0) return null;
 
     return (
-        <div className="mt-3 border-t border-gray-100 bg-white rounded-xl shadow-sm p-2 pb-1">
+        <div className="mt-3 bg-white rounded-2xl p-2 pb-1">
             <div className="flex justify-end mb-1">
                 <button
                     onClick={() => {

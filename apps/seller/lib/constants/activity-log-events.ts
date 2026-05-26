@@ -1,3 +1,13 @@
+import type { LucideIcon } from "lucide-react";
+import { LockOpen, ArrowRightLeft, DollarSign, Lock } from "lucide-react";
+
+export const EVENT_ICON: Record<string, LucideIcon> = {
+    store_open: LockOpen,
+    session_transferred: ArrowRightLeft,
+    expense_created: DollarSign,
+    daily_summary_closed: Lock,
+};
+
 export const EVENT_COLOR: Record<string, string> = {
     store_open: "bg-green-500",
     session_transferred: "bg-blue-500",

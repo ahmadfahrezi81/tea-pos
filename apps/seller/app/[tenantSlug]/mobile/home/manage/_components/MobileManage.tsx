@@ -46,26 +46,8 @@ export default function MobileManage() {
     return (
         <div className="flex flex-col gap-4 pb-24">
             {/* Top card: two equal tappable halves */}
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden flex divide-x divide-gray-100">
-                {/* Left half — weather */}
-                <button
-                    onClick={() => setIsWeatherOpen(true)}
-                    className="flex-1 flex items-center gap-3 p-4 active:bg-gray-50 transition-colors text-left"
-                >
-                    <div className="w-12 h-12 flex items-center justify-center shrink-0">
-                        {WeatherIcon ? (
-                            <WeatherIcon width={48} height={48} />
-                        ) : (
-                            <Cloud size={28} className="text-blue-400" />
-                        )}
-                    </div>
-                    <div>
-                        <p className="text-xs text-gray-500 font-medium">Weather</p>
-                        <p className="text-sm font-semibold text-gray-800">Forecast</p>
-                    </div>
-                </button>
-
-                {/* Right half — claim code (owner only) */}
+            <div className="bg-white rounded-2xl overflow-hidden flex divide-x divide-slate-100">
+                {/* Left half — claim code (owner only) */}
                 {isOwner ? (
                     <button
                         onClick={() => setCodeRevealed((v) => !v)}
@@ -89,15 +71,32 @@ export default function MobileManage() {
                         </div>
                     </div>
                 )}
+
+                {/* Right half — weather */}
+                <button
+                    onClick={() => setIsWeatherOpen(true)}
+                    className="flex-1 flex items-center gap-3 p-4 active:bg-gray-50 transition-colors text-left"
+                >
+                    <div className="w-12 h-12 flex items-center justify-center shrink-0">
+                        {WeatherIcon ? (
+                            <WeatherIcon width={48} height={48} />
+                        ) : (
+                            <Cloud size={28} className="text-blue-400" />
+                        )}
+                    </div>
+                    <div>
+                        <p className="text-xs text-gray-500 font-medium">Weather</p>
+                        <p className="text-sm font-semibold text-gray-800">Forecast</p>
+                    </div>
+                </button>
             </div>
 
             {/* Store actions */}
-            <div className="bg-white rounded-xl shadow-sm divide-y divide-gray-100 overflow-hidden">
+            <div className="bg-white rounded-2xl px-4 py-1">
                 {summaryId && (
                     <ActionRow
-                        icon={<History size={20} className="text-gray-500" />}
+                        icon={<History size={22} strokeWidth={2} className="text-gray-500" />}
                         label="Today's Activity"
-                        sublabel="View store events for today"
                         onClick={() =>
                             navigation.push(
                                 url(`/mobile/analytics/daily/${summaryId}/events?storeId=${selectedStoreId}&date=${todayStr}`)
@@ -106,29 +105,25 @@ export default function MobileManage() {
                     />
                 )}
                 <ActionRow
-                    icon={<DollarSign size={20} className={dimmed ? "text-gray-400" : "text-blue-600"} />}
+                    icon={<DollarSign size={22} strokeWidth={2} className={dimmed ? "text-gray-400" : "text-blue-600"} />}
                     label="Add Expenses"
-                    sublabel={dimmed ? "Open store first" : "Log costs for today"}
                     onClick={() => navigation.push(url("/mobile/home/manage/expense"))}
                     disabled={dimmed}
                 />
                 <ActionRow
-                    icon={<PackagePlus size={20} className={dimmed ? "text-gray-400" : "text-emerald-600"} />}
+                    icon={<PackagePlus size={22} strokeWidth={2} className={dimmed ? "text-gray-400" : "text-emerald-600"} />}
                     label="Request Supplies"
-                    sublabel={dimmed ? "Open store first" : "Cups, ice, syrup and more"}
                     onClick={() => navigation.push(url("/mobile/home/manage/request"))}
                     disabled={dimmed}
                 />
                 <ActionRow
-                    icon={<AlertTriangle size={20} className="text-orange-500" />}
+                    icon={<AlertTriangle size={22} strokeWidth={2} className="text-orange-500" />}
                     label="Report Issue"
-                    sublabel="Log an incident or problem"
                     onClick={() => navigation.push(url("/mobile/home/manage/report"))}
                 />
                 <ActionRow
-                    icon={<XCircle size={20} className={dimmed ? "text-gray-400" : "text-red-500"} />}
+                    icon={<XCircle size={22} strokeWidth={2} className={dimmed ? "text-gray-400" : "text-red-500"} />}
                     label="Close Day"
-                    sublabel={dimmed ? "Open store first" : "Count cash and finalize"}
                     onClick={() => navigation.push(url("/mobile/home/manage/close"))}
                     danger={!dimmed}
                     disabled={dimmed}
@@ -164,19 +159,21 @@ function ActionRow({
         <button
             onClick={onClick}
             disabled={disabled}
-            className={`w-full flex items-center gap-3 p-4 text-left transition-colors
+            className={`group w-full flex items-stretch gap-3 text-left transition-colors
                 ${highlight ? "bg-green-50 active:bg-green-100" : "active:bg-gray-50"}
                 ${disabled ? "opacity-50 cursor-not-allowed" : ""}
             `}
         >
-            <span className="shrink-0">{icon}</span>
-            <div className="flex-1">
-                <p className={`font-medium ${danger ? "text-red-600" : highlight ? "text-green-700" : "text-gray-800"}`}>
-                    {label}
-                </p>
-                {sublabel && <p className="text-xs text-gray-500 mt-0.5">{sublabel}</p>}
+            <span className="shrink-0 flex items-center py-5">{icon}</span>
+            <div className="flex-1 flex items-center py-5 -mr-4 pr-4 border-b-2 border-slate-100 group-last:border-b-0">
+                <div className="flex-1">
+                    <p className={`text-[17px] font-medium ${danger ? "text-red-600" : highlight ? "text-green-700" : "text-gray-800"}`}>
+                        {label}
+                    </p>
+                    {sublabel && <p className="text-xs text-gray-500 mt-0.5">{sublabel}</p>}
+                </div>
+                <ChevronRight size={20} strokeWidth={2.5} className="text-brand/90 shrink-0" />
             </div>
-            <ChevronRight size={18} className="text-gray-400 shrink-0" />
         </button>
     );
 }

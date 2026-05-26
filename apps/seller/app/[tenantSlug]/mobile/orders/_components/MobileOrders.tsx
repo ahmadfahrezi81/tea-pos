@@ -124,7 +124,7 @@ export default function MobileOrders() {
     return (
         <div className="flex flex-col gap-4">
             {/* Summary */}
-            <div className="bg-white p-4 rounded-lg shadow-sm">
+            <div className="bg-white p-4 rounded-2xl">
                 <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                         <Receipt size={20} className="text-gray-600" />
@@ -157,7 +157,7 @@ export default function MobileOrders() {
             </div>
 
             {/* Date Filter */}
-            <div className="bg-white p-4 rounded-lg shadow-sm">
+            <div className="bg-white p-4 rounded-2xl">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                     <CalendarDays size={16} className="inline mr-1" />
                     Select Date
@@ -185,7 +185,7 @@ export default function MobileOrders() {
 
             {/* Orders List */}
             {ordersWithNumbers.length === 0 ? (
-                <div className="bg-white p-8 rounded-lg shadow-sm text-center">
+                <div className="bg-white p-8 rounded-2xl text-center">
                     <Calendar
                         size={48}
                         className="mx-auto text-gray-400 mb-4"
@@ -210,7 +210,7 @@ export default function MobileOrders() {
                     {ordersWithNumbers.map((order) => (
                         <div
                             key={order.id}
-                            className="bg-white rounded-xl shadow-sm overflow-hidden"
+                            className="bg-white rounded-2xl overflow-hidden"
                         >
                             <div className="p-3.5 bg-white">
                                 <div className="flex justify-between items-start">
@@ -247,13 +247,13 @@ export default function MobileOrders() {
                                 </div>
                             </div>
 
-                            <div className="border-t border-gray-100 p-3 bg-gray-50">
+                            <div className="border-t border-gray-100 p-3 bg-slate-100">
                                 <div className="space-y-3">
                                     <div>
                                         <h4 className="font-medium text-gray-800 mb-2 text-sm">
                                             Order Details
                                         </h4>
-                                        <div className="text-xs text-gray-600 space-y-1">
+                                        <div className="text-xs text-gray-800 space-y-1">
                                             <div>
                                                 <span className="font-medium">
                                                     Order ID:
@@ -298,7 +298,7 @@ export default function MobileOrders() {
                                             {order.orderItems.map((item) => (
                                                 <div
                                                     key={item.id}
-                                                    className="flex justify-between items-center bg-white p-2.5 rounded-md text-sm"
+                                                    className="flex justify-between items-center bg-white p-2.5 rounded-xl text-sm"
                                                 >
                                                     <div className="flex-1">
                                                         <p className="font-medium">

@@ -82,7 +82,7 @@ export default function DayOfWeekChart({ storeId, month }: Props) {
     if (dayOfWeekChartData.length === 0) return null;
 
     return (
-        <div className="bg-white rounded-xl shadow-sm p-4">
+        <div className="bg-white rounded-2xl p-4">
             <div className="flex items-start justify-between mb-3">
                 <div>
                     <h3 className="font-semibold text-gray-800 text-lg">

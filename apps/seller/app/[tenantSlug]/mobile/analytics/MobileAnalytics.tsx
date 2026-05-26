@@ -89,7 +89,7 @@ export default function MobileAnalytics() {
         <div className="space-y-4">
             {/* Monthly Summary */}
             {summariesData?.monthlyTotals && (
-                <div className="bg-white p-4 rounded-lg shadow-sm">
+                <div className="bg-white p-4 rounded-2xl">
                     <div className="flex items-center gap-2 mb-3">
                         <Receipt size={20} className="text-gray-600" />
                         <h3 className="font-semibold text-gray-800">Monthly Summary</h3>
@@ -133,7 +133,7 @@ export default function MobileAnalytics() {
             )}
 
             {/* Month Filter */}
-            <div className="bg-white p-4 rounded-lg shadow-sm">
+            <div className="bg-white p-4 rounded-2xl">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                     <CalendarDays size={16} className="inline mr-1" />
                     Select Month
@@ -167,7 +167,7 @@ export default function MobileAnalytics() {
             {selectedStoreId && (
                 <div className="space-y-3">
                     {!summariesData?.summaries || summariesData.summaries.length === 0 ? (
-                        <div className="bg-white p-8 rounded-lg shadow-sm text-center">
+                        <div className="bg-white p-8 rounded-2xl text-center">
                             <Calendar size={48} className="mx-auto text-gray-400 mb-4" />
                             <p className="text-gray-600">
                                 No daily summary found for selected month
@@ -184,7 +184,7 @@ export default function MobileAnalytics() {
                             return (
                                 <div
                                     key={summary.id}
-                                    className="bg-white rounded-xl shadow-sm overflow-hidden"
+                                    className="bg-white rounded-2xl overflow-hidden"
                                 >
                                     <div className="p-3 bg-white space-y-3">
                                         <div className="flex justify-between items-start mb-3">
@@ -224,35 +224,35 @@ export default function MobileAnalytics() {
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-2 gap-2 rounded-lg border p-2 border-gray-200 bg-gray-50 text-gray-800">
+                                        <div className="grid grid-cols-2 gap-2 rounded-2xl p-2 bg-slate-100 text-gray-800">
                                             <div>
                                                 <p className="text-xs">Opening Balance</p>
-                                                <p className="text-lg font-semibold text-blue-600">
+                                                <p className="text-lg font-extrabold text-blue-600">
                                                     {formatRupiah(summary.openingBalance)}
                                                 </p>
                                             </div>
                                             <div>
                                                 <p className="text-xs">Total Sales</p>
-                                                <p className="text-lg font-bold text-green-600">
+                                                <p className="text-lg font-extrabold text-green-600">
                                                     {formatRupiah(summary.totalSales)}
                                                 </p>
                                             </div>
                                             <div>
                                                 <p className="text-xs">Opening + Sales</p>
-                                                <p className="text-lg font-semibold text-purple-600">
+                                                <p className="text-lg font-extrabold text-purple-600">
                                                     {formatRupiah(summary.openingBalance + summary.totalSales)}
                                                 </p>
                                             </div>
                                             <div className="flex gap-4">
                                                 <div>
                                                     <p className="text-xs">Orders</p>
-                                                    <p className="text-lg font-bold text-blue-600">
+                                                    <p className="text-lg font-extrabold text-blue-600">
                                                         {summary.totalOrders}
                                                     </p>
                                                 </div>
                                                 <div>
                                                     <p className="text-xs">Cups</p>
-                                                    <p className="text-lg font-bold text-orange-600">
+                                                    <p className="text-lg font-extrabold text-orange-600">
                                                         {summary.totalCups}
                                                     </p>
                                                 </div>
@@ -260,13 +260,13 @@ export default function MobileAnalytics() {
                                             <hr className="col-span-2 border-gray-300" />
                                             <div>
                                                 <p className="text-xs">Net Expected Cash</p>
-                                                <p className="text-lg font-semibold text-purple-600">
+                                                <p className="text-lg font-extrabold text-purple-600">
                                                     {formatRupiah(summary.expectedCash)}
                                                 </p>
                                             </div>
                                             <div>
                                                 <p className="text-xs">Actual Cash (Counted)</p>
-                                                <p className="text-lg font-semibold text-orange-600">
+                                                <p className="text-lg font-extrabold text-orange-600">
                                                     {summary.actualCash !== null
                                                         ? formatRupiah(summary.actualCash)
                                                         : "Not counted"}
@@ -326,7 +326,7 @@ export default function MobileAnalytics() {
                                                 <h4 className="text-gray-800 text-sm font-semibold mb-1">
                                                     Notes
                                                 </h4>
-                                                <p className="text-sm text-gray-700 bg-gray-50 p-2 rounded-lg border border-gray-200">
+                                                <p className="text-sm text-gray-700 bg-slate-100 p-2 rounded-xl">
                                                     {summary.notes}
                                                 </p>
                                             </div>
@@ -334,14 +334,14 @@ export default function MobileAnalytics() {
                                     </div>
 
                                     {!summary.closedAt && (
-                                        <div className="border-t border-gray-100 p-3 bg-gray-50">
+                                        <div className="border-t border-gray-100 p-3">
                                             <button
                                                 onClick={() =>
                                                     navigation.push(
                                                         url(`/mobile/home/manage/close?summaryId=${summary.id}&month=${summary.date.slice(0, 7)}`),
                                                     )
                                                 }
-                                                className="w-full bg-red-500 text-white border border-red-500 py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-600"
+                                                className="w-full bg-red-500 text-white py-4 px-4 rounded-xl text-sm font-semibold active:scale-95"
                                             >
                                                 Close Day
                                             </button>

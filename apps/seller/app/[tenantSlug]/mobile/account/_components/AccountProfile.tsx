@@ -16,37 +16,32 @@ import { navigation } from "@tea-pos/utils/navigation";
 const SettingsRow = ({
     icon,
     label,
-    sublabel,
     onClick,
     disabled = false,
 }: {
     icon: React.ReactNode;
     label: string;
-    sublabel?: string;
     onClick?: () => void;
     disabled?: boolean;
 }) => (
     <button
         onClick={onClick}
         disabled={disabled}
-        className={`w-full flex items-center gap-1 py-4 border-b border-gray-100 last:border-none text-left ${
+        className={`group w-full flex items-stretch gap-3 text-left ${
             disabled ? "opacity-40 cursor-default" : "active:bg-gray-50"
         }`}
     >
-        <span className="text-xl w-6 text-center">{icon}</span>
-        <div className="flex-1 min-w-0">
-            <p className="text-base text-gray-800">{label}</p>
-            {sublabel && (
-                <p className="text-xs text-gray-500 truncate">{sublabel}</p>
+        <span className="text-xl w-6 text-center shrink-0 flex items-center py-5">{icon}</span>
+        <div className="flex-1 flex items-center py-5 -mr-4 pr-4 border-b-2 border-slate-100 group-last:border-b-0">
+            <p className="flex-1 text-[17px] font-medium text-gray-800">{label}</p>
+            {!disabled && (
+                <ChevronRight
+                    size={20}
+                    strokeWidth={2.5}
+                    className="text-brand/90"
+                />
             )}
         </div>
-        {!disabled && (
-            <ChevronRight
-                size={20}
-                strokeWidth={2.5}
-                className="text-brand/90"
-            />
-        )}
     </button>
 );
 
@@ -77,7 +72,7 @@ export default function AccountProfile() {
     return (
         <div className="min-h-screen space-y-4">
             {/* Profile Header */}
-            <div className="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-4">
+            <div className="bg-white rounded-2xl p-4 flex items-center gap-4">
                 <div className="shrink-0">
                     {avatarUrl ? (
                         <Image
@@ -85,10 +80,10 @@ export default function AccountProfile() {
                             alt={profile.fullName}
                             width={64}
                             height={64}
-                            className="rounded-full object-cover border-2 border-brand/20"
+                            className="rounded-2xl object-cover border-2 border-brand/20"
                         />
                     ) : (
-                        <div className="w-16 h-16 rounded-full bg-brand/10 flex items-center justify-center">
+                        <div className="w-16 h-16 rounded-2xl bg-brand/10 flex items-center justify-center">
                             <UserCircle size={40} className="text-brand" />
                         </div>
                     )}
@@ -104,34 +99,29 @@ export default function AccountProfile() {
             </div>
 
             {/* Account Settings */}
-            <div className="bg-white rounded-xl p-4 py-1 space-y-1 shadow-sm">
+            <div className="bg-white rounded-2xl px-4 py-1">
                 <SettingsRow
-                    icon={<Pencil size={20} className="text-gray-900" />}
+                    icon={<Pencil size={22} strokeWidth={2} className="text-gray-900" />}
                     label="Personal Details"
-                    sublabel="View your account info"
-                    onClick={() =>
-                        navigation.push(url("/mobile/account/details"))
-                    }
+                    onClick={() => navigation.push(url("/mobile/account/details"))}
                 />
                 <SettingsRow
-                    icon={<Banknote size={20} className="text-gray-900" />}
+                    icon={<Banknote size={22} strokeWidth={2} className="text-gray-900" />}
                     label="My Earnings"
-                    sublabel="Commission & payroll history"
                     onClick={() => navigation.push(url("/mobile/account/earnings"))}
                 />
                 <SettingsRow
-                    icon={<ReceiptText size={20} className="text-gray-900" />}
+                    icon={<ReceiptText size={22} strokeWidth={2} className="text-gray-900" />}
                     label="Reimbursements"
-                    sublabel="Submit expense claims"
                     onClick={() => navigation.push(url("/mobile/account/reimbursements"))}
                 />
                 <SettingsRow
-                    icon={<Bell size={20} className="text-gray-900" />}
+                    icon={<Bell size={22} strokeWidth={2} className="text-gray-900" />}
                     label="Notifications"
                     disabled
                 />
                 <SettingsRow
-                    icon={<Globe size={20} className="text-gray-900" />}
+                    icon={<Globe size={22} strokeWidth={2} className="text-gray-900" />}
                     label="Language"
                     disabled
                 />
