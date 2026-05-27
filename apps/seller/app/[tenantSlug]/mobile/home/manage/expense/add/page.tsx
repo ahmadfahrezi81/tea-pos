@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/context/StoreContext";
 import { useSummaries } from "@/lib/hooks/summaries/useDailySummaries";
-import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
-import { navigation } from "@tea-pos/utils/navigation";
 import { SelectInput } from "../../_components/shared/SelectInput";
 import { NumberInput } from "../../_components/shared/NumberInput";
 import { FormFooter } from "@/components/shared/FormFooter";
@@ -16,8 +15,8 @@ const EXPENSE_OPTIONS = [
 ];
 
 export default function AddExpensePage() {
+    const router = useRouter();
     const { selectedStoreId } = useStore();
-    const { url } = useTenantSlug();
 
     const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
     const currentMonth = useMemo(() => new Date().toISOString().slice(0, 7), []);
@@ -47,7 +46,7 @@ export default function AddExpensePage() {
                 storeId: selectedStoreId,
                 expenses: [{ label, customLabel, amount: String(amount) }],
             });
-            navigation.push(url("/mobile/home/manage/expense"));
+            router.back();
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to save expense");
         } finally {

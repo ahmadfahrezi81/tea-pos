@@ -1,11 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/context/StoreContext";
 import { useSession } from "@/lib/hooks/sessions/useSession";
 import { useIncidentReports } from "@/lib/hooks/reports/useIncidentReports";
-import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
-import { navigation } from "@tea-pos/utils/navigation";
 import { apiFetch } from "@/lib/api/client";
 import { INCIDENT_CATEGORIES, INCIDENT_CATEGORY_LABELS } from "@tea-pos/features/reports/schema";
 import type { IncidentCategory } from "@tea-pos/features/reports/schema";
@@ -20,8 +19,8 @@ const CATEGORY_OPTIONS = INCIDENT_CATEGORIES.map((c) => ({
 }));
 
 export default function AddReportPage() {
+    const router = useRouter();
     const { selectedStoreId } = useStore();
-    const { url } = useTenantSlug();
     const { summaryId } = useSession(selectedStoreId);
     const { create } = useIncidentReports(selectedStoreId);
 
@@ -60,7 +59,7 @@ export default function AddReportPage() {
                 photoUrl,
                 dailySummaryId: summaryId ?? undefined,
             });
-            navigation.push(url("/mobile/home/manage/report"));
+            router.back();
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to submit report");
         } finally {

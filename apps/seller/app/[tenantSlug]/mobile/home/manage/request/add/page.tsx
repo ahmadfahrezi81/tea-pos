@@ -1,11 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/context/StoreContext";
 import { useSession } from "@/lib/hooks/sessions/useSession";
 import { useSupplyRequests } from "@/lib/hooks/requests/useSupplyRequests";
-import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
-import { navigation } from "@tea-pos/utils/navigation";
 import { apiFetch } from "@/lib/api/client";
 import { SUPPLY_REQUEST_TYPES, SUPPLY_REQUEST_TYPE_LABELS } from "@tea-pos/features/requests/schema";
 import type { SupplyRequestType } from "@tea-pos/features/requests/schema";
@@ -20,8 +19,8 @@ const TYPE_OPTIONS = SUPPLY_REQUEST_TYPES.map((t) => ({
 }));
 
 export default function AddRequestPage() {
+    const router = useRouter();
     const { selectedStoreId } = useStore();
-    const { url } = useTenantSlug();
     const { summaryId } = useSession(selectedStoreId);
     const { create } = useSupplyRequests(selectedStoreId);
 
@@ -55,7 +54,7 @@ export default function AddRequestPage() {
                 photoUrl,
                 dailySummaryId: summaryId ?? undefined,
             });
-            navigation.push(url("/mobile/home/manage/request"));
+            router.back();
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to send request");
         } finally {

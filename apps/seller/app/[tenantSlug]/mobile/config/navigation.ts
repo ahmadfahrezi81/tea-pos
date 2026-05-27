@@ -59,7 +59,7 @@ export const mobileRoutes = {
     "/mobile/home/manage/expense/add": {
         title: "Add Expense",
         subPage: true,
-        inlineHeader: true,
+        inlineHeader: false,
         isChart: false,
         parent: "/mobile/home/manage/expense",
     },
@@ -179,7 +179,7 @@ export const mobileRoutes = {
     "/mobile/home/manage/request/add": {
         title: "New Request",
         subPage: true,
-        inlineHeader: true,
+        inlineHeader: false,
         isChart: false,
         parent: "/mobile/home/manage/request",
     },
@@ -194,7 +194,7 @@ export const mobileRoutes = {
     "/mobile/home/manage/report/add": {
         title: "New Report",
         subPage: true,
-        inlineHeader: true,
+        inlineHeader: false,
         isChart: false,
         parent: "/mobile/home/manage/report",
     },

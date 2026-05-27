@@ -2,7 +2,10 @@
 
 import { useStore } from "@/lib/context/StoreContext";
 import { useSupplyRequests } from "@/lib/hooks/requests/useSupplyRequests";
+import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
+import { navigation } from "@tea-pos/utils/navigation";
 import { SUPPLY_REQUEST_TYPE_LABELS } from "@tea-pos/features/requests/schema";
+import { FormFooter } from "@/components/shared/FormFooter";
 import { PackageSearch } from "lucide-react";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -19,26 +22,41 @@ const STATUS_STYLE: Record<string, string> = {
 
 export default function RequestPage() {
     const { selectedStoreId } = useStore();
+    const { url } = useTenantSlug();
     const { requests, isLoading } = useSupplyRequests(selectedStoreId);
+
+    const footer = (
+        <FormFooter
+            label="New Request"
+            onSubmit={() => navigation.push(url("/mobile/home/manage/request/add"))}
+        />
+    );
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center py-20">
-                <div className="w-7 h-7 border-3 border-brand border-t-transparent rounded-full animate-spin" />
-            </div>
+            <>
+                <div className="flex items-center justify-center py-20">
+                    <div className="w-7 h-7 border-3 border-brand border-t-transparent rounded-full animate-spin" />
+                </div>
+                {footer}
+            </>
         );
     }
 
     if (requests.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-                <PackageSearch size={40} className="text-gray-300 mb-3" />
-                <p className="text-gray-500 text-sm">No supply requests today.</p>
-            </div>
+            <>
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                    <PackageSearch size={40} className="text-gray-300 mb-3" />
+                    <p className="text-gray-500 text-sm">No supply requests today.</p>
+                </div>
+                {footer}
+            </>
         );
     }
 
     return (
+        <>
         <div className="space-y-4">
             <div className="bg-white rounded-xl p-4 space-y-3">
                 <ul className="space-y-2">
@@ -60,5 +78,7 @@ export default function RequestPage() {
                 </ul>
             </div>
         </div>
+        {footer}
+        </>
     );
 }

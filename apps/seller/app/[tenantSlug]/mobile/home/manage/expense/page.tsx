@@ -3,11 +3,15 @@
 import { useMemo } from "react";
 import { useStore } from "@/lib/context/StoreContext";
 import { useSummaries } from "@/lib/hooks/summaries/useDailySummaries";
+import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
+import { navigation } from "@tea-pos/utils/navigation";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
+import { FormFooter } from "@/components/shared/FormFooter";
 import { Receipt } from "lucide-react";
 
 export default function ExpensePage() {
     const { selectedStoreId } = useStore();
+    const { url } = useTenantSlug();
     const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
     const currentMonth = useMemo(() => new Date().toISOString().slice(0, 7), []);
 
@@ -18,11 +22,21 @@ export default function ExpensePage() {
         [summariesData?.summaries, todayStr],
     );
 
+    const footer = (
+        <FormFooter
+            label="Add Expense"
+            onSubmit={() => navigation.push(url("/mobile/home/manage/expense/add"))}
+        />
+    );
+
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center py-20">
-                <div className="w-7 h-7 border-3 border-brand border-t-transparent rounded-full animate-spin" />
-            </div>
+            <>
+                <div className="flex items-center justify-center py-20">
+                    <div className="w-7 h-7 border-3 border-brand border-t-transparent rounded-full animate-spin" />
+                </div>
+                {footer}
+            </>
         );
     }
 
@@ -32,14 +46,18 @@ export default function ExpensePage() {
 
     if (existingExpenses.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-                <Receipt size={40} className="text-gray-300 mb-3" />
-                <p className="text-gray-500 text-sm">No expenses recorded today.</p>
-            </div>
+            <>
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                    <Receipt size={40} className="text-gray-300 mb-3" />
+                    <p className="text-gray-500 text-sm">No expenses recorded today.</p>
+                </div>
+                {footer}
+            </>
         );
     }
 
     return (
+        <>
         <div className="space-y-4">
             <div className="bg-white rounded-xl p-4">
                 <div className="space-y-2">
@@ -56,5 +74,7 @@ export default function ExpensePage() {
                 </div>
             </div>
         </div>
+        {footer}
+        </>
     );
 }

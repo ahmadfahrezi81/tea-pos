@@ -2,7 +2,10 @@
 
 import { useStore } from "@/lib/context/StoreContext";
 import { useIncidentReports } from "@/lib/hooks/reports/useIncidentReports";
+import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
+import { navigation } from "@tea-pos/utils/navigation";
 import { INCIDENT_CATEGORY_LABELS } from "@tea-pos/features/reports/schema";
+import { FormFooter } from "@/components/shared/FormFooter";
 import { ClipboardList } from "lucide-react";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -19,26 +22,41 @@ const STATUS_STYLE: Record<string, string> = {
 
 export default function ReportPage() {
     const { selectedStoreId } = useStore();
+    const { url } = useTenantSlug();
     const { reports, isLoading } = useIncidentReports(selectedStoreId);
+
+    const footer = (
+        <FormFooter
+            label="New Report"
+            onSubmit={() => navigation.push(url("/mobile/home/manage/report/add"))}
+        />
+    );
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center py-20">
-                <div className="w-7 h-7 border-3 border-brand border-t-transparent rounded-full animate-spin" />
-            </div>
+            <>
+                <div className="flex items-center justify-center py-20">
+                    <div className="w-7 h-7 border-3 border-brand border-t-transparent rounded-full animate-spin" />
+                </div>
+                {footer}
+            </>
         );
     }
 
     if (reports.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-                <ClipboardList size={40} className="text-gray-300 mb-3" />
-                <p className="text-gray-500 text-sm">No reports filed today.</p>
-            </div>
+            <>
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                    <ClipboardList size={40} className="text-gray-300 mb-3" />
+                    <p className="text-gray-500 text-sm">No reports filed today.</p>
+                </div>
+                {footer}
+            </>
         );
     }
 
     return (
+        <>
         <div className="space-y-4">
             <div className="bg-white rounded-xl p-4">
                 <ul className="space-y-3">
@@ -58,5 +76,7 @@ export default function ReportPage() {
                 </ul>
             </div>
         </div>
+        {footer}
+        </>
     );
 }

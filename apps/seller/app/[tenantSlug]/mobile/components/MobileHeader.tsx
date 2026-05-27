@@ -111,7 +111,7 @@ export function MobileHeader({
                                 >
                                     <ArrowLeft size={28} strokeWidth={2} />
                                 </button>
-                                <p className="text-2xl font-semibold tracking-tight text-gray-900">
+                                <p className="text-2xl font-bold tracking-tight text-gray-900">
                                     {currentTitle}
                                 </p>
                             </div>
