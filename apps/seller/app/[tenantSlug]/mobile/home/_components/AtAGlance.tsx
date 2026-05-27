@@ -81,8 +81,13 @@ interface AtAGlanceProps {
     events?: TimelineEventResponse[];
 }
 
-const BAR_WIDTH = 900;
+const MIN_BAR_WIDTH = 900;
 const BUFFER_MINUTES = 60;
+const ICON_SIZE = 36;
+const ICON_SLOT_GAP = 2; // tiny edge gap when computing slot count
+const MIN_HOUR_PX = 50;
+const BAR_PADDING_PX = 32; // px-4 × 2
+const HOUR_GAP_PX = 4; // gap-1
 
 export function AtAGlance({
     openTime = "10:00",
@@ -105,15 +110,28 @@ export function AtAGlance({
         ? formatTime(timeToMinutes(currentTime))
         : new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 
-    // Flex value per hour — grows with event density
-    const hourFlexValues = useMemo(() => {
-        const counts = new Array(numHours).fill(0);
+    // Flex values and bar width — count-based: each hour gets enough room to fit N icons side-by-side
+    const { hourFlexValues, dynamicBarWidth } = useMemo(() => {
+        const counts = new Array<number>(numHours).fill(0);
         events.forEach((event) => {
             const mins = createdAtToLocalMinutes(event.createdAt);
             const idx = Math.floor((mins - open) / 60);
             if (idx >= 0 && idx < numHours) counts[idx]++;
         });
-        return (counts as number[]).map((c) => Math.max(1, 1 + c * 0.6));
+
+        const minWidths = counts.map((n) =>
+            n <= 1 ? MIN_HOUR_PX : Math.max(MIN_HOUR_PX, n * ICON_SIZE + (n - 1) * ICON_SLOT_GAP),
+        );
+
+        const totalPillPx = minWidths.reduce((s, w) => s + w, 0);
+        const barWidth = Math.max(
+            MIN_BAR_WIDTH,
+            totalPillPx + BAR_PADDING_PX + (numHours - 1) * HOUR_GAP_PX,
+        );
+        const avgPx = totalPillPx / numHours;
+        const flexValues = minWidths.map((w) => w / avgPx);
+
+        return { hourFlexValues: flexValues, dynamicBarWidth: barWidth };
     }, [events, open, numHours]);
 
     const totalFlex = useMemo(
@@ -154,10 +172,10 @@ export function AtAGlance({
     useEffect(() => {
         const container = scrollRef.current;
         if (!container) return;
-        const markerLeft = progressPos * (BAR_WIDTH - 48);
+        const markerLeft = progressPos * (dynamicBarWidth - BAR_PADDING_PX);
         const containerWidth = container.offsetWidth;
         container.scrollTo({ left: markerLeft - containerWidth / 2, behavior: "smooth" });
-    }, [progressPos]);
+    }, [progressPos, dynamicBarWidth]);
 
     useEffect(() => {
         const container = scrollRef.current;
@@ -187,7 +205,7 @@ export function AtAGlance({
                 ref={scrollRef}
                 className="overflow-x-auto overflow-y-visible [&::-webkit-scrollbar]:h-0.5 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:mx-6"
             >
-                <div style={{ width: BAR_WIDTH }} className="relative px-4 py-4 pb-8">
+                <div style={{ width: dynamicBarWidth }} className="relative px-4 py-4 pb-8">
                     <div className="relative flex items-center">
                         {/* Track — variable-width pills per hour, first/last are buffer zones */}
                         <div className="w-full flex items-center gap-1">
