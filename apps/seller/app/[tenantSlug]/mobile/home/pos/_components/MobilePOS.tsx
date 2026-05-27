@@ -110,7 +110,7 @@ export default function MobilePOS() {
     } = useCart(selectedStoreId);
 
     return (
-        <div className="flex flex-col gap-4 pb-24">
+        <div className="flex flex-col gap-4 pb-24 shrink-0">
             {/* Products Grid */}
             <div className="grid grid-cols-2 gap-3">
                 {products.map((product) => (
