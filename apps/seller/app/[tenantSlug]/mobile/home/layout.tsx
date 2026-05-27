@@ -67,7 +67,7 @@ export default function HomeLayout({
     if (showGate) return null;
 
     return (
-        <div className="flex-1 flex flex-col gap-4">
+        <div className="flex-1 flex flex-col gap-4 min-h-0">
             {isHomeRoot && (
                 <AtAGlance
                     openTime={selectedStore?.openTime}
@@ -77,7 +77,7 @@ export default function HomeLayout({
             )}
             <div
                 key={pathname}
-                className="flex-1 animate-in fade-in duration-150 ease-out"
+                className="flex-1 flex flex-col min-h-0 animate-in fade-in duration-150 ease-out"
             >
                 {children}
             </div>

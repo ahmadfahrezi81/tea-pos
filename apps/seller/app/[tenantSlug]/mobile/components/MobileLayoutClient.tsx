@@ -147,12 +147,14 @@ export default function MobileLayoutClient({
     const showAccountIcon = rootTabPaths.some((p) => currentPath === p);
 
     const scrollPaddingTop = hasHeaderAction
-        ? "pt-24"
+        ? "pt-30"
         : isInlineHeader
           ? "pt-16"
           : currentIsSubPage
             ? "pt-27"
             : "pt-19";
+
+    const scrollPaddingBottom = hasHeaderAction ? "pb-32" : "pb-28";
 
     if (!shellReady) {
         return (
@@ -243,7 +245,7 @@ export default function MobileLayoutClient({
                 <div className="flex-1 relative overflow-hidden">
                     <div
                         ref={scrollContainerRef}
-                        className={`absolute inset-0 overflow-y-auto p-4 pb-28 flex flex-col ${scrollPaddingTop}`}
+                        className={`absolute inset-0 overflow-y-auto p-4 ${scrollPaddingBottom} flex flex-col ${scrollPaddingTop}`}
                     >
                         {isTransitioning ? (
                             <div className="absolute inset-0 flex items-center justify-center animate-pulse">
