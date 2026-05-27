@@ -6,7 +6,7 @@ import { DailySummary } from "@tea-pos/features/summaries/schema";
 import { Expense } from "@tea-pos/features/expenses/schema";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 import { toIndonesiaMonthYear } from "@tea-pos/utils/server-config/timezone";
-import { Calendar, CalendarDays, AlertTriangle, Receipt } from "lucide-react";
+import { Calendar, CalendarDays, AlertTriangle, Receipt, MoreVertical, Info, Zap } from "lucide-react";
 import { DetailsDrawer } from "./_components/DetailsDrawer";
 import { useStore } from "@/lib/context/StoreContext";
 import {
@@ -34,9 +34,10 @@ type DailySummaryWithExtras = DailySummary & {
 
 function PhotoCountLabel({ summaryId }: { summaryId: string }) {
     const { count } = useSummaryPhotoCount(summaryId);
+    if (count === 0) return null;
     return (
-        <p className="text-sm text-blue-600">
-            {count > 0 ? `${count} photo${count > 1 ? "s" : ""} · ` : ""}Tap for details
+        <p className="text-xs text-blue-500 mt-0.5">
+            {count} photo{count > 1 ? "s" : ""}
         </p>
     );
 }
@@ -51,6 +52,7 @@ export default function MobileAnalytics() {
     const [selectedSummary, setSelectedSummary] =
         useState<DailySummaryWithExtras | null>(null);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
+    const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
     const {
         data: summariesData,
@@ -188,38 +190,60 @@ export default function MobileAnalytics() {
                                 >
                                     <div className="p-3 bg-white space-y-3">
                                         <div className="flex justify-between items-start mb-3">
-                                            <div className="flex-1">
-                                                <div
-                                                    onClick={() => {
-                                                        setSelectedSummary(summaryWithExtras);
-                                                        setShowDetailsModal(true);
-                                                    }}
-                                                    className="text-left hover:text-blue-600 transition-colors cursor-pointer"
-                                                >
-                                                    <h3 className="text-lg font-semibold text-gray-800 hover:text-blue-600">
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <h3 className="text-lg font-semibold text-gray-800">
                                                         {formatDate(summary.date)}
                                                     </h3>
-                                                    <PhotoCountLabel summaryId={summary.id} />
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            navigation.push(url(`/mobile/analytics/daily/${summary.id}/events?storeId=${selectedStoreId}&date=${summary.date}`));
-                                                        }}
-                                                        className="text-sm text-blue-500 mt-0.5 block"
-                                                    >
-                                                        View day activity →
-                                                    </button>
+                                                    {summary.closedAt ? (
+                                                        <span className="bg-red-100 text-red-800 px-2 py-0.5 rounded-full text-xs font-medium">
+                                                            Closed
+                                                        </span>
+                                                    ) : (
+                                                        <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs font-medium">
+                                                            Open
+                                                        </span>
+                                                    )}
                                                 </div>
+                                                <PhotoCountLabel summaryId={summary.id} />
                                             </div>
-                                            <div className="text-right">
-                                                {summary.closedAt ? (
-                                                    <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
-                                                        Closed
-                                                    </span>
-                                                ) : (
-                                                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">
-                                                        Open
-                                                    </span>
+                                            <div className="relative">
+                                                <button
+                                                    onClick={() => setOpenMenuId(openMenuId === summary.id ? null : summary.id)}
+                                                    className="w-8 h-8 flex items-center justify-center rounded-lg active:bg-gray-100 active:scale-95 text-brand"
+                                                >
+                                                    <MoreVertical size={22} strokeWidth={2.5} />
+                                                </button>
+                                                {openMenuId === summary.id && (
+                                                    <>
+                                                        <div
+                                                            className="fixed inset-0 z-10"
+                                                            onClick={() => setOpenMenuId(null)}
+                                                        />
+                                                        <div className="absolute right-0 top-9 z-20 bg-white rounded-xl shadow-lg border border-gray-100 py-1 w-max">
+                                                            <button
+                                                                onClick={() => {
+                                                                    setOpenMenuId(null);
+                                                                    setSelectedSummary(summaryWithExtras);
+                                                                    setShowDetailsModal(true);
+                                                                }}
+                                                                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 active:bg-gray-50 flex items-center gap-2.5"
+                                                            >
+                                                                <Info size={15} className="text-gray-400" />
+                                                                Details
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    setOpenMenuId(null);
+                                                                    navigation.push(url(`/mobile/analytics/daily/${summary.id}/events?storeId=${selectedStoreId}&date=${summary.date}`));
+                                                                }}
+                                                                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 active:bg-gray-50 flex items-center gap-2.5"
+                                                            >
+                                                                <Zap size={15} className="text-gray-400" />
+                                                                Day Activity
+                                                            </button>
+                                                        </div>
+                                                    </>
                                                 )}
                                             </div>
                                         </div>

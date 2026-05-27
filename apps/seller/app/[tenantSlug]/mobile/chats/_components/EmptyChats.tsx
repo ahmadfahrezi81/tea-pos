@@ -1,6 +1,6 @@
 import { MailOpen } from "lucide-react";
 
-export default function EmptyInbox() {
+export default function EmptyChats() {
     return (
         <div className="flex flex-col items-center justify-center h-full py-24 text-gray-400 gap-3">
             <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">

@@ -31,6 +31,7 @@ export function MobileHeader({
     const isInlineHeader = currentRoute?.inlineHeader ?? false;
     const isChart = currentRoute?.isChart ?? false;
     const headerAction = currentRoute?.headerAction;
+    const hideStorePicker = currentRoute?.hideStorePicker ?? false;
 
     return (
         <header className="fixed top-0 left-0 right-0 z-40 bg-slate-100 p-4 py-3">
@@ -121,7 +122,7 @@ export function MobileHeader({
                             <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">
                                 {currentTitle}
                             </h1>
-                            {selectedStore && (
+                            {selectedStore && !hideStorePicker && (
                                 <button
                                     onClick={onStorePicker}
                                     className="flex items-center gap-0.5 active:scale-95"

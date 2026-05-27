@@ -6,7 +6,10 @@ import { useStore } from "@/lib/context/StoreContext";
 import { useSession } from "@/lib/hooks/sessions/useSession";
 import { useIncidentReports } from "@/lib/hooks/reports/useIncidentReports";
 import { apiFetch } from "@/lib/api/client";
-import { INCIDENT_CATEGORIES, INCIDENT_CATEGORY_LABELS } from "@tea-pos/features/reports/schema";
+import {
+    INCIDENT_CATEGORIES,
+    INCIDENT_CATEGORY_LABELS,
+} from "@tea-pos/features/reports/schema";
 import type { IncidentCategory } from "@tea-pos/features/reports/schema";
 import { SelectInput } from "../../_components/shared/SelectInput";
 import { Textarea } from "../../_components/shared/Textarea";
@@ -24,7 +27,9 @@ export default function AddReportPage() {
     const { summaryId } = useSession(selectedStoreId);
     const { create } = useIncidentReports(selectedStoreId);
 
-    const [selectedCategory, setSelectedCategory] = useState<IncidentCategory | "">("");
+    const [selectedCategory, setSelectedCategory] = useState<
+        IncidentCategory | ""
+    >("");
     const [customTitle, setCustomTitle] = useState("");
     const [description, setDescription] = useState("");
     const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -33,7 +38,8 @@ export default function AddReportPage() {
     const [error, setError] = useState<string | null>(null);
 
     const handleSubmit = async () => {
-        if (!selectedCategory || !description.trim() || !selectedStoreId) return;
+        if (!selectedCategory || !description.trim() || !selectedStoreId)
+            return;
         setIsSubmitting(true);
         setError(null);
         try {
@@ -42,10 +48,13 @@ export default function AddReportPage() {
                 const form = new FormData();
                 form.append("file", photoFile);
                 form.append("prefix", "incident-reports");
-                const { url: uploadUrl } = await apiFetch<{ url: string }>("/api/upload", {
-                    method: "POST",
-                    body: form,
-                });
+                const { url: uploadUrl } = await apiFetch<{ url: string }>(
+                    "/api/upload",
+                    {
+                        method: "POST",
+                        body: form,
+                    },
+                );
                 photoUrl = uploadUrl;
             }
             const title =
@@ -61,7 +70,9 @@ export default function AddReportPage() {
             });
             router.back();
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to submit report");
+            setError(
+                err instanceof Error ? err.message : "Failed to submit report",
+            );
         } finally {
             setIsSubmitting(false);
         }
@@ -73,11 +84,16 @@ export default function AddReportPage() {
         <div className="space-y-3 pb-4">
             <div className="bg-white rounded-xl p-4 space-y-4">
                 <div className="space-y-1.5">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Category</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        Category
+                    </p>
                     <SelectInput
                         options={CATEGORY_OPTIONS}
                         value={selectedCategory}
-                        onChange={(v) => { setSelectedCategory(v as IncidentCategory | ""); setCustomTitle(""); }}
+                        onChange={(v) => {
+                            setSelectedCategory(v as IncidentCategory | "");
+                            setCustomTitle("");
+                        }}
                         placeholder="Select category..."
                         otherTriggerValue="other"
                         otherValue={customTitle}
@@ -87,7 +103,9 @@ export default function AddReportPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Description</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        Description
+                    </p>
                     <Textarea
                         value={description}
                         onChange={setDescription}
@@ -98,11 +116,19 @@ export default function AddReportPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Photo</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        Photo
+                    </p>
                     <PhotoPicker
                         previewUrl={photoPreview}
-                        onCapture={(file, url) => { setPhotoFile(file); setPhotoPreview(url); }}
-                        onRemove={() => { setPhotoFile(null); setPhotoPreview(null); }}
+                        onCapture={(file, url) => {
+                            setPhotoFile(file);
+                            setPhotoPreview(url);
+                        }}
+                        onRemove={() => {
+                            setPhotoFile(null);
+                            setPhotoPreview(null);
+                        }}
                         onError={(msg) => setError(msg)}
                     />
                 </div>

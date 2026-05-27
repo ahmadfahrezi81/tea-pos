@@ -2,7 +2,7 @@ import {
     ShoppingCart,
     ReceiptText,
     ChartNoAxesCombinedIcon,
-    InboxIcon,
+    MessagesSquare,
     MoreHorizontal,
     Layers,
 } from "lucide-react";
@@ -17,6 +17,7 @@ export type RouteConfig = {
     isChart: boolean;
     parent: string | null | "lastRootTab";
     headerAction?: "add";
+    hideStorePicker?: boolean;
 };
 
 export const mobileRoutes = {
@@ -91,12 +92,13 @@ export const mobileRoutes = {
         isChart: true,
         parent: "/mobile/analytics",
     },
-    "/mobile/inbox": {
-        title: "Inbox",
+    "/mobile/chats": {
+        title: "Chats",
         subPage: false,
         inlineHeader: false,
         isChart: false,
         parent: null,
+        hideStorePicker: true,
     },
     "/mobile/more": {
         title: "More",
@@ -104,6 +106,7 @@ export const mobileRoutes = {
         inlineHeader: false,
         isChart: false,
         parent: null,
+        hideStorePicker: true,
     },
     "/mobile/more/stores": {
         title: "Assigned Stores",
@@ -290,10 +293,10 @@ export const tabGroups: { global: TabDef[] } = {
             matchSuffixes: ["/mobile/analytics", "/mobile/analytics/chart"],
         },
         {
-            pathSuffix: "/mobile/inbox",
-            label: "Inbox",
-            icon: InboxIcon,
-            matchSuffixes: ["/mobile/inbox"],
+            pathSuffix: "/mobile/chats",
+            label: "Chats",
+            icon: MessagesSquare,
+            matchSuffixes: ["/mobile/chats"],
         },
         {
             pathSuffix: "/mobile/more",
