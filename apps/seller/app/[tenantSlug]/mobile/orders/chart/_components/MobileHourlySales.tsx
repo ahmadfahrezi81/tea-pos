@@ -107,18 +107,6 @@ export default function MobileHourlySales() {
         });
     }, [peakIndex, hourlySales]);
 
-    if (salesLoading) {
-        return (
-            <div
-                className="flex flex-col items-center justify-center"
-                style={{ minHeight: "calc(100vh - 200px)" }}
-            >
-                <div className="w-10 h-10 border-3 border-brand border-t-transparent rounded-full animate-spin" />
-                <p className="mt-4 text-gray-600 text-sm">Loading Chart...</p>
-            </div>
-        );
-    }
-
     return (
         <div className="space-y-4">
             {/* Date Filter */}

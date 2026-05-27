@@ -109,18 +109,6 @@ export default function MobilePOS() {
         processOrder,
     } = useCart(selectedStoreId);
 
-    if (productsLoading) {
-        return (
-            <div
-                className="flex flex-col items-center justify-center"
-                style={{ minHeight: "calc(100vh - 200px)" }}
-            >
-                <div className="w-10 h-10 border-3 border-brand border-t-transparent rounded-full animate-spin" />
-                <p className="mt-4 text-gray-600 text-sm">Loading POS...</p>
-            </div>
-        );
-    }
-
     return (
         <div className="flex flex-col gap-4 pb-24">
             {/* Products Grid */}

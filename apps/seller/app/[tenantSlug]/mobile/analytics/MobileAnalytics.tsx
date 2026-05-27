@@ -65,18 +65,6 @@ export default function MobileAnalytics() {
         [summariesData?.summaries],
     );
 
-    if (summariesLoading) {
-        return (
-            <div
-                className="flex flex-col items-center justify-center"
-                style={{ minHeight: "calc(100vh - 200px)" }}
-            >
-                <div className="w-10 h-10 border-3 border-brand border-t-transparent rounded-full animate-spin" />
-                <p className="mt-4 text-gray-600 text-sm">Loading Analytics...</p>
-            </div>
-        );
-    }
-
     if (summariesError) {
         return (
             <div className="text-center py-8">

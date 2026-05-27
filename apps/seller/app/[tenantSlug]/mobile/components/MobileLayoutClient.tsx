@@ -247,14 +247,21 @@ export default function MobileLayoutClient({
                         ref={scrollContainerRef}
                         className={`absolute inset-0 overflow-y-auto p-4 ${scrollPaddingBottom} flex flex-col ${scrollPaddingTop}`}
                     >
-                        {isTransitioning ? (
-                            <div className="absolute inset-0 flex items-center justify-center animate-pulse">
-                                <div className="w-7 h-7 border-3 border-brand border-t-transparent rounded-full animate-spin" />
-                            </div>
-                        ) : (
-                            children
-                        )}
+                        {!isTransitioning && children}
                     </div>
+                    {isTransitioning && (
+                        <div
+                            className={`absolute inset-x-0 top-0 z-10 px-4 pb-4 ${scrollPaddingTop}`}
+                            style={{ bottom: "var(--mobile-footer-h)" }}
+                        >
+                            <div className="animate-pulse space-y-3">
+                                <div className="h-20 bg-slate-200 rounded-2xl" />
+                                <div className="h-40 bg-slate-200 rounded-2xl" />
+                                <div className="h-44 bg-slate-200 rounded-2xl" />
+                                <div className="h-12 bg-slate-200 rounded-2xl" />
+                            </div>
+                        </div>
+                    )}
                     {overlay && (
                         <div
                             className={`absolute inset-x-0 top-0 z-10 ${scrollPaddingTop} pb-5 px-3`}
