@@ -9,7 +9,7 @@ import { navigation } from "@tea-pos/utils/navigation";
 import { apiFetch } from "@/lib/api/client";
 import { SUPPLY_REQUEST_TYPES, SUPPLY_REQUEST_TYPE_LABELS } from "@tea-pos/features/requests/schema";
 import type { SupplyRequestType } from "@tea-pos/features/requests/schema";
-import { ImagePicker } from "@/components/shared/ImagePicker";
+import { PhotoPicker } from "@/components/shared/PhotoPicker";
 import { FormFooter } from "@/components/shared/FormFooter";
 
 export default function AddRequestPage() {
@@ -86,9 +86,9 @@ export default function AddRequestPage() {
 
                 <div className="space-y-1.5">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Photo</p>
-                    <ImagePicker
+                    <PhotoPicker
                         previewUrl={photoPreview}
-                        onCapture={(file, previewUrl) => { setPhotoFile(file); setPhotoPreview(previewUrl); }}
+                        onCapture={(file, url) => { setPhotoFile(file); setPhotoPreview(url); }}
                         onRemove={() => { setPhotoFile(null); setPhotoPreview(null); }}
                         onError={(msg) => setError(msg)}
                     />

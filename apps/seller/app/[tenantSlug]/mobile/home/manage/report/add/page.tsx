@@ -9,7 +9,7 @@ import { navigation } from "@tea-pos/utils/navigation";
 import { apiFetch } from "@/lib/api/client";
 import { INCIDENT_CATEGORIES, INCIDENT_CATEGORY_LABELS } from "@tea-pos/features/reports/schema";
 import type { IncidentCategory } from "@tea-pos/features/reports/schema";
-import { ImagePicker } from "@/components/shared/ImagePicker";
+import { PhotoPicker } from "@/components/shared/PhotoPicker";
 import { FormFooter } from "@/components/shared/FormFooter";
 
 export default function AddReportPage() {
@@ -102,9 +102,9 @@ export default function AddReportPage() {
 
                 <div className="space-y-1.5">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Photo</p>
-                    <ImagePicker
+                    <PhotoPicker
                         previewUrl={photoPreview}
-                        onCapture={(file, previewUrl) => { setPhotoFile(file); setPhotoPreview(previewUrl); }}
+                        onCapture={(file, url) => { setPhotoFile(file); setPhotoPreview(url); }}
                         onRemove={() => { setPhotoFile(null); setPhotoPreview(null); }}
                         onError={(msg) => setError(msg)}
                     />

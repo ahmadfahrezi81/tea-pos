@@ -1,14 +1,13 @@
 "use client";
 
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo } from "react";
 import { useStore } from "@/lib/context/StoreContext";
 import { useSession } from "@/lib/hooks/sessions/useSession";
 import { useSummaryPhotos } from "@/lib/hooks/summaries/useSummaryPhotos";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
-import { Camera, X, Loader2 } from "lucide-react";
-import { compressPhoto } from "@/lib/compressPhoto";
 import { isEnabled } from "@tea-pos/features/shared/features";
+import { PhotoPicker } from "@/components/shared/PhotoPicker";
 import { FormFooter } from "@/components/shared/FormFooter";
 
 export default function OpenStorePage() {
@@ -20,32 +19,8 @@ export default function OpenStorePage() {
     const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
     const [openingBalance, setOpeningBalance] = useState(0);
     const [photo, setPhoto] = useState<{ file: File; preview: string } | null>(null);
-    const [isCompressing, setIsCompressing] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const inputRef = useRef<HTMLInputElement>(null);
-
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        setIsCompressing(true);
-        try {
-            const compressed = await compressPhoto(file);
-            const preview = URL.createObjectURL(compressed);
-            if (photo) URL.revokeObjectURL(photo.preview);
-            setPhoto({ file: compressed, preview });
-        } catch {
-            setError("Failed to process photo");
-        } finally {
-            setIsCompressing(false);
-            if (inputRef.current) inputRef.current.value = "";
-        }
-    };
-
-    const handleRemovePhoto = () => {
-        if (photo) URL.revokeObjectURL(photo.preview);
-        setPhoto(null);
-    };
 
     const handleSubmit = async () => {
         if (!selectedStoreId || (!photo && !skipPhotos)) return;
@@ -79,7 +54,6 @@ export default function OpenStorePage() {
     const canSubmit =
         (!!photo || skipPhotos) &&
         !isSubmitting &&
-        !isCompressing &&
         !!selectedStoreId &&
         (gate === "no_summary" || gate === "no_session");
 
@@ -132,47 +106,18 @@ export default function OpenStorePage() {
                         <span className="text-xs text-red-400 font-medium">Required</span>
                     )}
                 </div>
-
-                <input
-                    ref={inputRef}
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    className="hidden"
-                    onChange={handleFileChange}
+                <PhotoPicker
+                    previewUrl={photo?.preview ?? null}
+                    onCapture={(file, url) => {
+                        if (photo) URL.revokeObjectURL(photo.preview);
+                        setPhoto({ file, preview: url });
+                    }}
+                    onRemove={() => {
+                        if (photo) URL.revokeObjectURL(photo.preview);
+                        setPhoto(null);
+                    }}
+                    onError={(msg) => setError(msg)}
                 />
-
-                {photo ? (
-                    <div className="relative">
-                        <img
-                            src={photo.preview}
-                            alt="Opening photo preview"
-                            className="w-full h-48 object-cover rounded-lg"
-                        />
-                        <button
-                            onClick={handleRemovePhoto}
-                            className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1 active:scale-95"
-                        >
-                            <X size={16} />
-                        </button>
-                    </div>
-                ) : (
-                    <button
-                        onClick={() => inputRef.current?.click()}
-                        disabled={isCompressing}
-                        className="w-full h-40 border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center gap-2 text-gray-400 active:bg-gray-50 disabled:opacity-60 transition-colors"
-                    >
-                        {isCompressing ? (
-                            <Loader2 size={24} className="animate-spin" />
-                        ) : (
-                            <>
-                                <Camera size={28} />
-                                <span className="text-sm">Take or choose a photo</span>
-                            </>
-                        )}
-                    </button>
-                )}
-
                 <p className="text-xs text-gray-400 mt-2">Proof of store opening condition</p>
             </div>
 

@@ -1,16 +1,14 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { ImagePlus, Loader2, CircleMinus } from "lucide-react";
-import { compressPhoto } from "@/lib/compressPhoto";
+import { useState } from "react";
 import { SummaryPhotoThumbnail } from "./SummaryPhotoThumbnail";
+import { PhotoPicker } from "@/components/shared/PhotoPicker";
 import { PhotoType } from "@tea-pos/features/summaries/photos-schema";
 import {
     SlottedPhoto,
     SavedSlottedPhoto,
 } from "@tea-pos/features/summaries/photos-schema";
 
-// Slots that have a quantity input and their fixed unit
 const QUANTITY_CONFIG: Partial<
     Record<PhotoType, { unit: string; placeholder: string }>
 > = {
@@ -41,41 +39,11 @@ export function SinglePhotoStep({
     onSavedPhotoDelete,
     onQuantityChange,
 }: SinglePhotoStepProps) {
-    const inputRef = useRef<HTMLInputElement | null>(null);
-    const [isCompressing, setIsCompressing] = useState(false);
-
     const quantityConfig = QUANTITY_CONFIG[type] ?? null;
     const initialQuantity = quantity?.value ?? 0;
     const [localQuantityValue, setLocalQuantityValue] = useState<string>(
         initialQuantity === 0 ? "" : String(initialQuantity),
     );
-
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setIsCompressing(true);
-        try {
-            const compressed = await compressPhoto(file);
-            const preview = URL.createObjectURL(compressed);
-            if (photo) URL.revokeObjectURL(photo.preview);
-            onPhotoChange({ type, file: compressed, preview, quantity: photo?.quantity ?? null });
-        } catch (err) {
-            console.error("Compression failed:", err);
-            if (["image/jpeg", "image/jpg", "image/webp"].includes(file.type)) {
-                const preview = URL.createObjectURL(file);
-                if (photo) URL.revokeObjectURL(photo.preview);
-                onPhotoChange({ type, file, preview, quantity: photo?.quantity ?? null });
-            }
-        } finally {
-            setIsCompressing(false);
-            e.target.value = "";
-        }
-    };
-    const handleRemove = () => {
-        if (photo) URL.revokeObjectURL(photo.preview);
-        onPhotoChange(null);
-    };
 
     const handleQuantityBlur = () => {
         if (!quantityConfig) return;
@@ -95,7 +63,6 @@ export function SinglePhotoStep({
 
     return (
         <div className="flex flex-col gap-3 pt-0">
-            {/* Title */}
             <div>
                 <h2 className="text-2xl font-bold text-gray-900">{label}</h2>
                 <p className="text-sm text-gray-600 mt-0.5">
@@ -104,7 +71,6 @@ export function SinglePhotoStep({
             </div>
 
             <div className="p-3 bg-white flex flex-col gap-4 rounded-2xl border border-gray-50">
-                {/* Quantity — only for cups and tea waste */}
                 {quantityConfig && (
                     <div className="flex flex-col gap-1.5">
                         <p className="text-xs font-semibold text-gray-900 uppercase tracking-wide px-1">
@@ -131,88 +97,35 @@ export function SinglePhotoStep({
                     </div>
                 )}
 
-                {/* Photo area */}
                 <div className="flex flex-col gap-1.5">
                     <p className="text-xs font-semibold text-gray-900 uppercase tracking-wide px-1">
                         Attachment{" "}
                         <span className="text-red-500 text-base">*</span>
                     </p>
-                    <div
-                        className={`w-52 aspect-square rounded-lg overflow-hidden bg-gray-50 relative ${
-                            !photo && !savedPhoto
-                                ? "border-2 border-dashed border-gray-400"
-                                : ""
-                        }`}
-                    >
-                        {isCompressing ? (
-                            <div className="w-full h-full flex flex-col items-center justify-center gap-2">
-                                <Loader2
-                                    size={28}
-                                    className="text-brand animate-spin"
-                                />
-                                <p className="text-sm text-gray-400">
-                                    Compressing...
-                                </p>
-                            </div>
-                        ) : savedPhoto ? (
-                            <div className="relative w-full h-full">
-                                <SummaryPhotoThumbnail
-                                    url={savedPhoto.url}
-                                    alt={label}
-                                    className="w-full h-full"
-                                    onDelete={onSavedPhotoDelete}
-                                    compact={false}
-                                />
-                            </div>
-                        ) : photo ? (
-                            <div className="relative w-full h-full">
-                                <SummaryPhotoThumbnail
-                                    url={photo.preview}
-                                    alt={label}
-                                    className="w-full h-full"
-                                    isSaved={false}
-                                />
-                                <button
-                                    onClick={handleRemove}
-                                    className="absolute top-2 right-2 w-9 h-9 bg-black rounded-lg flex items-center justify-center"
-                                >
-                                    <CircleMinus
-                                        size={24}
-                                        className="text-white"
-                                    />
-                                </button>
-                                <button
-                                    onClick={() => inputRef.current?.click()}
-                                    className="absolute bottom-2 right-2 bg-black rounded-lg px-3 py-1.5"
-                                >
-                                    <p className="text-white text-sm font-semibold">
-                                        Retake
-                                    </p>
-                                </button>
-                            </div>
-                        ) : (
-                            <button
-                                onClick={() => inputRef.current?.click()}
-                                className="w-full h-full flex flex-col items-center justify-center gap-3 active:scale-95 transition-transform"
-                            >
-                                <ImagePlus
-                                    size={40}
-                                    className="text-gray-500"
-                                />
-                            </button>
-                        )}
-                    </div>
+                    {savedPhoto ? (
+                        <div className="w-full h-52 rounded-xl overflow-hidden">
+                            <SummaryPhotoThumbnail
+                                url={savedPhoto.url}
+                                alt={label}
+                                className="w-full h-full"
+                                onDelete={onSavedPhotoDelete}
+                                compact={false}
+                            />
+                        </div>
+                    ) : (
+                        <PhotoPicker
+                            previewUrl={photo?.preview ?? null}
+                            onCapture={(file, url) => {
+                                if (photo) URL.revokeObjectURL(photo.preview);
+                                onPhotoChange({ type, file, preview: url, quantity: photo?.quantity ?? null });
+                            }}
+                            onRemove={() => {
+                                if (photo) URL.revokeObjectURL(photo.preview);
+                                onPhotoChange(null);
+                            }}
+                        />
+                    )}
                 </div>
-
-                {/* Hidden input */}
-                <input
-                    ref={inputRef}
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    className="hidden"
-                    onChange={handleFileChange}
-                />
             </div>
         </div>
     );
