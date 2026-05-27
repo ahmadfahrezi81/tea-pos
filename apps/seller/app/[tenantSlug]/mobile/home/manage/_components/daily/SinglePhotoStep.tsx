@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { SummaryPhotoThumbnail } from "./SummaryPhotoThumbnail";
-import { PhotoPicker } from "@/components/shared/PhotoPicker";
+import { PhotoPicker } from "../shared/PhotoPicker";
 import { PhotoType } from "@tea-pos/features/summaries/photos-schema";
 import {
     SlottedPhoto,

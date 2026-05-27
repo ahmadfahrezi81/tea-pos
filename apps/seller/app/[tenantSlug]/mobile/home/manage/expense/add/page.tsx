@@ -5,17 +5,15 @@ import { useStore } from "@/lib/context/StoreContext";
 import { useSummaries } from "@/lib/hooks/summaries/useDailySummaries";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
-import { formatRupiah } from "@tea-pos/utils/formatCurrency";
+import { SelectInput } from "../../_components/shared/SelectInput";
+import { NumberInput } from "../../_components/shared/NumberInput";
 import { FormFooter } from "@/components/shared/FormFooter";
-import { CircleMinus } from "lucide-react";
 
-const EXPENSE_TYPES = ["Ice", "Electricity", "Custom"];
-
-interface ExpenseItem {
-    label: string;
-    customLabel: string;
-    amount: string;
-}
+const EXPENSE_OPTIONS = [
+    { value: "Ice", label: "Ice" },
+    { value: "Electricity", label: "Electricity" },
+    { value: "Custom", label: "Custom" },
+];
 
 export default function AddExpensePage() {
     const { selectedStoreId } = useStore();
@@ -31,30 +29,13 @@ export default function AddExpensePage() {
         [summariesData?.summaries, todayStr],
     );
 
-    const [items, setItems] = useState<ExpenseItem[]>([]);
-    const [newLabel, setNewLabel] = useState("Ice");
-    const [newCustomLabel, setNewCustomLabel] = useState("");
-    const [newAmount, setNewAmount] = useState("");
+    const [label, setLabel] = useState("Ice");
+    const [customLabel, setCustomLabel] = useState("");
+    const [amount, setAmount] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const totalNew = items.reduce((sum, i) => sum + (parseInt(i.amount || "0", 10)), 0);
-    const isValid = items.length > 0 && items.every((i) => parseInt(i.amount, 10) > 0);
-
-    const canAdd = newAmount && parseInt(newAmount, 10) > 0 && !(newLabel === "Custom" && !newCustomLabel.trim());
-
-    const addItem = () => {
-        if (!canAdd) return;
-        setItems((prev) => [...prev, { label: newLabel, customLabel: newCustomLabel, amount: newAmount }]);
-        setNewCustomLabel("");
-        setNewAmount("");
-    };
-
-    const removeItem = (idx: number) =>
-        setItems((prev) => prev.filter((_, i) => i !== idx));
-
-    const updateAmount = (idx: number, amount: string) =>
-        setItems((prev) => prev.map((item, i) => (i === idx ? { ...item, amount } : item)));
+    const isValid = amount > 0 && !(label === "Custom" && !customLabel.trim());
 
     const handleSubmit = async () => {
         if (!todaySummary || !selectedStoreId || !isValid) return;
@@ -64,11 +45,11 @@ export default function AddExpensePage() {
             await createExpenses({
                 dailySummaryId: todaySummary.id,
                 storeId: selectedStoreId,
-                expenses: items,
+                expenses: [{ label, customLabel, amount: String(amount) }],
             });
             navigation.push(url("/mobile/home/manage/expense"));
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to save expenses");
+            setError(err instanceof Error ? err.message : "Failed to save expense");
         } finally {
             setIsSubmitting(false);
         }
@@ -92,92 +73,36 @@ export default function AddExpensePage() {
 
     return (
         <div className="space-y-3 pb-4">
-            {items.length > 0 && (
-                <div className="bg-white rounded-xl p-4 space-y-3">
-                    {items.map((item, idx) => (
-                        <div key={idx} className="flex items-center gap-2">
-                            <div className="flex-1 p-3 bg-gray-50 border border-gray-100 rounded-lg text-base text-gray-700 truncate">
-                                {item.label === "Custom" ? item.customLabel || "Custom" : item.label}
-                            </div>
-                            <input
-                                type="number"
-                                inputMode="numeric"
-                                min={0}
-                                step={100}
-                                value={item.amount}
-                                onChange={(e) => updateAmount(idx, e.target.value)}
-                                placeholder="Amount"
-                                className="w-32 p-3 border border-gray-200 rounded-lg text-base focus:ring-2 focus:ring-brand/90 focus:outline-none"
-                            />
-                            <button
-                                onClick={() => removeItem(idx)}
-                                className="p-2 text-red-400 active:bg-red-50 rounded-lg shrink-0"
-                            >
-                                <CircleMinus size={20} />
-                            </button>
-                        </div>
-                    ))}
-                    <div className="flex justify-between text-sm font-semibold bg-blue-50 rounded-lg p-3">
-                        <span className="text-blue-800">Total</span>
-                        <span className="text-blue-800">{formatRupiah(totalNew)}</span>
-                    </div>
+            <div className="bg-white rounded-xl p-4 space-y-4">
+                <div className="space-y-1.5">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Type</p>
+                    <SelectInput
+                        options={EXPENSE_OPTIONS}
+                        value={label}
+                        onChange={(v) => { setLabel(v); setCustomLabel(""); }}
+                        otherTriggerValue="Custom"
+                        otherValue={customLabel}
+                        onOtherChange={setCustomLabel}
+                        otherPlaceholder="e.g. Maintenance, Transport..."
+                    />
                 </div>
-            )}
 
-            <div className="bg-white rounded-xl p-4 space-y-3">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Add Expense</p>
-                <div className="flex gap-2">
-                    <select
-                        value={newLabel}
-                        onChange={(e) => { setNewLabel(e.target.value); setNewCustomLabel(""); }}
-                        className="flex-1 p-3 border border-gray-200 rounded-lg text-base focus:ring-2 focus:ring-brand/90 focus:outline-none bg-white"
-                    >
-                        {EXPENSE_TYPES.map((t) => (
-                            <option key={t} value={t}>{t}</option>
-                        ))}
-                    </select>
-                    <input
-                        type="number"
-                        inputMode="numeric"
-                        min={0}
-                        step={100}
-                        value={newAmount}
-                        onChange={(e) => setNewAmount(e.target.value)}
-                        placeholder="Amount"
-                        className="w-32 p-3 border border-gray-200 rounded-lg text-base focus:ring-2 focus:ring-brand/90 focus:outline-none"
-                    />
+                <div className="space-y-1.5">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Amount</p>
+                    <NumberInput value={amount} onChange={setAmount} />
                 </div>
-                {newLabel === "Custom" && (
-                    <input
-                        type="text"
-                        placeholder="Label"
-                        value={newCustomLabel}
-                        onChange={(e) => setNewCustomLabel(e.target.value)}
-                        className="w-full p-3 border border-gray-200 rounded-lg text-base focus:ring-2 focus:ring-brand/90 focus:outline-none"
-                    />
+
+                {error && (
+                    <p className="text-sm text-red-600">{error}</p>
                 )}
-                <button
-                    onClick={addItem}
-                    disabled={!canAdd}
-                    className="w-full p-3 border border-dashed border-brand/40 rounded-lg text-brand text-base font-medium active:bg-brand/5 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                    + Add to list
-                </button>
             </div>
 
-            {error && (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">
-                    {error}
-                </div>
-            )}
-
             <FormFooter
-                label="Save Expenses"
+                label="Save Expense"
                 loadingLabel="Saving..."
                 onSubmit={handleSubmit}
                 disabled={!isValid}
                 isLoading={isSubmitting}
-                variant="green"
             />
         </div>
     );

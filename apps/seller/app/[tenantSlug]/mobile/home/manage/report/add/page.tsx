@@ -9,8 +9,15 @@ import { navigation } from "@tea-pos/utils/navigation";
 import { apiFetch } from "@/lib/api/client";
 import { INCIDENT_CATEGORIES, INCIDENT_CATEGORY_LABELS } from "@tea-pos/features/reports/schema";
 import type { IncidentCategory } from "@tea-pos/features/reports/schema";
-import { PhotoPicker } from "@/components/shared/PhotoPicker";
+import { SelectInput } from "../../_components/shared/SelectInput";
+import { Textarea } from "../../_components/shared/Textarea";
+import { PhotoPicker } from "../../_components/shared/PhotoPicker";
 import { FormFooter } from "@/components/shared/FormFooter";
+
+const CATEGORY_OPTIONS = INCIDENT_CATEGORIES.map((c) => ({
+    value: c,
+    label: INCIDENT_CATEGORY_LABELS[c],
+}));
 
 export default function AddReportPage() {
     const { selectedStoreId } = useStore();
@@ -19,7 +26,7 @@ export default function AddReportPage() {
     const { create } = useIncidentReports(selectedStoreId);
 
     const [selectedCategory, setSelectedCategory] = useState<IncidentCategory | "">("");
-    const [title, setTitle] = useState("");
+    const [customTitle, setCustomTitle] = useState("");
     const [description, setDescription] = useState("");
     const [photoFile, setPhotoFile] = useState<File | null>(null);
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -27,7 +34,7 @@ export default function AddReportPage() {
     const [error, setError] = useState<string | null>(null);
 
     const handleSubmit = async () => {
-        if (!selectedCategory || !title.trim() || !description.trim() || !selectedStoreId) return;
+        if (!selectedCategory || !description.trim() || !selectedStoreId) return;
         setIsSubmitting(true);
         setError(null);
         try {
@@ -42,9 +49,13 @@ export default function AddReportPage() {
                 });
                 photoUrl = uploadUrl;
             }
+            const title =
+                selectedCategory === "other" && customTitle.trim()
+                    ? customTitle.trim()
+                    : INCIDENT_CATEGORY_LABELS[selectedCategory];
             await create({
                 category: selectedCategory as IncidentCategory,
-                title: title.trim(),
+                title,
                 description: description.trim(),
                 photoUrl,
                 dailySummaryId: summaryId ?? undefined,
@@ -57,46 +68,33 @@ export default function AddReportPage() {
         }
     };
 
-    const isValid = !!selectedCategory && title.trim().length > 0 && description.trim().length > 0;
+    const isValid = !!selectedCategory && description.trim().length > 0;
 
     return (
         <div className="space-y-3 pb-4">
             <div className="bg-white rounded-xl p-4 space-y-4">
                 <div className="space-y-1.5">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Category</p>
-                    <select
+                    <SelectInput
+                        options={CATEGORY_OPTIONS}
                         value={selectedCategory}
-                        onChange={(e) => setSelectedCategory(e.target.value as IncidentCategory | "")}
-                        className="w-full p-3 border border-gray-200 rounded-lg text-base focus:ring-2 focus:ring-brand/90 focus:outline-none bg-white"
-                    >
-                        <option value="" disabled>Select category...</option>
-                        {INCIDENT_CATEGORIES.map((cat) => (
-                            <option key={cat} value={cat}>{INCIDENT_CATEGORY_LABELS[cat]}</option>
-                        ))}
-                    </select>
-                </div>
-
-                <div className="space-y-1.5">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Title</p>
-                    <input
-                        type="text"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        placeholder="Brief title"
-                        maxLength={100}
-                        className="w-full p-3 border border-gray-200 rounded-lg text-base focus:ring-2 focus:ring-brand/90 focus:outline-none"
+                        onChange={(v) => { setSelectedCategory(v as IncidentCategory | ""); setCustomTitle(""); }}
+                        placeholder="Select category..."
+                        otherTriggerValue="other"
+                        otherValue={customTitle}
+                        onOtherChange={setCustomTitle}
+                        otherPlaceholder="Describe the incident..."
                     />
                 </div>
 
                 <div className="space-y-1.5">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Description</p>
-                    <textarea
+                    <Textarea
                         value={description}
-                        onChange={(e) => setDescription(e.target.value)}
+                        onChange={setDescription}
                         placeholder="Describe what happened"
                         rows={4}
                         maxLength={1000}
-                        className="w-full p-3 border border-gray-200 rounded-lg text-base resize-none focus:ring-2 focus:ring-brand/90 focus:outline-none"
                     />
                 </div>
 
@@ -119,7 +117,6 @@ export default function AddReportPage() {
                 onSubmit={handleSubmit}
                 disabled={!isValid}
                 isLoading={isSubmitting}
-                variant="orange"
             />
         </div>
     );

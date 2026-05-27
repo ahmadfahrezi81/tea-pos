@@ -7,7 +7,8 @@ import { useSummaryPhotos } from "@/lib/hooks/summaries/useSummaryPhotos";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
 import { isEnabled } from "@tea-pos/features/shared/features";
-import { PhotoPicker } from "@/components/shared/PhotoPicker";
+import { PhotoPicker } from "../_components/shared/PhotoPicker";
+import { NumberInput } from "../_components/shared/NumberInput";
 import { FormFooter } from "@/components/shared/FormFooter";
 
 export default function OpenStorePage() {
@@ -59,7 +60,7 @@ export default function OpenStorePage() {
 
     return (
         <div className="space-y-4 pb-4">
-            <div className="bg-white rounded-xl shadow-sm p-4 space-y-3">
+            <div className="bg-white rounded-xl p-4 space-y-3">
                 <div>
                     <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Store</p>
                     <p className="font-semibold text-gray-800 mt-0.5">{selectedStore?.name ?? "Unknown Store"}</p>
@@ -78,26 +79,17 @@ export default function OpenStorePage() {
             </div>
 
             {gate !== "no_session" && (
-                <div className="bg-white rounded-xl shadow-sm p-4">
-                    <label className="block">
+                <div className="bg-white rounded-xl p-4 space-y-2">
+                    <div className="flex items-center gap-1">
                         <span className="text-sm font-medium text-gray-700">Opening Balance</span>
-                        <span className="text-xs text-gray-400 ml-1">(optional)</span>
-                        <input
-                            type="number"
-                            inputMode="numeric"
-                            min={0}
-                            step={1000}
-                            value={openingBalance || ""}
-                            onChange={(e) => setOpeningBalance(Number(e.target.value) || 0)}
-                            placeholder="0"
-                            className="mt-2 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand/90 focus:outline-none text-lg"
-                        />
-                        <p className="text-xs text-gray-400 mt-1.5">Cash on hand at the start of the day</p>
-                    </label>
+                        <span className="text-xs text-gray-400">(optional)</span>
+                    </div>
+                    <NumberInput value={openingBalance} onChange={setOpeningBalance} />
+                    <p className="text-xs text-gray-400">Cash on hand at the start of the day</p>
                 </div>
             )}
 
-            <div className="bg-white rounded-xl shadow-sm p-4">
+            <div className="bg-white rounded-xl p-4">
                 <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-medium text-gray-700">Opening Photo</span>
                     {skipPhotos ? (
@@ -133,7 +125,6 @@ export default function OpenStorePage() {
                 onSubmit={handleSubmit}
                 disabled={!canSubmit}
                 isLoading={isSubmitting}
-                variant="green"
             />
         </div>
     );

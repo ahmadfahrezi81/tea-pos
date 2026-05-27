@@ -40,7 +40,7 @@ export function PhotoPicker({ previewUrl, onCapture, onRemove, onError }: PhotoP
             className={`w-full h-52 rounded-xl overflow-hidden relative ${
                 previewUrl && !isCompressing
                     ? "bg-black"
-                    : "bg-gray-50 border-2 border-dashed border-gray-300"
+                    : "border-3 border-dashed border-brand"
             }`}
         >
             <input
@@ -77,9 +77,10 @@ export function PhotoPicker({ previewUrl, onCapture, onRemove, onError }: PhotoP
             ) : (
                 <button
                     onClick={() => inputRef.current?.click()}
-                    className="w-full h-full flex flex-col items-center justify-center gap-3 active:scale-95 transition-transform"
+                    className="w-full h-full flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-transform"
                 >
-                    <Camera size={40} className="text-gray-400" />
+                    <Camera size={40} strokeWidth={2} className="text-brand" />
+                    <span className="text-sm font-medium text-gray-900">Tap to add photo</span>
                 </button>
             )}
         </div>

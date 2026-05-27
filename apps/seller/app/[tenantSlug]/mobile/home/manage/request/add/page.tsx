@@ -9,8 +9,15 @@ import { navigation } from "@tea-pos/utils/navigation";
 import { apiFetch } from "@/lib/api/client";
 import { SUPPLY_REQUEST_TYPES, SUPPLY_REQUEST_TYPE_LABELS } from "@tea-pos/features/requests/schema";
 import type { SupplyRequestType } from "@tea-pos/features/requests/schema";
-import { PhotoPicker } from "@/components/shared/PhotoPicker";
+import { SelectInput } from "../../_components/shared/SelectInput";
+import { Textarea } from "../../_components/shared/Textarea";
+import { PhotoPicker } from "../../_components/shared/PhotoPicker";
 import { FormFooter } from "@/components/shared/FormFooter";
+
+const TYPE_OPTIONS = SUPPLY_REQUEST_TYPES.map((t) => ({
+    value: t,
+    label: SUPPLY_REQUEST_TYPE_LABELS[t],
+}));
 
 export default function AddRequestPage() {
     const { selectedStoreId } = useStore();
@@ -19,6 +26,7 @@ export default function AddRequestPage() {
     const { create } = useSupplyRequests(selectedStoreId);
 
     const [selectedType, setSelectedType] = useState<SupplyRequestType | "">("");
+    const [customTypeText, setCustomTypeText] = useState("");
     const [notes, setNotes] = useState("");
     const [photoFile, setPhotoFile] = useState<File | null>(null);
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -60,27 +68,26 @@ export default function AddRequestPage() {
             <div className="bg-white rounded-xl p-4 space-y-4">
                 <div className="space-y-1.5">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Type</p>
-                    <select
+                    <SelectInput
+                        options={TYPE_OPTIONS}
                         value={selectedType}
-                        onChange={(e) => setSelectedType(e.target.value as SupplyRequestType | "")}
-                        className="w-full p-3 border border-gray-200 rounded-lg text-base focus:ring-2 focus:ring-brand/90 focus:outline-none bg-white"
-                    >
-                        <option value="" disabled>Select type...</option>
-                        {SUPPLY_REQUEST_TYPES.map((type) => (
-                            <option key={type} value={type}>{SUPPLY_REQUEST_TYPE_LABELS[type]}</option>
-                        ))}
-                    </select>
+                        onChange={(v) => { setSelectedType(v as SupplyRequestType | ""); setNotes(""); }}
+                        placeholder="Select type..."
+                        otherTriggerValue="other"
+                        otherValue={customTypeText}
+                        onOtherChange={setCustomTypeText}
+                        otherPlaceholder="e.g. Napkins, Straws..."
+                    />
                 </div>
 
                 <div className="space-y-1.5">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Notes</p>
-                    <textarea
+                    <Textarea
                         value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
+                        onChange={setNotes}
                         placeholder="Any extra details? (optional)"
                         rows={3}
                         maxLength={500}
-                        className="w-full p-3 border border-gray-200 rounded-lg text-base resize-none focus:ring-2 focus:ring-brand/90 focus:outline-none"
                     />
                 </div>
 
