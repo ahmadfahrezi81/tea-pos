@@ -280,32 +280,6 @@ export default function ManageCloseDayPage() {
         [deletePhoto, mutatePhotos],
     );
 
-    if (summariesLoading) {
-        return (
-            <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-7 h-7 border-3 border-brand border-t-transparent rounded-full animate-spin" />
-            </div>
-        );
-    }
-
-    if (!summaryId || !summary) {
-        return (
-            <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
-                <p className="text-gray-500 text-sm">No open summary found.</p>
-                <button
-                    onClick={() =>
-                        navigation.push(
-                            url(paramSummaryId ? "/mobile/analytics" : "/mobile/home/manage"),
-                        )
-                    }
-                    className="mt-4 text-brand text-sm font-medium"
-                >
-                    Go back
-                </button>
-            </div>
-        );
-    }
-
     const { setFooterSlot } = useMobileFooterSlot();
 
     const storeName = selectedStore?.name ?? "Unknown Store";
@@ -332,6 +306,9 @@ export default function ManageCloseDayPage() {
         (currentStep === STEP_REVIEW && !confirmed);
 
     useLayoutEffect(() => {
+        if (summariesLoading || !summary) {
+            return () => setFooterSlot(null);
+        }
         setFooterSlot(
             <div className="bg-white border-t border-gray-200 p-4 pb-8 flex gap-3">
                 {!isFirstStep && (
@@ -363,7 +340,33 @@ export default function ManageCloseDayPage() {
             </div>
         );
         return () => setFooterSlot(null);
-    }, [isFirstStep, isLastStep, isBusy, isSubmitting, isUploading, confirmed, nextDisabled, handleBack, handleNext, handleConfirm, setFooterSlot]);
+    }, [summariesLoading, summary, isFirstStep, isLastStep, isBusy, isSubmitting, isUploading, confirmed, nextDisabled, handleBack, handleNext, handleConfirm, setFooterSlot]);
+
+    if (summariesLoading) {
+        return (
+            <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-7 h-7 border-3 border-brand border-t-transparent rounded-full animate-spin" />
+            </div>
+        );
+    }
+
+    if (!summaryId || !summary) {
+        return (
+            <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
+                <p className="text-gray-500 text-sm">No open summary found.</p>
+                <button
+                    onClick={() =>
+                        navigation.push(
+                            url(paramSummaryId ? "/mobile/analytics" : "/mobile/home/manage"),
+                        )
+                    }
+                    className="mt-4 text-brand text-sm font-medium"
+                >
+                    Go back
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col bg-gray-50">
