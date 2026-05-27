@@ -10,25 +10,28 @@ export function useSession(storeId?: string) {
     const { data, error, mutate, isLoading } = useSWR<GateStateResponse>(
         key,
         () => sessionsApi.getGateState({ storeId: storeId! }),
-        { revalidateOnFocus: false, dedupingInterval: 5000, refreshInterval: 20000 },
+        { revalidateOnFocus: true, dedupingInterval: 5000, refreshInterval: 5000 },
     );
 
     const openStore = async (input: Omit<OpenStoreInput, "storeId">) => {
         const result = await sessionsApi.open({ storeId: storeId!, ...input });
-        await mutate({ gate: "open", session: result.session }, false);
+        mutate({ gate: "open", session: result.session }, false);
+        mutate();
         return result;
     };
 
     const resumeSession = async () => {
         if (!data || data.gate !== "no_session") throw new Error("No open summary to resume");
         const result = await sessionsApi.resume({ storeId: storeId!, summaryId: data.summaryId });
-        await mutate({ gate: "open", session: result.session }, false);
+        mutate({ gate: "open", session: result.session }, false);
+        mutate();
         return result;
     };
 
     const transferSession = async (claimCode: TransferSessionInput["claimCode"]) => {
         const result = await sessionsApi.transfer({ storeId: storeId!, claimCode });
-        await mutate({ gate: "open", session: result }, false);
+        mutate({ gate: "open", session: result }, false);
+        mutate();
         return result;
     };
 

@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useLayoutEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { useStore } from "@/lib/context/StoreContext";
+import { useSession } from "@/lib/hooks/sessions/useSession";
 import { useSummaries } from "@/lib/hooks/summaries/useDailySummaries";
 import { useSummaryPhotos } from "@/lib/hooks/summaries/useSummaryPhotos";
 import { useSummaryPhotosById } from "@/lib/hooks/summaries/useSummaryPhotosById";
@@ -51,6 +52,7 @@ export default function ManageCloseDayPage() {
     const searchParams = useSearchParams();
     const { url } = useTenantSlug();
     const { selectedStoreId, selectedStore } = useStore();
+    const { mutate: mutateSession } = useSession(selectedStoreId);
     const { showToast } = useToast();
 
     const paramSummaryId = searchParams.get("summaryId");
@@ -258,6 +260,7 @@ export default function ManageCloseDayPage() {
                 actualCash,
                 closedAt: new Date().toISOString(),
             });
+            mutateSession();
             if (STEP_KEY) localStorage.removeItem(STEP_KEY);
             showToast("Day closed successfully!", "success");
             navigation.push(url(paramSummaryId ? "/mobile/analytics" : "/mobile/home/manage"));

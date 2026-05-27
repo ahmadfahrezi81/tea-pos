@@ -32,7 +32,7 @@ export default function HomeLayout({
 
     const { events } = useStoreActivityLogs(selectedStoreId || undefined, todayStr);
 
-    const isPosInUse = isPos && gate === "open" && session?.userId !== profile?.id;
+    const isPosInUse = isHomeRoot && gate === "open" && session?.userId !== profile?.id;
     const showGate =
         isHomeRoot &&
         (gate === "no_summary" || gate === "no_session" || gate === "closed" || isPosInUse);
