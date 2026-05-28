@@ -30,10 +30,10 @@ const StoreContext = createContext<StoreContextType | null>(null);
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
-    const { profile } = useAuth();
+    const { user } = useAuth();
     const { data: storesData } = useStores();
 
-    const userId = profile?.id ?? "";
+    const userId = user?.id ?? "";
 
     const stores = useMemo(() => storesData?.stores ?? [], [storesData]);
     const assignments = useMemo(

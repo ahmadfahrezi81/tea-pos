@@ -27,10 +27,10 @@ function StatusBadge({ status }: { status: string }) {
 
 export default function PeriodDetailPage({ params }: { params: Promise<{ periodId: string }> }) {
     const { periodId } = use(params);
-    const { profile } = useAuth();
+    const { user } = useAuth();
     const { periods } = usePayrollPeriods();
     const { entries, isLoading } = usePayrollEntries(
-        profile?.id ? { userId: profile.id, periodId } : undefined,
+        user?.id ? { userId: user.id, periodId } : undefined,
     );
     const { data: storesData } = useStores();
 

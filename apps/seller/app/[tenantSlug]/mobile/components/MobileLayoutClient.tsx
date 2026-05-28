@@ -43,7 +43,7 @@ export default function MobileLayoutClient({
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const lastRootTabRef = useRef<string>(url("/mobile/more"));
 
-    const { profile, avatarUrl, mutate: refreshProfile } = useAuth();
+    const { user, avatarUrl, mutate: refreshProfile } = useAuth();
     const { data: storesData } = useStores();
     const { selectedStore, setIsPickerOpen, isPickerOpen } = useStore();
     const isIPhonePWA = useIsIPhonePWA();
@@ -51,10 +51,10 @@ export default function MobileLayoutClient({
     const storesReady = !!storesData;
 
     useEffect(() => {
-        if (profile) {
+        if (user) {
             setShellReady(true);
         }
-    }, [profile]);
+    }, [user]);
 
     const rootTabPaths = useMemo(() => rootTabSuffixes.map(url), [url]);
 
@@ -183,7 +183,7 @@ export default function MobileLayoutClient({
         );
     }
 
-    if (!profile) {
+    if (!user) {
         return (
             <div className="h-dvh overflow-hidden bg-white flex flex-col items-center justify-center p-4">
                 <div className="text-center">

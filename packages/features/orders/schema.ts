@@ -88,7 +88,7 @@ export const OrderItemResponse = z
         totalPrice: z.number(),
         createdAt: z.string().nullable(),
         tenantId: UUIDSchema.nullable(), // ← Added for response
-        products: z
+        tenantProducts: z
             .object({
                 name: z.string(),
             })
@@ -109,12 +109,12 @@ export const OrderResponse = z
                 name: z.string(),
             })
             .nullable(),
-        profiles: z
+        users: z
             .object({
                 fullName: z.string(),
             })
             .nullable(),
-        orderItems: z.array(OrderItemResponse),
+        storeOrderItems: z.array(OrderItemResponse),
         paymentMethod: PaymentMethodSchema.optional().openapi({
             description: "Payment method used",
             example: "cash",

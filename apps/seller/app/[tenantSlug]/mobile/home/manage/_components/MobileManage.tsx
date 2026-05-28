@@ -16,7 +16,7 @@ export default function MobileManage() {
     const { url } = useTenantSlug();
     const { selectedStoreId } = useStore();
     const { gate, session } = useSession(selectedStoreId);
-    const { profile } = useAuth();
+    const { user } = useAuth();
     const { data: weatherData } = useWeather();
     const [isWeatherOpen, setIsWeatherOpen] = useState(false);
     const [codeRevealed, setCodeRevealed] = useState(false);
@@ -36,7 +36,7 @@ export default function MobileManage() {
     const dimmed = isStoreNotOpen || isClosed;
     const hasSession = gate === "open" && !!session;
     // Only the session owner can reveal the code
-    const isOwner = hasSession && session.userId === profile?.id;
+    const isOwner = hasSession && session.userId === user?.id;
 
     return (
         <div className="flex flex-col gap-4 pb-24">

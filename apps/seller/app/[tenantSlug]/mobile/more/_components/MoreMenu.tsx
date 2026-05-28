@@ -84,13 +84,13 @@ function FastOrderToggle({ enabled }: { enabled: boolean }) {
 
 export default function MoreMenu() {
     const { url } = useTenantSlug();
-    const { profile } = useAuth();
+    const { user } = useAuth();
     const { assignedStores } = useStore();
     const { fastOrderMode, toggleFastOrderMode } = useFastOrderMode();
 
     const [showFeedbackDrawer, setShowFeedbackDrawer] = useState(false);
 
-    if (!profile) return null;
+    if (!user) return null;
 
     return (
         <div className="min-h-screen space-y-4">

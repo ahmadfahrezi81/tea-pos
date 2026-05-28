@@ -36,7 +36,7 @@ export async function listOrders(
     let query = supabase
         .from("store_orders")
         .select(
-            `*, stores(name), profiles:users(full_name), order_items:store_order_items(*, products:tenant_products(name))`,
+            `*, stores(name), users(full_name), store_order_items(*, tenant_products(name))`,
         )
         .eq("tenant_id", tenantId)
         .order("created_at", { ascending: false });

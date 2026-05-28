@@ -23,12 +23,12 @@ export interface ListCustomerFeedbacksParams {
 // ─── Internal helpers ─────────────────────────────────────────────────────────
 
 function mapRow(row: Record<string, unknown>): CustomerFeedbackResponse {
-    const profile = row.users as { full_name?: string } | null;
+    const user = row.users as { full_name?: string } | null;
     return {
         id: row.id as string,
         tenantId: row.tenant_id as string,
         userId: row.user_id as string,
-        userName: profile?.full_name ?? null,
+        userName: user?.full_name ?? null,
         locationName: row.location_name as string,
         locationDisplay: row.location_display as string,
         latitude: row.latitude as number,

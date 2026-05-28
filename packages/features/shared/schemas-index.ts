@@ -12,7 +12,6 @@ export * from "../orders/order-list-schema";
 export * from "../payments/schema";
 export * from "../products/schema";
 export * from "../products/categories-schema";
-export * from "../profiles/schema";
 export * from "../stores/schema";
 export * from "../stores/user-assignments-schema";
 export * from "../summaries/schema";

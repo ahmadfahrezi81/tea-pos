@@ -70,7 +70,7 @@ export default function MobileOrders() {
             ).getUTCHours();
             const key = `${localHour.toString().padStart(2, "0")}:00`;
             hourlyData[key] = (hourlyData[key] ?? 0) +
-                order.orderItems.reduce((s, item) => s + item.quantity, 0);
+                order.storeOrderItems.reduce((s, item) => s + item.quantity, 0);
         }
 
         const slots = Array.from({ length: 24 }, (_, h) => ({
@@ -101,7 +101,7 @@ export default function MobileOrders() {
         const totalCups = orders.reduce(
             (sum, order) =>
                 sum +
-                order.orderItems.reduce(
+                order.storeOrderItems.reduce(
                     (itemSum, item) => itemSum + item.quantity,
                     0,
                 ),
@@ -225,7 +225,7 @@ export default function MobileOrders() {
                                             {formatRupiah(order.totalAmount)}
                                         </p>
                                         <p className="text-sm text-gray-500">
-                                            {order.orderItems.reduce(
+                                            {order.storeOrderItems.reduce(
                                                 (sum, item) =>
                                                     sum + item.quantity,
                                                 0,
@@ -266,7 +266,7 @@ export default function MobileOrders() {
                                                 <span className="font-medium">
                                                     Seller:
                                                 </span>{" "}
-                                                {order.profiles?.fullName}
+                                                {order.users?.fullName}
                                             </p>
                                             <p>
                                                 <span className="font-medium">
@@ -284,7 +284,7 @@ export default function MobileOrders() {
                                             Items
                                         </h4>
                                         <div className="space-y-2">
-                                            {order.orderItems.map((item) => (
+                                            {order.storeOrderItems.map((item) => (
                                                 <div
                                                     key={item.id}
                                                     className="flex justify-between items-center bg-white p-2.5 rounded-xl text-sm"
@@ -292,7 +292,7 @@ export default function MobileOrders() {
                                                     <div className="flex-1">
                                                         <p className="font-medium">
                                                             {
-                                                                item.products
+                                                                item.tenantProducts
                                                                     ?.name
                                                             }
                                                         </p>

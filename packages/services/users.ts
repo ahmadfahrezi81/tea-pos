@@ -3,7 +3,7 @@ import { toCamelKeys } from "@tea-pos/utils/schemas";
 
 // ─── Public functions ─────────────────────────────────────────────────────────
 
-export async function getProfile(supabase: SupabaseClient, { userId }: { userId: string }) {
+export async function getUser(supabase: SupabaseClient, { userId }: { userId: string }) {
     const { data, error } = await supabase
         .from("users")
         .select("*")
@@ -12,11 +12,11 @@ export async function getProfile(supabase: SupabaseClient, { userId }: { userId:
 
     if (error) {
         const status = error.code === "PGRST116" ? 404 : 500;
-        const message = error.code === "PGRST116" ? "Profile not found" : "Failed to fetch profile";
+        const message = error.code === "PGRST116" ? "User not found" : "Failed to fetch user";
         throw Object.assign(new Error(message), { status });
     }
 
-    if (!data) throw Object.assign(new Error("Profile not found"), { status: 404 });
+    if (!data) throw Object.assign(new Error("User not found"), { status: 404 });
 
     return toCamelKeys(data);
 }

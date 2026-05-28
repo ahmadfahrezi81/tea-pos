@@ -13,7 +13,7 @@ export default function ManageLayout({ children }: { children: React.ReactNode }
     const { url } = useTenantSlug();
     const { selectedStoreId } = useStore();
     const { gate, session } = useSession(selectedStoreId);
-    const { profile } = useAuth();
+    const { user } = useAuth();
 
     const isExempt =
         pathname.endsWith("/home/manage") ||
@@ -22,11 +22,11 @@ export default function ManageLayout({ children }: { children: React.ReactNode }
 
     useEffect(() => {
         if (!gate || isExempt) return;
-        const sessionTakenByOther = gate === "open" && !!session && !!profile && session.userId !== profile.id;
+        const sessionTakenByOther = gate === "open" && !!session && !!user && session.userId !== user.id;
         if (gate !== "open" || sessionTakenByOther) {
             router.push(url("/mobile/home/manage"));
         }
-    }, [gate, session, profile, isExempt, router, url]);
+    }, [gate, session, user, isExempt, router, url]);
 
     return <>{children}</>;
 }

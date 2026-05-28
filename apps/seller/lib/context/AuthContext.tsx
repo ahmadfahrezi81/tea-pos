@@ -2,12 +2,12 @@
 import { createContext, useContext } from "react";
 import useSWR from "swr";
 import { createClient } from "@/lib/supabase";
-import { Profile, ProfileResponse } from "@tea-pos/features/profiles/schema";
+import { User, UserResponse } from "@tea-pos/features/users/schema";
 import { toCamelKeys } from "@tea-pos/utils/schemas";
 
 const supabase = createClient();
 
-const fetchProfile = async (): Promise<Profile | null> => {
+const fetchUser = async (): Promise<User | null> => {
     try {
         const {
             data: { user },
@@ -23,9 +23,9 @@ const fetchProfile = async (): Promise<Profile | null> => {
 
         if (!data) return null;
 
-        return ProfileResponse.parse(toCamelKeys(data));
+        return UserResponse.parse(toCamelKeys(data));
     } catch (error) {
-        console.error("fetchProfile error:", error);
+        console.error("fetchUser error:", error);
         return null;
     }
 };
@@ -38,10 +38,10 @@ const fetchAvatarUrl = async (): Promise<string | null> => {
 };
 
 interface AuthContextType {
-    profile: Profile | null;
+    user: User | null;
     avatarUrl: string | null;
     isLoading: boolean;
-    mutate: () => Promise<Profile | null | undefined>;
+    mutate: () => Promise<User | null | undefined>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -59,7 +59,7 @@ export function AuthProvider({
         avatarUrl?: string;
     } | null;
 }) {
-    const fallbackData: Profile | null = initialUser
+    const fallbackData: User | null = initialUser
         ? {
               id: initialUser.id,
               role: initialUser.role,
@@ -73,13 +73,13 @@ export function AuthProvider({
         : null;
 
     const {
-        data: profile = null,
+        data: user = null,
         isLoading,
         mutate,
     } = useSWR(
-        "profile",
+        "user",
         // Don't fetch if no session exists server-side
-        initialUser ? fetchProfile : null,
+        initialUser ? fetchUser : null,
         {
             fallbackData,
             // Server already validated the session — skip revalidation on mount,
@@ -101,7 +101,7 @@ export function AuthProvider({
     );
 
     return (
-        <AuthContext.Provider value={{ profile, avatarUrl, isLoading, mutate }}>
+        <AuthContext.Provider value={{ user, avatarUrl, isLoading, mutate }}>
             {children}
         </AuthContext.Provider>
     );

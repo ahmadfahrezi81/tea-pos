@@ -6,8 +6,8 @@ import { reimbursementsApi } from "@/lib/api/reimbursements";
 import type { ReimbursementListResponse, CreateReimbursementInput } from "@tea-pos/features/reimbursements/schema";
 
 export function useReimbursements() {
-    const { profile } = useAuth();
-    const userId = profile?.id;
+    const { user } = useAuth();
+    const userId = user?.id;
 
     const key = userId ? `reimbursements-${userId}` : null;
 

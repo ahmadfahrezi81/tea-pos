@@ -23,7 +23,7 @@ export default function HomeLayout({
 
     const { selectedStoreId, selectedStore } = useStore();
     const { gate, session, transferSession } = useSession(selectedStoreId);
-    const { profile } = useAuth();
+    const { user } = useAuth();
 
     const todayStr = useMemo(() => {
         const tz = parseInt(process.env.NEXT_PUBLIC_TIMEZONE_OFFSET ?? "7", 10);
@@ -32,7 +32,7 @@ export default function HomeLayout({
 
     const { events } = useStoreActivityLogs(selectedStoreId || undefined, todayStr);
 
-    const isPosInUse = isHomeRoot && gate === "open" && session?.userId !== profile?.id;
+    const isPosInUse = isHomeRoot && gate === "open" && session?.userId !== user?.id;
     const showGate =
         isHomeRoot &&
         (gate === "no_summary" || gate === "no_session" || gate === "closed" || isPosInUse);

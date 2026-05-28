@@ -244,7 +244,7 @@ export const StoreUserResponse = z
         role: z.enum(["seller", "manager"]),
         isDefault: z.boolean(),
         createdAt: z.string().nullable(),
-        profiles: z
+        users: z
             .object({
                 fullName: z.string(),
                 email: z.string(),

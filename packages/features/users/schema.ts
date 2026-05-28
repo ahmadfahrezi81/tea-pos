@@ -110,6 +110,33 @@ export const UpdateUserInputWithId = UpdateUserInput.extend({
 // RESPONSE SCHEMAS
 // ============================================================================
 
+export const USER_STATUSES = [
+    "active",
+    "inactive",
+    "pending",
+    "suspended",
+] as const;
+export type UserStatus = (typeof USER_STATUSES)[number];
+
+export const UserResponse = z
+    .object({
+        id: UUIDSchema,
+        email: z.string(),
+        fullName: z.string(),
+        role: z.string(),
+        phoneNumber: z.string().nullable(),
+        status: z.enum(USER_STATUSES),
+        createdAt: z.string().nullable(),
+        updatedAt: z.string().nullable(),
+    })
+    .openapi({ title: "UserResponse" });
+
+export const UserListResponse = z
+    .object({
+        users: z.array(UserResponse),
+    })
+    .openapi({ title: "UserListResponse" });
+
 export const CreateUserResponse = z
     .object({
         success: z.boolean().openapi({ example: true }),
@@ -147,5 +174,9 @@ export const UpdateUserResponse = z
 export type CreateUserInput = z.infer<typeof CreateUserInput>;
 export type UpdateUserInput = z.infer<typeof UpdateUserInput>;
 export type UpdateUserInputWithId = z.infer<typeof UpdateUserInputWithId>;
+export type UserResponse = z.infer<typeof UserResponse>;
+export type UserListResponse = z.infer<typeof UserListResponse>;
 export type CreateUserResponse = z.infer<typeof CreateUserResponse>;
 export type UpdateUserResponse = z.infer<typeof UpdateUserResponse>;
+
+export type User = z.infer<typeof UserResponse>;

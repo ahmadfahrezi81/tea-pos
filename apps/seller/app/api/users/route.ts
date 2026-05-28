@@ -1,7 +1,7 @@
 import { getServiceClient } from "@/lib/supabase/service";
 import { getRequestUser } from "@/lib/auth/get-request-user";
-import { ProfileResponse } from "@tea-pos/features/profiles/schema";
-import { getProfile } from "@tea-pos/services/profiles";
+import { UserResponse } from "@tea-pos/features/users/schema";
+import { getUser } from "@tea-pos/services/users";
 import { ok, unauthorized, handleError } from "@/lib/api/response";
 
 export async function GET() {
@@ -9,9 +9,9 @@ export async function GET() {
         const user = await getRequestUser();
         if (!user) return unauthorized();
         const supabase = getServiceClient();
-        const data = await getProfile(supabase, { userId: user.id });
-        return ok(ProfileResponse.parse(data));
+        const data = await getUser(supabase, { userId: user.id });
+        return ok(UserResponse.parse(data));
     } catch (error) {
-        return handleError("GET /api/profiles", error);
+        return handleError("GET /api/users", error);
     }
 }

@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
-type Profile = {
+type User = {
     id: string;
     email: string;
     fullName: string;
@@ -18,23 +18,23 @@ export default function UnauthorizedPage() {
     const searchParams = useSearchParams();
     const reason = searchParams.get("reason");
 
-    const [profile, setProfile] = useState<Profile | null>(null);
+    const [user, setUser] = useState<User | null>(null);
     const [validTenantSlug, setValidTenantSlug] = useState<string | null>(null);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     useEffect(() => {
-        async function loadProfile() {
+        async function loadUser() {
             try {
-                const res = await fetch("/api/profiles", {
+                const res = await fetch("/api/users", {
                     credentials: "include",
                 });
 
                 if (res.ok) {
                     const data = await res.json();
-                    setProfile(data);
+                    setUser(data);
                 }
             } catch (error) {
-                console.error("Failed to load profile:", error);
+                console.error("Failed to load user:", error);
             }
         }
 
@@ -60,7 +60,7 @@ export default function UnauthorizedPage() {
             }
         }
 
-        loadProfile();
+        loadUser();
         checkValidTenant();
     }, [reason, router]);
 
@@ -141,16 +141,16 @@ export default function UnauthorizedPage() {
                     <p className="text-gray-600 mb-4">{message.description}</p>
 
                     {/* Current User Info */}
-                    {profile && (
+                    {user && (
                         <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-left">
                             <p className="text-xs text-gray-500 mb-1">
                                 Logged in as:
                             </p>
                             <p className="font-semibold text-gray-900 text-sm">
-                                {profile.fullName}
+                                {user.fullName}
                             </p>
                             <p className="text-xs text-gray-600">
-                                {profile.email}
+                                {user.email}
                             </p>
                         </div>
                     )}

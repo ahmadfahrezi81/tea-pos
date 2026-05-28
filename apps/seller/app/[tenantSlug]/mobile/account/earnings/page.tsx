@@ -34,11 +34,11 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function EarningsPage() {
-    const { profile } = useAuth();
+    const { user } = useAuth();
     const { url } = useTenantSlug();
     const { periods, isLoading: periodsLoading } = usePayrollPeriods();
     const { entries, isLoading: entriesLoading } = usePayrollEntries(
-        profile?.id ? { userId: profile.id } : undefined,
+        user?.id ? { userId: user.id } : undefined,
     );
     const { ratePerCup, effectiveDate, isLoading: rateLoading } = useCommissionConfig("USER");
 

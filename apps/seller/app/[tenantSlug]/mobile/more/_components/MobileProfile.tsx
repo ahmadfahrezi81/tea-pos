@@ -71,7 +71,7 @@ const SettingsRow = ({
 export default function MobileProfile() {
     const router = useRouter();
     const { url } = useTenantSlug();
-    const { profile } = useAuth();
+    const { user } = useAuth();
     const { selectedStore, assignedStores, stores, setIsPickerOpen } =
         useStore();
     const { fastOrderMode, toggleFastOrderMode } = useFastOrderMode();
@@ -101,9 +101,9 @@ export default function MobileProfile() {
         navigation.push(url("/mobile/profile/stores"));
     }, [url]);
 
-    if (!profile) return null;
+    if (!user) return null;
 
-    const isAdmin = profile.role === "ADMIN";
+    const isAdmin = user.role === "ADMIN";
 
     return (
         <div className="min-h-screen space-y-4">
@@ -118,10 +118,10 @@ export default function MobileProfile() {
                     </button>
                     <div className="flex-1 min-w-0">
                         <p className="text-xl font-semibold text-gray-900 leading-tight truncate">
-                            {profile.fullName}
+                            {user.fullName}
                         </p>
                         <p className="text-sm text-gray-900 truncate">
-                            {profile.email}
+                            {user.email}
                         </p>
                     </div>
                 </div>

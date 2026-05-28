@@ -52,7 +52,7 @@ const SettingsRow = ({
 export default function AccountProfile() {
     const router = useRouter();
     const { url } = useTenantSlug();
-    const { profile, avatarUrl } = useAuth();
+    const { user, avatarUrl } = useAuth();
 
     const handleLogout = useCallback(async () => {
         const shouldLogout = window.confirm(
@@ -67,7 +67,7 @@ export default function AccountProfile() {
         }
     }, [router]);
 
-    if (!profile) return null;
+    if (!user) return null;
 
     return (
         <div className="min-h-screen space-y-4">
@@ -77,7 +77,7 @@ export default function AccountProfile() {
                     {avatarUrl ? (
                         <Image
                             src={avatarUrl}
-                            alt={profile.fullName}
+                            alt={user.fullName}
                             width={64}
                             height={64}
                             className="rounded-2xl object-cover border-2 border-brand/20"
@@ -90,10 +90,10 @@ export default function AccountProfile() {
                 </div>
                 <div className="flex-1 min-w-0">
                     <p className="text-xl font-semibold text-gray-900 leading-tight truncate">
-                        {profile.fullName}
+                        {user.fullName}
                     </p>
                     <p className="text-sm text-gray-500 truncate">
-                        {profile.email}
+                        {user.email}
                     </p>
                 </div>
             </div>

@@ -39,12 +39,12 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function ReimbursementsPage() {
-    const { profile } = useAuth();
+    const { user } = useAuth();
     const { claims, isLoading, create } = useReimbursements();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const allowedTypes: ReimbursementType[] =
-        REIMBURSEMENT_TYPES_BY_ROLE[profile?.role ?? "USER"] ?? ["mobile_data", "lunch"];
+        REIMBURSEMENT_TYPES_BY_ROLE[user?.role ?? "USER"] ?? ["mobile_data", "lunch"];
 
     const [selectedType, setSelectedType] = useState<ReimbursementType | null>(null);
     const [amount, setAmount] = useState("");
@@ -78,13 +78,13 @@ export default function ReimbursementsPage() {
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        if (!canSubmit || !profile) return;
+        if (!canSubmit || !user) return;
         setSubmitting(true);
         setError(null);
         try {
             let photoUrl: string | undefined;
             if (photoFile) {
-                photoUrl = await uploadPhoto(photoFile, profile.id);
+                photoUrl = await uploadPhoto(photoFile, user.id);
             }
             await create({
                 type: selectedType!,
