@@ -67,7 +67,7 @@ export default function HomeLayout({
     if (showGate) return null;
 
     return (
-        <div className="flex-1 flex flex-col gap-4 min-h-0">
+        <div className="min-h-full flex flex-col gap-4">
             {isHomeRoot && (
                 <AtAGlance
                     openTime={selectedStore?.openTime}

@@ -245,7 +245,7 @@ export default function MobileLayoutClient({
                 <div className="flex-1 relative overflow-hidden">
                     <div
                         ref={scrollContainerRef}
-                        className={`absolute inset-0 overflow-y-auto p-4 ${scrollPaddingBottom} flex flex-col ${scrollPaddingTop}`}
+                        className={`absolute inset-0 overflow-y-auto p-4 ${scrollPaddingBottom} ${scrollPaddingTop}`}
                     >
                         {!isTransitioning && children}
                     </div>

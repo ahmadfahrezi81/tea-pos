@@ -15,15 +15,18 @@ export default function ManageLayout({ children }: { children: React.ReactNode }
     const { gate, session } = useSession(selectedStoreId);
     const { profile } = useAuth();
 
-    const isManageRoot = pathname.endsWith("/home/manage");
+    const isExempt =
+        pathname.endsWith("/home/manage") ||
+        pathname.endsWith("/home/manage/open") ||
+        pathname.endsWith("/home/manage/close");
 
     useEffect(() => {
-        if (!gate || isManageRoot) return;
-        const sessionTakenByOther = gate === "open" && !!session && session.userId !== profile?.id;
+        if (!gate || isExempt) return;
+        const sessionTakenByOther = gate === "open" && !!session && !!profile && session.userId !== profile.id;
         if (gate !== "open" || sessionTakenByOther) {
             router.push(url("/mobile/home/manage"));
         }
-    }, [gate, session, profile, isManageRoot, router, url]);
+    }, [gate, session, profile, isExempt, router, url]);
 
     return <>{children}</>;
 }
