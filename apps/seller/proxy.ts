@@ -139,7 +139,7 @@ export async function proxy(request: NextRequest) {
     if (user) {
         const avatarUrl = (user.user_metadata?.avatar_url as string) ?? "";
         const { data: profile } = await supabase
-            .from("profiles")
+            .from("users")
             .select("role, full_name, email")
             .eq("id", user.id)
             .single();

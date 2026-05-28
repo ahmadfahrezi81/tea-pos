@@ -20,7 +20,7 @@ export async function createReimbursement(
     const { tenantId, userId, type, amount, date, storeId, notes, photoUrl } = params;
 
     const { data, error } = await supabase
-        .from("reimbursements")
+        .from("payroll_reimbursements")
         .insert({
             tenant_id: tenantId,
             user_id: userId,
@@ -39,7 +39,7 @@ export async function createReimbursement(
     const log = createLogger(supabase, { tenantId, userId, storeId });
     log("reimbursement_submitted", {
         refId: (data as { id: string }).id,
-        refTable: "reimbursements",
+        refTable: "payroll_reimbursements",
         metadata: { type, amount, date },
     });
 
@@ -57,7 +57,7 @@ export async function listMyReimbursements(
     { tenantId, userId, limit }: ListMyReimbursementsParams,
 ) {
     let query = supabase
-        .from("reimbursements")
+        .from("payroll_reimbursements")
         .select("*")
         .eq("tenant_id", tenantId)
         .eq("user_id", userId)

@@ -124,7 +124,7 @@ Then update Zod schemas in `packages/features` to match.
 
 **Authorization:**
 
-- `profiles.role`: `ADMIN` / `USER` / `DRIVER` / `SUPPLIER`
+- `users.role`: `ADMIN` / `USER` / `DRIVER` / `SUPPLIER`
 - Super admins (`ADMIN`) can access any tenant
 - Regular users checked against `user_tenant_assignments`
 - Store-level roles in `user_store_assignments`
@@ -198,25 +198,26 @@ Any API route that calls a mutating service must call `getRequestUser()` and pas
 ## Key Tables
 
 - `tenants` — Workspaces
-- `profiles` — User metadata (role, name, email, phone)
+- `users` — User metadata (role, name, email, phone)
 - `user_tenant_assignments` — Role per user per tenant
 - `user_store_assignments` — Role per user per store
-- `tenant_invites` — Pending invitations
 - `stores` — Tea shop locations
-- `products` + `product_categories` — Inventory
-- `orders` + `order_items` — Transactions
-- `payments` — Payment records
-- `daily_summaries` + `daily_summary_photos` — Cash reconciliation. Uses `opened_by` + `closed_by` (profile IDs); `seller_id`/`manager_id` no longer exist
-- `store_sessions` — POS ownership windows. One active session per store enforced by partial unique index. Sessions chain via `previous_session_id`. Created by `openStore()` immediately after `daily_summaries`
-- `commission_configs` — Flat rate per cup per role (`USER`, `DRIVER`, `SUPPLIER`). One config per `(tenant_id, role, effective_date)`. Most recent row where `effective_date <= today` is the active rate. Currently only `USER` rate is used in payroll calculations.
+- `tenant_products` + `tenant_product_categories` — Inventory
+- `store_orders` + `store_order_items` — Transactions
+- `store_order_payments` — QRIS/Xendit payment records
+- `store_daily_summaries` + `store_daily_summary_photos` — Cash reconciliation. Uses `opened_by` + `closed_by` (user IDs); `seller_id`/`manager_id` no longer exist
+- `store_sessions` — POS ownership windows. One active session per store enforced by partial unique index. Sessions chain via `previous_session_id`. Created by `openStore()` immediately after `store_daily_summaries`
+- `store_expenses` — Cost tracking per daily summary
+- `store_requests` — Supply requests submitted by staff
+- `store_reports` — Incident reports submitted by staff
+- `tenant_commission_configs` — Flat rate per cup per role (`USER`, `DRIVER`, `SUPPLIER`). One config per `(tenant_id, role, effective_date)`. Most recent row where `effective_date <= today` is the active rate. Currently only `USER` rate is used in payroll calculations.
 - `payroll_periods` — Weekly pay cycles (Monday–Sunday) per tenant
 - `payroll_entries` — One row per user per daily summary on close. `rate_per_cup` snapshotted at creation so historical entries are immutable to future rate changes
-- `reimbursements` — Staff expense claims (mobile data, lunch, gasoline). Submitted by staff, approved by admin. `status`: `pending → approved → rejected → paid`. `payroll_period_id` nullable — set when batching into a payroll run for payout.
-- `expenses` — Cost tracking
-- `customer_feedbacks` — Geotagged feedback
+- `payroll_reimbursements` — Staff expense claims (mobile data, lunch, gasoline). Submitted by staff, approved by admin. `status`: `pending → approved → rejected → paid`. `payroll_period_id` nullable — set when batching into a payroll run for payout.
+- `tenant_customer_feedbacks` — Geotagged feedback
 - `notification_events` + `notification_reads` — Notifications
 - `weather_hourly` — Cached weather forecasts
-- `activity_logs` — Audit trail of user actions. Known types: `order_created`, `store_open`, `daily_summary_closed`, `balance_updated`, `photo_uploaded`, `photo_deleted`, `photo_quantity_updated`, `expense_created`, `expense_updated`, `expense_deleted`, `customer_feedback_submitted`, `session_transferred`, `session_ended`, `commission_config_updated`, `payroll_entry_updated`, `payroll_period_updated`, `reimbursement_submitted`
+- `tenant_activity_logs` — Audit trail of user actions. Known types: `order_created`, `store_open`, `daily_summary_closed`, `balance_updated`, `photo_uploaded`, `photo_deleted`, `photo_quantity_updated`, `expense_created`, `expense_updated`, `expense_deleted`, `customer_feedback_submitted`, `session_transferred`, `session_ended`, `commission_config_updated`, `payroll_entry_updated`, `payroll_period_updated`, `reimbursement_submitted`
 
 ---
 

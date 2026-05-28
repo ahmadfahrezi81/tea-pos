@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
         const end = new Date(`${date}T23:59:59+${String(TIMEZONE_OFFSET).padStart(2, "0")}:00`).toISOString();
 
         let query = supabase
-            .from("orders")
+            .from("store_orders")
             .select(`
                 id,
                 store_id,
@@ -33,14 +33,14 @@ export async function GET(request: NextRequest) {
                 created_at,
                 tenant_id,
                 stores!inner(name),
-                profiles!inner(full_name),
-                order_items!inner(
+                users!inner(full_name),
+                store_order_items!inner(
                     id,
                     product_id,
                     quantity,
                     unit_price,
                     total_price,
-                    products(name)
+                    tenant_products(name)
                 )
             `)
             .eq("tenant_id", currentTenantId)
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
         if (productIds && productIds.length > 0) {
             filteredData = filteredData.filter((order) =>
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                order.order_items?.some((item: any) => productIds.includes(item.product_id)),
+                order.store_order_items?.some((item: any) => productIds.includes(item.product_id)),
             );
         }
 
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
         const transformedData = filteredData.map((order: any) => {
             const totalQuantity =
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                order.order_items?.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0) || 0;
+                order.store_order_items?.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0) || 0;
             return {
                 id: order.id,
                 store_id: order.store_id,
@@ -76,16 +76,16 @@ export async function GET(request: NextRequest) {
                 total_amount: order.total_amount,
                 created_at: order.created_at,
                 tenant_id: order.tenant_id,
-                seller: order.profiles ? { full_name: order.profiles.full_name } : null,
+                seller: order.users ? { full_name: order.users.full_name } : null,
                 store: order.stores ? { name: order.stores.name } : null,
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                items: order.order_items?.map((item: any) => ({
+                items: order.store_order_items?.map((item: any) => ({
                     id: item.id,
                     product_id: item.product_id,
                     quantity: item.quantity,
                     unit_price: item.unit_price,
                     total_price: item.total_price,
-                    product: item.products ? { name: item.products.name } : null,
+                    product: item.tenant_products ? { name: item.tenant_products.name } : null,
                 })) || [],
                 total_quantity: totalQuantity,
             };

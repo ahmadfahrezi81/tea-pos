@@ -19,7 +19,7 @@ export async function createIncidentReport(
     const { tenantId, storeId, userId, dailySummaryId, type, notes, photoUrl } = params;
 
     const { data, error } = await supabase
-        .from("incident_reports")
+        .from("store_reports")
         .insert({
             tenant_id: tenantId,
             store_id: storeId,
@@ -35,7 +35,7 @@ export async function createIncidentReport(
     if (error) throw error;
 
     const log = createLogger(supabase, { tenantId, userId, storeId });
-    log("incident_report_created", { refId: data.id, refTable: "incident_reports", metadata: { type } });
+    log("incident_report_created", { refId: data.id, refTable: "store_reports", metadata: { type } });
 
     return toCamelKeys(data);
 }
@@ -62,7 +62,7 @@ export async function listIncidentReports(
     const endUtc = new Date(new Date(dayEnd).getTime() - tz * 3600000).toISOString();
 
     const { data, error } = await supabase
-        .from("incident_reports")
+        .from("store_reports")
         .select("*")
         .eq("store_id", storeId)
         .eq("tenant_id", tenantId)

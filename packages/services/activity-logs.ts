@@ -24,7 +24,7 @@ export async function listStoreActivityLogs(
     const dayEnd = new Date(dayStartMs + 24 * 3600 * 1000 - 1).toISOString();
 
     const { data, error } = await supabase
-        .from("activity_logs")
+        .from("tenant_activity_logs")
         .select("id, type, created_at")
         .eq("tenant_id", tenantId)
         .eq("store_id", storeId)
@@ -60,7 +60,7 @@ async function logActivity(
     opts?: LogOpts,
 ): Promise<void> {
     try {
-        await supabase.from("activity_logs").insert({
+        await supabase.from("tenant_activity_logs").insert({
             tenant_id: context.tenantId,
             user_id: context.userId,
             store_id: context.storeId ?? null,

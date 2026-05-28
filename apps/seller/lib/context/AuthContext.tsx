@@ -16,7 +16,7 @@ const fetchProfile = async (): Promise<Profile | null> => {
         if (error || !user) return null;
 
         const { data } = await supabase
-            .from("profiles")
+            .from("users")
             .select("*")
             .eq("id", user.id)
             .single();

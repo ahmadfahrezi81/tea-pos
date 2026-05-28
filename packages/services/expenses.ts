@@ -31,8 +31,8 @@ export interface UpdateExpenseParams {
 
 async function recalcSummary(supabase: SupabaseClient, dailySummaryId: string, tenantId: string) {
     const [{ data: expenses }, { data: summary }] = await Promise.all([
-        supabase.from("expenses").select("amount").eq("daily_summary_id", dailySummaryId).eq("tenant_id", tenantId),
-        supabase.from("daily_summaries").select("opening_balance, total_sales").eq("id", dailySummaryId).eq("tenant_id", tenantId).single(),
+        supabase.from("store_expenses").select("amount").eq("daily_summary_id", dailySummaryId).eq("tenant_id", tenantId),
+        supabase.from("store_daily_summaries").select("opening_balance, total_sales").eq("id", dailySummaryId).eq("tenant_id", tenantId).single(),
     ]);
 
     if (!summary) return;
@@ -41,7 +41,7 @@ async function recalcSummary(supabase: SupabaseClient, dailySummaryId: string, t
     const expectedCash = summary.opening_balance + summary.total_sales - totalExpenses;
 
     await supabase
-        .from("daily_summaries")
+        .from("store_daily_summaries")
         .update({ expected_cash: expectedCash, total_expenses: totalExpenses })
         .eq("id", dailySummaryId)
         .eq("tenant_id", tenantId);
@@ -53,7 +53,7 @@ export async function listExpenses(supabase: SupabaseClient, params: ListExpense
     const { tenantId, dailySummaryId, storeId } = params;
 
     let query = supabase
-        .from("expenses")
+        .from("store_expenses")
         .select("*")
         .eq("tenant_id", tenantId)
         .order("created_at", { ascending: true });
@@ -70,7 +70,7 @@ export async function createExpense(supabase: SupabaseClient, params: CreateExpe
     const { tenantId, userId, dailySummaryId, storeId, type, amount } = params;
 
     const { data: summary, error: summaryError } = await supabase
-        .from("daily_summaries")
+        .from("store_daily_summaries")
         .select("id, tenant_id")
         .eq("id", dailySummaryId)
         .eq("tenant_id", tenantId)
@@ -88,7 +88,7 @@ export async function createExpense(supabase: SupabaseClient, params: CreateExpe
     if (storeError) throw new Error("Store not found or access denied");
 
     const { data: expenseData, error: expenseError } = await supabase
-        .from("expenses")
+        .from("store_expenses")
         .insert(toSnakeKeys({ dailySummaryId, storeId, type, amount, tenantId: summary.tenant_id }))
         .select()
         .single();
@@ -100,7 +100,7 @@ export async function createExpense(supabase: SupabaseClient, params: CreateExpe
     const log = createLogger(supabase, { tenantId, userId, storeId });
     log("expense_created", {
         refId: (expenseData as { id: string }).id,
-        refTable: "expenses",
+        refTable: "store_expenses",
         metadata: { amount, type },
     });
 
@@ -116,7 +116,7 @@ export async function updateExpense(supabase: SupabaseClient, params: UpdateExpe
     if (Object.keys(updates).length === 0) throw new Error("No fields to update");
 
     const { data: expenseData, error } = await supabase
-        .from("expenses")
+        .from("store_expenses")
         .update(updates)
         .eq("id", id)
         .eq("tenant_id", tenantId)
@@ -130,7 +130,7 @@ export async function updateExpense(supabase: SupabaseClient, params: UpdateExpe
     const raw = expenseData as { id: string; store_id: string; amount: number; type: string };
     createLogger(supabase, { tenantId, userId, storeId: raw.store_id })("expense_updated", {
         refId: raw.id,
-        refTable: "expenses",
+        refTable: "store_expenses",
         metadata: { amount: raw.amount, type: raw.type },
     });
 
@@ -139,7 +139,7 @@ export async function updateExpense(supabase: SupabaseClient, params: UpdateExpe
 
 export async function deleteExpense(supabase: SupabaseClient, { tenantId, userId, id }: { tenantId: string; userId: string; id: string }) {
     const { data: expense, error: getError } = await supabase
-        .from("expenses")
+        .from("store_expenses")
         .select("*")
         .eq("id", id)
         .eq("tenant_id", tenantId)
@@ -148,7 +148,7 @@ export async function deleteExpense(supabase: SupabaseClient, { tenantId, userId
     if (getError || !expense) throw new Error("Expense not found");
 
     const { error: deleteError } = await supabase
-        .from("expenses")
+        .from("store_expenses")
         .delete()
         .eq("id", id)
         .eq("tenant_id", tenantId);
@@ -160,7 +160,7 @@ export async function deleteExpense(supabase: SupabaseClient, { tenantId, userId
     const raw = expense as { id: string; store_id: string; amount: number; type: string };
     createLogger(supabase, { tenantId, userId, storeId: raw.store_id })("expense_deleted", {
         refId: raw.id,
-        refTable: "expenses",
+        refTable: "store_expenses",
         metadata: { amount: raw.amount, type: raw.type },
     });
 

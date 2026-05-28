@@ -13,7 +13,7 @@ export async function getCommissionRate(
     const today = new Date().toISOString().split("T")[0];
 
     const { data } = await supabase
-        .from("commission_configs")
+        .from("tenant_commission_configs")
         .select("rate_per_cup, effective_date")
         .eq("tenant_id", tenantId)
         .eq("role", role)
@@ -45,7 +45,7 @@ export async function upsertCommissionConfig(
     const { tenantId, actorId, role, ratePerCup, effectiveDate } = params;
 
     const { data: existing } = await supabase
-        .from("commission_configs")
+        .from("tenant_commission_configs")
         .select("id")
         .eq("tenant_id", tenantId)
         .eq("role", role)
@@ -56,7 +56,7 @@ export async function upsertCommissionConfig(
 
     if (existing) {
         const { data, error } = await supabase
-            .from("commission_configs")
+            .from("tenant_commission_configs")
             .update({ rate_per_cup: ratePerCup })
             .eq("id", (existing as { id: string }).id)
             .select()
@@ -66,7 +66,7 @@ export async function upsertCommissionConfig(
         result = data;
     } else {
         const { data, error } = await supabase
-            .from("commission_configs")
+            .from("tenant_commission_configs")
             .insert({
                 tenant_id: tenantId,
                 role,
@@ -83,7 +83,7 @@ export async function upsertCommissionConfig(
     const log = createLogger(supabase, { tenantId, userId: actorId });
     log("commission_config_updated", {
         refId: (result as { id: string }).id,
-        refTable: "commission_configs",
+        refTable: "tenant_commission_configs",
         metadata: { role, rate_per_cup: ratePerCup, effective_date: effectiveDate },
     });
 

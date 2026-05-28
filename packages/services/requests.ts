@@ -19,7 +19,7 @@ export async function createSupplyRequest(
     const { tenantId, storeId, userId, type, notes, photoUrl, dailySummaryId } = params;
 
     const { data, error } = await supabase
-        .from("supply_requests")
+        .from("store_requests")
         .insert({
             tenant_id: tenantId,
             store_id: storeId,
@@ -35,7 +35,7 @@ export async function createSupplyRequest(
     if (error) throw error;
 
     const log = createLogger(supabase, { tenantId, userId, storeId });
-    log("supply_request_created", { refId: data.id, refTable: "supply_requests", metadata: { type } });
+    log("supply_request_created", { refId: data.id, refTable: "store_requests", metadata: { type } });
 
     return toCamelKeys(data);
 }
@@ -63,7 +63,7 @@ export async function listSupplyRequests(
     const endUtc = new Date(new Date(dayEnd).getTime() - tz * 3600000).toISOString();
 
     const { data, error } = await supabase
-        .from("supply_requests")
+        .from("store_requests")
         .select("*")
         .eq("store_id", storeId)
         .eq("tenant_id", tenantId)

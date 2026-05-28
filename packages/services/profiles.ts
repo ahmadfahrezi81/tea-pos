@@ -5,7 +5,7 @@ import { toCamelKeys } from "@tea-pos/utils/schemas";
 
 export async function getProfile(supabase: SupabaseClient, { userId }: { userId: string }) {
     const { data, error } = await supabase
-        .from("profiles")
+        .from("users")
         .select("*")
         .eq("id", userId)
         .single();

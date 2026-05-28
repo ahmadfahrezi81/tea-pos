@@ -18,7 +18,7 @@ export async function getStoreGateState(supabase: SupabaseClient, params: GetSto
     const { tenantId, storeId, date } = params;
 
     const { data: summary, error: summaryError } = await supabase
-        .from("daily_summaries")
+        .from("store_daily_summaries")
         .select("id, closed_at")
         .eq("store_id", storeId)
         .eq("tenant_id", tenantId)
@@ -57,7 +57,7 @@ export async function resumeSession(supabase: SupabaseClient, params: ResumeSess
     const { tenantId, storeId, userId, summaryId } = params;
 
     const { data: summary, error: summaryError } = await supabase
-        .from("daily_summaries")
+        .from("store_daily_summaries")
         .select("id, closed_at")
         .eq("id", summaryId)
         .eq("store_id", storeId)
@@ -85,7 +85,7 @@ export async function resumeSession(supabase: SupabaseClient, params: ResumeSess
     const log = createLogger(supabase, { tenantId, userId, storeId });
     log("store_open", {
         refId: summaryId,
-        refTable: "daily_summaries",
+        refTable: "store_daily_summaries",
         metadata: { resumed: true },
     });
 
@@ -117,7 +117,7 @@ export async function openStore(supabase: SupabaseClient, params: OpenStoreParam
     if (storeError || !store) throw new Error("Store not found or access denied");
 
     const { count, error: existsError } = await supabase
-        .from("daily_summaries")
+        .from("store_daily_summaries")
         .select("id", { count: "exact", head: true })
         .eq("store_id", storeId)
         .eq("date", date)
@@ -128,7 +128,7 @@ export async function openStore(supabase: SupabaseClient, params: OpenStoreParam
         throw Object.assign(new Error("Store already opened for this date"), { status: 409 });
 
     const { data: summaryData, error: summaryError } = await supabase
-        .from("daily_summaries")
+        .from("store_daily_summaries")
         .insert({
             store_id: storeId,
             tenant_id: tenantId,
@@ -167,7 +167,7 @@ export async function openStore(supabase: SupabaseClient, params: OpenStoreParam
     const log = createLogger(supabase, { tenantId, userId, storeId });
     log("store_open", {
         refId: dailySummaryId,
-        refTable: "daily_summaries",
+        refTable: "store_daily_summaries",
         metadata: { date, opening_balance: openingBalance },
     });
 

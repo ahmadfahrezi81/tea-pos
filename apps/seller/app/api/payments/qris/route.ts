@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
         if (!paymentId) return badRequest("paymentId is required");
 
         const { data, error } = await supabase
-            .from("payments")
+            .from("store_order_payments")
             .select("status")
             .eq("id", paymentId)
             .eq("user_id", user.id)
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
 
         const productIds = items.map((i) => i.productId);
         const { data: products, error: productsError } = await supabase
-            .from("products")
+            .from("tenant_products")
             .select("id, price, is_active")
             .in("id", productIds)
             .eq("tenant_id", currentTenantId)
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
         const totalAmount = items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
 
         await supabase
-            .from("payments")
+            .from("store_order_payments")
             .update({ status: "expired" })
             .eq("user_id", user.id)
             .eq("store_id", storeId)
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
         const xenditData = await xenditResponse.json();
 
         const { data: paymentData, error: paymentError } = await supabase
-            .from("payments")
+            .from("store_order_payments")
             .insert({
                 xendit_qr_id: xenditData.id,
                 xendit_reference_id: referenceId,

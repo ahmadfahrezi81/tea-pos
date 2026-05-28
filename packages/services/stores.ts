@@ -15,7 +15,7 @@ export async function listUserStores(supabase: SupabaseClient, { tenantId, userI
 
     const [{ data: stores, error: storesError }, { data: users, error: usersError }] = await Promise.all([
         supabase.from("stores").select("*").eq("tenant_id", tenantId).in("id", storeIds).order("name"),
-        supabase.from("profiles").select("id, full_name, email").order("full_name"),
+        supabase.from("users").select("id, full_name, email").order("full_name"),
     ]);
 
     if (storesError) throw storesError;

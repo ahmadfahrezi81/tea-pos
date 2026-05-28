@@ -94,17 +94,17 @@ export async function createPayrollEntries(
             const endedAt = session.ended_at ?? new Date().toISOString();
 
             const { data: orders } = await supabase
-                .from("orders")
-                .select("id, order_items(quantity)")
+                .from("store_orders")
+                .select("id, store_order_items(quantity)")
                 .eq("user_id", userId)
                 .eq("store_id", storeId)
                 .eq("tenant_id", tenantId)
                 .gte("created_at", session.started_at)
                 .lt("created_at", endedAt);
 
-            const sessionCups = ((orders ?? []) as Array<{ order_items?: Array<{ quantity: number }> }>).reduce(
+            const sessionCups = ((orders ?? []) as Array<{ store_order_items?: Array<{ quantity: number }> }>).reduce(
                 (sum, order) =>
-                    sum + (order.order_items?.reduce((s, item) => s + item.quantity, 0) ?? 0),
+                    sum + (order.store_order_items?.reduce((s, item) => s + item.quantity, 0) ?? 0),
                 0,
             );
             totalCups += sessionCups;

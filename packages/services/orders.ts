@@ -34,9 +34,9 @@ export async function listOrders(
     const TZ = params.tzOffset ?? Number(process.env.TIMEZONE_OFFSET ?? 7);
 
     let query = supabase
-        .from("orders")
+        .from("store_orders")
         .select(
-            `*, stores(name), profiles(full_name), order_items(*, products(name))`,
+            `*, stores(name), users(full_name), store_order_items(*, tenant_products(name))`,
         )
         .eq("tenant_id", tenantId)
         .order("created_at", { ascending: false });
@@ -83,7 +83,7 @@ export async function createOrder(
 
     const productIds = items.map((i) => i.productId);
     const { data: products, error: productsError } = await supabase
-        .from("products")
+        .from("tenant_products")
         .select("id, price, is_active")
         .in("id", productIds)
         .eq("tenant_id", tenantId)
@@ -117,7 +117,7 @@ export async function createOrder(
         tenantId: store.tenant_id,
     });
     const { data: orderData, error: orderError } = await supabase
-        .from("orders")
+        .from("store_orders")
         .insert(orderPayload)
         .select()
         .single();
@@ -137,7 +137,7 @@ export async function createOrder(
     );
 
     const { error: itemsError } = await supabase
-        .from("order_items")
+        .from("store_order_items")
         .insert(orderItemsPayload);
     if (itemsError) throw new Error(itemsError.message);
 
@@ -145,7 +145,7 @@ export async function createOrder(
     const log = createLogger(supabase, { tenantId: store.tenant_id, userId, storeId });
     log("order_created", {
         refId: orderData.id as string,
-        refTable: "orders",
+        refTable: "store_orders",
         metadata: {
             total_amount: totalAmount,
             total_cups: totalCups,
