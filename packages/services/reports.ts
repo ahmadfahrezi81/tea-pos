@@ -7,9 +7,8 @@ export interface CreateIncidentReportParams {
     storeId: string;
     userId: string;
     dailySummaryId?: string;
-    category: string;
-    title: string;
-    description: string;
+    type: string;
+    notes: string;
     photoUrl?: string;
 }
 
@@ -17,7 +16,7 @@ export async function createIncidentReport(
     supabase: SupabaseClient,
     params: CreateIncidentReportParams,
 ) {
-    const { tenantId, storeId, userId, dailySummaryId, category, title, description, photoUrl } = params;
+    const { tenantId, storeId, userId, dailySummaryId, type, notes, photoUrl } = params;
 
     const { data, error } = await supabase
         .from("incident_reports")
@@ -26,9 +25,8 @@ export async function createIncidentReport(
             store_id: storeId,
             user_id: userId,
             daily_summary_id: dailySummaryId ?? null,
-            category,
-            title,
-            description,
+            type,
+            notes,
             photo_url: photoUrl ?? null,
         })
         .select()
@@ -37,7 +35,7 @@ export async function createIncidentReport(
     if (error) throw error;
 
     const log = createLogger(supabase, { tenantId, userId, storeId });
-    log("incident_report_created", { refId: data.id, refTable: "incident_reports", metadata: { category } });
+    log("incident_report_created", { refId: data.id, refTable: "incident_reports", metadata: { type } });
 
     return toCamelKeys(data);
 }

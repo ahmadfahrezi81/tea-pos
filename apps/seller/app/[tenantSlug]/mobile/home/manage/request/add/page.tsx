@@ -7,7 +7,6 @@ import { useSession } from "@/lib/hooks/sessions/useSession";
 import { useSupplyRequests } from "@/lib/hooks/requests/useSupplyRequests";
 import { apiFetch } from "@/lib/api/client";
 import { SUPPLY_REQUEST_TYPES, SUPPLY_REQUEST_TYPE_LABELS } from "@tea-pos/features/requests/schema";
-import type { SupplyRequestType } from "@tea-pos/features/requests/schema";
 import { SelectInput } from "../../_components/shared/SelectInput";
 import { Textarea } from "../../_components/shared/Textarea";
 import { PhotoPicker } from "../../_components/shared/PhotoPicker";
@@ -15,7 +14,7 @@ import { FormFooter } from "@/components/shared/FormFooter";
 
 const TYPE_OPTIONS = SUPPLY_REQUEST_TYPES.map((t) => ({
     value: t,
-    label: SUPPLY_REQUEST_TYPE_LABELS[t],
+    label: t === "other" ? "Custom" : SUPPLY_REQUEST_TYPE_LABELS[t],
 }));
 
 export default function AddRequestPage() {
@@ -24,7 +23,7 @@ export default function AddRequestPage() {
     const { summaryId } = useSession(selectedStoreId);
     const { create } = useSupplyRequests(selectedStoreId);
 
-    const [selectedType, setSelectedType] = useState<SupplyRequestType | "">("");
+    const [selectedType, setSelectedType] = useState("");
     const [customTypeText, setCustomTypeText] = useState("");
     const [notes, setNotes] = useState("");
     const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -49,7 +48,7 @@ export default function AddRequestPage() {
                 photoUrl = uploadUrl;
             }
             await create({
-                type: selectedType as SupplyRequestType,
+                type: selectedType,
                 notes: notes.trim() || undefined,
                 photoUrl,
                 dailySummaryId: summaryId ?? undefined,
@@ -70,7 +69,7 @@ export default function AddRequestPage() {
                     <SelectInput
                         options={TYPE_OPTIONS}
                         value={selectedType}
-                        onChange={(v) => { setSelectedType(v as SupplyRequestType | ""); setNotes(""); }}
+                        onChange={(v) => { setSelectedType(v); setNotes(""); }}
                         placeholder="Select type..."
                         otherTriggerValue="other"
                         otherValue={customTypeText}

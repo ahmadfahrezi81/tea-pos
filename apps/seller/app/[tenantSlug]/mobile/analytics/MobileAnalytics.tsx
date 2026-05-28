@@ -299,7 +299,7 @@ export default function MobileAnalytics() {
                                                             className="flex justify-between text-sm"
                                                         >
                                                             <span className="text-red-700">
-                                                                {expense.expenseType}
+                                                                {expense.type}
                                                             </span>
                                                             <span className="font-medium text-red-800">
                                                                 -{formatRupiah(expense.amount)}

@@ -16,7 +16,7 @@ export const SUPPLY_REQUEST_TYPE_LABELS: Record<SupplyRequestType, string> = {
 export const CreateSupplyRequestInput = z.object({
     storeId: UUIDSchema,
     dailySummaryId: UUIDSchema.optional(),
-    type: z.enum(SUPPLY_REQUEST_TYPES),
+    type: z.string().min(1).max(100),
     notes: z.string().max(500).optional(),
     photoUrl: z.string().url().optional(),
 });
@@ -32,10 +32,9 @@ export const SupplyRequestResponse = z.object({
     id: z.string(),
     storeId: z.string(),
     dailySummaryId: z.string().nullable(),
-    type: z.enum(SUPPLY_REQUEST_TYPES),
+    type: z.string(),
     notes: z.string().nullable(),
     photoUrl: z.string().nullable(),
-    status: z.enum(["pending", "acknowledged", "fulfilled"]),
     createdAt: z.string(),
     userId: z.string(),
 });

@@ -15,7 +15,7 @@ export interface CreateExpenseParams {
     userId: string;
     dailySummaryId: string;
     storeId: string;
-    expenseType: string;
+    type: string;
     amount: number;
 }
 
@@ -23,7 +23,7 @@ export interface UpdateExpenseParams {
     tenantId: string;
     userId: string;
     id: string;
-    expenseType?: string;
+    type?: string;
     amount?: number;
 }
 
@@ -67,7 +67,7 @@ export async function listExpenses(supabase: SupabaseClient, params: ListExpense
 }
 
 export async function createExpense(supabase: SupabaseClient, params: CreateExpenseParams) {
-    const { tenantId, userId, dailySummaryId, storeId, expenseType, amount } = params;
+    const { tenantId, userId, dailySummaryId, storeId, type, amount } = params;
 
     const { data: summary, error: summaryError } = await supabase
         .from("daily_summaries")
@@ -89,7 +89,7 @@ export async function createExpense(supabase: SupabaseClient, params: CreateExpe
 
     const { data: expenseData, error: expenseError } = await supabase
         .from("expenses")
-        .insert(toSnakeKeys({ dailySummaryId, storeId, expenseType, amount, tenantId: summary.tenant_id }))
+        .insert(toSnakeKeys({ dailySummaryId, storeId, type, amount, tenantId: summary.tenant_id }))
         .select()
         .single();
 
@@ -101,17 +101,17 @@ export async function createExpense(supabase: SupabaseClient, params: CreateExpe
     log("expense_created", {
         refId: (expenseData as { id: string }).id,
         refTable: "expenses",
-        metadata: { amount, description: expenseType },
+        metadata: { amount, type },
     });
 
     return toCamelKeys(expenseData);
 }
 
 export async function updateExpense(supabase: SupabaseClient, params: UpdateExpenseParams) {
-    const { tenantId, userId, id, expenseType, amount } = params;
+    const { tenantId, userId, id, type, amount } = params;
 
     const updates: Record<string, unknown> = {};
-    if (expenseType !== undefined) updates.expense_type = expenseType;
+    if (type !== undefined) updates.type = type;
     if (amount !== undefined) updates.amount = amount;
     if (Object.keys(updates).length === 0) throw new Error("No fields to update");
 
@@ -127,11 +127,11 @@ export async function updateExpense(supabase: SupabaseClient, params: UpdateExpe
 
     await recalcSummary(supabase, expenseData.daily_summary_id, tenantId);
 
-    const raw = expenseData as { id: string; store_id: string; amount: number; expense_type: string };
+    const raw = expenseData as { id: string; store_id: string; amount: number; type: string };
     createLogger(supabase, { tenantId, userId, storeId: raw.store_id })("expense_updated", {
         refId: raw.id,
         refTable: "expenses",
-        metadata: { amount: raw.amount, description: raw.expense_type },
+        metadata: { amount: raw.amount, type: raw.type },
     });
 
     return toCamelKeys(expenseData);
@@ -157,11 +157,11 @@ export async function deleteExpense(supabase: SupabaseClient, { tenantId, userId
 
     await recalcSummary(supabase, expense.daily_summary_id, tenantId);
 
-    const raw = expense as { id: string; store_id: string; amount: number; expense_type: string };
+    const raw = expense as { id: string; store_id: string; amount: number; type: string };
     createLogger(supabase, { tenantId, userId, storeId: raw.store_id })("expense_deleted", {
         refId: raw.id,
         refTable: "expenses",
-        metadata: { amount: raw.amount, description: raw.expense_type },
+        metadata: { amount: raw.amount, type: raw.type },
     });
 
     return toCamelKeys(expense);

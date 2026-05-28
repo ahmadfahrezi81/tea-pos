@@ -316,28 +316,37 @@ export type Database = {
           amount: number
           created_at: string
           daily_summary_id: string
-          expense_type: string
           id: string
+          notes: string | null
+          photo_url: string | null
           store_id: string
           tenant_id: string | null
+          type: string
+          user_id: string | null
         }
         Insert: {
           amount: number
           created_at?: string
           daily_summary_id: string
-          expense_type: string
           id?: string
+          notes?: string | null
+          photo_url?: string | null
           store_id: string
           tenant_id?: string | null
+          type: string
+          user_id?: string | null
         }
         Update: {
           amount?: number
           created_at?: string
           daily_summary_id?: string
-          expense_type?: string
           id?: string
+          notes?: string | null
+          photo_url?: string | null
           store_id?: string
           tenant_id?: string | null
+          type?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -361,46 +370,47 @@ export type Database = {
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "expenses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       incident_reports: {
         Row: {
-          category: string
           created_at: string
           daily_summary_id: string | null
-          description: string
           id: string
+          notes: string
           photo_url: string | null
-          status: string
           store_id: string
           tenant_id: string
-          title: string
+          type: string
           user_id: string
         }
         Insert: {
-          category: string
           created_at?: string
           daily_summary_id?: string | null
-          description: string
           id?: string
+          notes: string
           photo_url?: string | null
-          status?: string
           store_id: string
           tenant_id: string
-          title: string
+          type: string
           user_id: string
         }
         Update: {
-          category?: string
           created_at?: string
           daily_summary_id?: string | null
-          description?: string
           id?: string
+          notes?: string
           photo_url?: string | null
-          status?: string
           store_id?: string
           tenant_id?: string
-          title?: string
+          type?: string
           user_id?: string
         }
         Relationships: [
@@ -1152,7 +1162,6 @@ export type Database = {
           id: string
           notes: string | null
           photo_url: string | null
-          status: string
           store_id: string
           tenant_id: string
           type: string
@@ -1164,7 +1173,6 @@ export type Database = {
           id?: string
           notes?: string | null
           photo_url?: string | null
-          status?: string
           store_id: string
           tenant_id: string
           type: string
@@ -1176,7 +1184,6 @@ export type Database = {
           id?: string
           notes?: string | null
           photo_url?: string | null
-          status?: string
           store_id?: string
           tenant_id?: string
           type?: string

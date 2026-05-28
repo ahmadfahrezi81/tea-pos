@@ -187,7 +187,7 @@ export const SetExpenseModal = ({
                                                     className="flex justify-between items-center"
                                                 >
                                                     <span className="text-sm text-gray-600">
-                                                        {expense.expenseType}
+                                                        {expense.type}
                                                     </span>
                                                     <span className="text-sm font-medium text-gray-900">
                                                         Rp{" "}

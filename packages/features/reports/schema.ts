@@ -14,9 +14,8 @@ export const INCIDENT_CATEGORY_LABELS: Record<IncidentCategory, string> = {
 export const CreateIncidentReportInput = z.object({
     storeId: UUIDSchema,
     dailySummaryId: UUIDSchema.optional(),
-    category: z.enum(INCIDENT_CATEGORIES),
-    title: z.string().min(1).max(100),
-    description: z.string().min(1).max(1000),
+    type: z.string().min(1).max(100),
+    notes: z.string().min(1).max(1000),
     photoUrl: z.string().url().optional(),
 });
 export type CreateIncidentReportInput = z.infer<typeof CreateIncidentReportInput>;
@@ -31,11 +30,9 @@ export const IncidentReportResponse = z.object({
     id: z.string(),
     storeId: z.string(),
     dailySummaryId: z.string().nullable(),
-    category: z.enum(INCIDENT_CATEGORIES),
-    title: z.string(),
-    description: z.string(),
+    type: z.string(),
+    notes: z.string(),
     photoUrl: z.string().nullable(),
-    status: z.enum(["open", "acknowledged", "resolved"]),
     createdAt: z.string(),
     userId: z.string(),
 });

@@ -4,21 +4,10 @@ import { useStore } from "@/lib/context/StoreContext";
 import { useSupplyRequests } from "@/lib/hooks/requests/useSupplyRequests";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
-import { SUPPLY_REQUEST_TYPE_LABELS } from "@tea-pos/features/requests/schema";
+import { SUPPLY_REQUEST_TYPE_LABELS, SUPPLY_REQUEST_TYPES } from "@tea-pos/features/requests/schema";
+import type { SupplyRequestType } from "@tea-pos/features/requests/schema";
 import { FormFooter } from "@/components/shared/FormFooter";
 import { PackageSearch } from "lucide-react";
-
-const STATUS_LABEL: Record<string, string> = {
-    pending: "Pending",
-    acknowledged: "Acknowledged",
-    fulfilled: "Fulfilled",
-};
-
-const STATUS_STYLE: Record<string, string> = {
-    pending: "bg-yellow-50 text-yellow-700",
-    acknowledged: "bg-blue-50 text-blue-700",
-    fulfilled: "bg-green-50 text-green-700",
-};
 
 export default function RequestPage() {
     const { selectedStoreId } = useStore();
@@ -40,15 +29,14 @@ export default function RequestPage() {
                 <li key={r.id} className="flex items-start justify-between gap-3 px-4 py-3">
                     <div className="flex-1 min-w-0">
                         <p className="text-base font-medium text-gray-800">
-                            {SUPPLY_REQUEST_TYPE_LABELS[r.type]}
+                            {(SUPPLY_REQUEST_TYPES as readonly string[]).includes(r.type)
+                                ? SUPPLY_REQUEST_TYPE_LABELS[r.type as SupplyRequestType]
+                                : r.type}
                         </p>
                         {r.notes && (
                             <p className="text-sm text-gray-500 truncate mt-0.5">{r.notes}</p>
                         )}
                     </div>
-                    <span className={`shrink-0 text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLE[r.status] ?? "bg-gray-100 text-gray-600"}`}>
-                        {STATUS_LABEL[r.status] ?? r.status}
-                    </span>
                 </li>
             ))}
         </ul>

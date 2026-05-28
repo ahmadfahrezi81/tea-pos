@@ -36,7 +36,7 @@ export const CreateExpenseInput = z
         storeId: UUIDSchema.openapi({
             description: "ID of the store",
         }),
-        expenseType: z.string().min(1).max(100).openapi({
+        type: z.string().min(1).max(100).openapi({
             description: "Type/category of expense",
             example: "Supplies",
         }),
@@ -51,7 +51,7 @@ export const CreateExpenseInput = z
 export const UpdateExpenseInput = z
     .object({
         id: UUIDSchema,
-        expenseType: z.string().min(1).max(100).optional().openapi({
+        type: z.string().min(1).max(100).optional().openapi({
             description: "Type/category of expense",
             example: "Supplies",
         }),
@@ -87,10 +87,13 @@ export const ExpenseResponse = z
         id: UUIDSchema,
         dailySummaryId: UUIDSchema,
         storeId: UUIDSchema,
-        expenseType: z.string(),
+        type: z.string(),
         amount: z.number(),
         tenantId: UUIDSchema,
         createdAt: z.string(),
+        userId: UUIDSchema.nullable().optional(),
+        photoUrl: z.string().nullable().optional(),
+        notes: z.string().nullable().optional(),
         photos: z
             .array(
                 z.object({
@@ -139,6 +142,7 @@ export const DeleteExpenseResponse = z
 
 export type CreateExpenseInput = z.infer<typeof CreateExpenseInput>;
 export type UpdateExpenseInput = z.infer<typeof UpdateExpenseInput>;
+
 export type ListExpensesQuery = z.infer<typeof ListExpensesQuery>;
 export type ExpenseResponse = z.infer<typeof ExpenseResponse>;
 export type ExpenseListResponse = z.infer<typeof ExpenseListResponse>;

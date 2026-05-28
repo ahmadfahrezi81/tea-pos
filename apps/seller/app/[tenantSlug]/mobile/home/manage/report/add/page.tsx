@@ -10,15 +10,14 @@ import {
     INCIDENT_CATEGORIES,
     INCIDENT_CATEGORY_LABELS,
 } from "@tea-pos/features/reports/schema";
-import type { IncidentCategory } from "@tea-pos/features/reports/schema";
 import { SelectInput } from "../../_components/shared/SelectInput";
 import { Textarea } from "../../_components/shared/Textarea";
 import { PhotoPicker } from "../../_components/shared/PhotoPicker";
 import { FormFooter } from "@/components/shared/FormFooter";
 
-const CATEGORY_OPTIONS = INCIDENT_CATEGORIES.map((c) => ({
+const TYPE_OPTIONS = INCIDENT_CATEGORIES.map((c) => ({
     value: c,
-    label: INCIDENT_CATEGORY_LABELS[c],
+    label: c === "other" ? "Custom" : INCIDENT_CATEGORY_LABELS[c],
 }));
 
 export default function AddReportPage() {
@@ -27,19 +26,19 @@ export default function AddReportPage() {
     const { summaryId } = useSession(selectedStoreId);
     const { create } = useIncidentReports(selectedStoreId);
 
-    const [selectedCategory, setSelectedCategory] = useState<
-        IncidentCategory | ""
-    >("");
-    const [customTitle, setCustomTitle] = useState("");
-    const [description, setDescription] = useState("");
+    const [selectedType, setSelectedType] = useState("");
+    const [customType, setCustomType] = useState("");
+    const [notes, setNotes] = useState("");
     const [photoFile, setPhotoFile] = useState<File | null>(null);
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    const resolvedType = selectedType === "other" ? customType.trim() : selectedType;
+    const isValid = !!resolvedType && notes.trim().length > 0;
+
     const handleSubmit = async () => {
-        if (!selectedCategory || !description.trim() || !selectedStoreId)
-            return;
+        if (!isValid || !selectedStoreId) return;
         setIsSubmitting(true);
         setError(null);
         try {
@@ -50,65 +49,50 @@ export default function AddReportPage() {
                 form.append("prefix", "incident-reports");
                 const { url: uploadUrl } = await apiFetch<{ url: string }>(
                     "/api/upload",
-                    {
-                        method: "POST",
-                        body: form,
-                    },
+                    { method: "POST", body: form },
                 );
                 photoUrl = uploadUrl;
             }
-            const title =
-                selectedCategory === "other" && customTitle.trim()
-                    ? customTitle.trim()
-                    : INCIDENT_CATEGORY_LABELS[selectedCategory];
             await create({
-                category: selectedCategory as IncidentCategory,
-                title,
-                description: description.trim(),
+                type: resolvedType,
+                notes: notes.trim(),
                 photoUrl,
                 dailySummaryId: summaryId ?? undefined,
             });
             router.back();
         } catch (err) {
-            setError(
-                err instanceof Error ? err.message : "Failed to submit report",
-            );
+            setError(err instanceof Error ? err.message : "Failed to submit report");
         } finally {
             setIsSubmitting(false);
         }
     };
-
-    const isValid = !!selectedCategory && description.trim().length > 0;
 
     return (
         <div className="space-y-3 pb-4">
             <div className="bg-white rounded-xl p-4 space-y-4">
                 <div className="space-y-1.5">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                        Category
+                        Type
                     </p>
                     <SelectInput
-                        options={CATEGORY_OPTIONS}
-                        value={selectedCategory}
-                        onChange={(v) => {
-                            setSelectedCategory(v as IncidentCategory | "");
-                            setCustomTitle("");
-                        }}
-                        placeholder="Select category..."
+                        options={TYPE_OPTIONS}
+                        value={selectedType}
+                        onChange={(v) => { setSelectedType(v); setCustomType(""); }}
+                        placeholder="Select type..."
                         otherTriggerValue="other"
-                        otherValue={customTitle}
-                        onOtherChange={setCustomTitle}
-                        otherPlaceholder="Describe the incident..."
+                        otherValue={customType}
+                        onOtherChange={setCustomType}
+                        otherPlaceholder="Describe the incident type..."
                     />
                 </div>
 
                 <div className="space-y-1.5">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                        Description
+                        Notes
                     </p>
                     <Textarea
-                        value={description}
-                        onChange={setDescription}
+                        value={notes}
+                        onChange={setNotes}
                         placeholder="Describe what happened"
                         rows={4}
                         maxLength={1000}
@@ -121,14 +105,8 @@ export default function AddReportPage() {
                     </p>
                     <PhotoPicker
                         previewUrl={photoPreview}
-                        onCapture={(file, url) => {
-                            setPhotoFile(file);
-                            setPhotoPreview(url);
-                        }}
-                        onRemove={() => {
-                            setPhotoFile(null);
-                            setPhotoPreview(null);
-                        }}
+                        onCapture={(file, url) => { setPhotoFile(file); setPhotoPreview(url); }}
+                        onRemove={() => { setPhotoFile(null); setPhotoPreview(null); }}
                         onError={(msg) => setError(msg)}
                     />
                 </div>

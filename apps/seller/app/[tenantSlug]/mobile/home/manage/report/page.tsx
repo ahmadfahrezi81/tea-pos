@@ -4,21 +4,10 @@ import { useStore } from "@/lib/context/StoreContext";
 import { useIncidentReports } from "@/lib/hooks/reports/useIncidentReports";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
-import { INCIDENT_CATEGORY_LABELS } from "@tea-pos/features/reports/schema";
+import { INCIDENT_CATEGORIES, INCIDENT_CATEGORY_LABELS } from "@tea-pos/features/reports/schema";
+import type { IncidentCategory } from "@tea-pos/features/reports/schema";
 import { FormFooter } from "@/components/shared/FormFooter";
 import { ClipboardList } from "lucide-react";
-
-const STATUS_LABEL: Record<string, string> = {
-    open: "Open",
-    acknowledged: "Acknowledged",
-    resolved: "Resolved",
-};
-
-const STATUS_STYLE: Record<string, string> = {
-    open: "bg-red-50 text-red-700",
-    acknowledged: "bg-yellow-50 text-yellow-700",
-    resolved: "bg-green-50 text-green-700",
-};
 
 export default function ReportPage() {
     const { selectedStoreId } = useStore();
@@ -37,16 +26,17 @@ export default function ReportPage() {
     ) : (
         <ul className="divide-y divide-gray-100">
             {reports.map((r) => (
-                <li key={r.id} className="flex items-start justify-between gap-3 px-4 py-3">
+                <li key={r.id} className="flex items-start gap-3 px-4 py-3">
                     <div className="flex-1 min-w-0">
-                        <p className="text-base font-medium text-gray-800 truncate">{r.title}</p>
-                        <p className="text-sm text-gray-500 mt-0.5">
-                            {INCIDENT_CATEGORY_LABELS[r.category]}
+                        <p className="text-base font-medium text-gray-800 truncate">
+                            {(INCIDENT_CATEGORIES as readonly string[]).includes(r.type)
+                                ? INCIDENT_CATEGORY_LABELS[r.type as IncidentCategory]
+                                : r.type}
                         </p>
+                        {r.notes && (
+                            <p className="text-sm text-gray-500 mt-0.5 truncate">{r.notes}</p>
+                        )}
                     </div>
-                    <span className={`shrink-0 text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLE[r.status] ?? "bg-gray-100 text-gray-600"}`}>
-                        {STATUS_LABEL[r.status] ?? r.status}
-                    </span>
                 </li>
             ))}
         </ul>
