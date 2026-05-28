@@ -203,7 +203,7 @@ export function AtAGlance({
             {/* Scrollable progress bar */}
             <div
                 ref={scrollRef}
-                className="overflow-x-auto overflow-y-visible [&::-webkit-scrollbar]:h-0.5 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:mx-6"
+                className="overflow-x-auto overflow-y-visible [&::-webkit-scrollbar]:hidden"
             >
                 <div style={{ width: dynamicBarWidth }} className="relative px-4 py-4 pb-8">
                     <div className="relative flex items-center">
@@ -273,14 +273,14 @@ export function AtAGlance({
                                         onClick={() =>
                                             setActiveEventId(isActive ? null : event.id)
                                         }
-                                        className={`w-9 h-9 rounded-lg flex items-center justify-center border-2 border-white shadow-sm transition-colors duration-300 ${
+                                        className={`w-10 h-10 rounded-lg flex items-center justify-center border-2 border-white shadow-sm transition-colors duration-300 ${
                                             isPassed
                                                 ? (EVENT_COLOR[event.type] ?? "bg-gray-400")
                                                 : "bg-gray-200"
                                         }`}
                                     >
                                         <Icon
-                                            size={18}
+                                            size={24}
                                             strokeWidth={2}
                                             className={isPassed ? "text-white" : "text-gray-400"}
                                         />
