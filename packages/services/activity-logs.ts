@@ -6,8 +6,11 @@ import type { ActivityLogType } from "@tea-pos/features/activity-logs/schema";
 const TIMELINE_EVENT_TYPES: ActivityLogType[] = [
     "store_open",
     "session_transferred",
+    "session_ended",
     "expense_created",
     "daily_summary_closed",
+    "supply_request_created",
+    "incident_report_created",
 ];
 
 export async function listStoreActivityLogs(
