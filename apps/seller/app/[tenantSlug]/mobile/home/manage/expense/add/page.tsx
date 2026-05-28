@@ -98,7 +98,7 @@ export default function AddExpensePage() {
             </div>
 
             <FormFooter
-                label="Save Expense"
+                label="Submit Store Expense"
                 loadingLabel="Saving..."
                 onSubmit={handleSubmit}
                 disabled={!isValid}

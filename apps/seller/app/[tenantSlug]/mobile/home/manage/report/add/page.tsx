@@ -115,7 +115,7 @@ export default function AddReportPage() {
             </div>
 
             <FormFooter
-                label="Submit Report"
+                label="Submit Store Report"
                 loadingLabel="Submitting..."
                 onSubmit={handleSubmit}
                 disabled={!isValid}

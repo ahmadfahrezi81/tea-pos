@@ -7,7 +7,7 @@ import { Expense } from "@tea-pos/features/expenses/schema";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 import { toIndonesiaMonthYear } from "@tea-pos/utils/server-config/timezone";
 import { getCurrentLocalMonth } from "@tea-pos/utils/time";
-import { Calendar, CalendarDays, AlertTriangle, Receipt, MoreVertical, Info, Zap } from "lucide-react";
+import { Calendar, CalendarDays, AlertTriangle, Receipt, MoreVertical, Info, Activity } from "lucide-react";
 import { DetailsDrawer } from "./_components/DetailsDrawer";
 import { useStore } from "@/lib/context/StoreContext";
 import {
@@ -181,15 +181,15 @@ export default function MobileAnalytics() {
                                         <div className="flex justify-between items-start mb-3">
                                             <div>
                                                 <div className="flex items-center gap-2">
-                                                    <h3 className="text-lg font-semibold text-gray-800">
+                                                    <h3 className="text-xl font-bold text-gray-800">
                                                         {formatDate(summary.date)}
                                                     </h3>
                                                     {summary.closedAt ? (
-                                                        <span className="bg-red-100 text-red-800 px-2 py-0.5 rounded-full text-xs font-medium">
+                                                        <span className="bg-red-100 text-red-800 px-2 py-0.5 rounded-full text-sm font-medium self-center">
                                                             Closed
                                                         </span>
                                                     ) : (
-                                                        <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs font-medium">
+                                                        <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-sm font-medium self-center">
                                                             Open
                                                         </span>
                                                     )}
@@ -199,9 +199,9 @@ export default function MobileAnalytics() {
                                             <div className="relative">
                                                 <button
                                                     onClick={() => setOpenMenuId(openMenuId === summary.id ? null : summary.id)}
-                                                    className="w-8 h-8 flex items-center justify-center rounded-lg active:bg-gray-100 active:scale-95 text-brand"
+                                                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-brand active:opacity-80 active:scale-95 text-white transition-transform duration-100"
                                                 >
-                                                    <MoreVertical size={22} strokeWidth={2.5} />
+                                                    <MoreVertical size={24} strokeWidth={2} />
                                                 </button>
                                                 {openMenuId === summary.id && (
                                                     <>
@@ -216,9 +216,9 @@ export default function MobileAnalytics() {
                                                                     setSelectedSummary(summaryWithExtras);
                                                                     setShowDetailsModal(true);
                                                                 }}
-                                                                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 active:bg-gray-50 flex items-center gap-2.5"
+                                                                className="w-full text-left px-4 py-2.5 text-sm text-gray-900 font-medium active:bg-gray-50 flex items-center gap-2.5"
                                                             >
-                                                                <Info size={15} className="text-gray-400" />
+                                                                <Info size={15} className="text-gray-600" />
                                                                 Details
                                                             </button>
                                                             <button
@@ -226,9 +226,9 @@ export default function MobileAnalytics() {
                                                                     setOpenMenuId(null);
                                                                     navigation.push(url(`/mobile/analytics/daily/${summary.id}/events?storeId=${selectedStoreId}&date=${summary.date}`));
                                                                 }}
-                                                                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 active:bg-gray-50 flex items-center gap-2.5"
+                                                                className="w-full text-left px-4 py-2.5 text-sm text-gray-900 font-medium active:bg-gray-50 flex items-center gap-2.5"
                                                             >
-                                                                <Zap size={15} className="text-gray-400" />
+                                                                <Activity size={15} className="text-gray-600" />
                                                                 Day Activity
                                                             </button>
                                                         </div>

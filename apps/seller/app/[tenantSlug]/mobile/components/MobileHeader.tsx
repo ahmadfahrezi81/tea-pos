@@ -1,5 +1,5 @@
 "use client";
-import { ArrowLeft, ChevronsUpDown, UserCircle, Plus } from "lucide-react";
+import { ArrowLeft, X, ChevronsUpDown, UserCircle, Plus } from "lucide-react";
 import Image from "next/image";
 import { resolveRoute } from "../config/navigation";
 import { navigation } from "@tea-pos/utils/navigation";
@@ -45,7 +45,7 @@ export function MobileHeader({
                                         onClick={onBack}
                                         className="text-gray-900 active:scale-95 self-start pr-2 pl-0 py-1"
                                     >
-                                        <ArrowLeft size={28} strokeWidth={2} />
+                                        <ArrowLeft size={30} strokeWidth={2.5} />
                                     </button>
                                     <div className="flex items-center justify-between">
                                         <p className="text-2xl font-bold tracking-tight text-gray-900">
@@ -53,26 +53,24 @@ export function MobileHeader({
                                         </p>
                                         <button
                                             onClick={() => navigation.push(`${currentPath}/add`)}
-                                            className="w-11 h-11 rounded-xl bg-white flex items-center justify-center text-brand active:scale-95"
+                                            className="w-11 h-11 rounded-xl bg-brand flex items-center justify-center text-white active:scale-95"
                                             aria-label="Add"
                                         >
-                                            <Plus size={32} strokeWidth={3.5} />
+                                            <Plus size={30} strokeWidth={2.5} />
                                         </button>
                                     </div>
                                 </div>
                             ) : (
-                                <div className="flex items-center gap-1">
+                                <div className="flex items-center gap-2">
                                     <button
                                         onClick={onBack}
                                         className="text-gray-900 active:scale-95 pr-2 pl-0 py-1"
                                     >
-                                        <ArrowLeft size={28} strokeWidth={2} />
+                                        <X size={30} strokeWidth={2.5} />
                                     </button>
-                                    {currentTitle && (
-                                        <p className="text-xl font-semibold tracking-tight text-gray-900">
-                                            {currentTitle}
-                                        </p>
-                                    )}
+                                    <p className="text-2xl font-bold tracking-tight text-gray-900">
+                                        {currentTitle}
+                                    </p>
                                 </div>
                             )
                         ) : isChart ? (
@@ -81,7 +79,7 @@ export function MobileHeader({
                                     onClick={onBack}
                                     className="text-gray-900 active:scale-95 self-start pr-2 pl-0 py-1"
                                 >
-                                    <ArrowLeft size={28} strokeWidth={2} />
+                                    <ArrowLeft size={30} strokeWidth={2.5} />
                                 </button>
                                 <div className="flex items-center gap-2">
                                     <p className="text-2xl font-semibold tracking-tight text-gray-900">
@@ -110,7 +108,7 @@ export function MobileHeader({
                                     onClick={onBack}
                                     className="text-gray-900 active:scale-95 self-start pr-2 pl-0 py-1"
                                 >
-                                    <ArrowLeft size={28} strokeWidth={2} />
+                                    <ArrowLeft size={30} strokeWidth={2.5} />
                                 </button>
                                 <p className="text-2xl font-bold tracking-tight text-gray-900">
                                     {currentTitle}

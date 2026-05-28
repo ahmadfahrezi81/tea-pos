@@ -103,7 +103,7 @@ export default function AddRequestPage() {
             </div>
 
             <FormFooter
-                label="Send Request"
+                label="Submit Store Request"
                 loadingLabel="Sending..."
                 onSubmit={handleSubmit}
                 disabled={!selectedType}

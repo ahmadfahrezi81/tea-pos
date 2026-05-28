@@ -48,7 +48,7 @@ export default function ReportPage() {
                 {inner}
             </div>
             <FormFooter
-                label="New Report"
+                label="New Store Report"
                 onSubmit={() => navigation.push(url("/mobile/home/manage/report/add"))}
             />
         </>

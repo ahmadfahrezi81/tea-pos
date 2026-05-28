@@ -90,19 +90,19 @@ export default function MobileManage() {
             <div className="bg-white rounded-2xl px-4 py-1">
                 <ActionRow
                     icon={<DollarSign size={22} strokeWidth={2} className={dimmed ? "text-gray-400" : "text-blue-600"} />}
-                    label="Add Expenses"
+                    label="Store Expenses"
                     onClick={() => navigation.push(url("/mobile/home/manage/expense"))}
                     disabled={dimmed}
                 />
                 <ActionRow
                     icon={<PackagePlus size={22} strokeWidth={2} className={dimmed ? "text-gray-400" : "text-emerald-600"} />}
-                    label="Request Supplies"
+                    label="Store Requests"
                     onClick={() => navigation.push(url("/mobile/home/manage/request"))}
                     disabled={dimmed}
                 />
                 <ActionRow
                     icon={<AlertTriangle size={22} strokeWidth={2} className="text-orange-500" />}
-                    label="Report Issue"
+                    label="Store Reports"
                     onClick={() => navigation.push(url("/mobile/home/manage/report"))}
                 />
                 <ActionRow

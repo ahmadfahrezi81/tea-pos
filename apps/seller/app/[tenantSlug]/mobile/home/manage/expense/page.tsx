@@ -63,7 +63,7 @@ export default function ExpensePage() {
                 {inner}
             </div>
             <FormFooter
-                label="Add Expense"
+                label="New Store Expense"
                 onSubmit={() => navigation.push(url("/mobile/home/manage/expense/add"))}
             />
         </>

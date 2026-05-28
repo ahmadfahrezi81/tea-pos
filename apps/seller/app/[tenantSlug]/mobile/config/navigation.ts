@@ -50,7 +50,7 @@ export const mobileRoutes = {
         parent: "/mobile/home/manage",
     },
     "/mobile/home/manage/expense": {
-        title: "Expenses",
+        title: "Store Expenses",
         subPage: true,
         inlineHeader: true,
         isChart: false,
@@ -58,7 +58,7 @@ export const mobileRoutes = {
         headerAction: "add",
     },
     "/mobile/home/manage/expense/add": {
-        title: "Add Expense",
+        title: "New Store Expense",
         subPage: true,
         inlineHeader: false,
         isChart: false,
@@ -132,7 +132,7 @@ export const mobileRoutes = {
     "/mobile/account/details": {
         title: "Personal Details",
         subPage: true,
-        inlineHeader: true,
+        inlineHeader: false,
         isChart: false,
         parent: "/mobile/account",
     },
@@ -172,7 +172,7 @@ export const mobileRoutes = {
         parent: "/mobile/analytics",
     },
     "/mobile/home/manage/request": {
-        title: "Request Supplies",
+        title: "Store Requests",
         subPage: true,
         inlineHeader: true,
         isChart: false,
@@ -180,14 +180,14 @@ export const mobileRoutes = {
         headerAction: "add",
     },
     "/mobile/home/manage/request/add": {
-        title: "New Request",
+        title: "New Store Request",
         subPage: true,
         inlineHeader: false,
         isChart: false,
         parent: "/mobile/home/manage/request",
     },
     "/mobile/home/manage/report": {
-        title: "Report Issue",
+        title: "Store Reports",
         subPage: true,
         inlineHeader: true,
         isChart: false,
@@ -195,7 +195,7 @@ export const mobileRoutes = {
         headerAction: "add",
     },
     "/mobile/home/manage/report/add": {
-        title: "New Report",
+        title: "New Store Report",
         subPage: true,
         inlineHeader: false,
         isChart: false,
@@ -204,21 +204,21 @@ export const mobileRoutes = {
     "/mobile/account/earnings": {
         title: "My Earnings",
         subPage: true,
-        inlineHeader: true,
+        inlineHeader: false,
         isChart: false,
         parent: "/mobile/account",
     },
     "/mobile/account/earnings/*": {
         title: "Period Detail",
         subPage: true,
-        inlineHeader: true,
+        inlineHeader: false,
         isChart: false,
         parent: "/mobile/account/earnings",
     },
     "/mobile/account/reimbursements": {
         title: "Reimbursements",
         subPage: true,
-        inlineHeader: true,
+        inlineHeader: false,
         isChart: false,
         parent: "/mobile/account",
     },

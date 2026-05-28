@@ -48,7 +48,7 @@ export default function RequestPage() {
                 {inner}
             </div>
             <FormFooter
-                label="New Request"
+                label="New Store Request"
                 onSubmit={() => navigation.push(url("/mobile/home/manage/request/add"))}
             />
         </>
