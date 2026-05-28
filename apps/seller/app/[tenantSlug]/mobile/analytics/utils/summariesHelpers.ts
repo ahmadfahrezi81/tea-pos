@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // utils/summariesHelpers.ts
 // Compatible with the new summaries hook (camelCase fields)
+import { getCurrentLocalMonth } from "@tea-pos/utils/time";
 
 type ProductInfo = {
     quantity?: number;
@@ -18,8 +19,7 @@ type SummariesLike = {
 // ---------------------------------------------------------------------------
 
 export const isCurrentMonthSelected = (selectedMonth: string): boolean => {
-    const currentMonth = new Date().toISOString().slice(0, 7);
-    return selectedMonth === currentMonth;
+    return selectedMonth === getCurrentLocalMonth();
 };
 
 export const formatDate = (dateStr: string): string => {

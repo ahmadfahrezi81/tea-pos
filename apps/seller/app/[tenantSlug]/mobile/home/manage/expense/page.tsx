@@ -8,12 +8,13 @@ import { navigation } from "@tea-pos/utils/navigation";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 import { FormFooter } from "@/components/shared/FormFooter";
 import { Receipt } from "lucide-react";
+import { getTodayLocalStr, getCurrentLocalMonth } from "@tea-pos/utils/time";
 
 export default function ExpensePage() {
     const { selectedStoreId } = useStore();
     const { url } = useTenantSlug();
-    const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
-    const currentMonth = useMemo(() => new Date().toISOString().slice(0, 7), []);
+    const todayStr = useMemo(() => getTodayLocalStr(), []);
+    const currentMonth = useMemo(() => getCurrentLocalMonth(), []);
 
     const { data: summariesData, isLoading } = useSummaries(selectedStoreId, currentMonth);
 

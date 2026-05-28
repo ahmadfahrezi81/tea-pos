@@ -6,6 +6,7 @@ import { DailySummary } from "@tea-pos/features/summaries/schema";
 import { Expense } from "@tea-pos/features/expenses/schema";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 import { toIndonesiaMonthYear } from "@tea-pos/utils/server-config/timezone";
+import { getCurrentLocalMonth } from "@tea-pos/utils/time";
 import { Calendar, CalendarDays, AlertTriangle, Receipt, MoreVertical, Info, Zap } from "lucide-react";
 import { DetailsDrawer } from "./_components/DetailsDrawer";
 import { useStore } from "@/lib/context/StoreContext";
@@ -47,7 +48,7 @@ export default function MobileAnalytics() {
     const { url } = useTenantSlug();
 
     const [selectedMonth, setSelectedMonth] = useState<string>(
-        new Date().toISOString().slice(0, 7),
+        getCurrentLocalMonth(),
     );
     const [selectedSummary, setSelectedSummary] =
         useState<DailySummaryWithExtras | null>(null);

@@ -7,6 +7,7 @@ import { useSummaries } from "@/lib/hooks/summaries/useDailySummaries";
 import { SelectInput } from "../../_components/shared/SelectInput";
 import { NumberInput } from "../../_components/shared/NumberInput";
 import { FormFooter } from "@/components/shared/FormFooter";
+import { getTodayLocalStr, getCurrentLocalMonth } from "@tea-pos/utils/time";
 
 const EXPENSE_OPTIONS = [
     { value: "Ice", label: "Ice" },
@@ -18,8 +19,8 @@ export default function AddExpensePage() {
     const router = useRouter();
     const { selectedStoreId } = useStore();
 
-    const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
-    const currentMonth = useMemo(() => new Date().toISOString().slice(0, 7), []);
+    const todayStr = useMemo(() => getTodayLocalStr(), []);
+    const currentMonth = useMemo(() => getCurrentLocalMonth(), []);
 
     const { data: summariesData, isLoading, createExpenses } = useSummaries(selectedStoreId, currentMonth);
 

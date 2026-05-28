@@ -7,6 +7,7 @@ import { useSummaryPhotos } from "@/lib/hooks/summaries/useSummaryPhotos";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
 import { isEnabled } from "@tea-pos/features/shared/features";
+import { getTodayLocalStr } from "@tea-pos/utils/time";
 import { PhotoPicker } from "../_components/shared/PhotoPicker";
 import { NumberInput } from "../_components/shared/NumberInput";
 import { FormFooter } from "@/components/shared/FormFooter";
@@ -17,7 +18,7 @@ export default function OpenStorePage() {
     const { gate, openStore, resumeSession } = useSession(selectedStoreId);
     const { uploadPhoto } = useSummaryPhotos();
 
-    const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
+    const todayStr = useMemo(() => getTodayLocalStr(), []);
     const [openingBalance, setOpeningBalance] = useState(0);
     const [photo, setPhoto] = useState<{ file: File; preview: string } | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);

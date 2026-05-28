@@ -22,6 +22,7 @@ import { navigation } from "@tea-pos/utils/navigation";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/lib/context/ToastContext";
 import { isEnabled } from "@tea-pos/features/shared/features";
+import { getTodayLocalStr, getCurrentLocalMonth } from "@tea-pos/utils/time";
 import { useMobileFooterSlot } from "../../../components/MobileFooterSlotContext";
 
 // ============================================================================
@@ -58,9 +59,9 @@ export default function ManageCloseDayPage() {
     const paramSummaryId = searchParams.get("summaryId");
     const paramMonth = searchParams.get("month");
 
-    const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
+    const todayStr = useMemo(() => getTodayLocalStr(), []);
     const currentMonth = useMemo(
-        () => paramMonth ?? new Date().toISOString().slice(0, 7),
+        () => paramMonth ?? getCurrentLocalMonth(),
         [paramMonth],
     );
 

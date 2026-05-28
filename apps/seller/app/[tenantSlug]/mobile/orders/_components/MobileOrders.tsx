@@ -5,6 +5,7 @@ import { Calendar, CalendarDays, Receipt } from "lucide-react";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 import CopyableField from "@/components/shared/CopyableField";
 import { useStore } from "@/lib/context/StoreContext";
+import { getTodayLocalStr } from "@tea-pos/utils/time";
 
 import dynamic from "next/dynamic";
 
@@ -157,7 +158,7 @@ export default function MobileOrders() {
                         const newValue = e.target.value;
                         setSelectedDate(
                             newValue === ""
-                                ? new Date().toISOString().split("T")[0]
+                                ? getTodayLocalStr()
                                 : newValue,
                         );
                     }}
