@@ -13,13 +13,13 @@ export async function GET(request: NextRequest) {
         const storeId = new URL(request.url).searchParams.get("storeId") ?? undefined;
         const props = { role: user.role, tenantId, ...(storeId && { storeId }) };
 
-        const flags = await getAllFlags(user.id, props);
+        const evaluation = await getAllFlags(user.id, props);
 
         return ok({
-            qris: flags.isEnabled(FLAGS.FEATURE.QRIS),
-            payroll: flags.isEnabled(FLAGS.FEATURE.PAYROLL),
-            reimbursement: flags.isEnabled(FLAGS.FEATURE.REIMBURSEMENT),
-            skipManagePhotos: flags.isEnabled(FLAGS.OPS.SKIP_MANAGE_PHOTOS),
+            qris: evaluation.isEnabled(FLAGS.FEATURE.QRIS),
+            payroll: evaluation.isEnabled(FLAGS.FEATURE.PAYROLL),
+            reimbursement: evaluation.isEnabled(FLAGS.FEATURE.REIMBURSEMENT),
+            skipManagePhotos: evaluation.isEnabled(FLAGS.OPS.SKIP_MANAGE_PHOTOS),
         });
     } catch (error) {
         return handleError("GET /api/flags", error);
