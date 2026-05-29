@@ -8,6 +8,7 @@ import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { Pencil, Bell, Globe, ChevronRight, UserCircle, Banknote, ReceiptText } from "lucide-react";
 import Image from "next/image";
 import { navigation } from "@tea-pos/utils/navigation";
+import { useFlags } from "@/lib/context/FlagsContext";
 
 // ============================================================================
 // SETTINGS ROW
@@ -53,6 +54,7 @@ export default function AccountProfile() {
     const router = useRouter();
     const { url } = useTenantSlug();
     const { user, avatarUrl } = useAuth();
+    const { payroll, reimbursement } = useFlags();
 
     const handleLogout = useCallback(async () => {
         const shouldLogout = window.confirm(
@@ -109,11 +111,13 @@ export default function AccountProfile() {
                     icon={<Banknote size={22} strokeWidth={2} className="text-gray-900" />}
                     label="My Earnings"
                     onClick={() => navigation.push(url("/mobile/account/earnings"))}
+                    disabled={!payroll}
                 />
                 <SettingsRow
                     icon={<ReceiptText size={22} strokeWidth={2} className="text-gray-900" />}
                     label="Reimbursements"
                     onClick={() => navigation.push(url("/mobile/account/reimbursements"))}
+                    disabled={!reimbursement}
                 />
                 <SettingsRow
                     icon={<Bell size={22} strokeWidth={2} className="text-gray-900" />}

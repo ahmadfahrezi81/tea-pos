@@ -7,7 +7,7 @@ import type { CartItem } from "@/lib/hooks/orders/useCart";
 import { useState, useEffect, useMemo, memo, useCallback } from "react";
 import { QrisCode } from "./QrisCode";
 import { useQrisPayment } from "@/lib/hooks/payments/useQrisPayment";
-import { useFeatures } from "@/lib/context/features-provider";
+import { useFlags } from "@/lib/context/FlagsContext";
 import { useToast } from "@/lib/context/ToastContext";
 
 interface CartDrawerProps {
@@ -35,7 +35,7 @@ export const CartDrawer = memo(function CartDrawer({
     processing,
     selectedStoreId,
 }: CartDrawerProps) {
-    const { qris } = useFeatures();
+    const { qris } = useFlags();
     const { showToast } = useToast();
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
     const [showSuccess, setShowSuccess] = useState(false);

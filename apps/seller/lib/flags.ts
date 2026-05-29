@@ -9,20 +9,33 @@ function getFlagClient(): PostHog {
     });
 }
 
-export async function isFlagEnabled(
-    flag: string,
+type FlagEvaluations = { isEnabled: (flag: string) => boolean };
+const DISABLED: FlagEvaluations = { isEnabled: () => false };
+
+// For bulk evaluation (e.g. GET /api/flags) — one client, one network call.
+export async function getAllFlags(
     userId: string,
     properties?: Record<string, string>,
-): Promise<boolean> {
+): Promise<FlagEvaluations> {
     const client = getFlagClient();
     try {
         const flags = await client.evaluateFlags(userId, {
             personProperties: properties,
         });
         after(() => client.shutdown());
-        return flags.isEnabled(flag);
+        return flags;
     } catch {
         await client.shutdown();
-        return false;
+        return DISABLED;
     }
+}
+
+// For single-flag checks in individual API routes (hard gates).
+export async function isFlagEnabled(
+    flag: string,
+    userId: string,
+    properties?: Record<string, string>,
+): Promise<boolean> {
+    const flags = await getAllFlags(userId, properties);
+    return flags.isEnabled(flag);
 }

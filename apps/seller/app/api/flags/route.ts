@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { getRequestUser } from "@/lib/auth/get-request-user";
 import { getCurrentTenantId } from "@tea-pos/utils/server-config/tenant";
-import { isFlagEnabled } from "@/lib/flags";
+import { getAllFlags } from "@/lib/flags";
 import { ok, unauthorized, handleError } from "@/lib/api/response";
 
 export async function GET(request: NextRequest) {
@@ -13,14 +13,14 @@ export async function GET(request: NextRequest) {
         const storeId = new URL(request.url).searchParams.get("storeId") ?? undefined;
         const props = { role: user.role, tenantId, ...(storeId && { storeId }) };
 
-        const [qris, payroll, reimbursement, skipManagePhotos] = await Promise.all([
-            isFlagEnabled("qris", user.id, props),
-            isFlagEnabled("payroll", user.id, props),
-            isFlagEnabled("reimbursement", user.id, props),
-            isFlagEnabled("skip-manage-photos", user.id, props),
-        ]);
+        const flags = await getAllFlags(user.id, props);
 
-        return ok({ qris, payroll, reimbursement, skipManagePhotos });
+        return ok({
+            qris: flags.isEnabled("qris"),
+            payroll: flags.isEnabled("payroll"),
+            reimbursement: flags.isEnabled("reimbursement"),
+            skipManagePhotos: flags.isEnabled("skip-manage-photos"),
+        });
     } catch (error) {
         return handleError("GET /api/flags", error);
     }

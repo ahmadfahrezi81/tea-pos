@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface NumberInputProps {
     value: number;
@@ -13,15 +13,22 @@ const formatDisplay = (val: number) =>
 
 export function NumberInput({ value, onChange, placeholder = "0" }: NumberInputProps) {
     const [localValue, setLocalValue] = useState(formatDisplay(value));
+    const dirty = useRef(false);
 
+    // Only sync from parent when the user hasn't touched the field yet.
+    // Once dirty, the user's typed value (including "0") takes precedence.
     useEffect(() => {
-        setLocalValue(formatDisplay(value));
+        if (!dirty.current) {
+            setLocalValue(formatDisplay(value));
+        }
     }, [value]);
 
     const handleChange = (raw: string) => {
+        dirty.current = true;
         const digits = raw.replace(/\D/g, "");
         const num = parseInt(digits) || 0;
-        setLocalValue(formatDisplay(num));
+        // Use toLocaleString directly so "0" stays visible after typing it.
+        setLocalValue(digits === "" ? "" : num.toLocaleString("id-ID"));
         onChange(num);
     };
 

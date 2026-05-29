@@ -21,6 +21,7 @@ export default function OpenStorePage() {
 
     const todayStr = useMemo(() => getTodayLocalStr(), []);
     const [openingBalance, setOpeningBalance] = useState(0);
+    const [balanceConfirmed, setBalanceConfirmed] = useState(false);
     const [photo, setPhoto] = useState<{ file: File; preview: string } | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -58,7 +59,8 @@ export default function OpenStorePage() {
         (!!photo || skipPhotos) &&
         !isSubmitting &&
         !!selectedStoreId &&
-        (gate === "no_summary" || gate === "no_session");
+        (gate === "no_summary" || gate === "no_session") &&
+        (gate === "no_session" || balanceConfirmed);
 
     return (
         <div className="space-y-4 pb-4">
@@ -84,9 +86,15 @@ export default function OpenStorePage() {
                 <div className="bg-white rounded-xl p-4 space-y-2">
                     <div className="flex items-center gap-1">
                         <span className="text-sm font-medium text-gray-700">Opening Balance</span>
-                        <span className="text-xs text-gray-400">(optional)</span>
+                        <span className="text-xs text-red-400 font-medium">Required</span>
                     </div>
-                    <NumberInput value={openingBalance} onChange={setOpeningBalance} />
+                    <NumberInput
+                        value={openingBalance}
+                        onChange={(val) => {
+                            setOpeningBalance(val);
+                            setBalanceConfirmed(true);
+                        }}
+                    />
                     <p className="text-xs text-gray-400">Cash on hand at the start of the day</p>
                 </div>
             )}
