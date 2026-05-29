@@ -13,7 +13,6 @@ interface MobileFooterNavProps {
     currentPath: string;
     onTabClick: (path: string) => void;
     isIPhonePWA: boolean;
-    storesReady: boolean;
 }
 
 export function MobileFooterNav({
@@ -21,11 +20,8 @@ export function MobileFooterNav({
     currentPath,
     onTabClick,
     isIPhonePWA,
-    storesReady,
 }: MobileFooterNavProps) {
     const wrapperClass = `flex p-1 ${isIPhonePWA ? "pb-8" : ""}`;
-
-    if (!storesReady) return null;
 
     return (
         <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">

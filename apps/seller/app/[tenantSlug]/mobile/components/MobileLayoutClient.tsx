@@ -48,13 +48,11 @@ export default function MobileLayoutClient({
     const { selectedStore, setIsPickerOpen, isPickerOpen } = useStore();
     const isIPhonePWA = useIsIPhonePWA();
 
-    const storesReady = !!storesData;
-
     useEffect(() => {
-        if (user) {
+        if (user && storesData !== undefined) {
             setShellReady(true);
         }
-    }, [user]);
+    }, [user, storesData]);
 
     const rootTabPaths = useMemo(() => rootTabSuffixes.map(url), [url]);
 
@@ -138,6 +136,7 @@ export default function MobileLayoutClient({
     const currentIsSubPage = currentRoute?.subPage ?? false;
     const isInlineHeader = currentRoute?.inlineHeader ?? false;
     const hasHeaderAction = currentRoute?.headerAction === "add";
+    const footerCtaLabel = currentRoute?.footerCta;
     const parentSuffix = currentRoute?.parent;
     const parentPath = !parentSuffix
         ? url("/mobile")
@@ -154,78 +153,12 @@ export default function MobileLayoutClient({
             ? "pt-27"
             : "pt-19";
 
-    const scrollPaddingBottom = hasHeaderAction ? "pb-32" : "pb-28";
-
-    if (!shellReady) {
-        return (
-            <div className="h-dvh overflow-hidden bg-white flex flex-col items-center justify-center">
-                <div className="text-center" role="status" aria-live="polite">
-                    <div className="mb-8">
-                        <Image
-                            src="/icons/icon-192x192.png"
-                            alt="Logo"
-                            width={70}
-                            height={70}
-                            priority
-                            className="rounded-xl shadow-2xl mx-auto"
-                        />
-                    </div>
-                    <div className="w-64 h-1.5 loading-track rounded-full">
-                        <div className="loading-bar" />
-                    </div>
-                    <div className="mt-4 text-xs text-gray-600 text-center">
-                        <span className="font-mono text-xs opacity-90">
-                            Loading ...
-                        </span>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    if (!user) {
-        return (
-            <div className="h-dvh overflow-hidden bg-white flex flex-col items-center justify-center p-4">
-                <div className="text-center">
-                    <div className="mb-6">
-                        <Image
-                            src="/icons/icon-192x192.png"
-                            alt="Logo"
-                            width={70}
-                            height={70}
-                            priority
-                            className="rounded-xl shadow-2xl mx-auto"
-                        />
-                    </div>
-                    <h2 className="text-lg font-semibold text-gray-800 mb-2">
-                        Authentication Required
-                    </h2>
-                    <p className="text-gray-600 mb-6 text-sm">
-                        Unable to load your profile. Please check your
-                        connection and try again.
-                    </p>
-                    <div className="flex gap-3 justify-center">
-                        <button
-                            onClick={() => window.location.reload()}
-                            className="px-4 py-2 bg-brand text-white rounded-lg text-sm font-medium"
-                        >
-                            Refresh Page
-                        </button>
-                        <button
-                            onClick={() => refreshProfile()}
-                            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium"
-                        >
-                            Retry
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
+    const scrollPaddingBottom = (hasHeaderAction || !!footerCtaLabel) ? "pb-32" : "pb-28";
 
     return (
         <MobileFooterSlotContext.Provider value={{ setFooterSlot }}>
         <MobileOverlayContext.Provider value={{ setOverlay }}>
+            {/* Shell — always rendered so header/footer are on screen from first paint */}
             <div
                 className="h-dvh flex flex-col bg-gradient-to-b from-slate-100 to-slate-200 select-none overflow-hidden"
                 style={{ '--mobile-footer-h': isIPhonePWA ? '97px' : '65px' } as React.CSSProperties}
@@ -247,7 +180,7 @@ export default function MobileLayoutClient({
                         ref={scrollContainerRef}
                         className={`absolute inset-0 overflow-y-auto p-4 ${scrollPaddingBottom} ${scrollPaddingTop}`}
                     >
-                        {!isTransitioning && children}
+                        {shellReady && !isTransitioning && children}
                     </div>
                     {isTransitioning && (
                         <div
@@ -270,9 +203,18 @@ export default function MobileLayoutClient({
                             {overlay}
                         </div>
                     )}
-                    {footerSlot && (
+                    {(footerSlot || footerCtaLabel) && (
                         <div className="absolute bottom-0 left-0 right-0 z-20">
-                            {footerSlot}
+                            {footerSlot ?? (
+                                <div className="bg-white border-t border-gray-200 p-4 pb-8">
+                                    <button
+                                        onClick={() => handleNavClick(`${currentPath}/add`)}
+                                        className="w-full bg-brand text-white py-4 rounded-xl font-semibold text-base active:scale-[0.98] transition-transform"
+                                    >
+                                        {footerCtaLabel}
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
@@ -283,12 +225,76 @@ export default function MobileLayoutClient({
                         currentPath={currentPath}
                         onTabClick={handleNavClick}
                         isIPhonePWA={isIPhonePWA}
-                        storesReady={storesReady}
                     />
                 )}
 
                 <StorePickerDrawer />
             </div>
+
+            {/* Loader overlay — covers shell until shellReady; shell is already behind it */}
+            {!shellReady && (
+                <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center">
+                    <div className="text-center" role="status" aria-live="polite">
+                        <div className="mb-8">
+                            <Image
+                                src="/icons/icon-192x192.png"
+                                alt="Logo"
+                                width={70}
+                                height={70}
+                                priority
+                                className="rounded-xl shadow-2xl mx-auto"
+                            />
+                        </div>
+                        <div className="w-64 h-1.5 loading-track rounded-full">
+                            <div className="loading-bar" />
+                        </div>
+                        <div className="mt-4 text-xs text-gray-600 text-center">
+                            <span className="font-mono text-xs opacity-90">
+                                Loading ...
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Auth error overlay — shown when session is valid but user profile failed */}
+            {shellReady && !user && (
+                <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center p-4">
+                    <div className="text-center">
+                        <div className="mb-6">
+                            <Image
+                                src="/icons/icon-192x192.png"
+                                alt="Logo"
+                                width={70}
+                                height={70}
+                                priority
+                                className="rounded-xl shadow-2xl mx-auto"
+                            />
+                        </div>
+                        <h2 className="text-lg font-semibold text-gray-800 mb-2">
+                            Authentication Required
+                        </h2>
+                        <p className="text-gray-600 mb-6 text-sm">
+                            Unable to load your profile. Please check your
+                            connection and try again.
+                        </p>
+                        <div className="flex gap-3 justify-center">
+                            <button
+                                onClick={() => window.location.reload()}
+                                className="px-4 py-2 bg-brand text-white rounded-lg text-sm font-medium"
+                            >
+                                Refresh Page
+                            </button>
+                            <button
+                                onClick={() => refreshProfile()}
+                                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium"
+                            >
+                                Retry
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </MobileOverlayContext.Provider>
         </MobileFooterSlotContext.Provider>
     );

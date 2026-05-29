@@ -2,16 +2,12 @@
 
 import { useStore } from "@/lib/context/StoreContext";
 import { useSupplyRequests } from "@/lib/hooks/requests/useSupplyRequests";
-import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
-import { navigation } from "@tea-pos/utils/navigation";
 import { SUPPLY_REQUEST_TYPE_LABELS, SUPPLY_REQUEST_TYPES } from "@tea-pos/features/requests/schema";
 import type { SupplyRequestType } from "@tea-pos/features/requests/schema";
-import { FormFooter } from "@/components/shared/FormFooter";
 import { PackageSearch } from "lucide-react";
 
 export default function RequestPage() {
     const { selectedStoreId } = useStore();
-    const { url } = useTenantSlug();
     const { requests, isLoading } = useSupplyRequests(selectedStoreId);
 
     const inner = isLoading ? (
@@ -43,14 +39,8 @@ export default function RequestPage() {
     );
 
     return (
-        <>
-            <div className="flex-1 bg-white rounded-2xl flex flex-col">
-                {inner}
-            </div>
-            <FormFooter
-                label="New Store Request"
-                onSubmit={() => navigation.push(url("/mobile/home/manage/request/add"))}
-            />
-        </>
+        <div className="flex-1 bg-white rounded-2xl flex flex-col">
+            {inner}
+        </div>
     );
 }

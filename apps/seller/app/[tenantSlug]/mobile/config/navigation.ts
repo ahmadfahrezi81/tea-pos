@@ -18,6 +18,7 @@ export type RouteConfig = {
     parent: string | null | "lastRootTab";
     headerAction?: "add";
     hideStorePicker?: boolean;
+    footerCta?: string;
 };
 
 export const mobileRoutes = {
@@ -56,6 +57,7 @@ export const mobileRoutes = {
         isChart: false,
         parent: "/mobile/home/manage",
         headerAction: "add",
+        footerCta: "New Store Expense",
     },
     "/mobile/home/manage/expense/add": {
         title: "New Store Expense",
@@ -178,6 +180,7 @@ export const mobileRoutes = {
         isChart: false,
         parent: "/mobile/home/manage",
         headerAction: "add",
+        footerCta: "New Store Request",
     },
     "/mobile/home/manage/request/add": {
         title: "New Store Request",
@@ -193,6 +196,7 @@ export const mobileRoutes = {
         isChart: false,
         parent: "/mobile/home/manage",
         headerAction: "add",
+        footerCta: "New Store Report",
     },
     "/mobile/home/manage/report/add": {
         title: "New Store Report",

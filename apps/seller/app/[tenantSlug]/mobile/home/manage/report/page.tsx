@@ -2,16 +2,12 @@
 
 import { useStore } from "@/lib/context/StoreContext";
 import { useIncidentReports } from "@/lib/hooks/reports/useIncidentReports";
-import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
-import { navigation } from "@tea-pos/utils/navigation";
 import { INCIDENT_CATEGORIES, INCIDENT_CATEGORY_LABELS } from "@tea-pos/features/reports/schema";
 import type { IncidentCategory } from "@tea-pos/features/reports/schema";
-import { FormFooter } from "@/components/shared/FormFooter";
 import { ClipboardList } from "lucide-react";
 
 export default function ReportPage() {
     const { selectedStoreId } = useStore();
-    const { url } = useTenantSlug();
     const { reports, isLoading } = useIncidentReports(selectedStoreId);
 
     const inner = isLoading ? (
@@ -43,14 +39,8 @@ export default function ReportPage() {
     );
 
     return (
-        <>
-            <div className="flex-1 bg-white rounded-2xl flex flex-col">
-                {inner}
-            </div>
-            <FormFooter
-                label="New Store Report"
-                onSubmit={() => navigation.push(url("/mobile/home/manage/report/add"))}
-            />
-        </>
+        <div className="flex-1 bg-white rounded-2xl flex flex-col">
+            {inner}
+        </div>
     );
 }

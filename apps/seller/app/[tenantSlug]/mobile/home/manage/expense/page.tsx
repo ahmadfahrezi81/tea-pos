@@ -3,16 +3,12 @@
 import { useMemo } from "react";
 import { useStore } from "@/lib/context/StoreContext";
 import { useSummaries } from "@/lib/hooks/summaries/useDailySummaries";
-import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
-import { navigation } from "@tea-pos/utils/navigation";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
-import { FormFooter } from "@/components/shared/FormFooter";
 import { Receipt } from "lucide-react";
 import { getTodayLocalStr, getCurrentLocalMonth } from "@tea-pos/utils/time";
 
 export default function ExpensePage() {
     const { selectedStoreId } = useStore();
-    const { url } = useTenantSlug();
     const todayStr = useMemo(() => getTodayLocalStr(), []);
     const currentMonth = useMemo(() => getCurrentLocalMonth(), []);
 
@@ -58,14 +54,8 @@ export default function ExpensePage() {
     );
 
     return (
-        <>
-            <div className="flex-1 bg-white rounded-2xl flex flex-col">
-                {inner}
-            </div>
-            <FormFooter
-                label="New Store Expense"
-                onSubmit={() => navigation.push(url("/mobile/home/manage/expense/add"))}
-            />
-        </>
+        <div className="flex-1 bg-white rounded-2xl flex flex-col">
+            {inner}
+        </div>
     );
 }
