@@ -16,10 +16,10 @@ export async function GET(request: NextRequest) {
         const evaluation = await getAllFlags(user.id, props);
 
         return ok({
-            qris: evaluation.isEnabled(FLAGS.FEATURE.QRIS),
-            payroll: evaluation.isEnabled(FLAGS.FEATURE.PAYROLL),
-            reimbursement: evaluation.isEnabled(FLAGS.FEATURE.REIMBURSEMENT),
-            skipManagePhotos: evaluation.isEnabled(FLAGS.OPS.SKIP_MANAGE_PHOTOS),
+            isQrisEnabled: evaluation.isEnabled(FLAGS.FEATURE.QRIS),
+            isPayrollEnabled: evaluation.isEnabled(FLAGS.FEATURE.PAYROLL),
+            isReimbursementEnabled: evaluation.isEnabled(FLAGS.FEATURE.REIMBURSEMENT),
+            isSkipManagePhotosEnabled: evaluation.isEnabled(FLAGS.OPS.SKIP_MANAGE_PHOTOS),
         });
     } catch (error) {
         return handleError("GET /api/flags", error);

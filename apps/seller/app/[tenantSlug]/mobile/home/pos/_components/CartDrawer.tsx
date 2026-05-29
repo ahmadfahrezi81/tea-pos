@@ -35,7 +35,7 @@ export const CartDrawer = memo(function CartDrawer({
     processing,
     selectedStoreId,
 }: CartDrawerProps) {
-    const { flags: { qris } } = useFlags();
+    const { flags: { isQrisEnabled: qris } } = useFlags();
     const { showToast } = useToast();
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
     const [showSuccess, setShowSuccess] = useState(false);

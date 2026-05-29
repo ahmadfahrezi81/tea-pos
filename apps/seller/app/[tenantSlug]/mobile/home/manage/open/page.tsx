@@ -17,7 +17,7 @@ export default function OpenStorePage() {
     const { url } = useTenantSlug();
     const { gate, openStore, resumeSession } = useSession(selectedStoreId);
     const { uploadPhoto } = useSummaryPhotos();
-    const { flags: { skipManagePhotos } } = useFlags();
+    const { flags: { isSkipManagePhotosEnabled: skipManagePhotos } } = useFlags();
 
     const todayStr = useMemo(() => getTodayLocalStr(), []);
     const [openingBalance, setOpeningBalance] = useState(0);

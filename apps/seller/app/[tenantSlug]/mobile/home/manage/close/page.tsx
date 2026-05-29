@@ -55,7 +55,7 @@ export default function ManageCloseDayPage() {
     const { selectedStoreId, selectedStore } = useStore();
     const { mutate: mutateSession } = useSession(selectedStoreId);
     const { showToast } = useToast();
-    const { flags: { skipManagePhotos } } = useFlags();
+    const { flags: { isSkipManagePhotosEnabled: skipManagePhotos } } = useFlags();
 
     const paramSummaryId = searchParams.get("summaryId");
     const paramMonth = searchParams.get("month");

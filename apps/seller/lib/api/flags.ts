@@ -2,10 +2,10 @@ import { apiFetch } from "./client";
 import { z } from "zod";
 
 export const FlagsResponse = z.object({
-    qris: z.boolean(),
-    payroll: z.boolean(),
-    reimbursement: z.boolean(),
-    skipManagePhotos: z.boolean(),
+    isQrisEnabled: z.boolean(),
+    isPayrollEnabled: z.boolean(),
+    isReimbursementEnabled: z.boolean(),
+    isSkipManagePhotosEnabled: z.boolean(),
 });
 
 export type Flags = z.infer<typeof FlagsResponse>;

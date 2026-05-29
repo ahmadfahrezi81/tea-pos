@@ -5,10 +5,10 @@ import { flagsApi, type Flags } from "@/lib/api/flags";
 import { useStore } from "@/lib/context/StoreContext";
 
 const DEFAULT_FLAGS: Flags = {
-    qris: false,
-    payroll: false,
-    reimbursement: false,
-    skipManagePhotos: false,
+    isQrisEnabled: false,
+    isPayrollEnabled: false,
+    isReimbursementEnabled: false,
+    isSkipManagePhotosEnabled: false,
 };
 
 type FlagsContextType = {
