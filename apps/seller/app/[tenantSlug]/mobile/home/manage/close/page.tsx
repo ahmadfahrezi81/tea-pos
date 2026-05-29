@@ -21,7 +21,7 @@ import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/lib/context/ToastContext";
-import { isEnabled } from "@tea-pos/features/shared/features";
+import { useFlags } from "@/lib/context/FlagsContext";
 import { getTodayLocalStr, getCurrentLocalMonth } from "@tea-pos/utils/time";
 import { useMobileFooterSlot } from "../../../components/MobileFooterSlotContext";
 
@@ -55,6 +55,7 @@ export default function ManageCloseDayPage() {
     const { selectedStoreId, selectedStore } = useStore();
     const { mutate: mutateSession } = useSession(selectedStoreId);
     const { showToast } = useToast();
+    const { skipManagePhotos } = useFlags();
 
     const paramSummaryId = searchParams.get("summaryId");
     const paramMonth = searchParams.get("month");
@@ -297,7 +298,7 @@ export default function ManageCloseDayPage() {
         : false;
     const currentStepHasQuantity = currentSlot ? !!getSlotQuantity(currentSlot.type) : true;
 
-    const skipPhotos = isEnabled("skip-photos");
+    const skipPhotos = skipManagePhotos;
 
     const nextDisabled =
         isBusy ||

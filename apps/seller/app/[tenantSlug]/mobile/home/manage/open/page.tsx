@@ -6,7 +6,7 @@ import { useSession } from "@/lib/hooks/sessions/useSession";
 import { useSummaryPhotos } from "@/lib/hooks/summaries/useSummaryPhotos";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
-import { isEnabled } from "@tea-pos/features/shared/features";
+import { useFlags } from "@/lib/context/FlagsContext";
 import { getTodayLocalStr } from "@tea-pos/utils/time";
 import { PhotoPicker } from "../_components/shared/PhotoPicker";
 import { NumberInput } from "../_components/shared/NumberInput";
@@ -17,6 +17,7 @@ export default function OpenStorePage() {
     const { url } = useTenantSlug();
     const { gate, openStore, resumeSession } = useSession(selectedStoreId);
     const { uploadPhoto } = useSummaryPhotos();
+    const { skipManagePhotos } = useFlags();
 
     const todayStr = useMemo(() => getTodayLocalStr(), []);
     const [openingBalance, setOpeningBalance] = useState(0);
@@ -51,7 +52,7 @@ export default function OpenStorePage() {
         }
     };
 
-    const skipPhotos = isEnabled("skip-photos");
+    const skipPhotos = skipManagePhotos;
 
     const canSubmit =
         (!!photo || skipPhotos) &&

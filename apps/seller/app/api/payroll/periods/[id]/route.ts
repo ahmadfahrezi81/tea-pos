@@ -3,7 +3,8 @@ import { getCurrentTenantId } from "@tea-pos/utils/server-config/tenant";
 import { NextRequest } from "next/server";
 import { UpdatePayrollPeriodInput, PayrollPeriodResponse } from "@tea-pos/features/payroll/schema";
 import { updatePayrollPeriod } from "@tea-pos/services/payroll";
-import { ok, badRequest, unauthorized, handleError } from "@/lib/api/response";
+import { ok, badRequest, unauthorized, forbidden, handleError } from "@/lib/api/response";
+import { isFlagEnabled } from "@/lib/flags";
 import { getRequestUser } from "@/lib/auth/get-request-user";
 
 export async function PATCH(
@@ -16,6 +17,10 @@ export async function PATCH(
 
         const supabase = getServiceClient();
         const tenantId = await getCurrentTenantId();
+
+        const payrollEnabled = await isFlagEnabled("payroll", user.id, { role: user.role, tenantId });
+        if (!payrollEnabled) return forbidden("Payroll is not available");
+
         const { id } = await params;
         const body = UpdatePayrollPeriodInput.safeParse(await request.json());
         if (!body.success) return badRequest("Validation failed");

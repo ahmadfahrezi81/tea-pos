@@ -6,8 +6,9 @@ import {
     CreateQrisPaymentInput,
     CreateQrisPaymentResponse,
 } from "@tea-pos/features/payments/schema";
-import { ok, badRequest, err, unauthorized, handleError } from "@/lib/api/response";
+import { ok, badRequest, err, unauthorized, forbidden, handleError } from "@/lib/api/response";
 import { logger } from "@/lib/utils/logger";
+import { isFlagEnabled } from "@/lib/flags";
 
 export async function GET(request: NextRequest) {
     try {
@@ -39,12 +40,15 @@ export async function POST(request: NextRequest) {
         if (!user) return unauthorized();
         const supabase = getServiceClient();
         const currentTenantId = await getCurrentTenantId();
-        const body = await request.json();
 
+        const body = await request.json();
         const result = CreateQrisPaymentInput.safeParse(body);
         if (!result.success) return badRequest("Validation failed");
 
         const { storeId, items } = result.data;
+
+        const qrisEnabled = await isFlagEnabled("qris", user.id, { role: user.role, tenantId: currentTenantId, storeId });
+        if (!qrisEnabled) return forbidden("QRIS payments are not available");
 
         const { data: store, error: storeError } = await supabase
             .from("stores")
