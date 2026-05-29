@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/context/StoreContext";
+import { getTodayLocalStr } from "@tea-pos/utils/time";
 import { useSession } from "@/lib/hooks/sessions/useSession";
 import { useSupplyRequests } from "@/lib/hooks/requests/useSupplyRequests";
 import { apiFetch } from "@/lib/api/client";
@@ -23,6 +24,8 @@ export default function AddRequestPage() {
     const { summaryId } = useSession(selectedStoreId);
     const { create } = useSupplyRequests(selectedStoreId);
 
+    const todayStr = useMemo(() => getTodayLocalStr(), []);
+
     const [selectedType, setSelectedType] = useState("");
     const [customTypeText, setCustomTypeText] = useState("");
     const [notes, setNotes] = useState("");
@@ -40,7 +43,8 @@ export default function AddRequestPage() {
             if (photoFile) {
                 const form = new FormData();
                 form.append("file", photoFile);
-                form.append("prefix", "supply-requests");
+                form.append("bucket", "store-requests");
+                form.append("subPath", `${selectedStoreId}/${todayStr}`);
                 const { url: uploadUrl } = await apiFetch<{ url: string }>("/api/upload", {
                     method: "POST",
                     body: form,

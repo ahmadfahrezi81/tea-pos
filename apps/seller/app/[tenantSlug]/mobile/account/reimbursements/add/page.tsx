@@ -56,7 +56,8 @@ export default function AddReimbursementPage() {
             if (photoFile) {
                 const form = new FormData();
                 form.append("file", photoFile);
-                form.append("prefix", `reimbursements/${user.id}`);
+                form.append("bucket", "reimbursements");
+                form.append("subPath", `${user.id}/${date}`);
                 const { url: uploadUrl } = await apiFetch<{ url: string }>("/api/upload", {
                     method: "POST",
                     body: form,

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/context/StoreContext";
+import { getTodayLocalStr } from "@tea-pos/utils/time";
 import { useSession } from "@/lib/hooks/sessions/useSession";
 import { useIncidentReports } from "@/lib/hooks/reports/useIncidentReports";
 import { apiFetch } from "@/lib/api/client";
@@ -26,6 +27,8 @@ export default function AddReportPage() {
     const { summaryId } = useSession(selectedStoreId);
     const { create } = useIncidentReports(selectedStoreId);
 
+    const todayStr = useMemo(() => getTodayLocalStr(), []);
+
     const [selectedType, setSelectedType] = useState("");
     const [customType, setCustomType] = useState("");
     const [notes, setNotes] = useState("");
@@ -46,7 +49,8 @@ export default function AddReportPage() {
             if (photoFile) {
                 const form = new FormData();
                 form.append("file", photoFile);
-                form.append("prefix", "incident-reports");
+                form.append("bucket", "store-reports");
+                form.append("subPath", `${selectedStoreId}/${todayStr}`);
                 const { url: uploadUrl } = await apiFetch<{ url: string }>(
                     "/api/upload",
                     { method: "POST", body: form },
