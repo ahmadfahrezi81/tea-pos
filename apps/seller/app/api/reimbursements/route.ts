@@ -9,7 +9,7 @@ import {
 } from "@tea-pos/features/reimbursements/schema";
 import { createReimbursement, listMyReimbursements } from "@tea-pos/services/reimbursements";
 import { ok, badRequest, unauthorized, forbidden, handleError } from "@/lib/api/response";
-import { isFlagEnabled } from "@/lib/flags";
+import { isFlagEnabled, FLAGS } from "@/lib/flags";
 import { getRequestUser } from "@/lib/auth/get-request-user";
 
 export async function GET(request: NextRequest) {
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
         const supabase = getServiceClient();
         const tenantId = await getCurrentTenantId();
 
-        const reimbursementEnabled = await isFlagEnabled("reimbursement", user.id, { role: user.role, tenantId });
+        const reimbursementEnabled = await isFlagEnabled(FLAGS.FEATURE.REIMBURSEMENT, user.id, { role: user.role, tenantId });
         if (!reimbursementEnabled) return forbidden("Reimbursements are not available");
         const query = ListReimbursementsQuery.safeParse(Object.fromEntries(new URL(request.url).searchParams));
         if (!query.success) return badRequest("Invalid query parameters");
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
         const supabase = getServiceClient();
         const tenantId = await getCurrentTenantId();
 
-        const reimbursementEnabled = await isFlagEnabled("reimbursement", user.id, { role: user.role, tenantId });
+        const reimbursementEnabled = await isFlagEnabled(FLAGS.FEATURE.REIMBURSEMENT, user.id, { role: user.role, tenantId });
         if (!reimbursementEnabled) return forbidden("Reimbursements are not available");
         const body = CreateReimbursementInput.safeParse(await request.json());
         if (!body.success) return badRequest("Validation failed");

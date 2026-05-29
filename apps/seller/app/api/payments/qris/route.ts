@@ -8,7 +8,7 @@ import {
 } from "@tea-pos/features/payments/schema";
 import { ok, badRequest, err, unauthorized, forbidden, handleError } from "@/lib/api/response";
 import { logger } from "@/lib/utils/logger";
-import { isFlagEnabled } from "@/lib/flags";
+import { isFlagEnabled, FLAGS } from "@/lib/flags";
 
 export async function GET(request: NextRequest) {
     try {
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
 
         const { storeId, items } = result.data;
 
-        const qrisEnabled = await isFlagEnabled("qris", user.id, { role: user.role, tenantId: currentTenantId, storeId });
+        const qrisEnabled = await isFlagEnabled(FLAGS.FEATURE.QRIS, user.id, { role: user.role, tenantId: currentTenantId, storeId });
         if (!qrisEnabled) return forbidden("QRIS payments are not available");
 
         const { data: store, error: storeError } = await supabase

@@ -1,6 +1,21 @@
 import { PostHog } from "posthog-node";
 import { after } from "next/server";
 
+export const FLAGS = {
+    FEATURE: {
+        QRIS: "feature-qris",
+        PAYROLL: "feature-payroll",
+        REIMBURSEMENT: "feature-reimbursement",
+    },
+    OPS: {
+        SKIP_MANAGE_PHOTOS: "ops-skip-manage-photos",
+    },
+} as const;
+
+type FlagKey =
+    | (typeof FLAGS.FEATURE)[keyof typeof FLAGS.FEATURE]
+    | (typeof FLAGS.OPS)[keyof typeof FLAGS.OPS];
+
 function getFlagClient(): PostHog {
     return new PostHog(process.env.POSTHOG_API_KEY!, {
         host: process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com",
@@ -32,7 +47,7 @@ export async function getAllFlags(
 
 // For single-flag checks in individual API routes (hard gates).
 export async function isFlagEnabled(
-    flag: string,
+    flag: FlagKey,
     userId: string,
     properties?: Record<string, string>,
 ): Promise<boolean> {

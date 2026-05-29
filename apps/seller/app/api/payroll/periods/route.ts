@@ -5,7 +5,7 @@ import { ListPayrollPeriodsQuery, PayrollPeriodListResponse } from "@tea-pos/fea
 import { listPayrollPeriods } from "@tea-pos/services/payroll";
 import { ok, badRequest, unauthorized, forbidden, handleError } from "@/lib/api/response";
 import { getRequestUser } from "@/lib/auth/get-request-user";
-import { isFlagEnabled } from "@/lib/flags";
+import { isFlagEnabled, FLAGS } from "@/lib/flags";
 
 export async function GET(request: NextRequest) {
     try {
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
         const supabase = getServiceClient();
         const tenantId = await getCurrentTenantId();
 
-        const payrollEnabled = await isFlagEnabled("payroll", user.id, { role: user.role, tenantId });
+        const payrollEnabled = await isFlagEnabled(FLAGS.FEATURE.PAYROLL, user.id, { role: user.role, tenantId });
         if (!payrollEnabled) return forbidden("Payroll is not available");
         const query = ListPayrollPeriodsQuery.safeParse(Object.fromEntries(new URL(request.url).searchParams));
         if (!query.success) return badRequest("Invalid query parameters");

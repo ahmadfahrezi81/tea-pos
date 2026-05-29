@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { getRequestUser } from "@/lib/auth/get-request-user";
 import { getCurrentTenantId } from "@tea-pos/utils/server-config/tenant";
-import { getAllFlags } from "@/lib/flags";
+import { getAllFlags, FLAGS } from "@/lib/flags";
 import { ok, unauthorized, handleError } from "@/lib/api/response";
 
 export async function GET(request: NextRequest) {
@@ -16,10 +16,10 @@ export async function GET(request: NextRequest) {
         const flags = await getAllFlags(user.id, props);
 
         return ok({
-            qris: flags.isEnabled("qris"),
-            payroll: flags.isEnabled("payroll"),
-            reimbursement: flags.isEnabled("reimbursement"),
-            skipManagePhotos: flags.isEnabled("skip-manage-photos"),
+            qris: flags.isEnabled(FLAGS.FEATURE.QRIS),
+            payroll: flags.isEnabled(FLAGS.FEATURE.PAYROLL),
+            reimbursement: flags.isEnabled(FLAGS.FEATURE.REIMBURSEMENT),
+            skipManagePhotos: flags.isEnabled(FLAGS.OPS.SKIP_MANAGE_PHOTOS),
         });
     } catch (error) {
         return handleError("GET /api/flags", error);

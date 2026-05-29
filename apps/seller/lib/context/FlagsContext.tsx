@@ -11,12 +11,20 @@ const DEFAULT_FLAGS: Flags = {
     skipManagePhotos: false,
 };
 
-const FlagsContext = createContext<Flags>(DEFAULT_FLAGS);
+type FlagsContextType = {
+    flags: Flags;
+    isLoading: boolean;
+};
+
+const FlagsContext = createContext<FlagsContextType>({
+    flags: DEFAULT_FLAGS,
+    isLoading: true,
+});
 
 export function FlagsProvider({ children }: { children: React.ReactNode }) {
     const { selectedStoreId } = useStore();
 
-    const { data } = useSWR(
+    const { data, isLoading } = useSWR(
         ["flags", selectedStoreId],
         ([, storeId]) => flagsApi.get(storeId || undefined),
         {
@@ -27,12 +35,12 @@ export function FlagsProvider({ children }: { children: React.ReactNode }) {
     );
 
     return (
-        <FlagsContext.Provider value={data ?? DEFAULT_FLAGS}>
+        <FlagsContext.Provider value={{ flags: data ?? DEFAULT_FLAGS, isLoading }}>
             {children}
         </FlagsContext.Provider>
     );
 }
 
-export function useFlags(): Flags {
+export function useFlags(): FlagsContextType {
     return useContext(FlagsContext);
 }
