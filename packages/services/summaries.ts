@@ -52,14 +52,18 @@ async function fetchOrdersForDate(
     storeId: string,
     tenantId: string,
     date: string,
+    tz = DEFAULT_TZ,
 ): Promise<OrderRow[]> {
+    const startUtc = new Date(new Date(`${date}T00:00:00.000Z`).getTime() - tz * 3600000).toISOString();
+    const endUtc = new Date(new Date(`${date}T23:59:59.999Z`).getTime() - tz * 3600000).toISOString();
+
     const { data, error } = await supabase
         .from("store_orders")
         .select(`id, total_amount, created_at, store_order_items(quantity, total_price, tenant_products(name))`)
         .eq("store_id", storeId)
         .eq("tenant_id", tenantId)
-        .gte("created_at", `${date}T00:00:00Z`)
-        .lte("created_at", `${date}T23:59:59Z`)
+        .gte("created_at", startUtc)
+        .lte("created_at", endUtc)
         .order("created_at", { ascending: true });
 
     if (error) throw error;
@@ -227,13 +231,15 @@ export async function createSummary(supabase: SupabaseClient, params: CreateSumm
     if (existsError) throw existsError;
     if ((count ?? 0) > 0) throw Object.assign(new Error("Daily summary already exists for this date"), { status: 409 });
 
+    const createStartUtc = new Date(new Date(`${date}T00:00:00.000Z`).getTime() - DEFAULT_TZ * 3600000).toISOString();
+    const createEndUtc = new Date(new Date(`${date}T23:59:59.999Z`).getTime() - DEFAULT_TZ * 3600000).toISOString();
     const { data: existingOrders } = await supabase
         .from("store_orders")
         .select("total_amount, store_order_items(quantity)")
         .eq("store_id", storeId)
         .eq("tenant_id", tenantId)
-        .gte("created_at", `${date}T00:00:00Z`)
-        .lte("created_at", `${date}T23:59:59Z`);
+        .gte("created_at", createStartUtc)
+        .lte("created_at", createEndUtc);
 
     const typedOrders = (existingOrders ?? []) as Array<{
         total_amount: number;
@@ -409,13 +415,15 @@ export async function getSummaryBreakdown(
 
     if (summaryError || !summary) throw new Error("Summary not found");
 
+    const breakdownStartUtc = new Date(new Date(`${summary.date}T00:00:00.000Z`).getTime() - DEFAULT_TZ * 3600000).toISOString();
+    const breakdownEndUtc = new Date(new Date(`${summary.date}T23:59:59.999Z`).getTime() - DEFAULT_TZ * 3600000).toISOString();
     const { data: orders, error: ordersError } = await supabase
         .from("store_orders")
         .select(`id, total_amount, store_order_items(quantity, total_price, tenant_products(name))`)
         .eq("store_id", summary.store_id)
         .eq("tenant_id", tenantId)
-        .gte("created_at", `${summary.date}T00:00:00Z`)
-        .lte("created_at", `${summary.date}T23:59:59Z`);
+        .gte("created_at", breakdownStartUtc)
+        .lte("created_at", breakdownEndUtc);
 
     if (ordersError) throw ordersError;
 
