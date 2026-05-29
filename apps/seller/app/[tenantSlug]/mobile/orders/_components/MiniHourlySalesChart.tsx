@@ -101,7 +101,7 @@ export default function MiniHourlySalesChart({ storeId, date, hourlySales }: Pro
     if (hourlySales.length === 0) return null;
 
     return (
-        <div className="border-t border-gray-100 bg-white rounded-xl shadow-sm p-2 pb-1">
+        <div className="bg-white rounded-2xl p-2 pb-1">
             <div className="flex justify-end mb-1">
                 <button
                     onClick={() => {

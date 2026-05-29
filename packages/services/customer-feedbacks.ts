@@ -3,6 +3,7 @@ import type {
     CreateCustomerFeedbackInput,
     CustomerFeedbackResponse,
 } from "@tea-pos/features/customer-feedbacks/schema";
+import { createLogger } from "./activity-logs";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -22,12 +23,12 @@ export interface ListCustomerFeedbacksParams {
 // ─── Internal helpers ─────────────────────────────────────────────────────────
 
 function mapRow(row: Record<string, unknown>): CustomerFeedbackResponse {
-    const profile = row.profiles as { full_name?: string } | null;
+    const user = row.users as { full_name?: string } | null;
     return {
         id: row.id as string,
         tenantId: row.tenant_id as string,
         userId: row.user_id as string,
-        userName: profile?.full_name ?? null,
+        userName: user?.full_name ?? null,
         locationName: row.location_name as string,
         locationDisplay: row.location_display as string,
         latitude: row.latitude as number,
@@ -48,7 +49,7 @@ export async function createCustomerFeedback(
 }> {
     try {
         const { data, error } = await supabase
-            .from("customer_feedbacks")
+            .from("tenant_customer_feedbacks")
             .insert({
                 tenant_id: tenantId,
                 user_id: userId,
@@ -58,7 +59,7 @@ export async function createCustomerFeedback(
                 longitude: input.longitude,
                 notes: input.notes ?? null,
             })
-            .select("*, profiles(full_name)")
+            .select("*, users(full_name)")
             .single();
 
         if (error) {
@@ -66,7 +67,13 @@ export async function createCustomerFeedback(
             return { data: null, error: error.message };
         }
 
-        return { data: mapRow(data as Record<string, unknown>) };
+        const mapped = mapRow(data as Record<string, unknown>);
+        createLogger(supabase, { tenantId, userId })("customer_feedback_submitted", {
+            refId: mapped.id,
+            refTable: "tenant_customer_feedbacks",
+            metadata: { location_name: input.locationName, has_notes: !!input.notes },
+        });
+        return { data: mapped };
     } catch (err) {
         console.error("[createCustomerFeedback] Unexpected error:", err);
         return { data: null, error: "Unexpected error creating feedback" };
@@ -85,8 +92,8 @@ export async function listCustomerFeedbacks(
         const { tenantId, userId, limit = 20, offset = 0 } = params;
 
         let query = supabase
-            .from("customer_feedbacks")
-            .select("*, profiles(full_name)", { count: "exact" })
+            .from("tenant_customer_feedbacks")
+            .select("*, users(full_name)", { count: "exact" })
             .order("created_at", { ascending: false })
             .range(offset, offset + limit - 1);
 

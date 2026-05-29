@@ -1,35 +1,22 @@
-// components/mobile/MobileAnalytics.tsx
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { useAuth } from "@/lib/context/AuthContext";
+import { useState, useMemo } from "react";
 import { useSummaries } from "@/lib/hooks/summaries/useDailySummaries";
 import { DailySummary } from "@tea-pos/features/summaries/schema";
 import { Expense } from "@tea-pos/features/expenses/schema";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 import { toIndonesiaMonthYear } from "@tea-pos/utils/server-config/timezone";
-import {
-    Calendar,
-    CalendarDays,
-    AlertTriangle,
-    CheckCircle,
-    Receipt,
-} from "lucide-react";
-import { SetBalanceModal } from "./_components/SetBalanceModal";
-import { SetExpenseModal } from "./_components/SetExpenseModal";
-import { CloseDayModal } from "./_components/CloseDayModal";
+import { getCurrentLocalMonth } from "@tea-pos/utils/time";
+import { Calendar, CalendarDays, AlertTriangle, Receipt, ChevronsDown, Info, Activity } from "lucide-react";
 import { DetailsDrawer } from "./_components/DetailsDrawer";
-import { ConfirmationPopup } from "@/components/shared/ConfirmationPopup";
 import { useStore } from "@/lib/context/StoreContext";
 import {
-    isCurrentMonthSelected,
     formatDate,
     getExpensesForDate,
 } from "../analytics/utils/summariesHelpers";
 import { navigation } from "@tea-pos/utils/navigation";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { useSummaryPhotoCount } from "@/lib/hooks/summaries/useSummaryPhotoCount";
-import { useToast } from "@/lib/context/ToastContext";
 
 import dynamic from "next/dynamic";
 const MiniDailySalesChart = dynamic(
@@ -42,225 +29,42 @@ const MiniDailySalesChart = dynamic(
     },
 );
 
-// ============================================================================
-// TYPES
-// ============================================================================
-
 type DailySummaryWithExtras = DailySummary & {
     expenses: Expense[];
 };
 
 function PhotoCountLabel({ summaryId }: { summaryId: string }) {
     const { count } = useSummaryPhotoCount(summaryId);
+    if (count === 0) return null;
     return (
-        <p className="text-sm text-blue-600">
-            {count > 0 ? `${count} photo${count > 1 ? "s" : ""} · ` : ""}Tap for
-            details
+        <p className="text-xs text-blue-500 mt-0.5">
+            {count} photo{count > 1 ? "s" : ""}
         </p>
     );
 }
 
-// ============================================================================
-// MAIN COMPONENT
-// ============================================================================
-
 export default function MobileAnalytics() {
-    const { profile } = useAuth();
-    const { selectedStoreId, selectedStore } = useStore();
+    const { selectedStoreId } = useStore();
     const { url } = useTenantSlug();
-    const { showToast } = useToast();
-
-    const storeName = selectedStore?.name ?? "Unknown Store";
 
     const [selectedMonth, setSelectedMonth] = useState<string>(
-        new Date().toISOString().slice(0, 7),
+        getCurrentLocalMonth(),
     );
     const [selectedSummary, setSelectedSummary] =
         useState<DailySummaryWithExtras | null>(null);
-
-    const [showOpenStorePopup, setShowOpenStorePopup] = useState(false);
-    const [showCloseReminder, setShowCloseReminder] = useState(false);
-    const [showExpenseForm, setShowExpenseForm] = useState(false);
-    const [showEditForm, setShowEditForm] = useState(false);
-    const [showCloseForm, setShowCloseForm] = useState(false);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
-    const [hasSeenPopup, setHasSeenPopup] = useState(false);
-    const [hasSeenCloseReminder, setHasSeenCloseReminder] = useState(false);
+    const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
     const {
         data: summariesData,
         isLoading: summariesLoading,
         error: summariesError,
-        createSummary,
-        updateSummary,
-        createExpenses,
     } = useSummaries(selectedStoreId, selectedMonth);
-
-    const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
-
-    const todaysSummary = useMemo(
-        () => summariesData?.summaries.find((s) => s.date === todayStr),
-        [summariesData?.summaries, todayStr],
-    );
 
     const unclosedSummaries = useMemo(
         () => summariesData?.summaries.filter((s) => !s.closedAt) ?? [],
         [summariesData?.summaries],
     );
-
-    // ─── Open store reminder ───────────────────────────────────────────────
-    useEffect(() => {
-        if (!selectedStoreId || !summariesData?.summaries || hasSeenPopup)
-            return;
-        if (!isCurrentMonthSelected(selectedMonth)) {
-            setShowOpenStorePopup(false);
-            return;
-        }
-        if (!todaysSummary) {
-            setShowOpenStorePopup(true);
-            setHasSeenPopup(true);
-        } else {
-            setShowOpenStorePopup(false);
-        }
-    }, [
-        selectedStoreId,
-        summariesData?.summaries,
-        selectedMonth,
-        hasSeenPopup,
-        todaysSummary,
-    ]);
-
-    // ─── Close day reminder after 10 PM ───────────────────────────────────
-    useEffect(() => {
-        if (
-            !summariesData?.summaries ||
-            !selectedStoreId ||
-            hasSeenCloseReminder
-        )
-            return;
-        if (todaysSummary && unclosedSummaries.length > 0) {
-            const hour = new Date().getHours();
-            if (hour >= 22 || hour < 6) {
-                setShowCloseReminder(true);
-                setHasSeenCloseReminder(true);
-            }
-        }
-    }, [
-        summariesData?.summaries,
-        selectedStoreId,
-        todaysSummary,
-        unclosedSummaries,
-        hasSeenCloseReminder,
-    ]);
-
-    // ============================================================================
-    // ACTION HANDLERS
-    // ============================================================================
-
-    const handleOpenStoreToday = async () => {
-        if (!selectedStoreId || !profile) return;
-        try {
-            await createSummary({
-                storeId: selectedStoreId,
-                sellerId: profile.id,
-                managerId: profile.id,
-                date: todayStr,
-                openingBalance: 0,
-            });
-            setShowOpenStorePopup(false);
-            showToast("Store opened!", "success");
-        } catch (error) {
-            showToast(
-                error instanceof Error ? error.message : "Failed to open store",
-                "error",
-            );
-        }
-    };
-
-    const handleExpenseSubmit = async (
-        expenses: Array<{
-            label: string;
-            customLabel?: string;
-            amount: string;
-        }>,
-    ) => {
-        if (!selectedSummary || !selectedStoreId) return;
-        try {
-            await createExpenses({
-                dailySummaryId: selectedSummary.id,
-                storeId: selectedStoreId,
-                expenses,
-            });
-            setShowExpenseForm(false);
-            setSelectedSummary(null);
-            showToast("Expenses saved!", "success");
-        } catch (error) {
-            showToast(
-                error instanceof Error
-                    ? error.message
-                    : "Failed to save expenses",
-                "error",
-            );
-        }
-    };
-
-    const handleBalanceSubmit = async (openingBalance: number) => {
-        if (!selectedSummary) return;
-        try {
-            await updateSummary(selectedSummary.id, { openingBalance });
-            setShowEditForm(false);
-            setSelectedSummary(null);
-            showToast("Opening balance updated!", "success");
-        } catch (error) {
-            showToast(
-                error instanceof Error
-                    ? error.message
-                    : "Failed to update balance",
-                "error",
-            );
-        }
-    };
-
-    const handleCloseDaySubmit = async (
-        actualCash: number,
-        notes: string | null,
-    ) => {
-        if (!selectedSummary) return;
-        try {
-            await updateSummary(selectedSummary.id, {
-                actualCash,
-                notes: notes ?? null,
-                closedAt: new Date().toISOString(),
-            });
-            setShowCloseForm(false);
-            setSelectedSummary(null);
-            setShowCloseReminder(false);
-            showToast("Close Day. Thank you!", "success");
-        } catch (error) {
-            showToast(
-                error instanceof Error ? error.message : "Failed to close day",
-                "error",
-            );
-        }
-    };
-
-    // ============================================================================
-    // LOADING / ERROR
-    // ============================================================================
-
-    if (summariesLoading) {
-        return (
-            <div
-                className="flex flex-col items-center justify-center"
-                style={{ minHeight: "calc(100vh - 200px)" }}
-            >
-                <div className="w-10 h-10 border-3 border-brand border-t-transparent rounded-full animate-spin" />
-                <p className="mt-4 text-gray-600 text-sm">
-                    Loading Analytics...
-                </p>
-            </div>
-        );
-    }
 
     if (summariesError) {
         return (
@@ -272,20 +76,14 @@ export default function MobileAnalytics() {
         );
     }
 
-    // ============================================================================
-    // RENDER
-    // ============================================================================
-
     return (
         <div className="space-y-4">
             {/* Monthly Summary */}
             {summariesData?.monthlyTotals && (
-                <div className="bg-white p-4 rounded-lg shadow-sm">
+                <div className="bg-white p-4 rounded-2xl">
                     <div className="flex items-center gap-2 mb-3">
                         <Receipt size={20} className="text-gray-600" />
-                        <h3 className="font-semibold text-gray-800">
-                            Monthly Summary
-                        </h3>
+                        <h3 className="font-semibold text-gray-800">Monthly Summary</h3>
                     </div>
                     <div className="grid grid-cols-4 gap-2">
                         <div className="text-center">
@@ -303,9 +101,7 @@ export default function MobileAnalytics() {
                         <div className="text-center col-span-2 border-l-2 border-gray-300">
                             <p className="text-sm text-gray-600">Total Sales</p>
                             <p className="text-xl font-bold text-green-600">
-                                {formatRupiah(
-                                    summariesData.monthlyTotals.totalSales,
-                                )}
+                                {formatRupiah(summariesData.monthlyTotals.totalSales)}
                             </p>
                         </div>
                     </div>
@@ -318,46 +114,17 @@ export default function MobileAnalytics() {
                     <div className="flex items-center gap-2 mb-2">
                         <AlertTriangle size={20} className="text-red-600" />
                         <h3 className="font-semibold text-red-800">
-                            {unclosedSummaries.length - 1} Overdue Unclosed
-                            Day(s)
+                            {unclosedSummaries.length - 1} Overdue Unclosed Day(s)
                         </h3>
                     </div>
                     <p className="text-sm text-red-700">
-                        Please close these days to maintain accurate financial
-                        records.
+                        Please close these days to maintain accurate financial records.
                     </p>
-                </div>
-            )}
-
-            {/* Open Store Today */}
-            {!todaysSummary && isCurrentMonthSelected(selectedMonth) && (
-                <div className="bg-green-50 border border-green-200 p-3.5 rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                        <CheckCircle size={20} className="text-green-600" />
-                        <h3 className="font-semibold text-green-800">
-                            Open store Today for {storeName}
-                        </h3>
-                    </div>
-                    <p className="text-sm text-green-700 mb-2">
-                        Opening the store will initialize a summary with zero
-                        balances.
-                    </p>
-                    <button
-                        className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700"
-                        onClick={() => setShowOpenStorePopup(true)}
-                    >
-                        Open Store on{" "}
-                        {new Date().toLocaleDateString("en-US", {
-                            weekday: "long",
-                            day: "numeric",
-                            month: "short",
-                        })}
-                    </button>
                 </div>
             )}
 
             {/* Month Filter */}
-            <div className="bg-white p-4 rounded-lg shadow-sm">
+            <div className="bg-white p-4 rounded-2xl">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                     <CalendarDays size={16} className="inline mr-1" />
                     Select Month
@@ -383,32 +150,23 @@ export default function MobileAnalytics() {
                 </h3>
                 <span className="text-sm text-gray-500">
                     {summariesData?.summaries?.length ?? 0}{" "}
-                    {(summariesData?.summaries?.length ?? 0) === 1
-                        ? "summary"
-                        : "summaries"}
+                    {(summariesData?.summaries?.length ?? 0) === 1 ? "summary" : "summaries"}
                 </span>
             </div>
 
             {/* Daily Summaries */}
             {selectedStoreId && (
                 <div className="space-y-3">
-                    {!summariesData?.summaries ||
-                    summariesData.summaries.length === 0 ? (
-                        <div className="bg-white p-8 rounded-lg shadow-sm text-center">
-                            <Calendar
-                                size={48}
-                                className="mx-auto text-gray-400 mb-4"
-                            />
+                    {!summariesData?.summaries || summariesData.summaries.length === 0 ? (
+                        <div className="bg-white p-8 rounded-2xl text-center">
+                            <Calendar size={48} className="mx-auto text-gray-400 mb-4" />
                             <p className="text-gray-600">
                                 No daily summary found for selected month
                             </p>
                         </div>
                     ) : (
                         summariesData.summaries.map((summary) => {
-                            const dailyExpenses = getExpensesForDate(
-                                summariesData,
-                                summary.date,
-                            );
+                            const dailyExpenses = getExpensesForDate(summariesData, summary.date);
                             const summaryWithExtras: DailySummaryWithExtras = {
                                 ...summary,
                                 expenses: summary.expenses ?? dailyExpenses,
@@ -417,120 +175,113 @@ export default function MobileAnalytics() {
                             return (
                                 <div
                                     key={summary.id}
-                                    className="bg-white rounded-xl shadow-sm overflow-hidden"
+                                    className="bg-white rounded-2xl overflow-hidden"
                                 >
                                     <div className="p-3 bg-white space-y-3">
                                         <div className="flex justify-between items-start mb-3">
-                                            <div className="flex-1">
-                                                <button
-                                                    onClick={() => {
-                                                        setSelectedSummary(
-                                                            summaryWithExtras,
-                                                        );
-                                                        setShowDetailsModal(
-                                                            true,
-                                                        );
-                                                    }}
-                                                    className="text-left hover:text-blue-600 transition-colors"
-                                                >
-                                                    <h3 className="text-lg font-semibold text-gray-800 hover:text-blue-600">
-                                                        {formatDate(
-                                                            summary.date,
-                                                        )}
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <h3 className="text-xl font-bold text-gray-800">
+                                                        {formatDate(summary.date)}
                                                     </h3>
-                                                    <PhotoCountLabel
-                                                        summaryId={summary.id}
-                                                    />
-                                                </button>
+                                                    {summary.closedAt ? (
+                                                        <span className="bg-red-100 text-red-800 px-2 py-0.5 rounded-full text-sm font-medium self-center">
+                                                            Closed
+                                                        </span>
+                                                    ) : (
+                                                        <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-sm font-medium self-center">
+                                                            Open
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <PhotoCountLabel summaryId={summary.id} />
                                             </div>
-
-                                            <div className="text-right">
-                                                {summary.closedAt ? (
-                                                    <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
-                                                        Closed
-                                                    </span>
-                                                ) : (
-                                                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">
-                                                        Open
-                                                    </span>
+                                            <div className="relative">
+                                                <button
+                                                    onClick={() => setOpenMenuId(openMenuId === summary.id ? null : summary.id)}
+                                                    className="w-7 h-7 flex items-center justify-center rounded-lg bg-brand active:opacity-80 active:scale-95 text-white transition-transform duration-100"
+                                                >
+                                                    <ChevronsDown size={28} strokeWidth={2} />
+                                                </button>
+                                                {openMenuId === summary.id && (
+                                                    <>
+                                                        <div
+                                                            className="fixed inset-0 z-10"
+                                                            onClick={() => setOpenMenuId(null)}
+                                                        />
+                                                        <div className="absolute right-0 top-9 z-20 bg-white rounded-xl shadow-lg border border-gray-100 py-1 w-max">
+                                                            <button
+                                                                onClick={() => {
+                                                                    setOpenMenuId(null);
+                                                                    setSelectedSummary(summaryWithExtras);
+                                                                    setShowDetailsModal(true);
+                                                                }}
+                                                                className="w-full text-left px-4 py-2.5 text-sm text-gray-900 font-medium active:bg-gray-50 flex items-center gap-2.5"
+                                                            >
+                                                                <Info size={15} className="text-gray-600" />
+                                                                Details
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    setOpenMenuId(null);
+                                                                    navigation.push(url(`/mobile/analytics/daily/${summary.id}/events?storeId=${selectedStoreId}&date=${summary.date}`));
+                                                                }}
+                                                                className="w-full text-left px-4 py-2.5 text-sm text-gray-900 font-medium active:bg-gray-50 flex items-center gap-2.5"
+                                                            >
+                                                                <Activity size={15} className="text-gray-600" />
+                                                                Day Activity
+                                                            </button>
+                                                        </div>
+                                                    </>
                                                 )}
                                             </div>
                                         </div>
 
-                                        <h4 className="text-gray-800 text-sm font-semibold mb-1">
-                                            Summary of the Day
-                                        </h4>
-
-                                        <div className="grid grid-cols-2 gap-2 rounded-lg border p-2 border-gray-200 bg-gray-50 text-gray-800">
+                                        <div className="grid grid-cols-2 gap-2 rounded-2xl p-2 bg-slate-100 text-gray-800">
                                             <div>
-                                                <p className="text-xs">
-                                                    Opening Balance
-                                                </p>
-                                                <p className="text-lg font-semibold text-blue-600">
-                                                    {formatRupiah(
-                                                        summary.openingBalance,
-                                                    )}
+                                                <p className="text-xs">Opening Balance</p>
+                                                <p className="text-lg font-extrabold text-blue-600">
+                                                    {formatRupiah(summary.openingBalance)}
                                                 </p>
                                             </div>
                                             <div>
-                                                <p className="text-xs">
-                                                    Total Sales
-                                                </p>
-                                                <p className="text-lg font-bold text-green-600">
-                                                    {formatRupiah(
-                                                        summary.totalSales,
-                                                    )}
+                                                <p className="text-xs">Total Sales</p>
+                                                <p className="text-lg font-extrabold text-green-600">
+                                                    {formatRupiah(summary.totalSales)}
                                                 </p>
                                             </div>
                                             <div>
-                                                <p className="text-xs">
-                                                    Opening + Sales
-                                                </p>
-                                                <p className="text-lg font-semibold text-purple-600">
-                                                    {formatRupiah(
-                                                        summary.openingBalance +
-                                                            summary.totalSales,
-                                                    )}
+                                                <p className="text-xs">Opening + Sales</p>
+                                                <p className="text-lg font-extrabold text-purple-600">
+                                                    {formatRupiah(summary.openingBalance + summary.totalSales)}
                                                 </p>
                                             </div>
                                             <div className="flex gap-4">
                                                 <div>
-                                                    <p className="text-xs">
-                                                        Orders
-                                                    </p>
-                                                    <p className="text-lg font-bold text-blue-600">
+                                                    <p className="text-xs">Orders</p>
+                                                    <p className="text-lg font-extrabold text-blue-600">
                                                         {summary.totalOrders}
                                                     </p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs">
-                                                        Cups
-                                                    </p>
-                                                    <p className="text-lg font-bold text-orange-600">
+                                                    <p className="text-xs">Cups</p>
+                                                    <p className="text-lg font-extrabold text-orange-600">
                                                         {summary.totalCups}
                                                     </p>
                                                 </div>
                                             </div>
                                             <hr className="col-span-2 border-gray-300" />
                                             <div>
-                                                <p className="text-xs">
-                                                    Net Expected Cash
-                                                </p>
-                                                <p className="text-lg font-semibold text-purple-600">
-                                                    {formatRupiah(
-                                                        summary.expectedCash,
-                                                    )}
+                                                <p className="text-xs">Net Expected Cash</p>
+                                                <p className="text-lg font-extrabold text-purple-600">
+                                                    {formatRupiah(summary.expectedCash)}
                                                 </p>
                                             </div>
                                             <div>
-                                                <p className="text-xs">
-                                                    Actual Cash (Counted)
-                                                </p>
-                                                <p className="text-lg font-semibold text-orange-600">
+                                                <p className="text-xs">Actual Cash (Counted)</p>
+                                                <p className="text-lg font-extrabold text-orange-600">
                                                     {summary.actualCash !== null
-                                                        ? formatRupiah(
-                                                              summary.actualCash,
-                                                          )
+                                                        ? formatRupiah(summary.actualCash)
                                                         : "Not counted"}
                                                 </p>
                                             </div>
@@ -542,35 +293,23 @@ export default function MobileAnalytics() {
                                                     Expenses of the Day
                                                 </h4>
                                                 <div className="bg-red-50 border border-red-200 p-2 rounded-lg">
-                                                    {dailyExpenses.map(
-                                                        (expense) => (
-                                                            <div
-                                                                key={expense.id}
-                                                                className="flex justify-between text-sm"
-                                                            >
-                                                                <span className="text-red-700">
-                                                                    {
-                                                                        expense.expenseType
-                                                                    }
-                                                                </span>
-                                                                <span className="font-medium text-red-800">
-                                                                    -
-                                                                    {formatRupiah(
-                                                                        expense.amount,
-                                                                    )}
-                                                                </span>
-                                                            </div>
-                                                        ),
-                                                    )}
+                                                    {dailyExpenses.map((expense) => (
+                                                        <div
+                                                            key={expense.id}
+                                                            className="flex justify-between text-sm"
+                                                        >
+                                                            <span className="text-red-700">
+                                                                {expense.type}
+                                                            </span>
+                                                            <span className="font-medium text-red-800">
+                                                                -{formatRupiah(expense.amount)}
+                                                            </span>
+                                                        </div>
+                                                    ))}
                                                     <div className="border-t border-red-300 mt-1 pt-1 flex justify-between font-medium">
-                                                        <span className="text-red-700">
-                                                            Total
-                                                        </span>
+                                                        <span className="text-red-700">Total</span>
                                                         <span className="text-red-800">
-                                                            -
-                                                            {formatRupiah(
-                                                                summary.totalExpenses,
-                                                            )}
+                                                            -{formatRupiah(summary.totalExpenses)}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -589,12 +328,8 @@ export default function MobileAnalytics() {
                                                             : "bg-red-50 border border-red-200 text-red-700"
                                                     }`}
                                                 >
-                                                    {summary.variance >= 0
-                                                        ? "+"
-                                                        : ""}
-                                                    {formatRupiah(
-                                                        summary.variance,
-                                                    )}
+                                                    {summary.variance >= 0 ? "+" : ""}
+                                                    {formatRupiah(summary.variance)}
                                                 </p>
                                             </div>
                                         )}
@@ -604,7 +339,7 @@ export default function MobileAnalytics() {
                                                 <h4 className="text-gray-800 text-sm font-semibold mb-1">
                                                     Notes
                                                 </h4>
-                                                <p className="text-sm text-gray-700 bg-gray-50 p-2 rounded-lg border border-gray-200">
+                                                <p className="text-sm text-gray-700 bg-slate-100 p-2 rounded-xl">
                                                     {summary.notes}
                                                 </p>
                                             </div>
@@ -612,45 +347,17 @@ export default function MobileAnalytics() {
                                     </div>
 
                                     {!summary.closedAt && (
-                                        <div className="border-t border-gray-100 p-3 bg-gray-50">
-                                            <div className="flex space-x-2">
-                                                <button
-                                                    onClick={() => {
-                                                        setSelectedSummary(
-                                                            summaryWithExtras,
-                                                        );
-                                                        setShowEditForm(true);
-                                                    }}
-                                                    className="flex-1 bg-white text-blue-500 border border-blue-500 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-100"
-                                                >
-                                                    Balance
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        setSelectedSummary(
-                                                            summaryWithExtras,
-                                                        );
-                                                        setShowExpenseForm(
-                                                            true,
-                                                        );
-                                                    }}
-                                                    className="flex-1 bg-white text-green-500 border border-green-500 py-2 px-3 rounded-lg text-sm font-medium hover:bg-green-100"
-                                                >
-                                                    Expenses
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        navigation.push(
-                                                            url(
-                                                                `/mobile/analytics/daily/close?summaryId=${summary.id}`,
-                                                            ),
-                                                        );
-                                                    }}
-                                                    className="flex-1 bg-red-500 text-white border border-red-500 py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-600"
-                                                >
-                                                    Close Day
-                                                </button>
-                                            </div>
+                                        <div className="border-t border-gray-100 p-3">
+                                            <button
+                                                onClick={() =>
+                                                    navigation.push(
+                                                        url(`/mobile/home/manage/close?summaryId=${summary.id}&month=${summary.date.slice(0, 7)}`),
+                                                    )
+                                                }
+                                                className="w-full bg-red-500 text-white py-4 px-4 rounded-xl text-sm font-semibold active:scale-95"
+                                            >
+                                                Close Day
+                                            </button>
                                         </div>
                                     )}
                                 </div>
@@ -660,95 +367,16 @@ export default function MobileAnalytics() {
                 </div>
             )}
 
-            {/* Modals */}
-            <ConfirmationPopup
-                isOpen={showOpenStorePopup}
-                title="Open Store Today"
-                message={`Open '${storeName}' Store for ${new Date().toLocaleDateString(
-                    "en-US",
-                    {
-                        weekday: "long",
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                    },
-                )}? This will create a new daily summary.`}
-                confirmText="Open Store"
-                onConfirm={handleOpenStoreToday}
-                onCancel={() => {
-                    setShowOpenStorePopup(false);
-                    setHasSeenPopup(true);
-                }}
-            />
-
-            <ConfirmationPopup
-                isOpen={showCloseReminder}
-                title="Close Day Reminder"
-                message="Don't forget to close the day and count the cash before ending your shift."
-                confirmText="Close Now"
-                cancelText="Remind Later"
-                type="warning"
-                onConfirm={() => {
-                    if (todaysSummary) {
-                        setShowCloseReminder(false);
-                        navigation.push(
-                            url(
-                                `/mobile/analytics/daily/close?summaryId=${todaysSummary.id}`,
-                            ),
-                        );
-                    }
-                }}
-                onCancel={() => {
-                    setShowCloseReminder(false);
-                    setHasSeenCloseReminder(true);
-                }}
-            />
-
             {selectedSummary && (
-                <>
-                    <DetailsDrawer
-                        isOpen={showDetailsModal}
-                        summary={selectedSummary}
-                        onClose={() => {
-                            setShowDetailsModal(false);
-                            setSelectedSummary(null);
-                        }}
-                        storeName={storeName}
-                    />
-                    <SetBalanceModal
-                        isOpen={showEditForm}
-                        summary={selectedSummary}
-                        onClose={() => {
-                            setShowEditForm(false);
-                            setSelectedSummary(null);
-                        }}
-                        onSubmit={handleBalanceSubmit}
-                        formatDate={formatDate}
-                        getStoreName={() => storeName}
-                    />
-                    <SetExpenseModal
-                        isOpen={showExpenseForm}
-                        summary={selectedSummary}
-                        onClose={() => {
-                            setShowExpenseForm(false);
-                            setSelectedSummary(null);
-                        }}
-                        onSubmit={handleExpenseSubmit}
-                        formatDate={formatDate}
-                        getStoreName={() => storeName}
-                    />
-                    <CloseDayModal
-                        isOpen={showCloseForm}
-                        summary={selectedSummary}
-                        onClose={() => {
-                            setShowCloseForm(false);
-                            setSelectedSummary(null);
-                        }}
-                        onSubmit={handleCloseDaySubmit}
-                        formatDate={formatDate}
-                        getStoreName={() => storeName}
-                    />
-                </>
+                <DetailsDrawer
+                    isOpen={showDetailsModal}
+                    summary={selectedSummary}
+                    onClose={() => {
+                        setShowDetailsModal(false);
+                        setSelectedSummary(null);
+                    }}
+                    storeName={selectedSummary.storeId ?? ""}
+                />
             )}
         </div>
     );

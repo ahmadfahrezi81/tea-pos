@@ -41,7 +41,7 @@ export default function MobileDailySales() {
     return (
         <div className="space-y-4">
             {/* Month Filter */}
-            <div className="bg-white p-4 rounded-lg shadow-sm">
+            <div className="bg-white p-4 rounded-2xl">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                     <CalendarDays size={16} className="inline mr-1" />
                     Select Month

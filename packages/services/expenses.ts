@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { toCamelKeys, toSnakeKeys } from "@tea-pos/utils/schemas";
+import { createLogger } from "./activity-logs";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -11,16 +12,18 @@ export interface ListExpensesParams {
 
 export interface CreateExpenseParams {
     tenantId: string;
+    userId: string;
     dailySummaryId: string;
     storeId: string;
-    expenseType: string;
+    type: string;
     amount: number;
 }
 
 export interface UpdateExpenseParams {
     tenantId: string;
+    userId: string;
     id: string;
-    expenseType?: string;
+    type?: string;
     amount?: number;
 }
 
@@ -28,8 +31,8 @@ export interface UpdateExpenseParams {
 
 async function recalcSummary(supabase: SupabaseClient, dailySummaryId: string, tenantId: string) {
     const [{ data: expenses }, { data: summary }] = await Promise.all([
-        supabase.from("expenses").select("amount").eq("daily_summary_id", dailySummaryId).eq("tenant_id", tenantId),
-        supabase.from("daily_summaries").select("opening_balance, total_sales").eq("id", dailySummaryId).eq("tenant_id", tenantId).single(),
+        supabase.from("store_expenses").select("amount").eq("daily_summary_id", dailySummaryId).eq("tenant_id", tenantId),
+        supabase.from("store_daily_summaries").select("opening_balance, total_sales").eq("id", dailySummaryId).eq("tenant_id", tenantId).single(),
     ]);
 
     if (!summary) return;
@@ -38,7 +41,7 @@ async function recalcSummary(supabase: SupabaseClient, dailySummaryId: string, t
     const expectedCash = summary.opening_balance + summary.total_sales - totalExpenses;
 
     await supabase
-        .from("daily_summaries")
+        .from("store_daily_summaries")
         .update({ expected_cash: expectedCash, total_expenses: totalExpenses })
         .eq("id", dailySummaryId)
         .eq("tenant_id", tenantId);
@@ -50,7 +53,7 @@ export async function listExpenses(supabase: SupabaseClient, params: ListExpense
     const { tenantId, dailySummaryId, storeId } = params;
 
     let query = supabase
-        .from("expenses")
+        .from("store_expenses")
         .select("*")
         .eq("tenant_id", tenantId)
         .order("created_at", { ascending: true });
@@ -64,10 +67,10 @@ export async function listExpenses(supabase: SupabaseClient, params: ListExpense
 }
 
 export async function createExpense(supabase: SupabaseClient, params: CreateExpenseParams) {
-    const { tenantId, dailySummaryId, storeId, expenseType, amount } = params;
+    const { tenantId, userId, dailySummaryId, storeId, type, amount } = params;
 
     const { data: summary, error: summaryError } = await supabase
-        .from("daily_summaries")
+        .from("store_daily_summaries")
         .select("id, tenant_id")
         .eq("id", dailySummaryId)
         .eq("tenant_id", tenantId)
@@ -85,8 +88,8 @@ export async function createExpense(supabase: SupabaseClient, params: CreateExpe
     if (storeError) throw new Error("Store not found or access denied");
 
     const { data: expenseData, error: expenseError } = await supabase
-        .from("expenses")
-        .insert(toSnakeKeys({ dailySummaryId, storeId, expenseType, amount, tenantId: summary.tenant_id }))
+        .from("store_expenses")
+        .insert(toSnakeKeys({ dailySummaryId, storeId, type, amount, tenantId: summary.tenant_id }))
         .select()
         .single();
 
@@ -94,19 +97,26 @@ export async function createExpense(supabase: SupabaseClient, params: CreateExpe
 
     await recalcSummary(supabase, dailySummaryId, tenantId);
 
+    const log = createLogger(supabase, { tenantId, userId, storeId });
+    log("expense_created", {
+        refId: (expenseData as { id: string }).id,
+        refTable: "store_expenses",
+        metadata: { amount, type },
+    });
+
     return toCamelKeys(expenseData);
 }
 
 export async function updateExpense(supabase: SupabaseClient, params: UpdateExpenseParams) {
-    const { tenantId, id, expenseType, amount } = params;
+    const { tenantId, userId, id, type, amount } = params;
 
     const updates: Record<string, unknown> = {};
-    if (expenseType !== undefined) updates.expense_type = expenseType;
+    if (type !== undefined) updates.type = type;
     if (amount !== undefined) updates.amount = amount;
     if (Object.keys(updates).length === 0) throw new Error("No fields to update");
 
     const { data: expenseData, error } = await supabase
-        .from("expenses")
+        .from("store_expenses")
         .update(updates)
         .eq("id", id)
         .eq("tenant_id", tenantId)
@@ -117,12 +127,19 @@ export async function updateExpense(supabase: SupabaseClient, params: UpdateExpe
 
     await recalcSummary(supabase, expenseData.daily_summary_id, tenantId);
 
+    const raw = expenseData as { id: string; store_id: string; amount: number; type: string };
+    createLogger(supabase, { tenantId, userId, storeId: raw.store_id })("expense_updated", {
+        refId: raw.id,
+        refTable: "store_expenses",
+        metadata: { amount: raw.amount, type: raw.type },
+    });
+
     return toCamelKeys(expenseData);
 }
 
-export async function deleteExpense(supabase: SupabaseClient, { tenantId, id }: { tenantId: string; id: string }) {
+export async function deleteExpense(supabase: SupabaseClient, { tenantId, userId, id }: { tenantId: string; userId: string; id: string }) {
     const { data: expense, error: getError } = await supabase
-        .from("expenses")
+        .from("store_expenses")
         .select("*")
         .eq("id", id)
         .eq("tenant_id", tenantId)
@@ -131,7 +148,7 @@ export async function deleteExpense(supabase: SupabaseClient, { tenantId, id }: 
     if (getError || !expense) throw new Error("Expense not found");
 
     const { error: deleteError } = await supabase
-        .from("expenses")
+        .from("store_expenses")
         .delete()
         .eq("id", id)
         .eq("tenant_id", tenantId);
@@ -139,6 +156,13 @@ export async function deleteExpense(supabase: SupabaseClient, { tenantId, id }: 
     if (deleteError) throw new Error(deleteError.message);
 
     await recalcSummary(supabase, expense.daily_summary_id, tenantId);
+
+    const raw = expense as { id: string; store_id: string; amount: number; type: string };
+    createLogger(supabase, { tenantId, userId, storeId: raw.store_id })("expense_deleted", {
+        refId: raw.id,
+        refTable: "store_expenses",
+        metadata: { amount: raw.amount, type: raw.type },
+    });
 
     return toCamelKeys(expense);
 }

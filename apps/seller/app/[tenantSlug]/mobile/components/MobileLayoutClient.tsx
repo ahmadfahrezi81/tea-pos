@@ -1,5 +1,5 @@
 "use client";
-import {
+import React, {
     useEffect,
     ReactNode,
     useMemo,
@@ -7,13 +7,6 @@ import {
     useRef,
     useCallback,
 } from "react";
-import {
-    ReceiptText,
-    StoreIcon,
-    ChartNoAxesCombinedIcon,
-    InboxIcon,
-    MoreHorizontal,
-} from "lucide-react";
 import Image from "next/image";
 import { useStores } from "@/lib/hooks/stores/useStores";
 import { useRouter, usePathname } from "next/navigation";
@@ -25,7 +18,9 @@ import { navigation } from "@tea-pos/utils/navigation";
 import { useIsIPhonePWA } from "@/lib/usePWA";
 import { MobileHeader } from "./MobileHeader";
 import { MobileFooterNav } from "./MobileFooterNav";
-import { resolveRoute } from "../config/routes";
+import { MobileOverlayContext } from "./MobileOverlayContext";
+import { MobileFooterSlotContext } from "./MobileFooterSlotContext";
+import { resolveRoute, rootTabSuffixes, tabGroups } from "../config/navigation";
 
 interface MobileLayoutClientProps {
     children: ReactNode;
@@ -41,83 +36,25 @@ export default function MobileLayoutClient({
     const [shellReady, setShellReady] = useState(false);
     const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
     const [isTransitioning, setIsTransitioning] = useState(false);
+    const [overlay, setOverlayNode] = useState<ReactNode>(null);
+    const setOverlay = useCallback((node: ReactNode) => setOverlayNode(node), []);
+    const [footerSlot, setFooterSlotNode] = useState<ReactNode>(null);
+    const setFooterSlot = useCallback((node: ReactNode) => setFooterSlotNode(node), []);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const lastRootTabRef = useRef<string>(url("/mobile/more"));
 
-    const { profile, avatarUrl, mutate: refreshProfile } = useAuth();
+    const { user, avatarUrl, mutate: refreshProfile } = useAuth();
     const { data: storesData } = useStores();
     const { selectedStore, setIsPickerOpen, isPickerOpen } = useStore();
     const isIPhonePWA = useIsIPhonePWA();
 
-    const storesReady = !!storesData;
-
     useEffect(() => {
-        if (profile) {
+        if (user && storesData !== undefined) {
             setShellReady(true);
         }
-    }, [profile]);
+    }, [user, storesData]);
 
-    const tabs = useMemo(
-        () => [
-            {
-                path: url("/mobile/pos"),
-                label: "Home",
-                icon: StoreIcon,
-                matchPaths: [url("/mobile/pos")],
-            },
-            {
-                path: url("/mobile/orders"),
-                label: "Orders",
-                icon: ReceiptText,
-                matchPaths: [
-                    url("/mobile/orders"),
-                    url("/mobile/orders/chart"),
-                ],
-            },
-            {
-                path: url("/mobile/analytics"),
-                label: "Analytics",
-                icon: ChartNoAxesCombinedIcon,
-                matchPaths: [
-                    url("/mobile/analytics"),
-                    url("/mobile/analytics/chart"),
-                ],
-            },
-            {
-                path: url("/mobile/inbox"),
-                label: "Inbox",
-                icon: InboxIcon,
-                matchPaths: [url("/mobile/inbox")],
-            },
-            {
-                path: url("/mobile/more"),
-                label: "More",
-                icon: MoreHorizontal,
-                matchPaths: [url("/mobile/more")],
-            },
-        ],
-        [url],
-    );
-
-    const getCurrentPageTitle = useCallback(
-        (path: string): string | null => resolveRoute(path)?.title ?? "Mobile",
-        [],
-    );
-
-    const isSubPage = useCallback(
-        (path: string) => resolveRoute(path)?.subPage ?? false,
-        [],
-    );
-
-    const getParentPath = useCallback(
-        (path: string) => {
-            const route = resolveRoute(path);
-            if (!route?.parent) return url("/mobile");
-            if (route.parent === "lastRootTab") return lastRootTabRef.current;
-            return url(route.parent);
-        },
-        [url],
-    );
+    const rootTabPaths = useMemo(() => rootTabSuffixes.map(url), [url]);
 
     const handleNavClick = useCallback(
         (path: string) => {
@@ -130,17 +67,10 @@ export default function MobileLayoutClient({
     );
 
     useEffect(() => {
-        const rootTabs = [
-            url("/mobile/pos"),
-            url("/mobile/orders"),
-            url("/mobile/analytics"),
-            url("/mobile/inbox"),
-            url("/mobile/more"),
-        ];
-        if (rootTabs.includes(pathname)) {
+        if (rootTabPaths.includes(pathname)) {
             lastRootTabRef.current = pathname;
         }
-    }, [pathname, url]);
+    }, [pathname, rootTabPaths]);
 
     useEffect(() => {
         navigation.register(handleNavClick);
@@ -156,16 +86,14 @@ export default function MobileLayoutClient({
     }, [pathname, optimisticPath]);
 
     useEffect(() => {
+        router.prefetch(url("/mobile/home/pos"));
+        router.prefetch(url("/mobile/home/manage"));
         router.prefetch(url("/mobile/notifications"));
         router.prefetch(url("/mobile/account"));
         router.prefetch(url("/mobile/more/stores"));
         router.prefetch(url("/mobile/account/details"));
         router.prefetch(url("/mobile/more/map"));
     }, []);
-
-    useEffect(() => {
-        tabs.forEach((tab) => router.prefetch(tab.path));
-    }, [tabs]);
 
     useEffect(() => {
         const el = scrollContainerRef.current;
@@ -181,130 +109,193 @@ export default function MobileLayoutClient({
     }, [isPickerOpen]);
 
     const currentPath = optimisticPath || pathname;
-    const currentTitle = getCurrentPageTitle(currentPath);
-    const currentIsSubPage = isSubPage(currentPath);
-    const isInlineHeader = resolveRoute(currentPath)?.inlineHeader ?? false;
 
-    const rootTabPaths = [
-        url("/mobile/pos"),
-        url("/mobile/orders"),
-        url("/mobile/analytics"),
-        url("/mobile/inbox"),
-        url("/mobile/more"),
-    ];
+    const tabs = useMemo(
+        () =>
+            tabGroups.global.map((tab) => {
+                const v =
+                    tab.variant && currentPath.includes(tab.variant.pathContains)
+                        ? tab.variant
+                        : null;
+                return {
+                    path: url(tab.pathSuffix),
+                    label: v?.label ?? tab.label,
+                    icon: v?.icon ?? tab.icon,
+                    matchPaths: tab.matchSuffixes.map(url),
+                };
+            }),
+        [currentPath, url],
+    );
+
+    useEffect(() => {
+        tabs.forEach((tab) => router.prefetch(tab.path));
+    }, [tabs]);
+
+    const currentRoute = resolveRoute(currentPath);
+    const currentTitle = currentRoute?.title ?? "Mobile";
+    const currentIsSubPage = currentRoute?.subPage ?? false;
+    const isInlineHeader = currentRoute?.inlineHeader ?? false;
+    const hasHeaderAction = currentRoute?.headerAction === "add";
+    const footerCtaLabel = currentRoute?.footerCta;
+    const parentSuffix = currentRoute?.parent;
+    const parentPath = !parentSuffix
+        ? url("/mobile")
+        : parentSuffix === "lastRootTab"
+          ? lastRootTabRef.current
+          : url(parentSuffix);
     const showAccountIcon = rootTabPaths.some((p) => currentPath === p);
 
-    const scrollPaddingTop = isInlineHeader
-        ? "pt-16"
-        : currentIsSubPage
-          ? "pt-27"
-          : "pt-19";
+    const scrollPaddingTop = hasHeaderAction
+        ? "pt-30"
+        : isInlineHeader
+          ? "pt-16"
+          : currentIsSubPage
+            ? "pt-27"
+            : "pt-19";
 
-    if (!shellReady) {
-        return (
-            <div className="h-dvh overflow-hidden bg-white flex flex-col items-center justify-center">
-                <div className="text-center" role="status" aria-live="polite">
-                    <div className="mb-8">
-                        <Image
-                            src="/icons/icon-192x192.png"
-                            alt="Logo"
-                            width={70}
-                            height={70}
-                            priority
-                            className="rounded-xl shadow-2xl mx-auto"
-                        />
-                    </div>
-                    <div className="w-64 h-1.5 loading-track rounded-full">
-                        <div className="loading-bar" />
-                    </div>
-                    <div className="mt-4 text-xs text-gray-600 text-center">
-                        <span className="font-mono text-xs opacity-90">
-                            Loading ...
-                        </span>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    if (!profile) {
-        return (
-            <div className="h-dvh overflow-hidden bg-white flex flex-col items-center justify-center p-4">
-                <div className="text-center">
-                    <div className="mb-6">
-                        <Image
-                            src="/icons/icon-192x192.png"
-                            alt="Logo"
-                            width={70}
-                            height={70}
-                            priority
-                            className="rounded-xl shadow-2xl mx-auto"
-                        />
-                    </div>
-                    <h2 className="text-lg font-semibold text-gray-800 mb-2">
-                        Authentication Required
-                    </h2>
-                    <p className="text-gray-600 mb-6 text-sm">
-                        Unable to load your profile. Please check your
-                        connection and try again.
-                    </p>
-                    <div className="flex gap-3 justify-center">
-                        <button
-                            onClick={() => window.location.reload()}
-                            className="px-4 py-2 bg-brand text-white rounded-lg text-sm font-medium"
-                        >
-                            Refresh Page
-                        </button>
-                        <button
-                            onClick={() => refreshProfile()}
-                            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium"
-                        >
-                            Retry
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
+    const scrollPaddingBottom = (hasHeaderAction || !!footerCtaLabel) ? "pb-32" : "pb-28";
 
     return (
-        <div className="h-dvh flex flex-col bg-gray-50 select-none overflow-hidden">
-            <MobileHeader
-                currentPath={currentPath}
-                currentTitle={currentTitle}
-                isSubPage={currentIsSubPage}
-                selectedStore={selectedStore}
-                showAccountIcon={showAccountIcon}
-                avatarUrl={avatarUrl}
-                onBack={() => handleNavClick(getParentPath(currentPath))}
-                onStorePicker={() => setIsPickerOpen(true)}
-                onAccount={() => handleNavClick(url("/mobile/account"))}
-            />
-
+        <MobileFooterSlotContext.Provider value={{ setFooterSlot }}>
+        <MobileOverlayContext.Provider value={{ setOverlay }}>
+            {/* Shell — always rendered so header/footer are on screen from first paint */}
             <div
-                ref={scrollContainerRef}
-                className={`flex-1 overflow-y-auto bg-gray-50 p-4 pb-28 ${scrollPaddingTop}`}
+                className="h-dvh flex flex-col bg-gradient-to-b from-slate-100 to-slate-200 select-none overflow-hidden"
+                style={{ '--mobile-footer-h': isIPhonePWA ? '97px' : '65px' } as React.CSSProperties}
             >
-                {isTransitioning ? (
-                    <div className="absolute inset-0 flex items-center justify-center animate-pulse">
-                        <div className="w-7 h-7 border-3 border-brand border-t-transparent rounded-full animate-spin" />
+                <MobileHeader
+                    currentPath={currentPath}
+                    currentTitle={currentTitle}
+                    isSubPage={currentIsSubPage}
+                    selectedStore={selectedStore}
+                    showAccountIcon={showAccountIcon}
+                    avatarUrl={avatarUrl}
+                    onBack={() => handleNavClick(parentPath)}
+                    onStorePicker={() => setIsPickerOpen(true)}
+                    onAccount={() => handleNavClick(url("/mobile/account"))}
+                />
+
+                <div className="flex-1 relative overflow-hidden">
+                    <div
+                        ref={scrollContainerRef}
+                        className={`absolute inset-0 overflow-y-auto p-4 ${scrollPaddingBottom} ${scrollPaddingTop}`}
+                    >
+                        {shellReady && !isTransitioning && children}
                     </div>
-                ) : (
-                    children
+                    {isTransitioning && (
+                        <div
+                            className={`absolute inset-x-0 top-0 z-10 px-4 pb-4 ${scrollPaddingTop}`}
+                            style={{ bottom: "var(--mobile-footer-h)" }}
+                        >
+                            <div className="animate-pulse space-y-3">
+                                <div className="h-20 bg-slate-200 rounded-2xl" />
+                                <div className="h-40 bg-slate-200 rounded-2xl" />
+                                <div className="h-44 bg-slate-200 rounded-2xl" />
+                                <div className="h-12 bg-slate-200 rounded-2xl" />
+                            </div>
+                        </div>
+                    )}
+                    {overlay && (
+                        <div
+                            className={`absolute inset-x-0 top-0 z-10 ${scrollPaddingTop} pb-5 px-3`}
+                            style={{ bottom: 'var(--mobile-footer-h)' }}
+                        >
+                            {overlay}
+                        </div>
+                    )}
+                    {(footerSlot || footerCtaLabel) && (
+                        <div className="absolute bottom-0 left-0 right-0 z-20">
+                            {footerSlot ?? (
+                                <div className="bg-white border-t border-gray-200 p-4 pb-8">
+                                    <button
+                                        onClick={() => handleNavClick(`${currentPath}/add`)}
+                                        className="w-full bg-brand text-white py-4 rounded-xl font-semibold text-base active:scale-[0.98] transition-transform"
+                                    >
+                                        {footerCtaLabel}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {!currentIsSubPage && (
+                    <MobileFooterNav
+                        tabs={tabs}
+                        currentPath={currentPath}
+                        onTabClick={handleNavClick}
+                        isIPhonePWA={isIPhonePWA}
+                    />
                 )}
+
+                <StorePickerDrawer />
             </div>
 
-            {!currentIsSubPage && (
-                <MobileFooterNav
-                    tabs={tabs}
-                    currentPath={currentPath}
-                    onTabClick={handleNavClick}
-                    isIPhonePWA={isIPhonePWA}
-                    storesReady={storesReady}
-                />
+            {/* Loader overlay — covers shell until shellReady; shell is already behind it */}
+            {!shellReady && (
+                <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center">
+                    <div className="text-center" role="status" aria-live="polite">
+                        <div className="mb-8">
+                            <Image
+                                src="/icons/icon-192x192.png"
+                                alt="Logo"
+                                width={70}
+                                height={70}
+                                priority
+                                className="rounded-xl shadow-2xl mx-auto"
+                            />
+                        </div>
+                        <div className="w-64 h-1.5 loading-track rounded-full">
+                            <div className="loading-bar" />
+                        </div>
+                        <div className="mt-4 text-xs text-gray-600 text-center">
+                            <span className="font-mono text-xs opacity-90">
+                                Loading ...
+                            </span>
+                        </div>
+                    </div>
+                </div>
             )}
 
-            <StorePickerDrawer />
-        </div>
+            {/* Auth error overlay — shown when session is valid but user profile failed */}
+            {shellReady && !user && (
+                <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center p-4">
+                    <div className="text-center">
+                        <div className="mb-6">
+                            <Image
+                                src="/icons/icon-192x192.png"
+                                alt="Logo"
+                                width={70}
+                                height={70}
+                                priority
+                                className="rounded-xl shadow-2xl mx-auto"
+                            />
+                        </div>
+                        <h2 className="text-lg font-semibold text-gray-800 mb-2">
+                            Authentication Required
+                        </h2>
+                        <p className="text-gray-600 mb-6 text-sm">
+                            Unable to load your profile. Please check your
+                            connection and try again.
+                        </p>
+                        <div className="flex gap-3 justify-center">
+                            <button
+                                onClick={() => window.location.reload()}
+                                className="px-4 py-2 bg-brand text-white rounded-lg text-sm font-medium"
+                            >
+                                Refresh Page
+                            </button>
+                            <button
+                                onClick={() => refreshProfile()}
+                                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium"
+                            >
+                                Retry
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </MobileOverlayContext.Provider>
+        </MobileFooterSlotContext.Provider>
     );
 }

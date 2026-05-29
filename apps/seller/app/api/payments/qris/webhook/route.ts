@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
         const supabase = getServiceClient();
 
         const { data: payment, error: paymentError } = await supabase
-            .from("payments")
+            .from("store_order_payments")
             .select("*")
             .eq("xendit_qr_id", qr_id)
             .eq("status", "pending")
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
         }
 
         const { data: orderData, error: orderError } = await supabase
-            .from("orders")
+            .from("store_orders")
             .insert({
                 store_id: payment.store_id,
                 user_id: payment.user_id,
@@ -79,13 +79,13 @@ export async function POST(request: NextRequest) {
             tenant_id: payment.tenant_id,
         }));
 
-        const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
+        const { error: itemsError } = await supabase.from("store_order_items").insert(orderItems);
         if (itemsError) {
             logger.error("POST /api/payments/qris/webhook order items failed", itemsError);
         }
 
         const { error: updateError } = await supabase
-            .from("payments")
+            .from("store_order_payments")
             .update({
                 status: "succeeded",
                 order_id: orderData.id,

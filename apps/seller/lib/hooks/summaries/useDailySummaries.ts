@@ -57,7 +57,7 @@ export const useSummaries = (storeId?: string, month?: string) => {
         const payloads = expenseData.expenses.map((expense) => ({
             dailySummaryId: expenseData.dailySummaryId,
             storeId: expenseData.storeId,
-            expenseType:
+            type:
                 expense.label === "Custom"
                     ? (expense.customLabel ?? "Other")
                     : expense.label,
@@ -74,7 +74,7 @@ export const useSummaries = (storeId?: string, month?: string) => {
 
     const updateExpense = async (
         id: string,
-        updates: { expenseType?: string; amount?: number },
+        updates: { type?: string; amount?: number },
     ) => {
         const result = await expensesApi.update({ id, ...updates } as UpdateExpenseInput);
         await mutate();

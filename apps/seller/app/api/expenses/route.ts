@@ -8,7 +8,8 @@ import {
     DeleteExpenseResponse,
 } from "@tea-pos/features/expenses/schema";
 import { listExpenses, createExpense, updateExpense, deleteExpense } from "@tea-pos/services/expenses";
-import { ok, badRequest, err, handleError } from "@/lib/api/response";
+import { ok, badRequest, err, unauthorized, handleError } from "@/lib/api/response";
+import { getRequestUser } from "@/lib/auth/get-request-user";
 
 export async function GET(request: NextRequest) {
     try {
@@ -27,12 +28,14 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
     try {
+        const user = await getRequestUser();
+        if (!user) return unauthorized();
         const supabase = getServiceClient();
         const tenantId = await getCurrentTenantId();
         const body = CreateExpenseInput.safeParse(await request.json());
         if (!body.success) return badRequest("Validation failed");
 
-        const expense = await createExpense(supabase, { tenantId, ...body.data });
+        const expense = await createExpense(supabase, { tenantId, userId: user.id, ...body.data });
         const parsed = CreateExpenseResponse.safeParse({ success: true, expense });
         if (!parsed.success) return err("Invalid response shape");
 
@@ -42,12 +45,14 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
     try {
+        const user = await getRequestUser();
+        if (!user) return unauthorized();
         const supabase = getServiceClient();
         const tenantId = await getCurrentTenantId();
         const body = UpdateExpenseInput.safeParse(await request.json());
         if (!body.success) return badRequest("Validation failed");
 
-        const expense = await updateExpense(supabase, { tenantId, ...body.data });
+        const expense = await updateExpense(supabase, { tenantId, userId: user.id, ...body.data });
         const parsed = UpdateExpenseResponse.safeParse({ success: true, expense });
         if (!parsed.success) return err("Invalid response shape");
 
@@ -57,12 +62,14 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
     try {
+        const user = await getRequestUser();
+        if (!user) return unauthorized();
         const supabase = getServiceClient();
         const tenantId = await getCurrentTenantId();
         const id = new URL(request.url).searchParams.get("id");
         if (!id) return badRequest("Expense ID is required");
 
-        const expense = await deleteExpense(supabase, { tenantId, id });
+        const expense = await deleteExpense(supabase, { tenantId, userId: user.id, id });
         const parsed = DeleteExpenseResponse.safeParse({ success: true, expense });
         if (!parsed.success) return err("Invalid response shape");
 

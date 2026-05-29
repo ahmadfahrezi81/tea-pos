@@ -1,6 +1,6 @@
 "use client";
 
-import { useProfile } from "@/lib/hooks/profile/useProfile";
+import { useCurrentUser } from "@/lib/hooks/user/useCurrentUser";
 import { Copy, Check } from "lucide-react";
 import { useState } from "react";
 
@@ -86,7 +86,7 @@ function splitFullName(fullName: string): {
 }
 
 export default function MobilePersonalDetails() {
-    const { profile, isLoading, isError } = useProfile();
+    const { user, isLoading, isError } = useCurrentUser();
 
     if (isError) {
         return (
@@ -96,8 +96,8 @@ export default function MobilePersonalDetails() {
         );
     }
 
-    const { firstName, lastName } = profile
-        ? splitFullName(profile.fullName)
+    const { firstName, lastName } = user
+        ? splitFullName(user.fullName)
         : { firstName: "—", lastName: "—" };
 
     return (
@@ -114,21 +114,21 @@ export default function MobilePersonalDetails() {
                     </>
                 ) : (
                     <>
-                        <FieldRow label="Email" value={profile?.email ?? "—"} />
+                        <FieldRow label="Email" value={user?.email ?? "—"} />
                         <FieldRow
                             label="User ID"
-                            value={formatUserId(profile?.id ?? "")}
+                            value={formatUserId(user?.id ?? "")}
                             copyable
                         />
                         <FieldRow label="First Name" value={firstName} />
                         <FieldRow label="Last Name" value={lastName} />
                         <FieldRow
                             label="Phone Number"
-                            value={profile?.phoneNumber ?? "000"}
+                            value={user?.phoneNumber ?? "000"}
                         />
                         <FieldRow
                             label="Member Since"
-                            value={formatDate(profile?.createdAt ?? null)}
+                            value={formatDate(user?.createdAt ?? null)}
                         />
                     </>
                 )}

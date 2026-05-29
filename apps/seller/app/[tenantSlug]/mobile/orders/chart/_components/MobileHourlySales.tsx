@@ -107,22 +107,10 @@ export default function MobileHourlySales() {
         });
     }, [peakIndex, hourlySales]);
 
-    if (salesLoading) {
-        return (
-            <div
-                className="flex flex-col items-center justify-center"
-                style={{ minHeight: "calc(100vh - 200px)" }}
-            >
-                <div className="w-10 h-10 border-3 border-brand border-t-transparent rounded-full animate-spin" />
-                <p className="mt-4 text-gray-600 text-sm">Loading Chart...</p>
-            </div>
-        );
-    }
-
     return (
         <div className="space-y-4">
             {/* Date Filter */}
-            <div className="bg-white p-4 rounded-lg shadow-sm">
+            <div className="bg-white p-4 rounded-2xl">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                     <CalendarDays size={16} className="inline mr-1" />
                     Select Date
@@ -143,7 +131,7 @@ export default function MobileHourlySales() {
             </div>
 
             {/* Chart */}
-            <div className="bg-white rounded-xl shadow-sm p-4">
+            <div className="bg-white rounded-2xl p-4">
                 <div className="flex items-start justify-between mb-3">
                     <div>
                         <h3 className="font-semibold text-gray-800 text-lg">

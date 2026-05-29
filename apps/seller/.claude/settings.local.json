@@ -8,7 +8,17 @@
       "Read(//Volumes/DevSSD/Projects/Personal/tea-pos/**)",
       "Bash(pnpm --filter @tea-pos/services exec tsc --noEmit)",
       "Bash(pnpm --filter @tea-pos/features exec tsc --noEmit)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(git *)",
+      "Bash(pnpm build *)",
+      "Bash(supabase migration *)",
+      "Bash(pnpm --filter @tea-pos/features tsc --noEmit)",
+      "Bash(mkdir -p /Volumes/DevSSD/Projects/Personal/tea-pos/apps/seller/app/\\\\[tenantSlug\\\\]/mobile/home/manage/_components/daily)",
+      "Bash(cp /Volumes/DevSSD/Projects/Personal/tea-pos/apps/seller/app/[tenantSlug]/mobile/analytics/daily/_components/DailyStepHeader.tsx /Volumes/DevSSD/Projects/Personal/tea-pos/apps/seller/app/[tenantSlug]/mobile/analytics/daily/_components/SimpleCashStep.tsx /Volumes/DevSSD/Projects/Personal/tea-pos/apps/seller/app/[tenantSlug]/mobile/analytics/daily/_components/SummaryPhotoThumbnail.tsx /Volumes/DevSSD/Projects/Personal/tea-pos/apps/seller/app/[tenantSlug]/mobile/analytics/daily/_components/SinglePhotoStep.tsx /Volumes/DevSSD/Projects/Personal/tea-pos/apps/seller/app/[tenantSlug]/mobile/analytics/daily/_components/ReviewStep.tsx /Volumes/DevSSD/Projects/Personal/tea-pos/apps/seller/app/[tenantSlug]/mobile/home/manage/_components/daily/)",
+      "Bash(pnpm --filter @tea-pos/services tsc --noEmit)",
+      "Bash(pnpm --filter seller tsc --noEmit)",
+      "Bash(pnpm --filter seller exec tsc --noEmit)",
+      "Bash(pnpm tsc *)"
     ]
   }
 }

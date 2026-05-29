@@ -5,6 +5,7 @@ import { Calendar, CalendarDays, Receipt } from "lucide-react";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 import CopyableField from "@/components/shared/CopyableField";
 import { useStore } from "@/lib/context/StoreContext";
+import { getTodayLocalStr } from "@tea-pos/utils/time";
 
 import dynamic from "next/dynamic";
 
@@ -69,7 +70,7 @@ export default function MobileOrders() {
             ).getUTCHours();
             const key = `${localHour.toString().padStart(2, "0")}:00`;
             hourlyData[key] = (hourlyData[key] ?? 0) +
-                order.orderItems.reduce((s, item) => s + item.quantity, 0);
+                order.storeOrderItems.reduce((s, item) => s + item.quantity, 0);
         }
 
         const slots = Array.from({ length: 24 }, (_, h) => ({
@@ -100,7 +101,7 @@ export default function MobileOrders() {
         const totalCups = orders.reduce(
             (sum, order) =>
                 sum +
-                order.orderItems.reduce(
+                order.storeOrderItems.reduce(
                     (itemSum, item) => itemSum + item.quantity,
                     0,
                 ),
@@ -109,22 +110,10 @@ export default function MobileOrders() {
         return { totalOrders, totalSales, totalCups };
     }, [orders]);
 
-    if (ordersLoading) {
-        return (
-            <div
-                className="flex flex-col items-center justify-center"
-                style={{ minHeight: "calc(100vh - 200px)" }}
-            >
-                <div className="w-10 h-10 border-3 border-brand border-t-transparent rounded-full animate-spin" />
-                <p className="mt-4 text-gray-600 text-sm">Loading Orders...</p>
-            </div>
-        );
-    }
-
     return (
         <div className="flex flex-col gap-4">
             {/* Summary */}
-            <div className="bg-white p-4 rounded-lg shadow-sm">
+            <div className="bg-white p-4 rounded-2xl">
                 <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                         <Receipt size={20} className="text-gray-600" />
@@ -157,7 +146,7 @@ export default function MobileOrders() {
             </div>
 
             {/* Date Filter */}
-            <div className="bg-white p-4 rounded-lg shadow-sm">
+            <div className="bg-white p-4 rounded-2xl">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                     <CalendarDays size={16} className="inline mr-1" />
                     Select Date
@@ -169,7 +158,7 @@ export default function MobileOrders() {
                         const newValue = e.target.value;
                         setSelectedDate(
                             newValue === ""
-                                ? new Date().toISOString().split("T")[0]
+                                ? getTodayLocalStr()
                                 : newValue,
                         );
                     }}
@@ -185,7 +174,7 @@ export default function MobileOrders() {
 
             {/* Orders List */}
             {ordersWithNumbers.length === 0 ? (
-                <div className="bg-white p-8 rounded-lg shadow-sm text-center">
+                <div className="bg-white p-8 rounded-2xl text-center">
                     <Calendar
                         size={48}
                         className="mx-auto text-gray-400 mb-4"
@@ -210,7 +199,7 @@ export default function MobileOrders() {
                     {ordersWithNumbers.map((order) => (
                         <div
                             key={order.id}
-                            className="bg-white rounded-xl shadow-sm overflow-hidden"
+                            className="bg-white rounded-2xl overflow-hidden"
                         >
                             <div className="p-3.5 bg-white">
                                 <div className="flex justify-between items-start">
@@ -236,7 +225,7 @@ export default function MobileOrders() {
                                             {formatRupiah(order.totalAmount)}
                                         </p>
                                         <p className="text-sm text-gray-500">
-                                            {order.orderItems.reduce(
+                                            {order.storeOrderItems.reduce(
                                                 (sum, item) =>
                                                     sum + item.quantity,
                                                 0,
@@ -247,13 +236,13 @@ export default function MobileOrders() {
                                 </div>
                             </div>
 
-                            <div className="border-t border-gray-100 p-3 bg-gray-50">
+                            <div className="border-t border-gray-100 p-3 bg-slate-100">
                                 <div className="space-y-3">
                                     <div>
                                         <h4 className="font-medium text-gray-800 mb-2 text-sm">
                                             Order Details
                                         </h4>
-                                        <div className="text-xs text-gray-600 space-y-1">
+                                        <div className="text-xs text-gray-800 space-y-1">
                                             <div>
                                                 <span className="font-medium">
                                                     Order ID:
@@ -277,7 +266,7 @@ export default function MobileOrders() {
                                                 <span className="font-medium">
                                                     Seller:
                                                 </span>{" "}
-                                                {order.profiles?.fullName}
+                                                {order.users?.fullName}
                                             </p>
                                             <p>
                                                 <span className="font-medium">
@@ -295,15 +284,15 @@ export default function MobileOrders() {
                                             Items
                                         </h4>
                                         <div className="space-y-2">
-                                            {order.orderItems.map((item) => (
+                                            {order.storeOrderItems.map((item) => (
                                                 <div
                                                     key={item.id}
-                                                    className="flex justify-between items-center bg-white p-2.5 rounded-md text-sm"
+                                                    className="flex justify-between items-center bg-white p-2.5 rounded-xl text-sm"
                                                 >
                                                     <div className="flex-1">
                                                         <p className="font-medium">
                                                             {
-                                                                item.products
+                                                                item.tenantProducts
                                                                     ?.name
                                                             }
                                                         </p>

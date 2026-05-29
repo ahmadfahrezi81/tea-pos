@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { toCamelKeys, toSnakeKeys } from "@tea-pos/utils/schemas";
+import { createLogger } from "./activity-logs";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -25,13 +26,18 @@ export interface CreateOrderParams {
 
 // ─── Public functions ─────────────────────────────────────────────────────────
 
-export async function listOrders(supabase: SupabaseClient, params: ListOrdersParams) {
+export async function listOrders(
+    supabase: SupabaseClient,
+    params: ListOrdersParams,
+) {
     const { tenantId, storeId, date } = params;
     const TZ = params.tzOffset ?? Number(process.env.TIMEZONE_OFFSET ?? 7);
 
     let query = supabase
-        .from("orders")
-        .select(`*, stores(name), profiles(full_name), order_items(*, products(name))`)
+        .from("store_orders")
+        .select(
+            `*, stores(name), users(full_name), store_order_items(*, tenant_products(name))`,
+        )
         .eq("tenant_id", tenantId)
         .order("created_at", { ascending: false });
 
@@ -49,7 +55,10 @@ export async function listOrders(supabase: SupabaseClient, params: ListOrdersPar
     return toCamelKeys(data ?? []);
 }
 
-export async function createOrder(supabase: SupabaseClient, params: CreateOrderParams) {
+export async function createOrder(
+    supabase: SupabaseClient,
+    params: CreateOrderParams,
+) {
     const { tenantId, userId, storeId, items } = params;
 
     const { data: store, error: storeError } = await supabase
@@ -59,7 +68,8 @@ export async function createOrder(supabase: SupabaseClient, params: CreateOrderP
         .eq("tenant_id", tenantId)
         .single();
 
-    if (storeError || !store) throw new Error("Store not found or access denied");
+    if (storeError || !store)
+        throw new Error("Store not found or access denied");
 
     const { data: storeAccess } = await supabase
         .from("user_store_assignments")
@@ -68,38 +78,52 @@ export async function createOrder(supabase: SupabaseClient, params: CreateOrderP
         .eq("store_id", storeId)
         .single();
 
-    if (!storeAccess) throw new Error("Access denied - not assigned to this store");
+    if (!storeAccess)
+        throw new Error("Access denied - not assigned to this store");
 
     const productIds = items.map((i) => i.productId);
     const { data: products, error: productsError } = await supabase
-        .from("products")
+        .from("tenant_products")
         .select("id, price, is_active")
         .in("id", productIds)
         .eq("tenant_id", tenantId)
         .eq("is_active", true);
 
     if (productsError) throw new Error("Error validating products");
-    if (!products || products.length !== productIds.length) throw new Error("Some products are invalid or inactive");
+    if (!products || products.length !== productIds.length)
+        throw new Error("Some products are invalid or inactive");
 
     const productMap = new Map(products.map((p) => [p.id, p.price]));
     for (const item of items) {
         const dbPrice = productMap.get(item.productId);
-        if (dbPrice === undefined) throw new Error(`Product ${item.productId} not found or inactive`);
+        if (dbPrice === undefined)
+            throw new Error(`Product ${item.productId} not found or inactive`);
         if (Math.abs(dbPrice - item.unitPrice) > 0.01) {
-            throw new Error(`Price mismatch for product ${item.productId}. Expected ${dbPrice}, got ${item.unitPrice}`);
+            throw new Error(
+                `Price mismatch for product ${item.productId}. Expected ${dbPrice}, got ${item.unitPrice}`,
+            );
         }
     }
 
-    const totalAmount = items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
+    const totalAmount = items.reduce(
+        (sum, i) => sum + i.unitPrice * i.quantity,
+        0,
+    );
 
-    const orderPayload = toSnakeKeys({ storeId, userId, totalAmount, tenantId: store.tenant_id });
+    const orderPayload = toSnakeKeys({
+        storeId,
+        userId,
+        totalAmount,
+        tenantId: store.tenant_id,
+    });
     const { data: orderData, error: orderError } = await supabase
-        .from("orders")
+        .from("store_orders")
         .insert(orderPayload)
         .select()
         .single();
 
-    if (orderError || !orderData) throw new Error(orderError?.message ?? "Order insert failed");
+    if (orderError || !orderData)
+        throw new Error(orderError?.message ?? "Order insert failed");
 
     const orderItemsPayload = toSnakeKeys(
         items.map((i) => ({
@@ -112,8 +136,22 @@ export async function createOrder(supabase: SupabaseClient, params: CreateOrderP
         })),
     );
 
-    const { error: itemsError } = await supabase.from("order_items").insert(orderItemsPayload);
+    const { error: itemsError } = await supabase
+        .from("store_order_items")
+        .insert(orderItemsPayload);
     if (itemsError) throw new Error(itemsError.message);
+
+    const totalCups = items.reduce((sum, i) => sum + i.quantity, 0);
+    const log = createLogger(supabase, { tenantId: store.tenant_id, userId, storeId });
+    log("order_created", {
+        refId: orderData.id as string,
+        refTable: "store_orders",
+        metadata: {
+            total_amount: totalAmount,
+            total_cups: totalCups,
+            payment_method: orderData.payment_method,
+        },
+    });
 
     return { orderId: orderData.id as string, totalAmount };
 }

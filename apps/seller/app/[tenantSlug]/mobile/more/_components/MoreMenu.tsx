@@ -5,7 +5,6 @@ import { useAuth } from "@/lib/context/AuthContext";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import {
     MapPin,
-    StoreIcon,
     Building2,
     ChevronRight,
     Rocket,
@@ -37,25 +36,25 @@ const SettingsRow = ({
     <button
         onClick={onClick}
         disabled={disabled}
-        className={`w-full flex items-center gap-1 py-4 border-b border-gray-100 last:border-none text-left ${
+        className={`group w-full flex items-stretch gap-3 text-left ${
             disabled ? "opacity-40 cursor-default" : "active:bg-gray-50"
         }`}
     >
-        <span className="text-xl w-6 text-center">{icon}</span>
-        <div className="flex-1 min-w-0">
-            <p className="text-base text-gray-800">{label}</p>
+        <span className="text-xl w-6 text-center shrink-0 flex items-center py-5">{icon}</span>
+        <div className="flex-1 flex items-center py-5 -mr-4 pr-4 border-b-2 border-slate-100 group-last:border-b-0">
+            <p className="flex-1 text-[17px] font-medium text-gray-800">{label}</p>
             {sublabel && (
                 <p className="text-xs text-gray-500 truncate">{sublabel}</p>
             )}
+            {right ??
+                (!disabled && (
+                    <ChevronRight
+                        size={20}
+                        strokeWidth={2.5}
+                        className="text-brand/90"
+                    />
+                ))}
         </div>
-        {right ??
-            (!disabled && (
-                <ChevronRight
-                    size={20}
-                    strokeWidth={2.5}
-                    className="text-brand/90"
-                />
-            ))}
     </button>
 );
 
@@ -85,50 +84,34 @@ function FastOrderToggle({ enabled }: { enabled: boolean }) {
 
 export default function MoreMenu() {
     const { url } = useTenantSlug();
-    const { profile } = useAuth();
-    const { selectedStore, assignedStores, setIsPickerOpen } = useStore();
+    const { user } = useAuth();
+    const { assignedStores } = useStore();
     const { fastOrderMode, toggleFastOrderMode } = useFastOrderMode();
 
     const [showFeedbackDrawer, setShowFeedbackDrawer] = useState(false);
 
-    if (!profile) return null;
+    if (!user) return null;
 
     return (
         <div className="min-h-screen space-y-4">
             <h3 className="text-lg font-semibold text-gray-800 mb-1">
                 Quick Settings
             </h3>
-            <div className="bg-white rounded-xl p-4 py-1 space-y-1 shadow-sm">
+            <div className="bg-white rounded-2xl px-4 py-1">
                 <SettingsRow
-                    icon={<Rocket size={20} className="text-gray-900" />}
+                    icon={<Rocket size={22} strokeWidth={2} className="text-gray-900" />}
                     label="Fast Order Mode"
-                    sublabel="Faster POS experience"
                     onClick={toggleFastOrderMode}
                     right={<FastOrderToggle enabled={fastOrderMode} />}
                 />
-                {assignedStores.length > 0 && (
-                    <SettingsRow
-                        icon={<StoreIcon size={20} className="text-gray-900" />}
-                        label="Your Store"
-                        sublabel={selectedStore?.name}
-                        onClick={
-                            assignedStores.length > 1
-                                ? () => setIsPickerOpen(true)
-                                : undefined
-                        }
-                        disabled={assignedStores.length === 1}
-                    />
-                )}
                 <SettingsRow
-                    icon={<Building2 size={20} className="text-gray-900" />}
+                    icon={<Building2 size={22} strokeWidth={2} className="text-gray-900" />}
                     label="Assigned Stores"
-                    sublabel={`You're assigned in ${assignedStores.length} ${assignedStores.length !== 1 ? "stores" : "store"}`}
                     onClick={() => navigation.push(url("/mobile/more/stores"))}
                 />
                 <SettingsRow
-                    icon={<MapPin size={20} className="text-gray-900" />}
+                    icon={<MapPin size={22} strokeWidth={2} className="text-gray-900" />}
                     label="Location Feedback"
-                    sublabel="Log feedback with a location"
                     onClick={() => setShowFeedbackDrawer(true)}
                 />
             </div>

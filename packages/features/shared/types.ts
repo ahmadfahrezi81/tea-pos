@@ -79,7 +79,6 @@ export interface Database {
                     image_url?: string; // new
                     created_at: string;
                     updated_at: string;
-                    is_main: boolean; // Add this line
                 };
                 Insert: {
                     id?: string;
@@ -203,12 +202,7 @@ export interface Database {
 }
 
 export type Store = Database["public"]["Tables"]["stores"]["Row"];
-export type Product = Database["public"]["Tables"]["products"]["Row"];
-export type Order = Database["public"]["Tables"]["orders"]["Row"];
-export type OrderItem = Database["public"]["Tables"]["order_items"]["Row"];
-export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
-export type DailySummary =
-    Database["public"]["Tables"]["daily_summaries"]["Row"];
+export type User = Database["public"]["Tables"]["profiles"]["Row"];
 
 export interface CartItem {
     product: Product;

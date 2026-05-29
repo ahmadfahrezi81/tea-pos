@@ -37,8 +37,8 @@ async function fetchAllOrders(supabase: SupabaseClient, storeId: string, tenantI
 
     while (true) {
         const { data, error } = await supabase
-            .from("orders")
-            .select(`id, created_at, order_items(quantity)`)
+            .from("store_orders")
+            .select(`id, created_at, store_order_items(quantity)`)
             .eq("tenant_id", tenantId)
             .eq("store_id", storeId)
             .gte("created_at", start)
@@ -64,12 +64,12 @@ async function fetchAllOrderItems(supabase: SupabaseClient, storeId: string, ten
 
     while (true) {
         const { data, error } = await supabase
-            .from("order_items")
-            .select(`id, quantity, product_id, products(name), order_id, orders!inner(store_id, created_at)`)
+            .from("store_order_items")
+            .select(`id, quantity, product_id, tenant_products(name), order_id, store_orders!inner(store_id, created_at)`)
             .eq("tenant_id", tenantId)
-            .eq("orders.store_id", storeId)
-            .gte("orders.created_at", start)
-            .lte("orders.created_at", end)
+            .eq("store_orders.store_id", storeId)
+            .gte("store_orders.created_at", start)
+            .lte("store_orders.created_at", end)
             .range(from, from + pageSize - 1);
 
         if (error) throw error;
@@ -100,7 +100,7 @@ export async function getDailySales(supabase: SupabaseClient, params: MonthSales
         if (!order.created_at) continue;
         const dateKey = new Date(new Date(order.created_at).getTime() + tz * 3600000).toISOString().split("T")[0];
         if (!dailyData[dateKey]) dailyData[dateKey] = 0;
-        dailyData[dateKey] += sumOrderItemCups(order.order_items);
+        dailyData[dateKey] += sumOrderItemCups(order.store_order_items);
     }
 
     return Object.entries(dailyData)
@@ -114,8 +114,8 @@ export async function getHourlySales(supabase: SupabaseClient, params: HourlySal
     const pad = String(tz).padStart(2, "0");
 
     const { data: orders, error } = await supabase
-        .from("orders")
-        .select(`id, created_at, order_items(quantity)`)
+        .from("store_orders")
+        .select(`id, created_at, store_order_items(quantity)`)
         .eq("tenant_id", tenantId)
         .eq("store_id", storeId)
         .gte("created_at", new Date(`${date}T00:00:00+${pad}:00`).toISOString())
@@ -130,7 +130,7 @@ export async function getHourlySales(supabase: SupabaseClient, params: HourlySal
         const localHour = new Date(new Date(order.created_at).getTime() + tz * 3600000).getHours();
         const hourKey = `${localHour.toString().padStart(2, "0")}:00`;
         if (!hourlyData[hourKey]) hourlyData[hourKey] = 0;
-        hourlyData[hourKey] += sumOrderItemCups(order.order_items);
+        hourlyData[hourKey] += sumOrderItemCups(order.store_order_items);
     }
 
     const allSlots = Array.from({ length: 24 }, (_, h) => {
@@ -151,8 +151,8 @@ export async function getProductSales(supabase: SupabaseClient, params: MonthSal
 
     const productData: Record<string, { name: string; quantity: number }> = {};
     for (const item of items) {
-        if (!item.product_id || !item.products?.name) continue;
-        if (!productData[item.product_id]) productData[item.product_id] = { name: item.products.name, quantity: 0 };
+        if (!item.product_id || !item.tenant_products?.name) continue;
+        if (!productData[item.product_id]) productData[item.product_id] = { name: item.tenant_products.name, quantity: 0 };
         productData[item.product_id].quantity += item.quantity || 0;
     }
 
@@ -189,8 +189,8 @@ export async function getDayOfWeekSales(supabase: SupabaseClient, params: MonthS
     for (let i = 0; i < 7; i++) dayData[i] = { totalCups: 0, dates: new Set() };
 
     for (const item of items) {
-        if (!item.orders?.created_at) continue;
-        const local = new Date(new Date(item.orders.created_at).getTime() + tz * 3600000);
+        if (!item.store_orders?.created_at) continue;
+        const local = new Date(new Date(item.store_orders.created_at).getTime() + tz * 3600000);
         dayData[local.getUTCDay()].totalCups += item.quantity || 0;
         dayData[local.getUTCDay()].dates.add(local.toISOString().split("T")[0]);
     }

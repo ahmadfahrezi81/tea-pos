@@ -9,7 +9,8 @@ import {
     listSummaryPhotos, uploadSummaryPhoto, updateSummaryPhoto,
     deleteSummaryPhoto, validatePhotoFile,
 } from "@tea-pos/services/summaries";
-import { ok, badRequest, err, handleError } from "@/lib/api/response";
+import { ok, badRequest, err, unauthorized, handleError } from "@/lib/api/response";
+import { getRequestUser } from "@/lib/auth/get-request-user";
 
 export async function GET(request: NextRequest) {
     try {
@@ -28,6 +29,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
     try {
+        const user = await getRequestUser();
+        if (!user) return unauthorized();
         const supabase = getServiceClient();
         const tenantId = await getCurrentTenantId();
 
@@ -56,6 +59,7 @@ export async function POST(request: NextRequest) {
 
         const photo = await uploadSummaryPhoto(supabase, {
             tenantId,
+            userId: user.id,
             dailySummaryId: input.data.dailySummaryId,
             storeId: input.data.storeId,
             type: input.data.type,
@@ -74,24 +78,28 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
     try {
+        const user = await getRequestUser();
+        if (!user) return unauthorized();
         const supabase = getServiceClient();
         const tenantId = await getCurrentTenantId();
         const { id, quantity } = await request.json();
         if (!id) return badRequest("Photo ID is required");
 
-        const photo = await updateSummaryPhoto(supabase, { tenantId, id, quantity });
+        const photo = await updateSummaryPhoto(supabase, { tenantId, userId: user.id, id, quantity });
         return ok({ success: true, photo });
     } catch (error) { return handleError("PATCH /api/summaries/photo", error); }
 }
 
 export async function DELETE(request: NextRequest) {
     try {
+        const user = await getRequestUser();
+        if (!user) return unauthorized();
         const supabase = getServiceClient();
         const tenantId = await getCurrentTenantId();
         const id = new URL(request.url).searchParams.get("id");
         if (!id) return badRequest("Photo ID is required");
 
-        const photo = await deleteSummaryPhoto(supabase, { tenantId, id });
+        const photo = await deleteSummaryPhoto(supabase, { tenantId, userId: user.id, id });
         const parsed = DeleteSummaryPhotoResponse.safeParse({ success: true, photo });
         if (!parsed.success) return err("Invalid response shape");
 

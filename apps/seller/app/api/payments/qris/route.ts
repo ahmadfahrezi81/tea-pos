@@ -6,8 +6,9 @@ import {
     CreateQrisPaymentInput,
     CreateQrisPaymentResponse,
 } from "@tea-pos/features/payments/schema";
-import { ok, badRequest, err, unauthorized, handleError } from "@/lib/api/response";
+import { ok, badRequest, err, unauthorized, forbidden, handleError } from "@/lib/api/response";
 import { logger } from "@/lib/utils/logger";
+import { isFlagEnabled, FLAGS } from "@/lib/flags";
 
 export async function GET(request: NextRequest) {
     try {
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
         if (!paymentId) return badRequest("paymentId is required");
 
         const { data, error } = await supabase
-            .from("payments")
+            .from("store_order_payments")
             .select("status")
             .eq("id", paymentId)
             .eq("user_id", user.id)
@@ -39,12 +40,15 @@ export async function POST(request: NextRequest) {
         if (!user) return unauthorized();
         const supabase = getServiceClient();
         const currentTenantId = await getCurrentTenantId();
-        const body = await request.json();
 
+        const body = await request.json();
         const result = CreateQrisPaymentInput.safeParse(body);
         if (!result.success) return badRequest("Validation failed");
 
         const { storeId, items } = result.data;
+
+        const qrisEnabled = await isFlagEnabled(FLAGS.FEATURE.QRIS, user.id, { role: user.role, tenantId: currentTenantId, storeId });
+        if (!qrisEnabled) return forbidden("QRIS payments are not available");
 
         const { data: store, error: storeError } = await supabase
             .from("stores")
@@ -60,14 +64,13 @@ export async function POST(request: NextRequest) {
             .select("id")
             .eq("user_id", user.id)
             .eq("store_id", storeId)
-            .eq("role", "seller")
             .single();
 
-        if (!storeAccess) return err("Access denied - seller role required", 403);
+        if (!storeAccess) return err("Access denied", 403);
 
         const productIds = items.map((i) => i.productId);
         const { data: products, error: productsError } = await supabase
-            .from("products")
+            .from("tenant_products")
             .select("id, price, is_active")
             .in("id", productIds)
             .eq("tenant_id", currentTenantId)
@@ -87,7 +90,7 @@ export async function POST(request: NextRequest) {
         const totalAmount = items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
 
         await supabase
-            .from("payments")
+            .from("store_order_payments")
             .update({ status: "expired" })
             .eq("user_id", user.id)
             .eq("store_id", storeId)
@@ -118,7 +121,7 @@ export async function POST(request: NextRequest) {
         const xenditData = await xenditResponse.json();
 
         const { data: paymentData, error: paymentError } = await supabase
-            .from("payments")
+            .from("store_order_payments")
             .insert({
                 xendit_qr_id: xenditData.id,
                 xendit_reference_id: referenceId,

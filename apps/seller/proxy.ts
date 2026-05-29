@@ -139,7 +139,7 @@ export async function proxy(request: NextRequest) {
     if (user) {
         const avatarUrl = (user.user_metadata?.avatar_url as string) ?? "";
         const { data: profile } = await supabase
-            .from("profiles")
+            .from("users")
             .select("role, full_name, email")
             .eq("id", user.id)
             .single();
@@ -177,13 +177,13 @@ export async function proxy(request: NextRequest) {
         if (!firstTenant?.slug)
             return redirectTo("/unauthorized?reason=invalid-tenant", request);
 
-        return redirectTo(`/${firstTenant.slug}/mobile/pos`, request);
+        return redirectTo(`/${firstTenant.slug}/mobile/home/pos`, request);
     }
 
     // ── /{tenant}/mobile root ─────────────────────────────────────────────────
     if (pathname === `/${tenantSlug}/mobile`) {
         if (!user) return redirectTo("/login", request);
-        return redirectTo(`/${tenantSlug}/mobile/pos`, request);
+        return redirectTo(`/${tenantSlug}/mobile/home/pos`, request);
     }
 
     // ── Protect mobile routes ─────────────────────────────────────────────────
@@ -237,7 +237,7 @@ export async function proxy(request: NextRequest) {
     if (!validTenant?.slug)
         return redirectTo("/unauthorized?reason=invalid-tenant", request);
 
-    return redirectTo(`/${validTenant.slug}/mobile/pos`, request);
+    return redirectTo(`/${validTenant.slug}/mobile/home/pos`, request);
 }
 
 export const config = {

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { toCamelKeys, toSnakeKeys } from "@tea-pos/utils/schemas";
+import { toCamelKeys } from "@tea-pos/utils/schemas";
+import { createLogger } from "./activity-logs";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -7,7 +8,7 @@ interface OrderRow {
     id: string;
     total_amount: number;
     created_at: string;
-    order_items?: Array<{ quantity: number; total_price: number; products?: Array<{ name: string }> | { name: string } | null }>;
+    store_order_items?: Array<{ quantity: number; total_price: number; tenant_products?: Array<{ name: string }> | { name: string } | null }>;
 }
 
 interface SummaryRow {
@@ -36,19 +37,33 @@ function getTodayStr(tz = DEFAULT_TZ): string {
     return toLocalDateStr(new Date().toISOString(), tz);
 }
 
+export async function seedTotalsFromOrders(
+    supabase: SupabaseClient,
+    storeId: string,
+    tenantId: string,
+    date: string,
+) {
+    const orders = await fetchOrdersForDate(supabase, storeId, tenantId, date);
+    return aggregateOrders(orders);
+}
+
 async function fetchOrdersForDate(
     supabase: SupabaseClient,
     storeId: string,
     tenantId: string,
     date: string,
+    tz = DEFAULT_TZ,
 ): Promise<OrderRow[]> {
+    const startUtc = new Date(new Date(`${date}T00:00:00.000Z`).getTime() - tz * 3600000).toISOString();
+    const endUtc = new Date(new Date(`${date}T23:59:59.999Z`).getTime() - tz * 3600000).toISOString();
+
     const { data, error } = await supabase
-        .from("orders")
-        .select(`id, total_amount, created_at, order_items(quantity, total_price, products(name))`)
+        .from("store_orders")
+        .select(`id, total_amount, created_at, store_order_items(quantity, total_price, tenant_products(name))`)
         .eq("store_id", storeId)
         .eq("tenant_id", tenantId)
-        .gte("created_at", `${date}T00:00:00Z`)
-        .lte("created_at", `${date}T23:59:59Z`)
+        .gte("created_at", startUtc)
+        .lte("created_at", endUtc)
         .order("created_at", { ascending: true });
 
     if (error) throw error;
@@ -60,7 +75,7 @@ function aggregateOrders(orders: OrderRow[]) {
         (acc, order) => ({
             totalSales: acc.totalSales + order.total_amount,
             totalOrders: acc.totalOrders + 1,
-            totalCups: acc.totalCups + (order.order_items?.reduce((s, i) => s + i.quantity, 0) ?? 0),
+            totalCups: acc.totalCups + (order.store_order_items?.reduce((s, i) => s + i.quantity, 0) ?? 0),
         }),
         { totalSales: 0, totalOrders: 0, totalCups: 0 },
     );
@@ -86,11 +101,11 @@ export async function listSummaries(supabase: SupabaseClient, params: ListSummar
     const todayStr = getTodayStr(tzOffset);
 
     const { data: summaries, error: summariesError } = await supabase
-        .from("daily_summaries")
+        .from("store_daily_summaries")
         .select(
             `*, stores(name),
-            manager:profiles!daily_summaries_manager_id_fkey(full_name),
-            seller:profiles!daily_summaries_seller_id_fkey(full_name)`,
+            opened_by_user:users!daily_summaries_opened_by_fkey(full_name),
+            closed_by_user:users!daily_summaries_closed_by_fkey(full_name)`,
         )
         .eq("store_id", storeId)
         .eq("tenant_id", tenantId)
@@ -107,7 +122,7 @@ export async function listSummaries(supabase: SupabaseClient, params: ListSummar
 
     if (summaryIds.length > 0) {
         const { data: expenses, error: expensesError } = await supabase
-            .from("expenses")
+            .from("store_expenses")
             .select("*")
             .in("daily_summary_id", summaryIds)
             .eq("tenant_id", tenantId);
@@ -126,7 +141,10 @@ export async function listSummaries(supabase: SupabaseClient, params: ListSummar
         });
     }
 
-    // Live-update today's open summary before returning
+    // Write-on-read: re-aggregates today's open summary totals from live orders and
+    // persists them so the UI always shows fresh numbers. Intentional but side-effectful —
+    // fires on every GET /api/summaries call (including on tab focus via revalidateOnFocus).
+    // Long-term fix: update totals at mutation time (order created/deleted) instead.
     const todaySummary = summaryList.find((s) => s.date === todayStr && !s.closed_at);
     if (todaySummary) {
         const todayOrders = await fetchOrdersForDate(supabase, storeId, tenantId, todayStr);
@@ -143,7 +161,7 @@ export async function listSummaries(supabase: SupabaseClient, params: ListSummar
 
         if (changed) {
             await supabase
-                .from("daily_summaries")
+                .from("store_daily_summaries")
                 .update({
                     total_sales: totalSales,
                     total_orders: totalOrders,
@@ -185,15 +203,14 @@ export async function listSummaries(supabase: SupabaseClient, params: ListSummar
 export interface CreateSummaryParams {
     tenantId: string;
     storeId: string;
-    sellerId: string;
-    managerId?: string | null;
+    openedBy: string;
     date: string;
     openingBalance?: number;
     openingCashBreakdown?: unknown;
 }
 
 export async function createSummary(supabase: SupabaseClient, params: CreateSummaryParams) {
-    const { tenantId, storeId, sellerId, managerId, date, openingBalance, openingCashBreakdown } = params;
+    const { tenantId, storeId, openedBy, date, openingBalance, openingCashBreakdown } = params;
 
     const { data: store, error: storeError } = await supabase
         .from("stores")
@@ -205,7 +222,7 @@ export async function createSummary(supabase: SupabaseClient, params: CreateSumm
     if (storeError || !store) throw new Error("Store not found or access denied");
 
     const { count, error: existsError } = await supabase
-        .from("daily_summaries")
+        .from("store_daily_summaries")
         .select("id", { count: "exact", head: true })
         .eq("store_id", storeId)
         .eq("date", date)
@@ -214,45 +231,52 @@ export async function createSummary(supabase: SupabaseClient, params: CreateSumm
     if (existsError) throw existsError;
     if ((count ?? 0) > 0) throw Object.assign(new Error("Daily summary already exists for this date"), { status: 409 });
 
+    const createStartUtc = new Date(new Date(`${date}T00:00:00.000Z`).getTime() - DEFAULT_TZ * 3600000).toISOString();
+    const createEndUtc = new Date(new Date(`${date}T23:59:59.999Z`).getTime() - DEFAULT_TZ * 3600000).toISOString();
     const { data: existingOrders } = await supabase
-        .from("orders")
-        .select("total_amount, order_items(quantity)")
+        .from("store_orders")
+        .select("total_amount, store_order_items(quantity)")
         .eq("store_id", storeId)
         .eq("tenant_id", tenantId)
-        .gte("created_at", `${date}T00:00:00Z`)
-        .lte("created_at", `${date}T23:59:59Z`);
+        .gte("created_at", createStartUtc)
+        .lte("created_at", createEndUtc);
 
     const typedOrders = (existingOrders ?? []) as Array<{
         total_amount: number;
-        order_items?: Array<{ quantity: number }>;
+        store_order_items?: Array<{ quantity: number }>;
     }>;
     const totalSales = typedOrders.reduce((sum, o) => sum + o.total_amount, 0);
     const totalOrders = typedOrders.length;
-    const totalCups = typedOrders.reduce((sum, o) => sum + (o.order_items?.reduce((s, i) => s + i.quantity, 0) ?? 0), 0);
+    const totalCups = typedOrders.reduce((sum, o) => sum + (o.store_order_items?.reduce((s, i) => s + i.quantity, 0) ?? 0), 0);
     const opening = openingBalance ?? 0;
 
     const { data: summaryData, error: summaryError } = await supabase
-        .from("daily_summaries")
-        .insert(
-            toSnakeKeys({
-                storeId,
-                sellerId,
-                managerId: managerId ?? null,
-                date,
-                openingBalance: opening,
-                openingCashBreakdown: openingCashBreakdown ?? null,
-                totalSales,
-                totalOrders,
-                totalCups,
-                totalExpenses: 0,
-                expectedCash: opening + totalSales,
-                tenantId: store.tenant_id,
-            }),
-        )
+        .from("store_daily_summaries")
+        .insert({
+            store_id: storeId,
+            tenant_id: store.tenant_id,
+            opened_by: openedBy,
+            closed_by: openedBy,
+            date,
+            opening_balance: opening,
+            opening_cash_breakdown: openingCashBreakdown ?? null,
+            total_sales: totalSales,
+            total_orders: totalOrders,
+            total_cups: totalCups,
+            total_expenses: 0,
+            expected_cash: opening + totalSales,
+        })
         .select()
         .single();
 
     if (summaryError || !summaryData) throw new Error(summaryError?.message ?? "Daily summary insert failed");
+
+    const log = createLogger(supabase, { tenantId: store.tenant_id, userId: openedBy, storeId });
+    log("store_open", {
+        refId: (summaryData as { id: string }).id,
+        refTable: "store_daily_summaries",
+        metadata: { date, opening_balance: opening },
+    });
 
     return toCamelKeys(summaryData);
 }
@@ -261,6 +285,7 @@ export async function createSummary(supabase: SupabaseClient, params: CreateSumm
 
 export interface UpdateSummaryParams {
     tenantId: string;
+    userId: string;
     id: string;
     openingBalance?: number;
     openingCashBreakdown?: unknown;
@@ -271,10 +296,10 @@ export interface UpdateSummaryParams {
 }
 
 export async function updateSummary(supabase: SupabaseClient, params: UpdateSummaryParams) {
-    const { tenantId, id, openingBalance, openingCashBreakdown, actualCash, closingCashBreakdown, notes, closedAt } = params;
+    const { tenantId, userId, id, openingBalance, openingCashBreakdown, actualCash, closingCashBreakdown, notes, closedAt } = params;
 
     const { data: current, error: fetchError } = await supabase
-        .from("daily_summaries")
+        .from("store_daily_summaries")
         .select("expected_cash, total_sales, total_expenses, total_orders, total_cups, closed_at")
         .eq("id", id)
         .eq("tenant_id", tenantId)
@@ -298,10 +323,15 @@ export async function updateSummary(supabase: SupabaseClient, params: UpdateSumm
         updates.expected_cash = openingBalance + current.total_sales - current.total_expenses;
     }
 
+    // Record who closed the summary
+    if (closedAt && !current.closed_at) {
+        updates.closed_by = userId;
+    }
+
     // Lock in final totals on close
     if (closedAt && !current.closed_at) {
         const { data: summaryRow } = await supabase
-            .from("daily_summaries")
+            .from("store_daily_summaries")
             .select("date, store_id, opening_balance")
             .eq("id", id)
             .eq("tenant_id", tenantId)
@@ -318,7 +348,7 @@ export async function updateSummary(supabase: SupabaseClient, params: UpdateSumm
             const { totalSales, totalOrders, totalCups } = aggregateOrders(liveOrders);
 
             const { data: expenseRows } = await supabase
-                .from("expenses")
+                .from("store_expenses")
                 .select("amount")
                 .eq("daily_summary_id", id)
                 .eq("tenant_id", tenantId);
@@ -341,7 +371,7 @@ export async function updateSummary(supabase: SupabaseClient, params: UpdateSumm
     if (Object.keys(updates).length === 0) throw new Error("No fields to update");
 
     const { data: summaryData, error: updateError } = await supabase
-        .from("daily_summaries")
+        .from("store_daily_summaries")
         .update(updates)
         .eq("id", id)
         .eq("tenant_id", tenantId)
@@ -349,6 +379,23 @@ export async function updateSummary(supabase: SupabaseClient, params: UpdateSumm
         .single();
 
     if (updateError || !summaryData) throw new Error(updateError?.message ?? "Daily summary not found");
+
+    const raw = summaryData as { store_id: string; total_sales: number; variance: number | null };
+    const log = createLogger(supabase, { tenantId, userId, storeId: raw.store_id });
+
+    if (closedAt && !current.closed_at) {
+        log("daily_summary_closed", {
+            refId: id,
+            refTable: "store_daily_summaries",
+            metadata: { total_sales: raw.total_sales, variance: raw.variance },
+        });
+    } else if (openingBalance !== undefined) {
+        log("balance_updated", {
+            refId: id,
+            refTable: "store_daily_summaries",
+            metadata: { opening_balance: openingBalance },
+        });
+    }
 
     return toCamelKeys(summaryData);
 }
@@ -360,7 +407,7 @@ export async function getSummaryBreakdown(
     { tenantId, summaryId }: { tenantId: string; summaryId: string },
 ) {
     const { data: summary, error: summaryError } = await supabase
-        .from("daily_summaries")
+        .from("store_daily_summaries")
         .select("store_id, date")
         .eq("id", summaryId)
         .eq("tenant_id", tenantId)
@@ -368,20 +415,22 @@ export async function getSummaryBreakdown(
 
     if (summaryError || !summary) throw new Error("Summary not found");
 
+    const breakdownStartUtc = new Date(new Date(`${summary.date}T00:00:00.000Z`).getTime() - DEFAULT_TZ * 3600000).toISOString();
+    const breakdownEndUtc = new Date(new Date(`${summary.date}T23:59:59.999Z`).getTime() - DEFAULT_TZ * 3600000).toISOString();
     const { data: orders, error: ordersError } = await supabase
-        .from("orders")
-        .select(`id, total_amount, order_items(quantity, total_price, products(name))`)
+        .from("store_orders")
+        .select(`id, total_amount, store_order_items(quantity, total_price, tenant_products(name))`)
         .eq("store_id", summary.store_id)
         .eq("tenant_id", tenantId)
-        .gte("created_at", `${summary.date}T00:00:00Z`)
-        .lte("created_at", `${summary.date}T23:59:59Z`);
+        .gte("created_at", breakdownStartUtc)
+        .lte("created_at", breakdownEndUtc);
 
     if (ordersError) throw ordersError;
 
     const breakdown: Record<string, { quantity: number; revenue: number }> = {};
     (orders ?? []).forEach((order) => {
-        order.order_items?.forEach((item: { products: Array<{ name: string }> | { name: string } | null; quantity: number; total_price: number }) => {
-            const prod = item.products;
+        order.store_order_items?.forEach((item: { tenant_products: Array<{ name: string }> | { name: string } | null; quantity: number; total_price: number }) => {
+            const prod = item.tenant_products;
             const name = (Array.isArray(prod) ? prod[0]?.name : prod?.name) ?? "Unknown Product";
             if (!breakdown[name]) breakdown[name] = { quantity: 0, revenue: 0 };
             breakdown[name].quantity += item.quantity;
@@ -409,7 +458,7 @@ export async function listSummaryPhotos(supabase: SupabaseClient, params: ListSu
     const { tenantId, dailySummaryId, expenseId, type } = params;
 
     let query = supabase
-        .from("daily_summary_photos")
+        .from("store_daily_summary_photos")
         .select("*")
         .eq("tenant_id", tenantId)
         .order("created_at", { ascending: true });
@@ -437,6 +486,7 @@ export async function listSummaryPhotos(supabase: SupabaseClient, params: ListSu
 
 export interface UploadSummaryPhotoParams {
     tenantId: string;
+    userId: string;
     dailySummaryId: string;
     storeId: string;
     type: string;
@@ -453,10 +503,10 @@ export function validatePhotoFile(file: File): string | null {
 }
 
 export async function uploadSummaryPhoto(supabase: SupabaseClient, params: UploadSummaryPhotoParams) {
-    const { tenantId, dailySummaryId, storeId, type, fileBuffer, fileType, expenseId, quantity } = params;
+    const { tenantId, userId, dailySummaryId, storeId, type, fileBuffer, fileType, expenseId, quantity } = params;
 
     const { data: summary, error: summaryError } = await supabase
-        .from("daily_summaries")
+        .from("store_daily_summaries")
         .select("id, date, store_id")
         .eq("id", dailySummaryId)
         .eq("tenant_id", tenantId)
@@ -476,7 +526,7 @@ export async function uploadSummaryPhoto(supabase: SupabaseClient, params: Uploa
     const { data: urlData } = supabase.storage.from(PHOTO_BUCKET).getPublicUrl(storagePath);
 
     const { data: photoData, error: insertError } = await supabase
-        .from("daily_summary_photos")
+        .from("store_daily_summary_photos")
         .insert({
             daily_summary_id: dailySummaryId,
             expense_id: expenseId ?? null,
@@ -494,15 +544,22 @@ export async function uploadSummaryPhoto(supabase: SupabaseClient, params: Uploa
         throw new Error("Failed to save photo record");
     }
 
+    const log = createLogger(supabase, { tenantId, userId, storeId });
+    log("photo_uploaded", {
+        refId: (photoData as { id: string }).id,
+        refTable: "store_daily_summary_photos",
+        metadata: { photo_url: urlData.publicUrl, slot: type, quantity: quantity ?? null },
+    });
+
     return toCamelKeys(photoData);
 }
 
 export async function updateSummaryPhoto(
     supabase: SupabaseClient,
-    { tenantId, id, quantity }: { tenantId: string; id: string; quantity?: unknown },
+    { tenantId, userId, id, quantity }: { tenantId: string; userId: string; id: string; quantity?: unknown },
 ) {
     const { data: photo, error: fetchError } = await supabase
-        .from("daily_summary_photos")
+        .from("store_daily_summary_photos")
         .select("id")
         .eq("id", id)
         .eq("tenant_id", tenantId)
@@ -511,7 +568,7 @@ export async function updateSummaryPhoto(
     if (fetchError || !photo) throw new Error("Photo not found or access denied");
 
     const { data: updated, error: updateError } = await supabase
-        .from("daily_summary_photos")
+        .from("store_daily_summary_photos")
         .update({ quantity: quantity ?? null })
         .eq("id", id)
         .eq("tenant_id", tenantId)
@@ -520,15 +577,22 @@ export async function updateSummaryPhoto(
 
     if (updateError || !updated) throw new Error("Failed to update photo");
 
+    const raw = updated as { id: string; store_id: string };
+    createLogger(supabase, { tenantId, userId, storeId: raw.store_id })("photo_quantity_updated", {
+        refId: raw.id,
+        refTable: "store_daily_summary_photos",
+        metadata: { quantity: quantity ?? null },
+    });
+
     return toCamelKeys(updated);
 }
 
 export async function deleteSummaryPhoto(
     supabase: SupabaseClient,
-    { tenantId, id }: { tenantId: string; id: string },
+    { tenantId, userId, id }: { tenantId: string; userId: string; id: string },
 ) {
     const { data: photo, error: fetchError } = await supabase
-        .from("daily_summary_photos")
+        .from("store_daily_summary_photos")
         .select("*")
         .eq("id", id)
         .eq("tenant_id", tenantId)
@@ -542,12 +606,19 @@ export async function deleteSummaryPhoto(
     }
 
     const { error: deleteError } = await supabase
-        .from("daily_summary_photos")
+        .from("store_daily_summary_photos")
         .delete()
         .eq("id", id)
         .eq("tenant_id", tenantId);
 
     if (deleteError) throw new Error(deleteError.message);
+
+    const raw = photo as { store_id: string; url: string; type: string };
+    createLogger(supabase, { tenantId, userId, storeId: raw.store_id })("photo_deleted", {
+        refId: id,
+        refTable: "store_daily_summary_photos",
+        metadata: { photo_url: raw.url, slot: raw.type },
+    });
 
     return toCamelKeys(photo);
 }
@@ -557,7 +628,7 @@ export async function getSummaryPhotoCount(
     { tenantId, dailySummaryId }: { tenantId: string; dailySummaryId: string },
 ) {
     const { count, error } = await supabase
-        .from("daily_summary_photos")
+        .from("store_daily_summary_photos")
         .select("*", { count: "exact", head: true })
         .eq("tenant_id", tenantId)
         .eq("daily_summary_id", dailySummaryId);

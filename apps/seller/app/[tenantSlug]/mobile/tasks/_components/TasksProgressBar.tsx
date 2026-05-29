@@ -15,7 +15,7 @@ import {
 import { LucideIcon } from "lucide-react";
 import { useRef, useEffect, useState, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { WeatherButton } from "@/app/[tenantSlug]/mobile/pos/_components/WeatherButton";
+import { WeatherButton } from "@/app/[tenantSlug]/mobile/home/pos/_components/WeatherButton";
 
 const iconMap: Record<string, LucideIcon> = {
     ice: Snowflake,

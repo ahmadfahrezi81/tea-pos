@@ -78,7 +78,7 @@ export const UserTenantAssignmentResponse = z
         tenantId: UUIDSchema,
         role: z.string(),
         createdAt: z.string().nullable(),
-        profiles: z
+        users: z
             .object({
                 fullName: z.string(),
                 email: z.string(),

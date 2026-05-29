@@ -1,5 +1,5 @@
 // lib/shared/features.ts
-export const Features = ["qris", "new-dashboard", "export-pdf"] as const;
+export const Features = ["qris", "new-dashboard", "export-pdf", "skip-photos"] as const;
 
 export type Feature = (typeof Features)[number];
 
