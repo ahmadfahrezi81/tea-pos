@@ -32,9 +32,6 @@ export const CreateDailySummaryInput = z
         storeId: UUIDSchema.openapi({
             description: "ID of the store",
         }),
-        openedBy: UUIDSchema.openapi({
-            description: "ID of the user opening this summary",
-        }),
         date: z
             .string()
             .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)")

@@ -37,6 +37,16 @@ function getTodayStr(tz = DEFAULT_TZ): string {
     return toLocalDateStr(new Date().toISOString(), tz);
 }
 
+export async function seedTotalsFromOrders(
+    supabase: SupabaseClient,
+    storeId: string,
+    tenantId: string,
+    date: string,
+) {
+    const orders = await fetchOrdersForDate(supabase, storeId, tenantId, date);
+    return aggregateOrders(orders);
+}
+
 async function fetchOrdersForDate(
     supabase: SupabaseClient,
     storeId: string,
@@ -127,7 +137,10 @@ export async function listSummaries(supabase: SupabaseClient, params: ListSummar
         });
     }
 
-    // Live-update today's open summary before returning
+    // Write-on-read: re-aggregates today's open summary totals from live orders and
+    // persists them so the UI always shows fresh numbers. Intentional but side-effectful —
+    // fires on every GET /api/summaries call (including on tab focus via revalidateOnFocus).
+    // Long-term fix: update totals at mutation time (order created/deleted) instead.
     const todaySummary = summaryList.find((s) => s.date === todayStr && !s.closed_at);
     if (todaySummary) {
         const todayOrders = await fetchOrdersForDate(supabase, storeId, tenantId, todayStr);

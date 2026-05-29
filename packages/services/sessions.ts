@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { toCamelKeys } from "@tea-pos/utils/schemas";
 import { createLogger } from "./activity-logs";
+import { seedTotalsFromOrders } from "./summaries";
 
 function generateClaimCode(): string {
     return String(Math.floor(Math.random() * 90) + 10);
@@ -127,6 +128,8 @@ export async function openStore(supabase: SupabaseClient, params: OpenStoreParam
     if ((count ?? 0) > 0)
         throw Object.assign(new Error("Store already opened for this date"), { status: 409 });
 
+    const { totalSales, totalOrders, totalCups } = await seedTotalsFromOrders(supabase, storeId, tenantId, date);
+
     const { data: summaryData, error: summaryError } = await supabase
         .from("store_daily_summaries")
         .insert({
@@ -137,11 +140,11 @@ export async function openStore(supabase: SupabaseClient, params: OpenStoreParam
             date,
             opening_balance: openingBalance,
             opening_cash_breakdown: openingCashBreakdown ?? null,
-            total_sales: 0,
-            total_orders: 0,
-            total_cups: 0,
+            total_sales: totalSales,
+            total_orders: totalOrders,
+            total_cups: totalCups,
             total_expenses: 0,
-            expected_cash: openingBalance,
+            expected_cash: openingBalance + totalSales,
         })
         .select()
         .single();

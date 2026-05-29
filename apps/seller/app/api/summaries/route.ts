@@ -32,6 +32,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
     try {
+        const user = await getRequestUser();
+        if (!user) return unauthorized();
         const supabase = getServiceClient();
         const tenantId = await getCurrentTenantId();
         const body = CreateDailySummaryInput.safeParse(await request.json());
@@ -40,7 +42,7 @@ export async function POST(request: NextRequest) {
         const summary = await createSummary(supabase, {
             tenantId,
             storeId: body.data.storeId,
-            openedBy: body.data.openedBy,
+            openedBy: user.id,
             date: body.data.date,
             openingBalance: body.data.openingBalance,
             openingCashBreakdown: body.data.openingCashBreakdown,
