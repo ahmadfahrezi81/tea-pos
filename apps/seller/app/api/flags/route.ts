@@ -17,7 +17,8 @@ export async function GET(request: NextRequest) {
 
         return ok({
             isQrisEnabled: evaluation.isEnabled(FLAGS.FEATURE.QRIS),
-            isPayrollEnabled: evaluation.isEnabled(FLAGS.FEATURE.PAYROLL),
+            isReportEnabled: evaluation.isEnabled(FLAGS.FEATURE.REPORT),
+            isRequestEnabled: evaluation.isEnabled(FLAGS.FEATURE.REQUEST),
             isReimbursementEnabled: evaluation.isEnabled(FLAGS.FEATURE.REIMBURSEMENT),
             isSkipManagePhotosEnabled: evaluation.isEnabled(FLAGS.OPS.SKIP_MANAGE_PHOTOS),
         });

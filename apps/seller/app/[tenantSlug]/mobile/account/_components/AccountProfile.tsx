@@ -54,7 +54,7 @@ export default function AccountProfile() {
     const router = useRouter();
     const { url } = useTenantSlug();
     const { user, avatarUrl } = useAuth();
-    const { flags: { isPayrollEnabled, isReimbursementEnabled }, isLoading: flagsLoading } = useFlags();
+    const { flags: { isReimbursementEnabled }, isLoading: flagsLoading } = useFlags();
 
     const handleLogout = useCallback(async () => {
         const shouldLogout = window.confirm(
@@ -111,7 +111,6 @@ export default function AccountProfile() {
                     icon={<Banknote size={22} strokeWidth={2} className="text-gray-900" />}
                     label="My Earnings"
                     onClick={() => navigation.push(url("/mobile/account/earnings"))}
-                    disabled={flagsLoading ? false : !isPayrollEnabled}
                 />
                 <SettingsRow
                     icon={<ReceiptText size={22} strokeWidth={2} className="text-gray-900" />}

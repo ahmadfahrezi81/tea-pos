@@ -3,7 +3,8 @@ import { z } from "zod";
 
 export const FlagsResponse = z.object({
     isQrisEnabled: z.boolean(),
-    isPayrollEnabled: z.boolean(),
+    isReportEnabled: z.boolean(),
+    isRequestEnabled: z.boolean(),
     isReimbursementEnabled: z.boolean(),
     isSkipManagePhotosEnabled: z.boolean(),
 });

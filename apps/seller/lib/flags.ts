@@ -4,7 +4,8 @@ import { after } from "next/server";
 export const FLAGS = {
     FEATURE: {
         QRIS: "feature-qris",
-        PAYROLL: "feature-payroll",
+        REPORT: "feature-report",
+        REQUEST: "feature-request",
         REIMBURSEMENT: "feature-reimbursement",
     },
     OPS: {

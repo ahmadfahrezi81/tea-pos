@@ -6,7 +6,8 @@ import { useStore } from "@/lib/context/StoreContext";
 
 const DEFAULT_FLAGS: Flags = {
     isQrisEnabled: false,
-    isPayrollEnabled: false,
+    isReportEnabled: false,
+    isRequestEnabled: false,
     isReimbursementEnabled: false,
     isSkipManagePhotosEnabled: false,
 };

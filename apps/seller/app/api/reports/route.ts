@@ -9,10 +9,16 @@ import {
     IncidentReportListResponse,
 } from "@tea-pos/features/reports/schema";
 import { createIncidentReport, listIncidentReports } from "@tea-pos/services/reports";
-import { ok, badRequest, unauthorized, handleError } from "@/lib/api/response";
+import { ok, badRequest, unauthorized, forbidden, handleError } from "@/lib/api/response";
+import { isFlagEnabled, FLAGS } from "@/lib/flags";
 
 export async function GET(request: NextRequest) {
     try {
+        const user = await getRequestUser();
+        if (!user) return unauthorized();
+        const reportEnabled = await isFlagEnabled(FLAGS.FEATURE.REPORT, user.id, { role: user.role });
+        if (!reportEnabled) return forbidden("Store reports are not available");
+
         const supabase = getServiceClient();
         const tenantId = await getCurrentTenantId();
         const query = ListIncidentReportsQuery.safeParse(
@@ -34,6 +40,9 @@ export async function POST(request: NextRequest) {
     try {
         const user = await getRequestUser();
         if (!user) return unauthorized();
+        const reportEnabled = await isFlagEnabled(FLAGS.FEATURE.REPORT, user.id, { role: user.role });
+        if (!reportEnabled) return forbidden("Store reports are not available");
+
         const supabase = getServiceClient();
         const tenantId = await getCurrentTenantId();
 

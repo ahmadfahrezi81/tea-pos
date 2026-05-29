@@ -11,6 +11,7 @@ import { getWeatherMeta, isNightHour } from "@tea-pos/utils/weatherCode";
 import { getCurrentLocalHour } from "@tea-pos/utils/time";
 import { WeatherDrawer } from "../../pos/_components/WeatherDrawer";
 import { ChevronRight, DollarSign, XCircle, Eye, EyeOff, Cloud, PackagePlus, AlertTriangle } from "lucide-react";
+import { useFlags } from "@/lib/context/FlagsContext";
 
 export default function MobileManage() {
     const { url } = useTenantSlug();
@@ -18,6 +19,7 @@ export default function MobileManage() {
     const { gate, session } = useSession(selectedStoreId);
     const { user } = useAuth();
     const { data: weatherData } = useWeather();
+    const { flags: { isReportEnabled, isRequestEnabled } } = useFlags();
     const [isWeatherOpen, setIsWeatherOpen] = useState(false);
     const [codeRevealed, setCodeRevealed] = useState(false);
 
@@ -94,17 +96,21 @@ export default function MobileManage() {
                     onClick={() => navigation.push(url("/mobile/home/manage/expense"))}
                     disabled={dimmed}
                 />
-                <ActionRow
-                    icon={<PackagePlus size={22} strokeWidth={2} className={dimmed ? "text-gray-400" : "text-emerald-600"} />}
-                    label="Store Requests"
-                    onClick={() => navigation.push(url("/mobile/home/manage/request"))}
-                    disabled={dimmed}
-                />
-                <ActionRow
-                    icon={<AlertTriangle size={22} strokeWidth={2} className="text-orange-500" />}
-                    label="Store Reports"
-                    onClick={() => navigation.push(url("/mobile/home/manage/report"))}
-                />
+                {isRequestEnabled && (
+                    <ActionRow
+                        icon={<PackagePlus size={22} strokeWidth={2} className={dimmed ? "text-gray-400" : "text-emerald-600"} />}
+                        label="Store Requests"
+                        onClick={() => navigation.push(url("/mobile/home/manage/request"))}
+                        disabled={dimmed}
+                    />
+                )}
+                {isReportEnabled && (
+                    <ActionRow
+                        icon={<AlertTriangle size={22} strokeWidth={2} className="text-orange-500" />}
+                        label="Store Reports"
+                        onClick={() => navigation.push(url("/mobile/home/manage/report"))}
+                    />
+                )}
                 <ActionRow
                     icon={<XCircle size={22} strokeWidth={2} className={dimmed ? "text-gray-400" : "text-red-500"} />}
                     label="Close Day"

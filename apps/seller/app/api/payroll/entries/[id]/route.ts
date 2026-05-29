@@ -3,8 +3,7 @@ import { getCurrentTenantId } from "@tea-pos/utils/server-config/tenant";
 import { NextRequest } from "next/server";
 import { UpdatePayrollEntryInput, PayrollEntryResponse } from "@tea-pos/features/payroll/schema";
 import { updatePayrollEntry } from "@tea-pos/services/payroll";
-import { ok, badRequest, unauthorized, forbidden, handleError } from "@/lib/api/response";
-import { isFlagEnabled, FLAGS } from "@/lib/flags";
+import { ok, badRequest, unauthorized, handleError } from "@/lib/api/response";
 import { getRequestUser } from "@/lib/auth/get-request-user";
 
 export async function PATCH(
@@ -17,9 +16,6 @@ export async function PATCH(
 
         const supabase = getServiceClient();
         const tenantId = await getCurrentTenantId();
-
-        const payrollEnabled = await isFlagEnabled(FLAGS.FEATURE.PAYROLL, user.id, { role: user.role, tenantId });
-        if (!payrollEnabled) return forbidden("Payroll is not available");
 
         const { id } = await params;
         const body = UpdatePayrollEntryInput.safeParse(await request.json());
