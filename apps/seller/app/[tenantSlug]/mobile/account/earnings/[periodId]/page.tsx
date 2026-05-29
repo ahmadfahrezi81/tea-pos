@@ -60,9 +60,9 @@ export default function PeriodDetailPage({ params }: { params: Promise<{ periodI
         <div className="space-y-3">
             {/* Period header */}
             {period && (
-                <div className="bg-white rounded-xl p-4 shadow-sm">
+                <div className="bg-white rounded-xl p-4">
                     <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-semibold text-gray-700">
+                        <span className="text-base font-semibold text-gray-700">
                             Week {getISOWeek(parseISO(period.startDate))} ·{" "}
                             {format(parseISO(period.startDate), "MMM d")}–
                             {format(parseISO(period.endDate), "MMM d, yyyy")}
@@ -75,7 +75,7 @@ export default function PeriodDetailPage({ params }: { params: Promise<{ periodI
                                 {totalCups} cups · Rp {totalPay.toLocaleString("id-ID")}
                             </p>
                             {singleRate !== null && (
-                                <p className="text-xs text-gray-400 mt-0.5">
+                                <p className="text-sm text-gray-400 mt-0.5">
                                     Rate: Rp {singleRate.toLocaleString("id-ID")} / cup
                                 </p>
                             )}
@@ -85,7 +85,7 @@ export default function PeriodDetailPage({ params }: { params: Promise<{ periodI
             )}
 
             {/* Day-by-day breakdown */}
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div className="bg-white rounded-xl overflow-hidden">
                 {isLoading ? (
                     <div className="p-4 space-y-3">
                         {[1, 2, 3, 4, 5, 6, 7].map((i) => (
@@ -93,7 +93,7 @@ export default function PeriodDetailPage({ params }: { params: Promise<{ periodI
                         ))}
                     </div>
                 ) : days.length === 0 ? (
-                    <p className="p-4 text-sm text-gray-400">Period not found.</p>
+                    <p className="p-4 text-base text-gray-400">Period not found.</p>
                 ) : (
                     days.map((day, idx) => {
                         const dateStr = format(day, "yyyy-MM-dd");
@@ -104,45 +104,45 @@ export default function PeriodDetailPage({ params }: { params: Promise<{ periodI
                             <div key={dateStr} className={`px-4 py-3 ${!isLast ? "border-b border-gray-100" : ""}`}>
                                 {dayEntries.length === 0 ? (
                                     <div className="flex items-center justify-between">
-                                        <span className="text-sm font-medium text-gray-500">
+                                        <span className="text-base font-medium text-gray-500">
                                             {format(day, "EEE d MMM")}
                                         </span>
-                                        <span className="text-sm text-gray-300">— — —</span>
+                                        <span className="text-base text-gray-300">— — —</span>
                                     </div>
                                 ) : dayEntries.length === 1 ? (
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <span className="text-sm font-medium text-gray-800">
+                                            <span className="text-base font-medium text-gray-800">
                                                 {format(day, "EEE d MMM")}
                                             </span>
-                                            <span className="ml-2 text-xs text-gray-400">
+                                            <span className="ml-2 text-sm text-gray-400">
                                                 {getStoreName(dayEntries[0].storeId)}
                                             </span>
                                         </div>
                                         <div className="text-right">
-                                            <span className="text-sm text-gray-700">
+                                            <span className="text-base text-gray-700">
                                                 {dayEntries[0].totalCups} cups
                                             </span>
-                                            <span className="ml-2 text-sm font-medium text-gray-900">
+                                            <span className="ml-2 text-base font-medium text-gray-900">
                                                 Rp {dayEntries[0].grossPay.toLocaleString("id-ID")}
                                             </span>
                                         </div>
                                     </div>
                                 ) : (
                                     <div>
-                                        <span className="text-sm font-medium text-gray-800 block mb-1">
+                                        <span className="text-base font-medium text-gray-800 block mb-1">
                                             {format(day, "EEE d MMM")}
                                         </span>
                                         {dayEntries.map((entry) => (
                                             <div key={entry.id} className="flex items-center justify-between pl-4">
-                                                <span className="text-xs text-gray-400">
+                                                <span className="text-sm text-gray-400">
                                                     {getStoreName(entry.storeId)}
                                                 </span>
                                                 <div className="text-right">
-                                                    <span className="text-sm text-gray-700">
+                                                    <span className="text-base text-gray-700">
                                                         {entry.totalCups} cups
                                                     </span>
-                                                    <span className="ml-2 text-sm font-medium text-gray-900">
+                                                    <span className="ml-2 text-base font-medium text-gray-900">
                                                         Rp {entry.grossPay.toLocaleString("id-ID")}
                                                     </span>
                                                 </div>

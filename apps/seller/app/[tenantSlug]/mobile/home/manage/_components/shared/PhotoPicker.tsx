@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Camera, Loader2, CircleMinus } from "lucide-react";
+import { Camera, ImagePlus, Loader2, CircleMinus } from "lucide-react";
 import { compressPhoto } from "@/lib/compressPhoto";
 
 interface PhotoPickerProps {
@@ -9,9 +9,10 @@ interface PhotoPickerProps {
     onCapture: (file: File, previewUrl: string) => void;
     onRemove: () => void;
     onError?: (message: string) => void;
+    allowGallery?: boolean;
 }
 
-export function PhotoPicker({ previewUrl, onCapture, onRemove, onError }: PhotoPickerProps) {
+export function PhotoPicker({ previewUrl, onCapture, onRemove, onError, allowGallery = false }: PhotoPickerProps) {
     const inputRef = useRef<HTMLInputElement>(null);
     const [isCompressing, setIsCompressing] = useState(false);
 
@@ -47,7 +48,7 @@ export function PhotoPicker({ previewUrl, onCapture, onRemove, onError }: PhotoP
                 ref={inputRef}
                 type="file"
                 accept="image/*"
-                capture="environment"
+                {...(!allowGallery && { capture: "environment" })}
                 className="hidden"
                 onChange={handleFileChange}
             />
@@ -79,7 +80,11 @@ export function PhotoPicker({ previewUrl, onCapture, onRemove, onError }: PhotoP
                     onClick={() => inputRef.current?.click()}
                     className="w-full h-full flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-transform"
                 >
-                    <Camera size={40} strokeWidth={2} className="text-brand" />
+                    {allowGallery ? (
+                        <ImagePlus size={40} strokeWidth={2} className="text-brand" />
+                    ) : (
+                        <Camera size={40} strokeWidth={2} className="text-brand" />
+                    )}
                     <span className="text-sm font-medium text-gray-900">Tap to add photo</span>
                 </button>
             )}

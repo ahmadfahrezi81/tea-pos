@@ -218,9 +218,17 @@ export const mobileRoutes = {
     "/mobile/account/reimbursements": {
         title: "Reimbursements",
         subPage: true,
-        inlineHeader: false,
+        inlineHeader: true,
         isChart: false,
         parent: "/mobile/account",
+        headerAction: "add",
+    },
+    "/mobile/account/reimbursements/add": {
+        title: "New Claim",
+        subPage: true,
+        inlineHeader: false,
+        isChart: false,
+        parent: "/mobile/account/reimbursements",
     },
 } satisfies Record<string, RouteConfig>;
 
