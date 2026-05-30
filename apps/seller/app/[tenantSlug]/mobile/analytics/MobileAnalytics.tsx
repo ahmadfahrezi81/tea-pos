@@ -7,7 +7,7 @@ import { Expense } from "@tea-pos/features/expenses/schema";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 import { toIndonesiaMonthYear } from "@tea-pos/utils/server-config/timezone";
 import { getCurrentLocalMonth } from "@tea-pos/utils/time";
-import { Calendar, CalendarDays, AlertTriangle, Receipt, ChevronsDown, Info, Activity } from "lucide-react";
+import { Calendar, CalendarDays, AlertTriangle, Receipt, MoreHorizontal, Info, Activity } from "lucide-react";
 import { DetailsDrawer } from "./_components/DetailsDrawer";
 import { useStore } from "@/lib/context/StoreContext";
 import {
@@ -199,9 +199,9 @@ export default function MobileAnalytics() {
                                             <div className="relative">
                                                 <button
                                                     onClick={() => setOpenMenuId(openMenuId === summary.id ? null : summary.id)}
-                                                    className="w-7 h-7 flex items-center justify-center rounded-lg bg-brand active:opacity-80 active:scale-95 text-white transition-transform duration-100"
+                                                    className="size-8 shrink-0 flex items-center justify-center rounded-full bg-brand active:opacity-80 text-white -mr-1"
                                                 >
-                                                    <ChevronsDown size={28} strokeWidth={2} />
+                                                    <MoreHorizontal size={24} strokeWidth={2} />
                                                 </button>
                                                 {openMenuId === summary.id && (
                                                     <>

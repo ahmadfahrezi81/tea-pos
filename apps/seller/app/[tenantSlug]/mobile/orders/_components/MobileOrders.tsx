@@ -43,16 +43,12 @@ const formatFullTimestamp = (dateString: string) => {
     });
 };
 
-const formatDateForInput = (date: Date) => date.toISOString().split("T")[0];
-
 const TZ_OFFSET = Number(process.env.NEXT_PUBLIC_TIMEZONE_OFFSET ?? 7);
 
 export default function MobileOrders() {
     const { selectedStoreId } = useStore();
 
-    const [selectedDate, setSelectedDate] = useState(
-        formatDateForInput(new Date()),
-    );
+    const [selectedDate, setSelectedDate] = useState(getTodayLocalStr);
 
     const { data: orders = [], isLoading: ordersLoading } = useStoreOrders(
         selectedStoreId,

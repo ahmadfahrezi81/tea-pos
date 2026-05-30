@@ -245,8 +245,10 @@ export default function MobileLayoutClient({
                                 className="rounded-xl shadow-2xl mx-auto"
                             />
                         </div>
-                        <div className="w-64 h-1.5 loading-track rounded-full">
-                            <div className="loading-bar" />
+                        <div className="w-64 h-4 loading-track">
+                            <div className="loading-bar">
+                                <div className="absolute top-0 left-0 right-0 h-1/2 rounded-full bg-gradient-to-b from-white/20 to-transparent" />
+                            </div>
                         </div>
                         <div className="mt-4 text-xs text-gray-600 text-center">
                             <span className="font-mono text-xs opacity-90">
