@@ -66,8 +66,8 @@ export const StoreSessionResponse = z
         status: z.enum(["active", "ended"]),
         previousSessionId: UUIDSchema.nullable(),
         createdAt: z.string().nullable(),
-        userName: z.string().nullable(),
-        userAvatarUrl: z.string().nullable(),
+        userName: z.string().nullable().optional(),
+        userAvatarUrl: z.string().nullable().optional(),
     })
     .openapi({ title: "StoreSessionResponse" });
 
