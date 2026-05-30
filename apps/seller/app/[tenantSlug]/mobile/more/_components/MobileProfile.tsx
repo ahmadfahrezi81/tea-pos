@@ -21,7 +21,6 @@ import { useFastOrderMode } from "@/lib/context/FastOrderModeContext";
 import { navigation } from "@tea-pos/utils/navigation";
 import { IconPickerDrawer } from "./IconPickerDrawer";
 import { useProfileIcon } from "@/lib/context/ProfileIconContext";
-import { CustomerFeedbackDrawer } from "./CustomerFeedbackDrawer";
 
 // ============================================================================
 // SETTINGS ROW
@@ -78,7 +77,6 @@ export default function MobileProfile() {
     const { iconId, setIconId, ProfileIcon } = useProfileIcon();
 
     const [showIconPicker, setShowIconPicker] = useState(false);
-    const [showFeedbackDrawer, setShowFeedbackDrawer] = useState(false);
 
     const handleLogout = useCallback(async () => {
         const shouldLogout = window.confirm(
@@ -190,7 +188,7 @@ export default function MobileProfile() {
                     icon={<MapPin size={20} className="text-gray-900" />}
                     label="Customer Feedback"
                     sublabel="Log feedback with a location"
-                    onClick={() => setShowFeedbackDrawer(true)}
+                    onClick={() => navigation.push(url("/mobile/more/map"))}
                 />
                 <SettingsRow
                     icon={<Bell size={20} className="text-gray-900" />}
@@ -231,10 +229,6 @@ export default function MobileProfile() {
                 onClose={() => setShowIconPicker(false)}
                 currentIconId={iconId}
                 onConfirm={(id) => setIconId(id)}
-            />
-            <CustomerFeedbackDrawer
-                isOpen={showFeedbackDrawer}
-                onClose={() => setShowFeedbackDrawer(false)}
             />
         </div>
     );
