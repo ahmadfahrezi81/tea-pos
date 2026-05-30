@@ -99,9 +99,9 @@ CREATE TABLE payroll_payouts (
   user_id             UUID NOT NULL REFERENCES users(id),
   status              TEXT NOT NULL DEFAULT 'pending'
                       CHECK (status IN ('pending', 'approved', 'on_hold', 'paid')),
-  base_pay            NUMERIC(12,2) NOT NULL DEFAULT 0,
-  reimbursements_total NUMERIC(12,2) NOT NULL DEFAULT 0,
-  total_pay           NUMERIC(12,2) NOT NULL DEFAULT 0,
+  cups_pay_total      NUMERIC(12,2) NOT NULL DEFAULT 0,  -- cups × rate
+  reimbursements_total NUMERIC(12,2) NOT NULL DEFAULT 0, -- sum of approved claims
+  total_pay           NUMERIC(12,2) NOT NULL DEFAULT 0,  -- cups_pay_total + reimbursements_total (transfer amount)
   payment_proof_url   TEXT,
   paid_at             TIMESTAMPTZ,
   paid_by             UUID REFERENCES users(id),
@@ -111,16 +111,10 @@ CREATE TABLE payroll_payouts (
 
 ALTER TABLE payroll_payouts ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "own_or_admin_read" ON payroll_payouts
-  FOR SELECT USING (
-    user_id = auth.uid()
-    OR EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'ADMIN')
-  );
-
-CREATE POLICY "admin_write" ON payroll_payouts
-  FOR ALL USING (
-    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'ADMIN')
-  );
+-- Staff can only read their own payout rows.
+-- Admin writes go through the service client (bypasses RLS) — no role check needed here.
+CREATE POLICY "own_read" ON payroll_payouts
+  FOR SELECT USING (user_id = auth.uid());
 ```
 
 A payout row is created (or upserted) when the admin first opens the user's period view. Status starts `pending`. Totals are computed from entries + approved reimbursements at the time of approval.
@@ -138,11 +132,10 @@ UPDATE payroll_periods SET status = 'pending' WHERE status = 'open';
 
 DROP POLICY IF EXISTS "tenant_read" ON payroll_reimbursements;
 
-CREATE POLICY "own_or_admin_read" ON payroll_reimbursements
-  FOR SELECT USING (
-    user_id = auth.uid()
-    OR EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'ADMIN')
-  );
+-- Staff can only read their own claims.
+-- Admin reads go through the service client (bypasses RLS).
+CREATE POLICY "own_read" ON payroll_reimbursements
+  FOR SELECT USING (user_id = auth.uid());
 ```
 
 After all migrations: `pnpm types:db`.
@@ -181,7 +174,8 @@ const { rate } = await getCommissionRate(supabase, { tenantId, userId });
 **New: `getPayslip`** — one call returns everything for a user+period:
 ```ts
 export async function getPayslip(supabase, { tenantId, userId, periodId })
-// Returns: { period, entry, reimbursements, basePay, reimbursementsTotal, totalPay, ratePerCup }
+// Returns: { period, payout, entry, reimbursements, cupsPayTotal, reimbursementsTotal, totalPay, ratePerCup }
+// payout = payroll_payouts row (null if not yet created)
 // entry = null if no payroll entry exists yet for this user+period
 // reimbursements = approved claims where payroll_period_id = periodId
 ```
@@ -196,8 +190,9 @@ export async function getPayslip(supabase, { tenantId, userId, periodId })
 ```ts
 export async function upsertPayout(supabase, { tenantId, periodId, userId })
 // Creates or returns existing payroll_payouts row for this user+period
-// Computes basePay from payroll_entries, reimbursementsTotal from approved reimbursements
+// Computes cupsPayTotal from payroll_entries, reimbursementsTotal from approved reimbursements
 // in date range period.start_date..period.end_date
+// totalPay = cupsPayTotal + reimbursementsTotal
 ```
 
 **New: `updatePayoutStatus`:**
@@ -304,7 +299,8 @@ Fri 16 May        —
 Sat 17 May        —
 Sun 18 May        —
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-75 cups × Rp 500      Rp 37,500
+75 cups × Rp 500
+Cups Pay Total        Rp 37,500
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 CLAIMS
 Mobile Data            Rp 15,000
