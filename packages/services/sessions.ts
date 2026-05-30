@@ -41,7 +41,23 @@ export async function getStoreGateState(supabase: SupabaseClient, params: GetSto
     if (sessionError) throw sessionError;
     if (!session) return { gate: "no_session" as const, summaryId: summary.id };
 
-    return { gate: "open" as const, session: toCamelKeys(session) };
+    const { data: userRow } = await supabase
+        .from("users")
+        .select("full_name")
+        .eq("id", session.user_id)
+        .single();
+
+    const { data: authUser } = await supabase.auth.admin.getUserById(session.user_id);
+    const avatarUrl = authUser?.user?.user_metadata?.avatar_url ?? null;
+
+    return {
+        gate: "open" as const,
+        session: {
+            ...toCamelKeys(session),
+            userName: userRow?.full_name ?? null,
+            userAvatarUrl: avatarUrl,
+        },
+    };
 }
 
 // ─── Resume session ────────────────────────────────────────────────────────────

@@ -53,6 +53,8 @@ export default function HomeLayout({
                         gate={gate}
                         isPosInUse={isPosInUse}
                         onTransfer={transferSession}
+                        sessionUserName={session?.userName ?? null}
+                        sessionUserAvatarUrl={session?.userAvatarUrl ?? null}
                     />
                 </div>
             </div>
