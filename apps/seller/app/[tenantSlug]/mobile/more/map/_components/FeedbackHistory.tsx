@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useMemo } from "react";
-import { MapPin, MessageSquare } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import mapboxgl from "mapbox-gl";
 import useCustomerFeedbacks from "@/lib/hooks/customer-feedbacks/useCustomerFeedbacks";
 import { formatTimeAgo } from "@tea-pos/utils/formatTimeAgo";
@@ -46,6 +46,22 @@ export default function FeedbackHistory() {
 
     const { data, isLoading } = useCustomerFeedbacks({ limit: 100 });
     const feedbacks = useMemo(() => data?.feedbacks ?? [], [data]);
+
+    const locationCountMap = useMemo(() => {
+        const counts = new Map<string, number>();
+        const PRECISION = 2;
+        feedbacks.forEach((fb) => {
+            const key = `${fb.latitude.toFixed(PRECISION)},${fb.longitude.toFixed(PRECISION)}`;
+            counts.set(key, (counts.get(key) ?? 0) + 1);
+        });
+        return counts;
+    }, [feedbacks]);
+
+    const getLocationCount = (fb: CustomerFeedbackResponse) => {
+        const PRECISION = 2;
+        const key = `${fb.latitude.toFixed(PRECISION)},${fb.longitude.toFixed(PRECISION)}`;
+        return locationCountMap.get(key) ?? 1;
+    };
 
     // ── Init map ──────────────────────────────────────────────────────
 
@@ -147,7 +163,7 @@ export default function FeedbackHistory() {
                     ))}
                 </div>
             ) : feedbacks.length === 0 ? (
-                <div className="bg-white rounded-2xl shadow-sm flex flex-col items-center justify-center py-16 text-gray-400 gap-2">
+                <div className="bg-white rounded-2xl flex flex-col items-center justify-center py-16 text-gray-400 gap-2">
                     <MessageSquare size={28} className="opacity-50" />
                     <p className="text-sm">No feedback submitted yet</p>
                 </div>
@@ -163,31 +179,37 @@ export default function FeedbackHistory() {
                                     duration: 600,
                                 });
                             }}
-                            className="w-full bg-white rounded-2xl shadow-sm flex items-start gap-3 px-4 py-4 active:bg-gray-50 text-left"
+                            className="w-full bg-white rounded-2xl flex items-start gap-3 px-3 py-3 active:bg-gray-50 text-left"
                         >
-                            <div className="w-9 h-9 rounded-full bg-brand/10 flex items-center justify-center shrink-0 mt-0.5">
-                                <MapPin size={15} className="text-brand" />
-                            </div>
                             <div className="flex-1 min-w-0">
-                                <div className="flex items-start justify-between gap-2 mb-0.5">
-                                    <p className="text-sm font-bold text-gray-900 leading-snug">
+                                <div className="flex items-start justify-between gap-2">
+                                    <p className="text-lg font-extrabold text-gray-900 leading-snug">
                                         {fb.locationDisplay}
                                     </p>
-                                    <span className="text-xs text-gray-400 shrink-0 pt-0.5">
+                                    <span className="text-sm text-gray-400 shrink-0 pt-0.5">
                                         {formatDate(fb.createdAt)}
                                     </span>
                                 </div>
-                                <p className="text-xs text-gray-400 truncate">
-                                    {fb.locationName}
-                                </p>
-                                <p className="text-xs font-semibold text-gray-600 mt-2">
-                                    {fb.userName ?? "Unknown"}
-                                </p>
-                                {fb.notes && (
-                                    <p className="text-xs text-gray-500 mt-0.5 leading-relaxed line-clamp-2">
-                                        {fb.notes}
+                                <p className="text-sm text-gray-400 truncate mt-0.5">{fb.locationName}</p>
+                                <span className="inline-block bg-brand text-white text-xs font-bold px-2 py-0.5 rounded-full mt-1.5">
+                                    {getLocationCount(fb)} votes
+                                </span>
+                                <div className="mt-2 space-y-1">
+                                    <p className="text-sm text-gray-500">
+                                        <span className="font-semibold text-gray-700">Submitted by </span>
+                                        {fb.userName ?? "Unknown"}
                                     </p>
-                                )}
+                                    {fb.notes && (
+                                        <>
+                                            <p className="text-sm text-gray-500">
+                                                <span className="font-semibold text-gray-700">Notes</span>
+                                            </p>
+                                            <div className="bg-slate-100 rounded-lg px-3 py-2">
+                                                <p className="text-sm text-gray-600 leading-relaxed">{fb.notes}</p>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
                             </div>
                         </button>
                     ))}

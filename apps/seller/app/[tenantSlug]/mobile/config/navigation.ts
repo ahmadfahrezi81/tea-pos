@@ -120,9 +120,18 @@ export const mobileRoutes = {
     "/mobile/more/map": {
         title: "Location Feedback",
         subPage: true,
-        inlineHeader: false,
+        inlineHeader: true,
         isChart: false,
         parent: "/mobile/more",
+        headerAction: "add",
+        footerCta: "New Location Feedback",
+    },
+    "/mobile/more/map/add": {
+        title: "New Location Feedback",
+        subPage: true,
+        inlineHeader: false,
+        isChart: false,
+        parent: "/mobile/more/map",
     },
     "/mobile/account": {
         title: "Account",

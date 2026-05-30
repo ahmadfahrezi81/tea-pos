@@ -20,15 +20,21 @@ interface StoreGateProps {
     gate: string | null;
     isPosInUse?: boolean;
     onTransfer?: (code: string) => Promise<unknown>;
+    sessionUserName?: string | null;
+    sessionUserAvatarUrl?: string | null;
 }
 
-export function StoreGate({ gate, isPosInUse, onTransfer }: StoreGateProps) {
+export function StoreGate({ gate, isPosInUse, onTransfer, sessionUserName, sessionUserAvatarUrl }: StoreGateProps) {
     const { url } = useTenantSlug();
 
     return (
         <div className="bg-white rounded-2xl w-full h-full flex flex-col items-center justify-center p-6">
             {isPosInUse && onTransfer ? (
-                <TakeOverCard onTransfer={onTransfer} />
+                <TakeOverCard
+                    onTransfer={onTransfer}
+                    userName={sessionUserName}
+                    userAvatarUrl={sessionUserAvatarUrl}
+                />
             ) : gate === "closed" ? (
                 <div className="text-center w-full max-w-xs">
                     <GateIcon icon="fluent-emoji:alarm-clock" />

@@ -1,13 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, UserCircle } from "lucide-react";
 import { Icon } from "@iconify/react";
+import Image from "next/image";
 
 export function TakeOverCard({
     onTransfer,
+    userName,
+    userAvatarUrl,
 }: {
     onTransfer: (code: string) => Promise<unknown>;
+    userName?: string | null;
+    userAvatarUrl?: string | null;
 }) {
     const [claimCode, setClaimCode] = useState("");
     const [transferError, setTransferError] = useState<string | null>(null);
@@ -29,8 +34,26 @@ export function TakeOverCard({
     return (
         <div className="text-center w-full max-w-xs mx-auto">
             <Icon icon="fluent-emoji:locked-with-key" width={100} height={100} className="mx-auto mb-5" />
-            <p className="font-bold text-gray-900 text-2xl tracking-tight">Session already taken</p>
-            <p className="text-base text-gray-500 mt-2 mb-7">
+            <p className="font-bold text-gray-900 text-2xl tracking-tight">Session already taken by</p>
+            {userName && (
+                <div className="flex items-center gap-2 mt-1 justify-center bg-slate-100 rounded-xl px-2 py-2 pr-4 w-fit mx-auto">
+                    {userAvatarUrl ? (
+                        <Image
+                            src={userAvatarUrl}
+                            alt={userName}
+                            width={28}
+                            height={28}
+                            className="rounded-lg object-cover shrink-0"
+                        />
+                    ) : (
+                        <div className="w-7 h-7 rounded-lg bg-brand/10 flex items-center justify-center shrink-0">
+                            <UserCircle size={18} className="text-brand" />
+                        </div>
+                    )}
+                    <p className="text-lg font-bold text-gray-900 truncate">{userName}</p>
+                </div>
+            )}
+            <p className="text-base text-gray-500 mt-4 mb-7">
                 Ask the current seller for their 2-digit code to take over.
             </p>
             <input

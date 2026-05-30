@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import {
@@ -12,7 +11,6 @@ import {
 import { useStore } from "@/lib/context/StoreContext";
 import { useFastOrderMode } from "@/lib/context/FastOrderModeContext";
 import { navigation } from "@tea-pos/utils/navigation";
-import { CustomerFeedbackDrawer } from "./CustomerFeedbackDrawer";
 
 // ============================================================================
 // SETTINGS ROW
@@ -88,8 +86,6 @@ export default function MoreMenu() {
     const { assignedStores } = useStore();
     const { fastOrderMode, toggleFastOrderMode } = useFastOrderMode();
 
-    const [showFeedbackDrawer, setShowFeedbackDrawer] = useState(false);
-
     if (!user) return null;
 
     return (
@@ -112,14 +108,10 @@ export default function MoreMenu() {
                 <SettingsRow
                     icon={<MapPin size={22} strokeWidth={2} className="text-gray-900" />}
                     label="Location Feedback"
-                    onClick={() => setShowFeedbackDrawer(true)}
+                    onClick={() => navigation.push(url("/mobile/more/map"))}
                 />
             </div>
 
-            <CustomerFeedbackDrawer
-                isOpen={showFeedbackDrawer}
-                onClose={() => setShowFeedbackDrawer(false)}
-            />
         </div>
     );
 }
