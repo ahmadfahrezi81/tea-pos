@@ -22,7 +22,7 @@ export default function HomeLayout({
     const isHomeRoot = isPos || isManage;
 
     const { selectedStoreId, selectedStore } = useStore();
-    const { gate, session, transferSession } = useSession(selectedStoreId);
+    const { gate, session, transferSession, isLoading: gateLoading } = useSession(selectedStoreId);
     const { user } = useAuth();
 
     const todayStr = useMemo(() => {
@@ -64,6 +64,7 @@ export default function HomeLayout({
         return () => setOverlay(null);
     }, [gateContent, setOverlay]);
 
+    if (isHomeRoot && gateLoading) return null;
     if (showGate) return null;
 
     return (

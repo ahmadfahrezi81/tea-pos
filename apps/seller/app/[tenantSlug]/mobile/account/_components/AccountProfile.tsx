@@ -72,7 +72,7 @@ export default function AccountProfile() {
     if (!user) return null;
 
     return (
-        <div className="min-h-screen space-y-4">
+        <div className="space-y-4">
             {/* Profile Header */}
             <div className="bg-white rounded-2xl p-4 flex items-center gap-4">
                 <div className="shrink-0">
@@ -131,8 +131,8 @@ export default function AccountProfile() {
             </div>
 
             {/* Logout + Version */}
-            <div className="mt-8 pb-10 flex flex-col items-center gap-2">
-                <div className="text-gray-900">
+            <div className="mt-8 flex flex-col items-center gap-2">
+                <div className="text-gray-600">
                     <VersionInfo />
                 </div>
                 <button

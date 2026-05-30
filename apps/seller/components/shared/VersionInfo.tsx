@@ -13,5 +13,5 @@ export default function VersionInfo() {
             .catch(() => setBackend("error"));
     }, []);
 
-    return <span className="font-mono text-xs opacity-90">v{frontend}</span>;
+    return <span className="font-mono text-base opacity-90">v{frontend}</span>;
 }

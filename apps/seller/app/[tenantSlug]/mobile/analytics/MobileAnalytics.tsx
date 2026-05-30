@@ -7,7 +7,8 @@ import { Expense } from "@tea-pos/features/expenses/schema";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 import { toIndonesiaMonthYear } from "@tea-pos/utils/server-config/timezone";
 import { getCurrentLocalMonth } from "@tea-pos/utils/time";
-import { Calendar, CalendarDays, AlertTriangle, Receipt, ChevronsDown, Info, Activity } from "lucide-react";
+import { Calendar, CalendarDays, AlertTriangle, Receipt, MoreHorizontal, Info, Activity } from "lucide-react";
+import { SkeletonValue } from "@/components/shared/SkeletonValue";
 import { DetailsDrawer } from "./_components/DetailsDrawer";
 import { useStore } from "@/lib/context/StoreContext";
 import {
@@ -79,7 +80,7 @@ export default function MobileAnalytics() {
     return (
         <div className="space-y-4">
             {/* Monthly Summary */}
-            {summariesData?.monthlyTotals && (
+            {(summariesLoading || summariesData?.monthlyTotals) && (
                 <div className="bg-white p-4 rounded-2xl">
                     <div className="flex items-center gap-2 mb-3">
                         <Receipt size={20} className="text-gray-600" />
@@ -88,20 +89,20 @@ export default function MobileAnalytics() {
                     <div className="grid grid-cols-4 gap-2">
                         <div className="text-center">
                             <p className="text-xl font-bold text-blue-600">
-                                {summariesData.monthlyTotals.totalOrders}
+                                <SkeletonValue loading={summariesLoading} className="h-7 w-8">{summariesData?.monthlyTotals?.totalOrders ?? 0}</SkeletonValue>
                             </p>
                             <p className="text-sm text-gray-600">Orders</p>
                         </div>
                         <div className="text-center">
                             <p className="text-xl font-bold text-orange-600">
-                                {summariesData.monthlyTotals.totalCups}
+                                <SkeletonValue loading={summariesLoading} className="h-7 w-8">{summariesData?.monthlyTotals?.totalCups ?? 0}</SkeletonValue>
                             </p>
                             <p className="text-sm text-gray-600">Cups</p>
                         </div>
                         <div className="text-center col-span-2 border-l-2 border-gray-300">
                             <p className="text-sm text-gray-600">Total Sales</p>
                             <p className="text-xl font-bold text-green-600">
-                                {formatRupiah(summariesData.monthlyTotals.totalSales)}
+                                <SkeletonValue loading={summariesLoading} className="h-7 w-24">{formatRupiah(summariesData?.monthlyTotals?.totalSales ?? 0)}</SkeletonValue>
                             </p>
                         </div>
                     </div>
@@ -137,11 +138,15 @@ export default function MobileAnalytics() {
                 />
             </div>
 
-            <MiniDailySalesChart
-                summaries={summariesData?.summaries ?? []}
-                storeId={selectedStoreId}
-                month={selectedMonth}
-            />
+            {summariesLoading ? (
+                <div className="h-[160px] bg-white rounded-2xl animate-pulse" />
+            ) : (
+                <MiniDailySalesChart
+                    summaries={summariesData?.summaries ?? []}
+                    storeId={selectedStoreId}
+                    month={selectedMonth}
+                />
+            )}
 
             {/* Summaries Header */}
             <div className="flex items-center justify-between">
@@ -157,7 +162,22 @@ export default function MobileAnalytics() {
             {/* Daily Summaries */}
             {selectedStoreId && (
                 <div className="space-y-3">
-                    {!summariesData?.summaries || summariesData.summaries.length === 0 ? (
+                    {summariesLoading ? (
+                        Array.from({ length: 3 }).map((_, i) => (
+                            <div key={i} className="bg-white rounded-2xl p-3 animate-pulse space-y-3">
+                                <div className="flex justify-between">
+                                    <div className="h-7 w-32 bg-gray-200 rounded-md" />
+                                    <div className="h-7 w-7 bg-gray-200 rounded-full" />
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 bg-slate-100 rounded-2xl p-2">
+                                    <div className="h-12 bg-gray-200 rounded-md" />
+                                    <div className="h-12 bg-gray-200 rounded-md" />
+                                    <div className="h-12 bg-gray-200 rounded-md" />
+                                    <div className="h-12 bg-gray-200 rounded-md" />
+                                </div>
+                            </div>
+                        ))
+                    ) : !summariesData?.summaries || summariesData.summaries.length === 0 ? (
                         <div className="bg-white p-8 rounded-2xl text-center">
                             <Calendar size={48} className="mx-auto text-gray-400 mb-4" />
                             <p className="text-gray-600">
@@ -199,9 +219,9 @@ export default function MobileAnalytics() {
                                             <div className="relative">
                                                 <button
                                                     onClick={() => setOpenMenuId(openMenuId === summary.id ? null : summary.id)}
-                                                    className="w-7 h-7 flex items-center justify-center rounded-lg bg-brand active:opacity-80 active:scale-95 text-white transition-transform duration-100"
+                                                    className="size-8 shrink-0 flex items-center justify-center rounded-full bg-brand active:opacity-80 text-white -mr-1"
                                                 >
-                                                    <ChevronsDown size={28} strokeWidth={2} />
+                                                    <MoreHorizontal size={24} strokeWidth={2} />
                                                 </button>
                                                 {openMenuId === summary.id && (
                                                     <>
