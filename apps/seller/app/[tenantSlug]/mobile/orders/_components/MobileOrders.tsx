@@ -4,6 +4,7 @@ import useStoreOrders from "@/lib/hooks/orders/useStoreOrders";
 import { Calendar, CalendarDays, Receipt } from "lucide-react";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 import CopyableField from "@/components/shared/CopyableField";
+import { SkeletonValue } from "@/components/shared/SkeletonValue";
 import { useStore } from "@/lib/context/StoreContext";
 import { getTodayLocalStr } from "@tea-pos/utils/time";
 
@@ -122,20 +123,20 @@ export default function MobileOrders() {
                 <div className="grid grid-cols-4 gap-2">
                     <div className="text-center">
                         <p className="text-xl font-bold text-blue-600">
-                            {summaryStats.totalOrders}
+                            <SkeletonValue loading={ordersLoading} className="h-7 w-8">{summaryStats.totalOrders}</SkeletonValue>
                         </p>
                         <p className="text-sm text-gray-600">Orders</p>
                     </div>
                     <div className="text-center">
                         <p className="text-xl font-bold text-orange-600">
-                            {summaryStats.totalCups}
+                            <SkeletonValue loading={ordersLoading} className="h-7 w-8">{summaryStats.totalCups}</SkeletonValue>
                         </p>
                         <p className="text-sm text-gray-600">Cups</p>
                     </div>
                     <div className="text-center col-span-2 border-l-2 border-gray-300">
                         <p className="text-sm text-gray-600">Total Sales</p>
                         <p className="text-xl font-bold text-green-600">
-                            {formatRupiah(summaryStats.totalSales)}
+                            <SkeletonValue loading={ordersLoading} className="h-7 w-24">{formatRupiah(summaryStats.totalSales)}</SkeletonValue>
                         </p>
                     </div>
                 </div>
@@ -162,14 +163,30 @@ export default function MobileOrders() {
                 />
             </div>
 
-            <MiniHourlySalesChart
-                storeId={selectedStoreId}
-                date={selectedDate}
-                hourlySales={hourlySales}
-            />
+            {ordersLoading ? (
+                <div className="h-[160px] bg-white rounded-2xl animate-pulse" />
+            ) : (
+                <MiniHourlySalesChart
+                    storeId={selectedStoreId}
+                    date={selectedDate}
+                    hourlySales={hourlySales}
+                />
+            )}
 
             {/* Orders List */}
-            {ordersWithNumbers.length === 0 ? (
+            {ordersLoading ? (
+                <div className="space-y-3">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className="bg-white rounded-2xl p-3.5 animate-pulse space-y-3">
+                            <div className="flex justify-between">
+                                <div className="h-6 w-28 bg-gray-200 rounded-md" />
+                                <div className="h-6 w-20 bg-gray-200 rounded-md" />
+                            </div>
+                            <div className="h-4 w-24 bg-gray-200 rounded-md" />
+                        </div>
+                    ))}
+                </div>
+            ) : ordersWithNumbers.length === 0 ? (
                 <div className="bg-white p-8 rounded-2xl text-center">
                     <Calendar
                         size={48}
