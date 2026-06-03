@@ -6,13 +6,19 @@ import { createClient } from "@/lib/supabase";
 export default function AuthForm() {
     const supabase = createClient();
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const handleGoogleSignIn = async () => {
         setIsLoading(true);
-        await supabase.auth.signInWithOAuth({
+        setError(null);
+        const { error } = await supabase.auth.signInWithOAuth({
             provider: "google",
             options: { redirectTo: `${window.location.origin}/auth/callback` },
         });
+        if (error) {
+            setError(error.message);
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -22,6 +28,7 @@ export default function AuthForm() {
                     <h1 className="text-2xl font-bold text-gray-900 mb-1">Backoffice</h1>
                     <p className="text-base text-gray-600">Admin access only.</p>
                 </div>
+                {error && <p className="text-sm text-red-500 text-center">{error}</p>}
                 <button
                     onClick={handleGoogleSignIn}
                     disabled={isLoading}
