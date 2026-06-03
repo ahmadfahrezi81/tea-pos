@@ -55,29 +55,13 @@ export const CreateUserInput = z
 
 export const UpdateUserInput = z
     .object({
-        fullName: z
-            .string()
-            .min(1, "Full name is required")
-            .optional()
-            .openapi({
-                description: "User's full name",
-                example: "John Doe",
-            }),
-        role: z.enum(["owner", "manager", "staff"]).optional().openapi({
-            description: "User's role in the tenant",
-            example: "manager",
-        }),
-        phoneNumber: z.string().nullable().optional().openapi({
-            description: "User's phone number with country code",
-            example: "6281234567890",
-        }),
-        status: z
-            .enum(["active", "inactive", "pending", "suspended"])
-            .optional()
-            .openapi({
-                description: "User account status",
-                example: "active",
-            }),
+        fullName: z.string().min(1).optional().openapi({ description: "User's full name", example: "John Doe" }),
+        role: z.enum(["owner", "manager", "staff"]).optional(),
+        phoneNumber: z.string().nullable().optional(),
+        status: z.enum(["active", "inactive", "pending", "suspended"]).optional(),
+        bankName: z.string().nullable().optional(),
+        bankAccountNumber: z.string().nullable().optional(),
+        bankAccountHolder: z.string().nullable().optional(),
     })
     .openapi({ title: "UpdateUserInput" });
 
@@ -128,6 +112,9 @@ export const UserResponse = z
         status: z.enum(USER_STATUSES),
         createdAt: z.string().nullable(),
         updatedAt: z.string().nullable(),
+        bankName: z.string().nullable().optional(),
+        bankAccountNumber: z.string().nullable().optional(),
+        bankAccountHolder: z.string().nullable().optional(),
     })
     .openapi({ title: "UserResponse" });
 

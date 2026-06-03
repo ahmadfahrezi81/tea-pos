@@ -4,12 +4,10 @@ import useSWR from "swr";
 import { commissionConfigsApi } from "@/lib/api/commission-configs";
 import type { CommissionRateResponse } from "@tea-pos/features/commission-configs/schema";
 
-type CommissionRole = "USER" | "DRIVER" | "SUPPLIER";
-
-export function useCommissionConfig(role: CommissionRole) {
+export function useCommissionConfig(userId: string | undefined) {
     const { data, error, isLoading } = useSWR<CommissionRateResponse>(
-        `commission-config-${role}`,
-        () => commissionConfigsApi.getRate({ role }),
+        userId ? `commission-config-${userId}` : null,
+        () => commissionConfigsApi.getRate({ userId: userId! }),
         { revalidateOnFocus: false, dedupingInterval: 5000 },
     );
 

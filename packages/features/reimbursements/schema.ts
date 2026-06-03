@@ -37,6 +37,18 @@ export const ListReimbursementsQuery = z
     })
     .openapi({ title: "ListReimbursementsQuery" });
 
+export const ListAllReimbursementsQuery = z
+    .object({
+        status: z.enum(["pending", "approved", "rejected", "paid"]).optional(),
+    })
+    .openapi({ title: "ListAllReimbursementsQuery" });
+
+export const UpdateReimbursementStatusInput = z
+    .object({
+        status: z.enum(["approved", "rejected"]),
+    })
+    .openapi({ title: "UpdateReimbursementStatusInput" });
+
 // ============================================================================
 // RESPONSE SCHEMAS
 // ============================================================================
@@ -67,5 +79,7 @@ export const ReimbursementListResponse = z
 
 export type CreateReimbursementInput = z.infer<typeof CreateReimbursementInput>;
 export type ListReimbursementsQuery = z.infer<typeof ListReimbursementsQuery>;
+export type ListAllReimbursementsQuery = z.infer<typeof ListAllReimbursementsQuery>;
+export type UpdateReimbursementStatusInput = z.infer<typeof UpdateReimbursementStatusInput>;
 export type ReimbursementResponse = z.infer<typeof ReimbursementResponse>;
 export type ReimbursementListResponse = z.infer<typeof ReimbursementListResponse>;

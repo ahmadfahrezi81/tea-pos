@@ -109,7 +109,7 @@ export default function AccountProfile() {
                 />
                 <SettingsRow
                     icon={<Banknote size={22} strokeWidth={2} className="text-gray-900" />}
-                    label="My Earnings"
+                    label="My Pay"
                     onClick={() => navigation.push(url("/mobile/account/earnings"))}
                 />
                 <SettingsRow

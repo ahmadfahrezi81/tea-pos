@@ -5,15 +5,20 @@ import { useAuth } from "@/lib/context/AuthContext";
 import { reimbursementsApi } from "@/lib/api/reimbursements";
 import type { ReimbursementListResponse, CreateReimbursementInput } from "@tea-pos/features/reimbursements/schema";
 
-export function useReimbursements() {
+interface UseReimbursementsOptions {
+    all?: boolean;
+}
+
+export function useReimbursements(options?: UseReimbursementsOptions) {
     const { user } = useAuth();
     const userId = user?.id;
+    const isAll = options?.all === true;
 
-    const key = userId ? `reimbursements-${userId}` : null;
+    const key = isAll ? "reimbursements-all" : userId ? `reimbursements-${userId}` : null;
 
     const { data, error, mutate, isLoading } = useSWR<ReimbursementListResponse>(
         key,
-        () => reimbursementsApi.list(),
+        () => isAll ? reimbursementsApi.listAll() : reimbursementsApi.list(),
         { revalidateOnFocus: false, dedupingInterval: 5000 },
     );
 

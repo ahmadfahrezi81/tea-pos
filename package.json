@@ -8,6 +8,7 @@
         "lint": "turbo lint",
         "dev:admin": "turbo dev --filter=@tea-pos/admin",
         "dev:seller": "turbo dev --filter=@tea-pos/seller",
+        "dev:backoffice": "turbo dev --filter=@tea-pos/backoffice",
         "types:db": "dotenv -e .env -- pnpm dlx supabase gen types typescript --project-id obmingbnnftplafhyker --schema public > packages/db/types.ts"
     },
     "devDependencies": {

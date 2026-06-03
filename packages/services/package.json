@@ -16,7 +16,8 @@
   },
   "dependencies": {
     "@tea-pos/features": "workspace:*",
-    "@tea-pos/utils": "workspace:*"
+    "@tea-pos/utils": "workspace:*",
+    "date-fns": "^4.1.0"
   },
   "peerDependencies": {
     "@supabase/supabase-js": "^2.0.0"

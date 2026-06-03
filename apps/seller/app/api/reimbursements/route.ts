@@ -7,7 +7,8 @@ import {
     ReimbursementListResponse,
     ReimbursementResponse,
 } from "@tea-pos/features/reimbursements/schema";
-import { createReimbursement, listMyReimbursements } from "@tea-pos/services/reimbursements";
+import { createReimbursement, listMyReimbursements, listAllReimbursements } from "@tea-pos/services/reimbursements";
+import { ListAllReimbursementsQuery } from "@tea-pos/features/reimbursements/schema";
 import { ok, badRequest, unauthorized, forbidden, handleError } from "@/lib/api/response";
 import { isFlagEnabled, FLAGS } from "@/lib/flags";
 import { getRequestUser } from "@/lib/auth/get-request-user";
@@ -22,7 +23,18 @@ export async function GET(request: NextRequest) {
 
         const reimbursementEnabled = await isFlagEnabled(FLAGS.FEATURE.REIMBURSEMENT, user.id, { role: user.role, tenantId });
         if (!reimbursementEnabled) return forbidden("Reimbursements are not available");
-        const query = ListReimbursementsQuery.safeParse(Object.fromEntries(new URL(request.url).searchParams));
+
+        const searchParams = Object.fromEntries(new URL(request.url).searchParams);
+
+        if (user.role === "ADMIN" && searchParams.all === "true") {
+            const allQuery = ListAllReimbursementsQuery.safeParse(searchParams);
+            if (!allQuery.success) return badRequest("Invalid query parameters");
+            const claims = await listAllReimbursements(supabase, { tenantId, status: allQuery.data.status });
+            const parsed = ReimbursementListResponse.safeParse({ claims });
+            return ok(parsed.success ? parsed.data : { claims });
+        }
+
+        const query = ListReimbursementsQuery.safeParse(searchParams);
         if (!query.success) return badRequest("Invalid query parameters");
 
         const claims = await listMyReimbursements(supabase, { tenantId, userId: user.id, ...query.data });

@@ -35,6 +35,8 @@ export const ActivityLogType = z.enum([
     "supply_request_created",
     "incident_report_created",
     "reimbursement_submitted",
+    "reimbursement_status_updated",
+    "payroll_payout_updated",
 ]);
 
 // ============================================================================

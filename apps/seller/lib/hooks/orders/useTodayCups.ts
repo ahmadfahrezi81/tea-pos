@@ -18,7 +18,7 @@ export function useTodayCups(storeId?: string, userId?: string, date?: string) {
         async () => {
             const [ordersResult, rateResult] = await Promise.all([
                 ordersApi.list({ storeId: storeId!, date: date! }),
-                commissionConfigsApi.getRate({ role: "USER" }),
+                commissionConfigsApi.getRate({ userId: userId! }),
             ]);
 
             const totalCups = ordersResult.orders

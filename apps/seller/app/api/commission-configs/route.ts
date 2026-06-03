@@ -8,7 +8,7 @@ import {
     CommissionConfigResponse,
 } from "@tea-pos/features/commission-configs/schema";
 import { getCommissionRate, upsertCommissionConfig } from "@tea-pos/services/commission-configs";
-import { ok, badRequest, unauthorized, handleError } from "@/lib/api/response";
+import { ok, badRequest, unauthorized, forbidden, handleError } from "@/lib/api/response";
 import { getRequestUser } from "@/lib/auth/get-request-user";
 
 export async function GET(request: NextRequest) {
@@ -18,8 +18,7 @@ export async function GET(request: NextRequest) {
         const query = GetCommissionRateQuery.safeParse(Object.fromEntries(new URL(request.url).searchParams));
         if (!query.success) return badRequest("Invalid query parameters");
 
-        const result = await getCommissionRate(supabase, { tenantId, role: query.data.role });
-
+        const result = await getCommissionRate(supabase, { tenantId, userId: query.data.userId });
         return ok(CommissionRateResponse.parse(result));
     } catch (error) { return handleError("GET /api/commission-configs", error); }
 }
@@ -28,6 +27,7 @@ export async function POST(request: NextRequest) {
     try {
         const user = await getRequestUser();
         if (!user) return unauthorized();
+        if (user.role !== "ADMIN") return forbidden();
 
         const supabase = getServiceClient();
         const tenantId = await getCurrentTenantId();
@@ -38,7 +38,6 @@ export async function POST(request: NextRequest) {
 
         const parsed = CommissionConfigResponse.safeParse(config);
         if (!parsed.success) return ok(config);
-
         return ok(parsed.data);
     } catch (error) { return handleError("POST /api/commission-configs", error); }
 }

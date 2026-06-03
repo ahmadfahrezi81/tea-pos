@@ -18,7 +18,7 @@ export function usePayrollPeriods(params?: Partial<ListPayrollPeriodsQuery>) {
         { revalidateOnFocus: false, dedupingInterval: 5000 },
     );
 
-    const updatePeriodStatus = async (periodId: string, status: "open" | "processing" | "paid") => {
+    const updatePeriodStatus = async (periodId: string, status: "pending" | "approved" | "on_hold" | "paid") => {
         const result = await payrollApi.updatePeriod(periodId, { status });
         await mutate();
         return result;

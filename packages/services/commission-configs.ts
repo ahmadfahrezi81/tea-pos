@@ -2,13 +2,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { toCamelKeys } from "@tea-pos/utils/schemas";
 import { createLogger } from "./activity-logs";
 
-// ─── Get effective rate ───────────────────────────────────────────────────────
-// Returns the most recent config for the given tenant + role where effective_date <= today.
-// Returns rate = 0 if no config exists.
-
 export async function getCommissionRate(
     supabase: SupabaseClient,
-    { tenantId, role }: { tenantId: string; role: string },
+    { tenantId, userId }: { tenantId: string; userId: string },
 ) {
     const today = new Date().toISOString().split("T")[0];
 
@@ -16,7 +12,7 @@ export async function getCommissionRate(
         .from("tenant_commission_configs")
         .select("rate_per_cup, effective_date")
         .eq("tenant_id", tenantId)
-        .eq("role", role)
+        .eq("user_id", userId)
         .lte("effective_date", today)
         .order("effective_date", { ascending: false })
         .limit(1)
@@ -28,12 +24,10 @@ export async function getCommissionRate(
     };
 }
 
-// ─── Upsert config ────────────────────────────────────────────────────────────
-
 export interface UpsertCommissionConfigParams {
     tenantId: string;
     actorId: string;
-    role: string;
+    userId: string;
     ratePerCup: number;
     effectiveDate: string;
 }
@@ -42,13 +36,13 @@ export async function upsertCommissionConfig(
     supabase: SupabaseClient,
     params: UpsertCommissionConfigParams,
 ) {
-    const { tenantId, actorId, role, ratePerCup, effectiveDate } = params;
+    const { tenantId, actorId, userId, ratePerCup, effectiveDate } = params;
 
     const { data: existing } = await supabase
         .from("tenant_commission_configs")
         .select("id")
         .eq("tenant_id", tenantId)
-        .eq("role", role)
+        .eq("user_id", userId)
         .eq("effective_date", effectiveDate)
         .maybeSingle();
 
@@ -67,12 +61,7 @@ export async function upsertCommissionConfig(
     } else {
         const { data, error } = await supabase
             .from("tenant_commission_configs")
-            .insert({
-                tenant_id: tenantId,
-                role,
-                rate_per_cup: ratePerCup,
-                effective_date: effectiveDate,
-            })
+            .insert({ tenant_id: tenantId, user_id: userId, rate_per_cup: ratePerCup, effective_date: effectiveDate })
             .select()
             .single();
 
@@ -84,7 +73,7 @@ export async function upsertCommissionConfig(
     log("commission_config_updated", {
         refId: (result as { id: string }).id,
         refTable: "tenant_commission_configs",
-        metadata: { role, rate_per_cup: ratePerCup, effective_date: effectiveDate },
+        metadata: { user_id: userId, rate_per_cup: ratePerCup, effective_date: effectiveDate },
     });
 
     return toCamelKeys(result);

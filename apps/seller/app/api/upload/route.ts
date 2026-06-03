@@ -4,7 +4,7 @@ import { getCurrentTenantId } from "@tea-pos/utils/server-config/tenant";
 import { NextRequest } from "next/server";
 import { ok, badRequest, unauthorized, handleError } from "@/lib/api/response";
 
-const ALLOWED_BUCKETS = ["store-reports", "store-requests", "reimbursements"] as const;
+const ALLOWED_BUCKETS = ["store-reports", "store-requests", "reimbursements", "payroll-proofs"] as const;
 type AllowedBucket = (typeof ALLOWED_BUCKETS)[number];
 
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/webp"];

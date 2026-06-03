@@ -215,14 +215,14 @@ export const mobileRoutes = {
         parent: "/mobile/home/manage/report",
     },
     "/mobile/account/earnings": {
-        title: "My Earnings",
+        title: "My Pay",
         subPage: true,
         inlineHeader: false,
         isChart: false,
         parent: "/mobile/account",
     },
     "/mobile/account/earnings/*": {
-        title: "Period Detail",
+        title: "Pay Details",
         subPage: true,
         inlineHeader: false,
         isChart: false,

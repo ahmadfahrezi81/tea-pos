@@ -46,6 +46,43 @@ export async function createReimbursement(
     return toCamelKeys(data);
 }
 
+export async function updateReimbursementStatus(
+    supabase: SupabaseClient,
+    { id, tenantId, actorId, status }: { id: string; tenantId: string; actorId: string; status: "approved" | "rejected" },
+) {
+    const { data, error } = await supabase
+        .from("payroll_reimbursements")
+        .update({ status })
+        .eq("id", id)
+        .eq("tenant_id", tenantId)
+        .select()
+        .single();
+
+    if (error || !data) throw Object.assign(new Error(error?.message ?? "Reimbursement not found"), { status: 404 });
+
+    const log = createLogger(supabase, { tenantId, userId: actorId });
+    log("reimbursement_status_updated", { refId: id, refTable: "payroll_reimbursements", metadata: { status } });
+
+    return toCamelKeys(data);
+}
+
+export async function listAllReimbursements(
+    supabase: SupabaseClient,
+    { tenantId, status }: { tenantId: string; status?: string },
+) {
+    let query = supabase
+        .from("payroll_reimbursements")
+        .select("*")
+        .eq("tenant_id", tenantId)
+        .order("created_at", { ascending: false });
+
+    if (status) query = query.eq("status", status);
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return toCamelKeys(data ?? []);
+}
+
 export interface ListMyReimbursementsParams {
     tenantId: string;
     userId: string;
