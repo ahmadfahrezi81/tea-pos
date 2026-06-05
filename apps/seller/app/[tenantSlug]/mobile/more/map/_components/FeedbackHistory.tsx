@@ -302,7 +302,7 @@ export default function FeedbackHistory() {
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             placeholder="Search feedback..."
-                            className="flex-1 text-sm text-gray-800 placeholder:text-gray-400 bg-transparent outline-none"
+                            className="flex-1 text-base text-gray-800 placeholder:text-gray-400 bg-transparent outline-none"
                         />
                         {query && (
                             <button onClick={() => setQuery("")} className="text-gray-400">
