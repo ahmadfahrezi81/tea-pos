@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import {
@@ -7,10 +8,12 @@ import {
     Building2,
     ChevronRight,
     Rocket,
+    Cloud,
 } from "lucide-react";
 import { useStore } from "@/lib/context/StoreContext";
 import { useFastOrderMode } from "@/lib/context/FastOrderModeContext";
 import { navigation } from "@tea-pos/utils/navigation";
+import { WeatherDrawer } from "../../home/pos/_components/WeatherDrawer";
 
 // ============================================================================
 // SETTINGS ROW
@@ -85,11 +88,12 @@ export default function MoreMenu() {
     const { user } = useAuth();
     const { assignedStores } = useStore();
     const { fastOrderMode, toggleFastOrderMode } = useFastOrderMode();
+    const [isWeatherOpen, setIsWeatherOpen] = useState(false);
 
     if (!user) return null;
 
     return (
-        <div className="min-h-screen space-y-4">
+        <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-800 mb-1">
                 Quick Settings
             </h3>
@@ -99,6 +103,11 @@ export default function MoreMenu() {
                     label="Fast Order Mode"
                     onClick={toggleFastOrderMode}
                     right={<FastOrderToggle enabled={fastOrderMode} />}
+                />
+                <SettingsRow
+                    icon={<Cloud size={22} strokeWidth={2} className="text-gray-900" />}
+                    label="Weather"
+                    onClick={() => setIsWeatherOpen(true)}
                 />
                 <SettingsRow
                     icon={<Building2 size={22} strokeWidth={2} className="text-gray-900" />}
@@ -112,6 +121,10 @@ export default function MoreMenu() {
                 />
             </div>
 
+            <WeatherDrawer
+                isOpen={isWeatherOpen}
+                onClose={() => setIsWeatherOpen(false)}
+            />
         </div>
     );
 }
