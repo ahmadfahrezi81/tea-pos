@@ -288,7 +288,7 @@ export default function FeedbackHistory() {
     return (
         <div className="flex flex-col h-full gap-3">
             {/* Map — fixed, doesn't scroll */}
-            <div className="shrink-0 h-[250px] w-full rounded-2xl overflow-hidden bg-gray-100">
+            <div className="shrink-0 h-[220px] w-full rounded-2xl overflow-hidden bg-gray-100">
                 <div ref={mapContainerRef} className="w-full h-full" />
             </div>
 
@@ -365,10 +365,10 @@ export default function FeedbackHistory() {
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-start justify-between gap-2">
                                                     <div className="flex items-center gap-2 min-w-0">
-                                                        <p className="text-base font-extrabold text-gray-900 leading-snug truncate">
+                                                        <p className="text-lg font-extrabold text-gray-900 leading-snug truncate">
                                                             {fb.locationDisplay}
                                                         </p>
-                                                        <span className="shrink-0 bg-brand text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                                        <span className="shrink-0 bg-brand text-white text-xs font-bold px-1.5 py-0 rounded-full">
                                                             {getLocationCount(fb)} {getLocationCount(fb) === 1 ? "vote" : "votes"}
                                                         </span>
                                                     </div>

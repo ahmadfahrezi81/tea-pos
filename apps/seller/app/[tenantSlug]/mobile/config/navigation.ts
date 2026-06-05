@@ -19,6 +19,7 @@ export type RouteConfig = {
     headerAction?: "add";
     hideStorePicker?: boolean;
     footerCta?: string;
+    scrollPaddingBottom?: string;
 };
 
 export const mobileRoutes = {
@@ -124,7 +125,7 @@ export const mobileRoutes = {
         isChart: false,
         parent: "/mobile/more",
         headerAction: "add",
-        footerCta: "New Location Feedback",
+        scrollPaddingBottom: "pb-0",
     },
     "/mobile/more/map/add": {
         title: "New Location Feedback",

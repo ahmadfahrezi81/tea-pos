@@ -153,7 +153,7 @@ export default function MobileLayoutClient({
             ? "pt-27"
             : "pt-19";
 
-    const scrollPaddingBottom = (hasHeaderAction || !!footerCtaLabel) ? "pb-32" : "pb-28";
+    const scrollPaddingBottom = currentRoute?.scrollPaddingBottom ?? (!!footerCtaLabel ? "pb-32" : "pb-28");
 
     return (
         <MobileFooterSlotContext.Provider value={{ setFooterSlot }}>
