@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { toCamelKeys } from "@tea-pos/utils/schemas";
 import { createLogger } from "./activity-logs";
+import { fetchSessionUsersForSummaries } from "./sessions";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -117,6 +118,9 @@ export async function listSummaries(supabase: SupabaseClient, params: ListSummar
 
     const summaryList = (summaries ?? []) as SummaryRow[];
     const summaryIds = summaryList.map((s) => s.id);
+    const sessionsBySummaryId = summaryIds.length > 0
+        ? await fetchSessionUsersForSummaries(supabase, { tenantId, summaryIds })
+        : {};
     const expensesBySummaryId: Record<string, Array<{ daily_summary_id: string; amount: number; [key: string]: unknown }>> = {};
     const expensesByDate: Record<string, unknown[]> = {};
 
@@ -180,7 +184,11 @@ export async function listSummaries(supabase: SupabaseClient, params: ListSummar
         }
     }
 
-    const finalSummaries = summaryList.map((s) => ({ ...s, expenses: expensesBySummaryId[s.id] ?? [] }));
+    const finalSummaries = summaryList.map((s) => ({
+        ...s,
+        expenses: expensesBySummaryId[s.id] ?? [],
+        sessions: sessionsBySummaryId[s.id] ?? [],
+    }));
     const monthlyTotals = summaryList.reduce(
         (acc, s) => ({
             totalSales: acc.totalSales + (s.total_sales ?? 0),

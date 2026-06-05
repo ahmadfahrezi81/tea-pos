@@ -289,6 +289,86 @@ export async function endSessionsForSummary(
         .eq("status", "active");
 }
 
+// ─── Sessions by summary IDs (internal helper) ───────────────────────────────
+
+export async function fetchSessionUsersForSummaries(
+    supabase: SupabaseClient,
+    { tenantId, summaryIds }: { tenantId: string; summaryIds: string[] },
+): Promise<Record<string, Array<{ userId: string; userName: string | null; userAvatarUrl: string | null }>>> {
+    if (summaryIds.length === 0) return {};
+
+    const { data: sessions, error } = await supabase
+        .from("store_sessions")
+        .select("user_id, daily_summary_id")
+        .in("daily_summary_id", summaryIds)
+        .eq("tenant_id", tenantId);
+
+    if (error) throw error;
+    if (!sessions || sessions.length === 0) return {};
+
+    const uniqueUserIds = [...new Set(sessions.map((s) => s.user_id))];
+
+    const { data: userRows } = await supabase
+        .from("users")
+        .select("id, full_name")
+        .in("id", uniqueUserIds);
+
+    const nameMap = new Map((userRows ?? []).map((u: { id: string; full_name: string | null }) => [u.id, u.full_name ?? null]));
+
+    const avatarMap = new Map<string, string | null>();
+    await Promise.all(
+        uniqueUserIds.map(async (userId) => {
+            const { data: authUser } = await supabase.auth.admin.getUserById(userId);
+            avatarMap.set(userId, (authUser?.user?.user_metadata?.avatar_url as string | undefined) ?? null);
+        }),
+    );
+
+    const result: Record<string, Array<{ userId: string; userName: string | null; userAvatarUrl: string | null }>> = {};
+    for (const session of sessions as Array<{ user_id: string; daily_summary_id: string }>) {
+        const { daily_summary_id, user_id } = session;
+        if (!result[daily_summary_id]) result[daily_summary_id] = [];
+        if (!result[daily_summary_id].some((u) => u.userId === user_id)) {
+            result[daily_summary_id].push({
+                userId: user_id,
+                userName: nameMap.get(user_id) ?? null,
+                userAvatarUrl: avatarMap.get(user_id) ?? null,
+            });
+        }
+    }
+    return result;
+}
+
+// ─── Sessions by month (standalone endpoint) ──────────────────────────────────
+
+export interface ListSessionsByMonthParams {
+    tenantId: string;
+    storeId: string;
+    month: string;
+}
+
+export async function listSessionsByMonth(supabase: SupabaseClient, params: ListSessionsByMonthParams) {
+    const { tenantId, storeId, month } = params;
+    const startDate = `${month}-01`;
+    const endDateObj = new Date(`${month}-01`);
+    endDateObj.setMonth(endDateObj.getMonth() + 1);
+    endDateObj.setDate(0);
+    const endDate = endDateObj.toISOString().split("T")[0];
+
+    const { data: summaries, error: summariesError } = await supabase
+        .from("store_daily_summaries")
+        .select("id")
+        .eq("store_id", storeId)
+        .eq("tenant_id", tenantId)
+        .gte("date", startDate)
+        .lte("date", endDate);
+
+    if (summariesError) throw summariesError;
+    const summaryIds = (summaries ?? []).map((s: { id: string }) => s.id);
+
+    const sessionsBySummaryId = await fetchSessionUsersForSummaries(supabase, { tenantId, summaryIds });
+    return { sessionsBySummaryId };
+}
+
 // ─── End session ──────────────────────────────────────────────────────────────
 
 export async function endSession(

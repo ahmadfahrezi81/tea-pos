@@ -1,9 +1,9 @@
 import { apiFetch, buildParams } from "./client";
 import type {
     OpenStoreInput, TransferSessionInput, GetActiveSessionQuery,
-    GetGateStateQuery, ResumeSessionInput,
+    GetGateStateQuery, ResumeSessionInput, ListSessionsByMonthQuery,
 } from "@tea-pos/features/sessions/schema";
-import { OpenStoreResponse, StoreSessionResponse, GateStateResponse, ResumeSessionResponse } from "@tea-pos/features/sessions/schema";
+import { OpenStoreResponse, StoreSessionResponse, GateStateResponse, ResumeSessionResponse, SessionsByMonthResponse } from "@tea-pos/features/sessions/schema";
 
 export const sessionsApi = {
     getActive: async (params: GetActiveSessionQuery) => {
@@ -55,5 +55,10 @@ export const sessionsApi = {
                 method: "PATCH",
             }),
         );
+    },
+
+    listByMonth: async (params: ListSessionsByMonthQuery) => {
+        const sp = buildParams(params as Record<string, unknown>);
+        return SessionsByMonthResponse.parse(await apiFetch<unknown>(`/api/sessions?${sp}`));
     },
 };

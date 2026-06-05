@@ -99,6 +99,27 @@ export const OpenStoreResponse = z
     })
     .openapi({ title: "OpenStoreResponse" });
 
+export const SessionUserResponse = z
+    .object({
+        userId: UUIDSchema,
+        userName: z.string().nullable(),
+        userAvatarUrl: z.string().nullable(),
+    })
+    .openapi({ title: "SessionUserResponse" });
+
+export const ListSessionsByMonthQuery = z
+    .object({
+        storeId: UUIDSchema,
+        month: z.string().regex(/^\d{4}-\d{2}$/, "Invalid month format (YYYY-MM)"),
+    })
+    .openapi({ title: "ListSessionsByMonthQuery" });
+
+export const SessionsByMonthResponse = z
+    .object({
+        sessionsBySummaryId: z.record(z.string(), z.array(SessionUserResponse)),
+    })
+    .openapi({ title: "SessionsByMonthResponse" });
+
 // ============================================================================
 // TYPE EXPORTS
 // ============================================================================
@@ -112,3 +133,6 @@ export type StoreSessionResponse = z.infer<typeof StoreSessionResponse>;
 export type GateStateResponse = z.infer<typeof GateStateResponse>;
 export type ResumeSessionResponse = z.infer<typeof ResumeSessionResponse>;
 export type OpenStoreResponse = z.infer<typeof OpenStoreResponse>;
+export type SessionUserResponse = z.infer<typeof SessionUserResponse>;
+export type ListSessionsByMonthQuery = z.infer<typeof ListSessionsByMonthQuery>;
+export type SessionsByMonthResponse = z.infer<typeof SessionsByMonthResponse>;

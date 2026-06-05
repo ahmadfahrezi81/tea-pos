@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Image from "next/image";
 import { useSummaries } from "@/lib/hooks/summaries/useDailySummaries";
 import { DailySummary } from "@tea-pos/features/summaries/schema";
 import { Expense } from "@tea-pos/features/expenses/schema";
+import type { SessionUserResponse } from "@tea-pos/features/sessions/schema";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 import { toIndonesiaMonthYear } from "@tea-pos/utils/server-config/timezone";
 import { getCurrentLocalMonth } from "@tea-pos/utils/time";
-import { Calendar, CalendarDays, AlertTriangle, Receipt, MoreHorizontal, Info, Activity } from "lucide-react";
+import { Calendar, CalendarDays, AlertTriangle, Receipt, MoreVertical, Info, Activity, UserCircle } from "lucide-react";
 import { SkeletonValue } from "@/components/shared/SkeletonValue";
 import { DetailsDrawer } from "./_components/DetailsDrawer";
 import { useStore } from "@/lib/context/StoreContext";
@@ -32,6 +34,7 @@ const MiniDailySalesChart = dynamic(
 
 type DailySummaryWithExtras = DailySummary & {
     expenses: Expense[];
+    sessions?: SessionUserResponse[];
 };
 
 function PhotoCountLabel({ summaryId }: { summaryId: string }) {
@@ -190,6 +193,7 @@ export default function MobileAnalytics() {
                             const summaryWithExtras: DailySummaryWithExtras = {
                                 ...summary,
                                 expenses: summary.expenses ?? dailyExpenses,
+                                sessions: summary.sessions,
                             };
 
                             return (
@@ -216,44 +220,44 @@ export default function MobileAnalytics() {
                                                 </div>
                                                 <PhotoCountLabel summaryId={summary.id} />
                                             </div>
-                                            <div className="relative">
+                                            <div className="flex items-center gap-1.5 -mr-1">
                                                 <button
-                                                    onClick={() => setOpenMenuId(openMenuId === summary.id ? null : summary.id)}
-                                                    className="size-8 shrink-0 flex items-center justify-center rounded-full bg-brand active:opacity-80 text-white -mr-1"
+                                                    onClick={() => {
+                                                        setSelectedSummary(summaryWithExtras);
+                                                        setShowDetailsModal(true);
+                                                    }}
+                                                    className="size-8 shrink-0 flex items-center justify-center text-gray-500 active:opacity-60"
                                                 >
-                                                    <MoreHorizontal size={24} strokeWidth={2} />
+                                                    <Info size={22} strokeWidth={2.5} />
                                                 </button>
-                                                {openMenuId === summary.id && (
-                                                    <>
-                                                        <div
-                                                            className="fixed inset-0 z-10"
-                                                            onClick={() => setOpenMenuId(null)}
-                                                        />
-                                                        <div className="absolute right-0 top-9 z-20 bg-white rounded-xl shadow-lg border border-gray-100 py-1 w-max">
-                                                            <button
-                                                                onClick={() => {
-                                                                    setOpenMenuId(null);
-                                                                    setSelectedSummary(summaryWithExtras);
-                                                                    setShowDetailsModal(true);
-                                                                }}
-                                                                className="w-full text-left px-4 py-2.5 text-sm text-gray-900 font-medium active:bg-gray-50 flex items-center gap-2.5"
-                                                            >
-                                                                <Info size={15} className="text-gray-600" />
-                                                                Details
-                                                            </button>
-                                                            <button
-                                                                onClick={() => {
-                                                                    setOpenMenuId(null);
-                                                                    navigation.push(url(`/mobile/analytics/daily/${summary.id}/events?storeId=${selectedStoreId}&date=${summary.date}`));
-                                                                }}
-                                                                className="w-full text-left px-4 py-2.5 text-sm text-gray-900 font-medium active:bg-gray-50 flex items-center gap-2.5"
-                                                            >
-                                                                <Activity size={15} className="text-gray-600" />
-                                                                Day Activity
-                                                            </button>
-                                                        </div>
-                                                    </>
-                                                )}
+                                                <div className="relative">
+                                                    <button
+                                                        onClick={() => setOpenMenuId(openMenuId === summary.id ? null : summary.id)}
+                                                        className="size-8 shrink-0 flex items-center justify-center text-gray-500 active:opacity-60"
+                                                    >
+                                                        <MoreVertical size={22} strokeWidth={2.5} />
+                                                    </button>
+                                                    {openMenuId === summary.id && (
+                                                        <>
+                                                            <div
+                                                                className="fixed inset-0 z-10"
+                                                                onClick={() => setOpenMenuId(null)}
+                                                            />
+                                                            <div className="absolute right-0 top-9 z-20 bg-white rounded-xl shadow-lg border border-gray-100 py-1 w-max">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setOpenMenuId(null);
+                                                                        navigation.push(url(`/mobile/analytics/daily/${summary.id}/events?storeId=${selectedStoreId}&date=${summary.date}`));
+                                                                    }}
+                                                                    className="w-full text-left px-4 py-2.5 text-sm text-gray-900 font-medium active:bg-gray-50 flex items-center gap-2.5"
+                                                                >
+                                                                    <Activity size={15} className="text-gray-600" />
+                                                                    Day Activity
+                                                                </button>
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
 
@@ -306,6 +310,36 @@ export default function MobileAnalytics() {
                                                 </p>
                                             </div>
                                         </div>
+
+                                        {(summary.sessions ?? []).length > 0 && (
+                                            <div>
+<div className="flex flex-wrap gap-1.5">
+                                                    {(summary.sessions ?? []).map((s) => (
+                                                        <div
+                                                            key={s.userId}
+                                                            className="flex items-center gap-2 bg-slate-100 rounded-xl p-1.5 pr-3.5 w-full"
+                                                        >
+                                                            {s.userAvatarUrl ? (
+                                                                <Image
+                                                                    src={s.userAvatarUrl}
+                                                                    alt={s.userName ?? ""}
+                                                                    width={28}
+                                                                    height={28}
+                                                                    className="rounded-lg object-cover shrink-0"
+                                                                />
+                                                            ) : (
+                                                                <div className="w-7 h-7 rounded-lg bg-brand/10 flex items-center justify-center shrink-0">
+                                                                    <UserCircle size={18} className="text-brand" />
+                                                                </div>
+                                                            )}
+                                                            <p className="text-base font-bold text-gray-900 truncate">
+                                                                {s.userName ?? "Unknown"}
+                                                            </p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
 
                                         {dailyExpenses.length > 0 && (
                                             <div>
