@@ -253,7 +253,6 @@ export async function createSummary(supabase: SupabaseClient, params: CreateSumm
             store_id: storeId,
             tenant_id: store.tenant_id,
             opened_by: openedBy,
-            closed_by: openedBy,
             date,
             opening_balance: opening,
             opening_cash_breakdown: openingCashBreakdown ?? null,
