@@ -108,6 +108,7 @@ export function IconPickerDrawer({
                         <Drawer.Title className="text-lg font-semibold text-gray-900">
                             Pick your icon
                         </Drawer.Title>
+                        <Drawer.Description className="sr-only">Choose an icon for your feedback</Drawer.Description>
                         <button
                             onClick={onClose}
                             className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500"

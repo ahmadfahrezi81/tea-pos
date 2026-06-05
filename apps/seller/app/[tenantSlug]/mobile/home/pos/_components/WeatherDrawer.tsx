@@ -117,6 +117,7 @@ export function WeatherDrawer({ isOpen, onClose }: WeatherDrawerProps) {
                                 {data?.city ?? "Ciomas"},{" "}
                                 {data?.region ?? "Bogor"}
                             </Drawer.Title>
+                            <Drawer.Description className="sr-only">Hourly weather forecast</Drawer.Description>
                             <p className="font-bebas text-lg text-gray-500 -mt-2">
                                 As of{" "}
                                 {currentHourData?.fetchedAt

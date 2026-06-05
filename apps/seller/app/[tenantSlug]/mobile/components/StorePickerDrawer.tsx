@@ -39,6 +39,7 @@ export function StorePickerDrawer() {
                         <Drawer.Title className="text-xl font-bold text-gray-900">
                             Select Store
                         </Drawer.Title>
+                        <Drawer.Description className="sr-only">Select a store to manage</Drawer.Description>
                         <button
                             onClick={() => setIsPickerOpen(false)}
                             className="p-1.5 rounded-full text-gray-900 hover:bg-gray-100 -mr-2"

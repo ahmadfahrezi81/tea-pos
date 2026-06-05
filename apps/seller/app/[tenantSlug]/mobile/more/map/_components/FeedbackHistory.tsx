@@ -117,6 +117,7 @@ function FilterDrawer({
 
                     <div className="flex items-center justify-between mb-5">
                         <Drawer.Title className="text-lg font-bold text-gray-900">Filter</Drawer.Title>
+                        <Drawer.Description className="sr-only">Filter feedback by date and user</Drawer.Description>
                         <button onClick={onClose} className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500">
                             <X size={20} />
                         </button>

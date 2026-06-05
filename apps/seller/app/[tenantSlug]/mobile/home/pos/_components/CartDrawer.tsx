@@ -140,6 +140,7 @@ export const CartDrawer = memo(function CartDrawer({
                                 <Drawer.Title className="text-xl font-bold text-gray-900">
                                     Cart
                                 </Drawer.Title>
+                                <Drawer.Description className="sr-only">Cart items and checkout</Drawer.Description>
                             </div>
 
                             {/* Payment method toggle */}
