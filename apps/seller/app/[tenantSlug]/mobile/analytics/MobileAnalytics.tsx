@@ -3,15 +3,12 @@
 import { useState, useMemo } from "react";
 import Image from "next/image";
 import { useSummaries } from "@/lib/hooks/summaries/useDailySummaries";
-import { DailySummary } from "@tea-pos/features/summaries/schema";
-import { Expense } from "@tea-pos/features/expenses/schema";
 import type { SessionUserResponse } from "@tea-pos/features/sessions/schema";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 import { toIndonesiaMonthYear } from "@tea-pos/utils/server-config/timezone";
 import { getCurrentLocalMonth } from "@tea-pos/utils/time";
 import { Calendar, CalendarDays, AlertTriangle, Receipt, MoreVertical, Info, Activity, UserCircle } from "lucide-react";
 import { SkeletonValue } from "@/components/shared/SkeletonValue";
-import { DetailsDrawer } from "./_components/DetailsDrawer";
 import { useStore } from "@/lib/context/StoreContext";
 import {
     formatDate,
@@ -32,11 +29,6 @@ const MiniDailySalesChart = dynamic(
     },
 );
 
-type DailySummaryWithExtras = DailySummary & {
-    expenses: Expense[];
-    sessions?: SessionUserResponse[];
-};
-
 function PhotoCountLabel({ summaryId }: { summaryId: string }) {
     const { count } = useSummaryPhotoCount(summaryId);
     if (count === 0) return null;
@@ -54,9 +46,6 @@ export default function MobileAnalytics() {
     const [selectedMonth, setSelectedMonth] = useState<string>(
         getCurrentLocalMonth(),
     );
-    const [selectedSummary, setSelectedSummary] =
-        useState<DailySummaryWithExtras | null>(null);
-    const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
     const {
@@ -190,11 +179,6 @@ export default function MobileAnalytics() {
                     ) : (
                         summariesData.summaries.map((summary) => {
                             const dailyExpenses = getExpensesForDate(summariesData, summary.date);
-                            const summaryWithExtras: DailySummaryWithExtras = {
-                                ...summary,
-                                expenses: summary.expenses ?? dailyExpenses,
-                                sessions: summary.sessions,
-                            };
 
                             return (
                                 <div
@@ -222,10 +206,9 @@ export default function MobileAnalytics() {
                                             </div>
                                             <div className="flex items-center gap-1.5 -mr-1">
                                                 <button
-                                                    onClick={() => {
-                                                        setSelectedSummary(summaryWithExtras);
-                                                        setShowDetailsModal(true);
-                                                    }}
+                                                    onClick={() =>
+                                                        navigation.push(url(`/mobile/analytics/daily/${summary.id}`))
+                                                    }
                                                     className="size-8 shrink-0 flex items-center justify-center text-gray-500 active:opacity-60"
                                                 >
                                                     <Info size={22} strokeWidth={2.5} />
@@ -421,17 +404,6 @@ export default function MobileAnalytics() {
                 </div>
             )}
 
-            {selectedSummary && (
-                <DetailsDrawer
-                    isOpen={showDetailsModal}
-                    summary={selectedSummary}
-                    onClose={() => {
-                        setShowDetailsModal(false);
-                        setSelectedSummary(null);
-                    }}
-                    storeName={selectedSummary.storeId ?? ""}
-                />
-            )}
         </div>
     );
 }

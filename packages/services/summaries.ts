@@ -206,6 +206,28 @@ export async function listSummaries(supabase: SupabaseClient, params: ListSummar
     };
 }
 
+// ─── Get single summary ───────────────────────────────────────────────────────
+
+export async function getSummaryById(
+    supabase: SupabaseClient,
+    { tenantId, summaryId }: { tenantId: string; summaryId: string },
+) {
+    const { data, error } = await supabase
+        .from("store_daily_summaries")
+        .select(
+            `*, stores(name),
+            opened_by_user:users!daily_summaries_opened_by_fkey(full_name),
+            closed_by_user:users!daily_summaries_closed_by_fkey(full_name)`,
+        )
+        .eq("id", summaryId)
+        .eq("tenant_id", tenantId)
+        .single();
+
+    if (error || !data) throw new Error("Summary not found");
+
+    return toCamelKeys(data) as ReturnType<typeof toCamelKeys>;
+}
+
 // ─── Create summary ───────────────────────────────────────────────────────────
 
 export interface CreateSummaryParams {
