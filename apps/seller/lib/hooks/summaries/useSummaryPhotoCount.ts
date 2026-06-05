@@ -11,7 +11,7 @@ export const useSummaryPhotoCount = (summaryId?: string | null) => {
             revalidateOnFocus: false,
             revalidateOnMount: true,
             revalidateIfStale: false,
-            dedupingInterval: 5_000,
+            dedupingInterval: 60_000,
         },
     );
 

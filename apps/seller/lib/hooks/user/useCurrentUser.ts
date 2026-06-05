@@ -6,6 +6,7 @@ export function useCurrentUser() {
     const { data, error, isLoading, mutate } = useSWR<User>(
         "user",
         () => usersApi.get(),
+        { revalidateOnFocus: false, dedupingInterval: 300_000 },
     );
 
     return {

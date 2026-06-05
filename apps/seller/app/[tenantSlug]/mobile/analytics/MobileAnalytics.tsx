@@ -16,7 +16,6 @@ import {
 } from "../analytics/utils/summariesHelpers";
 import { navigation } from "@tea-pos/utils/navigation";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
-import { useSummaryPhotoCount } from "@/lib/hooks/summaries/useSummaryPhotoCount";
 
 import dynamic from "next/dynamic";
 const MiniDailySalesChart = dynamic(
@@ -29,15 +28,6 @@ const MiniDailySalesChart = dynamic(
     },
 );
 
-function PhotoCountLabel({ summaryId }: { summaryId: string }) {
-    const { count } = useSummaryPhotoCount(summaryId);
-    if (count === 0) return null;
-    return (
-        <p className="text-xs text-blue-500 mt-0.5">
-            {count} photo{count > 1 ? "s" : ""}
-        </p>
-    );
-}
 
 export default function MobileAnalytics() {
     const { selectedStoreId } = useStore();
@@ -202,7 +192,6 @@ export default function MobileAnalytics() {
                                                         </span>
                                                     )}
                                                 </div>
-                                                <PhotoCountLabel summaryId={summary.id} />
                                             </div>
                                             <div className="flex items-center gap-1.5 -mr-1">
                                                 <button

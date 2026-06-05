@@ -123,6 +123,7 @@ export async function listSummaries(supabase: SupabaseClient, params: ListSummar
         : {};
     const expensesBySummaryId: Record<string, Array<{ daily_summary_id: string; amount: number; [key: string]: unknown }>> = {};
     const expensesByDate: Record<string, unknown[]> = {};
+    const photoCountBySummaryId: Record<string, number> = {};
 
     if (summaryIds.length > 0) {
         const { data: expenses, error: expensesError } = await supabase
@@ -142,6 +143,18 @@ export async function listSummaries(supabase: SupabaseClient, params: ListSummar
                 if (!expensesByDate[summary.date]) expensesByDate[summary.date] = [];
                 expensesByDate[summary.date].push(expense);
             }
+        });
+
+        const { data: photos, error: photosError } = await supabase
+            .from("store_daily_summary_photos")
+            .select("daily_summary_id")
+            .in("daily_summary_id", summaryIds)
+            .eq("tenant_id", tenantId);
+
+        if (photosError) throw photosError;
+
+        (photos ?? []).forEach((p) => {
+            photoCountBySummaryId[p.daily_summary_id] = (photoCountBySummaryId[p.daily_summary_id] ?? 0) + 1;
         });
     }
 
@@ -188,6 +201,7 @@ export async function listSummaries(supabase: SupabaseClient, params: ListSummar
         ...s,
         expenses: expensesBySummaryId[s.id] ?? [],
         sessions: sessionsBySummaryId[s.id] ?? [],
+        photo_count: photoCountBySummaryId[s.id] ?? 0,
     }));
     const monthlyTotals = summaryList.reduce(
         (acc, s) => ({

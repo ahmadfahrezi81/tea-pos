@@ -12,10 +12,10 @@ export const useSummaries = (storeId?: string, month?: string) => {
         key,
         () => summariesApi.list({ storeId, month }),
         {
-            revalidateOnFocus: true,
+            revalidateOnFocus: false,
             revalidateOnMount: true,
             revalidateIfStale: false,
-            dedupingInterval: 5_000,
+            dedupingInterval: 30_000,
         },
     );
 

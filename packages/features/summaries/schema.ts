@@ -148,6 +148,9 @@ export const DailySummaryResponse = z
         sessions: z.array(SessionUserResponse).optional().openapi({
             description: "Sellers who worked this day",
         }),
+        photoCount: z.number().optional().openapi({
+            description: "Number of photos uploaded for this day",
+        }),
     })
     .openapi({ title: "DailySummaryResponse" });
 

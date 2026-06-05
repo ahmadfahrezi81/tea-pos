@@ -10,7 +10,7 @@ export function useSession(storeId?: string) {
     const { data, error, mutate, isLoading } = useSWR<GateStateResponse>(
         key,
         () => sessionsApi.getGateState({ storeId: storeId! }),
-        { revalidateOnFocus: true, dedupingInterval: 5000, refreshInterval: 5000 },
+        { revalidateOnFocus: true, dedupingInterval: 60000, refreshInterval: 120000 },
     );
 
     const openStore = async (input: Omit<OpenStoreInput, "storeId">) => {

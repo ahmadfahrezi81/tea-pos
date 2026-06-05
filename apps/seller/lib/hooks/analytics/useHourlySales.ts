@@ -12,6 +12,6 @@ export default function useHourlySales(storeId: string | null, date: string) {
     return useSWR<HourlySalesData[]>(
         key,
         () => analyticsApi.getHourlySales({ storeId: storeId!, date }).then((r) => r.data),
-        { revalidateOnFocus: true, dedupingInterval: 5000 },
+        { revalidateOnFocus: false, dedupingInterval: 300000 },
     );
 }
