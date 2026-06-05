@@ -30,13 +30,6 @@ const DEFAULT_TZ = 7;
 
 // ─── Internal helpers ─────────────────────────────────────────────────────────
 
-function toLocalDateStr(utcDateStr: string, tz = DEFAULT_TZ): string {
-    return new Date(new Date(utcDateStr).getTime() + tz * 3600000).toISOString().split("T")[0];
-}
-
-function getTodayStr(tz = DEFAULT_TZ): string {
-    return toLocalDateStr(new Date().toISOString(), tz);
-}
 
 export async function seedTotalsFromOrders(
     supabase: SupabaseClient,
@@ -99,7 +92,6 @@ export async function listSummaries(supabase: SupabaseClient, params: ListSummar
     endDateObj.setMonth(endDateObj.getMonth() + 1);
     endDateObj.setDate(0);
     const endDate = endDateObj.toISOString().split("T")[0];
-    const todayStr = getTodayStr(tzOffset);
 
     const { data: summaries, error: summariesError } = await supabase
         .from("store_daily_summaries")
@@ -156,45 +148,6 @@ export async function listSummaries(supabase: SupabaseClient, params: ListSummar
         (photos ?? []).forEach((p) => {
             photoCountBySummaryId[p.daily_summary_id] = (photoCountBySummaryId[p.daily_summary_id] ?? 0) + 1;
         });
-    }
-
-    // Write-on-read: re-aggregates today's open summary totals from live orders and
-    // persists them so the UI always shows fresh numbers. Intentional but side-effectful —
-    // fires on every GET /api/summaries call (including on tab focus via revalidateOnFocus).
-    // Long-term fix: update totals at mutation time (order created/deleted) instead.
-    const todaySummary = summaryList.find((s) => s.date === todayStr && !s.closed_at);
-    if (todaySummary) {
-        const todayOrders = await fetchOrdersForDate(supabase, storeId, tenantId, todayStr);
-        const { totalSales, totalOrders, totalCups } = aggregateOrders(todayOrders);
-        const todayExpenses = (expensesBySummaryId[todaySummary.id] ?? []).reduce((sum, e) => sum + e.amount, 0);
-        const newExpectedCash = todaySummary.opening_balance + totalSales - todayExpenses;
-
-        const changed =
-            totalSales !== todaySummary.total_sales ||
-            newExpectedCash !== todaySummary.expected_cash ||
-            totalOrders !== todaySummary.total_orders ||
-            totalCups !== todaySummary.total_cups ||
-            todayExpenses !== todaySummary.total_expenses;
-
-        if (changed) {
-            await supabase
-                .from("store_daily_summaries")
-                .update({
-                    total_sales: totalSales,
-                    total_orders: totalOrders,
-                    total_cups: totalCups,
-                    total_expenses: todayExpenses,
-                    expected_cash: newExpectedCash,
-                })
-                .eq("id", todaySummary.id)
-                .eq("tenant_id", tenantId);
-
-            todaySummary.total_sales = totalSales;
-            todaySummary.total_orders = totalOrders;
-            todaySummary.total_cups = totalCups;
-            todaySummary.total_expenses = todayExpenses;
-            todaySummary.expected_cash = newExpectedCash;
-        }
     }
 
     const finalSummaries = summaryList.map((s) => ({

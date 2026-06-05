@@ -142,6 +142,32 @@ export async function createOrder(
     if (itemsError) throw new Error(itemsError.message);
 
     const totalCups = items.reduce((sum, i) => sum + i.quantity, 0);
+
+    const TZ = Number(process.env.TIMEZONE_OFFSET ?? 7);
+    const todayStr = new Date(new Date().getTime() + TZ * 3600000).toISOString().split("T")[0];
+
+    const { data: activeSummary } = await supabase
+        .from("store_daily_summaries")
+        .select("id, total_sales, total_orders, total_cups, expected_cash")
+        .eq("store_id", storeId)
+        .eq("tenant_id", tenantId)
+        .eq("date", todayStr)
+        .is("closed_at", null)
+        .maybeSingle();
+
+    if (activeSummary) {
+        await supabase
+            .from("store_daily_summaries")
+            .update({
+                total_sales: activeSummary.total_sales + totalAmount,
+                total_orders: activeSummary.total_orders + 1,
+                total_cups: activeSummary.total_cups + totalCups,
+                expected_cash: activeSummary.expected_cash + totalAmount,
+            })
+            .eq("id", activeSummary.id)
+            .eq("tenant_id", tenantId);
+    }
+
     const log = createLogger(supabase, { tenantId: store.tenant_id, userId, storeId });
     log("order_created", {
         refId: orderData.id as string,
