@@ -3,7 +3,7 @@ import type {
     OpenStoreInput, TransferSessionInput, GetActiveSessionQuery,
     GetGateStateQuery, ResumeSessionInput, ListSessionsByMonthQuery,
 } from "@tea-pos/features/sessions/schema";
-import { OpenStoreResponse, StoreSessionResponse, GateStateResponse, ResumeSessionResponse, SessionsByMonthResponse } from "@tea-pos/features/sessions/schema";
+import { OpenStoreResponse, StoreSessionResponse, GateStateResponse, ResumeSessionResponse, SessionsByMonthResponse, SessionsBySummaryResponse } from "@tea-pos/features/sessions/schema";
 
 export const sessionsApi = {
     getActive: async (params: GetActiveSessionQuery) => {
@@ -60,5 +60,11 @@ export const sessionsApi = {
     listByMonth: async (params: ListSessionsByMonthQuery) => {
         const sp = buildParams(params as Record<string, unknown>);
         return SessionsByMonthResponse.parse(await apiFetch<unknown>(`/api/sessions?${sp}`));
+    },
+
+    getBySummary: async (summaryId: string) => {
+        return SessionsBySummaryResponse.parse(
+            await apiFetch<unknown>(`/api/sessions/summary/${encodeURIComponent(summaryId)}`),
+        );
     },
 };

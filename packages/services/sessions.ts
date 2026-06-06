@@ -369,6 +369,56 @@ export async function listSessionsByMonth(supabase: SupabaseClient, params: List
     return { sessionsBySummaryId };
 }
 
+// ─── Sessions by summary (detail view) ───────────────────────────────────────
+
+export async function listSessionsBySummary(
+    supabase: SupabaseClient,
+    { tenantId, summaryId }: { tenantId: string; summaryId: string },
+) {
+    const { data: sessions, error } = await supabase
+        .from("store_sessions")
+        .select("id, user_id, started_at, ended_at, status, previous_session_id, claim_code")
+        .eq("daily_summary_id", summaryId)
+        .eq("tenant_id", tenantId)
+        .order("started_at", { ascending: true });
+
+    if (error) throw error;
+    if (!sessions || sessions.length === 0) return { sessions: [] };
+
+    const uniqueUserIds = [...new Set(sessions.map((s) => s.user_id))];
+
+    const { data: userRows } = await supabase
+        .from("users")
+        .select("id, full_name")
+        .in("id", uniqueUserIds);
+
+    const nameMap = new Map(
+        (userRows ?? []).map((u: { id: string; full_name: string | null }) => [u.id, u.full_name ?? null]),
+    );
+
+    const avatarMap = new Map<string, string | null>();
+    await Promise.all(
+        uniqueUserIds.map(async (userId) => {
+            const { data: authUser } = await supabase.auth.admin.getUserById(userId);
+            avatarMap.set(userId, (authUser?.user?.user_metadata?.avatar_url as string | undefined) ?? null);
+        }),
+    );
+
+    return {
+        sessions: sessions.map((s) => ({
+            id: s.id,
+            userId: s.user_id,
+            userName: nameMap.get(s.user_id) ?? null,
+            userAvatarUrl: avatarMap.get(s.user_id) ?? null,
+            startedAt: s.started_at,
+            endedAt: s.ended_at ?? null,
+            status: s.status as "active" | "ended",
+            previousSessionId: s.previous_session_id ?? null,
+            claimCode: s.claim_code,
+        })),
+    };
+}
+
 // ─── End session ──────────────────────────────────────────────────────────────
 
 export async function endSession(

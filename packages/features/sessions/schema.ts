@@ -120,6 +120,32 @@ export const SessionsByMonthResponse = z
     })
     .openapi({ title: "SessionsByMonthResponse" });
 
+export const GetSessionsBySummaryQuery = z
+    .object({
+        summaryId: UUIDSchema,
+    })
+    .openapi({ title: "GetSessionsBySummaryQuery" });
+
+export const SessionDetailItem = z
+    .object({
+        id: UUIDSchema,
+        userId: UUIDSchema,
+        userName: z.string().nullable(),
+        userAvatarUrl: z.string().nullable(),
+        startedAt: z.string(),
+        endedAt: z.string().nullable(),
+        status: z.enum(["active", "ended"]),
+        previousSessionId: UUIDSchema.nullable(),
+        claimCode: z.string(),
+    })
+    .openapi({ title: "SessionDetailItem" });
+
+export const SessionsBySummaryResponse = z
+    .object({
+        sessions: z.array(SessionDetailItem),
+    })
+    .openapi({ title: "SessionsBySummaryResponse" });
+
 // ============================================================================
 // TYPE EXPORTS
 // ============================================================================
@@ -135,4 +161,7 @@ export type ResumeSessionResponse = z.infer<typeof ResumeSessionResponse>;
 export type OpenStoreResponse = z.infer<typeof OpenStoreResponse>;
 export type SessionUserResponse = z.infer<typeof SessionUserResponse>;
 export type ListSessionsByMonthQuery = z.infer<typeof ListSessionsByMonthQuery>;
+export type GetSessionsBySummaryQuery = z.infer<typeof GetSessionsBySummaryQuery>;
+export type SessionDetailItem = z.infer<typeof SessionDetailItem>;
+export type SessionsBySummaryResponse = z.infer<typeof SessionsBySummaryResponse>;
 export type SessionsByMonthResponse = z.infer<typeof SessionsByMonthResponse>;
