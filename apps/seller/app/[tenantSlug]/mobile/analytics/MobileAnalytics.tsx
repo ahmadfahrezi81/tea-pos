@@ -7,7 +7,7 @@ import type { SessionUserResponse } from "@tea-pos/features/sessions/schema";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 import { toIndonesiaMonthYear } from "@tea-pos/utils/server-config/timezone";
 import { getCurrentLocalMonth } from "@tea-pos/utils/time";
-import { Calendar, CalendarDays, AlertTriangle, Receipt, MoreVertical, Info, Activity, UserCircle } from "lucide-react";
+import { Calendar, CalendarDays, AlertTriangle, Receipt, MoreVertical, Info, Activity, UserCircle, History, Users } from "lucide-react";
 import { SkeletonValue } from "@/components/shared/SkeletonValue";
 import { useStore } from "@/lib/context/StoreContext";
 import {
@@ -193,7 +193,7 @@ export default function MobileAnalytics() {
                                                     )}
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-1.5 -mr-1">
+                                            <div className="flex items-center gap-0.5 -mr-2">
                                                 <button
                                                     onClick={() =>
                                                         navigation.push(url(`/mobile/analytics/daily/${summary.id}`))
@@ -205,7 +205,7 @@ export default function MobileAnalytics() {
                                                 <div className="relative">
                                                     <button
                                                         onClick={() => setOpenMenuId(openMenuId === summary.id ? null : summary.id)}
-                                                        className="size-8 shrink-0 flex items-center justify-center text-gray-500 active:opacity-60"
+                                                        className={`size-8 shrink-0 flex items-center justify-center text-gray-500 active:opacity-60 rounded-lg transition-colors ${openMenuId === summary.id ? "bg-gray-100" : ""}`}
                                                     >
                                                         <MoreVertical size={22} strokeWidth={2.5} />
                                                     </button>
@@ -215,16 +215,27 @@ export default function MobileAnalytics() {
                                                                 className="fixed inset-0 z-10"
                                                                 onClick={() => setOpenMenuId(null)}
                                                             />
-                                                            <div className="absolute right-0 top-9 z-20 bg-white rounded-xl shadow-lg border border-gray-100 py-1 w-max">
+                                                            <div className="absolute right-0 top-9 z-20 bg-white rounded-xl shadow-lg border border-gray-100 py-1 w-40">
                                                                 <button
                                                                     onClick={() => {
                                                                         setOpenMenuId(null);
                                                                         navigation.push(url(`/mobile/analytics/daily/${summary.id}/events?storeId=${selectedStoreId}&date=${summary.date}`));
                                                                     }}
-                                                                    className="w-full text-left px-4 py-2.5 text-sm text-gray-900 font-medium active:bg-gray-50 flex items-center gap-2.5"
+                                                                    className="w-full text-left px-3 py-2 text-sm text-gray-900 font-medium active:bg-gray-50 flex items-center justify-between gap-2.5"
                                                                 >
-                                                                    <Activity size={15} className="text-gray-600" />
-                                                                    Day Activity
+                                                                    Activity
+                                                                    <History size={15} strokeWidth={2.5} className="text-gray-900" />
+                                                                </button>
+                                                                <hr className="border-gray-100 mx-2" />
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setOpenMenuId(null);
+                                                                        navigation.push(url(`/mobile/analytics/daily/${summary.id}/sessions?storeId=${selectedStoreId}&date=${summary.date}`));
+                                                                    }}
+                                                                    className="w-full text-left px-3 py-2 text-sm text-gray-900 font-medium active:bg-gray-50 flex items-center justify-between gap-2.5"
+                                                                >
+                                                                    Sessions
+                                                                    <Users size={15} strokeWidth={2.5} className="text-gray-900" />
                                                                 </button>
                                                             </div>
                                                         </>
