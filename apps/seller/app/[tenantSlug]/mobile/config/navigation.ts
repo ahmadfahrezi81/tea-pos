@@ -177,7 +177,7 @@ export const mobileRoutes = {
         parent: "/mobile/analytics",
     },
     "/mobile/analytics/daily/*": {
-        title: "Daily Summary",
+        title: "Day Summary Details",
         subPage: true,
         inlineHeader: false,
         isChart: false,
@@ -185,6 +185,13 @@ export const mobileRoutes = {
     },
     "/mobile/analytics/daily/*/events": {
         title: "Day Activity",
+        subPage: true,
+        inlineHeader: false,
+        isChart: false,
+        parent: "/mobile/analytics",
+    },
+    "/mobile/analytics/daily/*/sessions": {
+        title: "Day Sessions",
         subPage: true,
         inlineHeader: false,
         isChart: false,
@@ -272,6 +279,8 @@ export const resolveRoute = (path: string): RouteConfig | null => {
     if (path.includes("/mobile/analytics/daily/")) {
         if (path.endsWith("/events"))
             return mobileRoutes["/mobile/analytics/daily/*/events"];
+        if (path.endsWith("/sessions"))
+            return mobileRoutes["/mobile/analytics/daily/*/sessions"];
         return mobileRoutes["/mobile/analytics/daily/*"];
     }
 

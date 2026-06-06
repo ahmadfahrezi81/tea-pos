@@ -85,6 +85,29 @@ export const ActivityLogListResponse = z
     })
     .openapi({ title: "ActivityLogListResponse" });
 
+// Day activity timeline — segmented view
+export const EventSegment = z.object({
+    kind: z.literal("event"),
+    id: UUIDSchema,
+    type: ActivityLogType,
+    createdAt: z.string(),
+    userName: z.string(),
+    metadata: z.record(z.string(), z.unknown()),
+    refId: UUIDSchema.nullable(),
+    refTable: z.string().nullable(),
+});
+
+export const OrdersSegment = z.object({
+    kind: z.literal("orders"),
+    startTime: z.string(),
+    endTime: z.string(),
+    count: z.number(),
+    totalSales: z.number(),
+});
+
+export const DaySegment = z.discriminatedUnion("kind", [EventSegment, OrdersSegment]);
+export const DayActivityResponse = z.object({ segments: z.array(DaySegment) });
+
 // ============================================================================
 // TYPE EXPORTS
 // ============================================================================
@@ -93,3 +116,7 @@ export type ActivityLogType = z.infer<typeof ActivityLogType>;
 export type ActivityLogInsert = z.infer<typeof ActivityLogInsert>;
 export type ActivityLogResponse = z.infer<typeof ActivityLogResponse>;
 export type ActivityLogListResponse = z.infer<typeof ActivityLogListResponse>;
+export type EventSegment = z.infer<typeof EventSegment>;
+export type OrdersSegment = z.infer<typeof OrdersSegment>;
+export type DaySegment = z.infer<typeof DaySegment>;
+export type DayActivityResponse = z.infer<typeof DayActivityResponse>;
