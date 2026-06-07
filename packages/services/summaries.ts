@@ -268,7 +268,7 @@ export async function createSummary(supabase: SupabaseClient, params: CreateSumm
     if (summaryError || !summaryData) throw new Error(summaryError?.message ?? "Daily summary insert failed");
 
     const log = createLogger(supabase, { tenantId: store.tenant_id, userId: openedBy, storeId });
-    log("store_open", {
+    log("store_opened", {
         refId: (summaryData as { id: string }).id,
         refTable: "store_daily_summaries",
         metadata: { date, opening_balance: opening },
@@ -380,13 +380,13 @@ export async function updateSummary(supabase: SupabaseClient, params: UpdateSumm
     const log = createLogger(supabase, { tenantId, userId, storeId: raw.store_id });
 
     if (closedAt && !current.closed_at) {
-        log("daily_summary_closed", {
+        log("store_closed", {
             refId: id,
             refTable: "store_daily_summaries",
             metadata: { total_sales: raw.total_sales, variance: raw.variance },
         });
     } else if (openingBalance !== undefined) {
-        log("balance_updated", {
+        log("opening_balance_updated", {
             refId: id,
             refTable: "store_daily_summaries",
             metadata: { opening_balance: openingBalance },
@@ -541,7 +541,7 @@ export async function uploadSummaryPhoto(supabase: SupabaseClient, params: Uploa
     }
 
     const log = createLogger(supabase, { tenantId, userId, storeId });
-    log("photo_uploaded", {
+    log("summary_photo_uploaded", {
         refId: (photoData as { id: string }).id,
         refTable: "store_daily_summary_photos",
         metadata: { photo_url: urlData.publicUrl, slot: type, quantity: quantity ?? null },
@@ -573,11 +573,11 @@ export async function updateSummaryPhoto(
 
     if (updateError || !updated) throw new Error("Failed to update photo");
 
-    const raw = updated as { id: string; store_id: string };
-    createLogger(supabase, { tenantId, userId, storeId: raw.store_id })("photo_quantity_updated", {
+    const raw = updated as { id: string; store_id: string; type: string };
+    createLogger(supabase, { tenantId, userId, storeId: raw.store_id })("summary_photo_updated", {
         refId: raw.id,
         refTable: "store_daily_summary_photos",
-        metadata: { quantity: quantity ?? null },
+        metadata: { slot: raw.type, quantity: quantity ?? null },
     });
 
     return toCamelKeys(updated);
@@ -610,7 +610,7 @@ export async function deleteSummaryPhoto(
     if (deleteError) throw new Error(deleteError.message);
 
     const raw = photo as { store_id: string; url: string; type: string };
-    createLogger(supabase, { tenantId, userId, storeId: raw.store_id })("photo_deleted", {
+    createLogger(supabase, { tenantId, userId, storeId: raw.store_id })("summary_photo_deleted", {
         refId: id,
         refTable: "store_daily_summary_photos",
         metadata: { photo_url: raw.url, slot: raw.type },

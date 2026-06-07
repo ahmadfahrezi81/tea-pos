@@ -100,7 +100,7 @@ export async function resumeSession(supabase: SupabaseClient, params: ResumeSess
     if (sessionError || !sessionData) throw new Error(sessionError?.message ?? "Failed to create session");
 
     const log = createLogger(supabase, { tenantId, userId, storeId });
-    log("store_open", {
+    log("store_opened", {
         refId: summaryId,
         refTable: "store_daily_summaries",
         metadata: { resumed: true },
@@ -184,7 +184,7 @@ export async function openStore(supabase: SupabaseClient, params: OpenStoreParam
     if (sessionError || !sessionData) throw new Error(sessionError?.message ?? "Failed to create session");
 
     const log = createLogger(supabase, { tenantId, userId, storeId });
-    log("store_open", {
+    log("store_opened", {
         refId: dailySummaryId,
         refTable: "store_daily_summaries",
         metadata: { date, opening_balance: openingBalance },

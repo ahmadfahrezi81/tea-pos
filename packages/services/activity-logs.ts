@@ -1,14 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { ActivityLogType, EventSegment } from "@tea-pos/features/activity-logs/schema";
+import type { ActivityLogMetadataMap, ActivityLogType, EventSegment } from "@tea-pos/features/activity-logs/schema";
 
 // ─── Timeline event types — curated subset shown in AtAGlance ─────────────────
 
 const TIMELINE_EVENT_TYPES: ActivityLogType[] = [
-    "store_open",
+    "store_opened",
     "session_transferred",
     "session_ended",
     "expense_created",
-    "daily_summary_closed",
+    "store_closed",
     "supply_request_created",
     "incident_report_created",
 ];
@@ -44,26 +44,20 @@ export async function listStoreActivityLogs(
 // All event types including order_created — full audit log for the day
 const DAY_ACTIVITY_EVENT_TYPES: ActivityLogType[] = [
     "order_created",
-    "store_open",
-    "daily_summary_closed",
-    "balance_updated",
-    "photo_uploaded",
-    "photo_deleted",
-    "photo_quantity_updated",
+    "store_opened",
+    "store_closed",
+    "opening_balance_updated",
+    "summary_photo_uploaded",
+    "summary_photo_deleted",
+    "summary_photo_updated",
     "expense_created",
     "expense_updated",
     "expense_deleted",
     "customer_feedback_submitted",
     "session_transferred",
     "session_ended",
-    "commission_config_updated",
-    "payroll_entry_updated",
-    "payroll_period_updated",
     "supply_request_created",
     "incident_report_created",
-    "reimbursement_submitted",
-    "reimbursement_status_updated",
-    "payroll_payout_updated",
 ];
 
 export async function getDayActivity(
@@ -105,7 +99,7 @@ export async function getDayActivity(
     const PHOTO_BUCKET = "daily-photos";
     const signedUrlMap = new Map<string, string>();
     const photoRows = rows.filter(
-        (r) => (r.type === "photo_uploaded" || r.type === "photo_deleted" || r.type === "photo_quantity_updated")
+        (r) => (r.type === "summary_photo_uploaded" || r.type === "summary_photo_deleted" || r.type === "summary_photo_updated")
             && typeof (r.metadata as Record<string, unknown>)?.photo_url === "string",
     );
     await Promise.all(
@@ -124,7 +118,6 @@ export async function getDayActivity(
         const meta = (row.metadata ?? {}) as Record<string, unknown>;
         const signedPhotoUrl = signedUrlMap.get(row.id);
         return {
-            kind: "event" as const,
             id: row.id,
             type: row.type as ActivityLogType,
             createdAt: row.created_at,
@@ -142,17 +135,17 @@ interface LogContext {
     storeId?: string;
 }
 
-interface LogOpts {
+interface LogOpts<T extends ActivityLogType> {
     refId?: string;
     refTable?: string;
-    metadata?: Record<string, unknown>;
+    metadata?: ActivityLogMetadataMap[T];
 }
 
-async function logActivity(
+async function logActivity<T extends ActivityLogType>(
     supabase: SupabaseClient,
     context: LogContext,
-    type: ActivityLogType,
-    opts?: LogOpts,
+    type: T,
+    opts?: LogOpts<T>,
 ): Promise<void> {
     try {
         await supabase.from("tenant_activity_logs").insert({
@@ -162,7 +155,7 @@ async function logActivity(
             type,
             ref_id: opts?.refId ?? null,
             ref_table: opts?.refTable ?? null,
-            metadata: opts?.metadata ?? {},
+            metadata: (opts?.metadata ?? {}) as Record<string, unknown>,
         });
     } catch {
         // fire-and-forget — logging failures must never break the calling service
@@ -170,7 +163,7 @@ async function logActivity(
 }
 
 export function createLogger(supabase: SupabaseClient, context: LogContext) {
-    return (type: ActivityLogType, opts?: LogOpts): void => {
+    return <T extends ActivityLogType>(type: T, opts?: LogOpts<T>): void => {
         void logActivity(supabase, context, type, opts);
     };
 }

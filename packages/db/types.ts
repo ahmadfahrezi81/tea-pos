@@ -173,6 +173,80 @@ export type Database = {
           },
         ]
       }
+      payroll_payouts: {
+        Row: {
+          created_at: string
+          cups_pay_total: number
+          id: string
+          paid_at: string | null
+          paid_by: string | null
+          payment_proof_url: string | null
+          payroll_period_id: string
+          reimbursements_total: number
+          status: string
+          tenant_id: string
+          total_pay: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          cups_pay_total?: number
+          id?: string
+          paid_at?: string | null
+          paid_by?: string | null
+          payment_proof_url?: string | null
+          payroll_period_id: string
+          reimbursements_total?: number
+          status?: string
+          tenant_id: string
+          total_pay?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          cups_pay_total?: number
+          id?: string
+          paid_at?: string | null
+          paid_by?: string | null
+          payment_proof_url?: string | null
+          payroll_period_id?: string
+          reimbursements_total?: number
+          status?: string
+          tenant_id?: string
+          total_pay?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_payouts_paid_by_fkey"
+            columns: ["paid_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_payouts_payroll_period_id_fkey"
+            columns: ["payroll_period_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_periods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_payouts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_payouts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payroll_periods: {
         Row: {
           created_at: string | null
@@ -1012,24 +1086,24 @@ export type Database = {
           effective_date: string
           id: string
           rate_per_cup: number
-          role: string
           tenant_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
           effective_date: string
           id?: string
           rate_per_cup: number
-          role?: string
           tenant_id: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
           effective_date?: string
           id?: string
           rate_per_cup?: number
-          role?: string
           tenant_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -1037,6 +1111,13 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_commission_configs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -1288,6 +1369,9 @@ export type Database = {
       }
       users: {
         Row: {
+          bank_account_holder: string | null
+          bank_account_number: string | null
+          bank_name: string | null
           created_at: string | null
           email: string
           full_name: string
@@ -1298,6 +1382,9 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          bank_account_holder?: string | null
+          bank_account_number?: string | null
+          bank_name?: string | null
           created_at?: string | null
           email: string
           full_name: string
@@ -1308,6 +1395,9 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          bank_account_holder?: string | null
+          bank_account_number?: string | null
+          bank_name?: string | null
           created_at?: string | null
           email?: string
           full_name?: string

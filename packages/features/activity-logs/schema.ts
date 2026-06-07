@@ -17,12 +17,12 @@ export type ListActivityLogsQuery = z.infer<typeof ListActivityLogsQuery>;
 
 export const ActivityLogType = z.enum([
     "order_created",
-    "store_open",
-    "daily_summary_closed",
-    "balance_updated",
-    "photo_uploaded",
-    "photo_deleted",
-    "photo_quantity_updated",
+    "store_opened",
+    "store_closed",
+    "opening_balance_updated",
+    "summary_photo_uploaded",
+    "summary_photo_deleted",
+    "summary_photo_updated",
     "expense_created",
     "expense_updated",
     "expense_deleted",
@@ -85,9 +85,42 @@ export const ActivityLogListResponse = z
     })
     .openapi({ title: "ActivityLogListResponse" });
 
-// Day activity timeline — segmented view
+// ============================================================================
+// METADATA CONTRACTS
+// ============================================================================
+
+// Typed metadata per event type — enforced at the write side via createLogger.
+// Keeps callsites honest: log("store_closed", { metadata: { wrong_field: 1 } }) is a TS error.
+export type ActivityLogMetadataMap = {
+    order_created:              { total_amount: number; total_cups: number; payment_method: string };
+    store_opened:               { opening_balance?: number; date?: string; resumed?: boolean };
+    store_closed:               { total_sales: number; variance: number | null };
+    opening_balance_updated:    { opening_balance: number };
+    summary_photo_uploaded:     { photo_url: string; slot: string; quantity?: unknown };
+    summary_photo_deleted:      { photo_url: string; slot: string };
+    summary_photo_updated:      { slot: string; quantity?: unknown };
+    expense_created:            { amount: number; type: string };
+    expense_updated:            { amount: number; type: string };
+    expense_deleted:            { amount: number; type: string };
+    customer_feedback_submitted:{ location_name: string; has_notes: boolean };
+    session_transferred:        { previous_session_id: string; daily_summary_id: string };
+    session_ended:              Record<string, never>;
+    commission_config_updated:  { user_id: string; rate_per_cup: number; effective_date: string };
+    payroll_entry_updated:      { user_id?: string; total_cups?: number; rate_per_cup?: number; gross_pay?: number; status?: string };
+    payroll_period_updated:     { status: string };
+    supply_request_created:     { type: string };
+    incident_report_created:    { type: string };
+    reimbursement_submitted:    { type: string; amount: number; date: string };
+    reimbursement_status_updated: { status: string };
+    payroll_payout_updated:     { status: string };
+};
+
+// ============================================================================
+// DAY ACTIVITY SEGMENT
+// ============================================================================
+
+// One row from the day activity timeline — no grouping, no discriminated kind.
 export const EventSegment = z.object({
-    kind: z.literal("event"),
     id: UUIDSchema,
     type: ActivityLogType,
     createdAt: z.string(),
@@ -96,17 +129,6 @@ export const EventSegment = z.object({
     refId: UUIDSchema.nullable(),
     refTable: z.string().nullable(),
 });
-
-export const OrdersSegment = z.object({
-    kind: z.literal("orders"),
-    startTime: z.string(),
-    endTime: z.string(),
-    count: z.number(),
-    totalSales: z.number(),
-});
-
-export const DaySegment = z.discriminatedUnion("kind", [EventSegment, OrdersSegment]);
-export const DayActivityResponse = z.object({ segments: z.array(DaySegment) });
 
 // ============================================================================
 // TYPE EXPORTS
@@ -117,6 +139,3 @@ export type ActivityLogInsert = z.infer<typeof ActivityLogInsert>;
 export type ActivityLogResponse = z.infer<typeof ActivityLogResponse>;
 export type ActivityLogListResponse = z.infer<typeof ActivityLogListResponse>;
 export type EventSegment = z.infer<typeof EventSegment>;
-export type OrdersSegment = z.infer<typeof OrdersSegment>;
-export type DaySegment = z.infer<typeof DaySegment>;
-export type DayActivityResponse = z.infer<typeof DayActivityResponse>;

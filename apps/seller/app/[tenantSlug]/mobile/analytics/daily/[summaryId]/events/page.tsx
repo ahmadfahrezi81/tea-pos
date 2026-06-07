@@ -119,6 +119,14 @@ function EventNode({
         typeof segment.metadata?.opening_balance === "number"
             ? (segment.metadata.opening_balance as number)
             : null;
+    const totalSales =
+        typeof segment.metadata?.total_sales === "number"
+            ? (segment.metadata.total_sales as number)
+            : null;
+    const variance =
+        typeof segment.metadata?.variance === "number"
+            ? (segment.metadata.variance as number)
+            : null;
     const photoUrl =
         typeof segment.metadata?.photo_url === "string"
             ? (segment.metadata.photo_url as string)
@@ -178,6 +186,28 @@ function EventNode({
                         </span>
                         <span className="text-sm font-bold text-blue-600">
                             {formatRupiah(openingBalance)}
+                        </span>
+                    </div>
+                )}
+
+                {totalSales !== null && (
+                    <div className="bg-slate-100 rounded-xl px-3 py-2 flex items-center justify-between">
+                        <span className="text-xs text-gray-500">
+                            Total sales
+                        </span>
+                        <span className="text-sm font-bold text-green-600">
+                            {formatRupiah(totalSales)}
+                        </span>
+                    </div>
+                )}
+
+                {variance !== null && (
+                    <div className="bg-slate-100 rounded-xl px-3 py-2 flex items-center justify-between">
+                        <span className="text-xs text-gray-500">
+                            Variance
+                        </span>
+                        <span className={`text-sm font-bold ${variance >= 0 ? "text-green-600" : "text-red-500"}`}>
+                            {variance >= 0 ? "+" : ""}{formatRupiah(variance)}
                         </span>
                     </div>
                 )}
