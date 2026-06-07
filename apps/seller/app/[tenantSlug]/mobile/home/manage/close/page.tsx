@@ -90,7 +90,7 @@ export default function ManageCloseDayPage() {
     const savedPhotos: SavedSlottedPhoto[] = useMemo(
         () =>
             fetchedPhotos
-                .filter((p) => p.type.startsWith("closing:"))
+                .filter((p) => p.type.startsWith("closing:") || p.type === "opening")
                 .map((p) => ({
                     id: p.id,
                     type: p.type as PhotoType,
@@ -415,6 +415,7 @@ export default function ManageCloseDayPage() {
                         savedPhotos={savedPhotos}
                         notes=""
                         storeName={storeName}
+                        confirmed={confirmed}
                         onConfirmChange={setConfirmed}
                     />
                 )}

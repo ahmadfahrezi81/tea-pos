@@ -38,7 +38,7 @@ export function DailyStepHeader({
     }, [currentStep]);
 
     return (
-        <div className="sticky top-0 z-10 w-full py-1">
+        <div className="sticky top-[-8px] z-10 bg-slate-100 w-full py-2">
             <div
                 ref={scrollRef}
                 className="overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full"
