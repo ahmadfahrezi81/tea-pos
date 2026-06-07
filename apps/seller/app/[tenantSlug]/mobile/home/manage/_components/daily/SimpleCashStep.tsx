@@ -148,53 +148,33 @@
 import { useState, useEffect } from "react";
 import { Check } from "lucide-react";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
+import { NumberInput } from "../shared/NumberInput";
 
 interface SimpleCashStepProps {
     expectedCash: number;
     initialValue?: number;
+    confirmed: boolean;
     onActualCashChange: (amount: number) => void;
     onConfirmedChange: (confirmed: boolean) => void;
 }
 
-const formatDisplay = (val: number) =>
-    val === 0 ? "" : val.toLocaleString("id-ID");
-
 export function SimpleCashStep({
     expectedCash,
     initialValue,
+    confirmed,
     onActualCashChange,
     onConfirmedChange,
 }: SimpleCashStepProps) {
     const seedValue = initialValue ?? expectedCash;
-    const wasAlreadySaved = initialValue != null && initialValue > 0;
-
-    const [localValue, setLocalValue] = useState<string>(
-        formatDisplay(seedValue),
-    );
-    const [confirmed, setConfirmed] = useState(wasAlreadySaved);
+    const [actualCash, setActualCash] = useState(seedValue);
 
     useEffect(() => {
         onActualCashChange(seedValue);
-        if (wasAlreadySaved) onConfirmedChange(true);
     }, []);
 
-    const actualCash = parseInt(localValue.replace(/\D/g, "")) || 0;
     const variance = actualCash - expectedCash;
     const isExact = variance === 0;
     const isOver = variance > 0;
-
-    const handleChange = (raw: string) => {
-        const digits = raw.replace(/\D/g, "");
-        const num = parseInt(digits) || 0;
-        setLocalValue(formatDisplay(num));
-        onActualCashChange(num);
-    };
-
-    const handleConfirm = () => {
-        const next = !confirmed;
-        setConfirmed(next);
-        onConfirmedChange(next);
-    };
 
     return (
         <div className="flex flex-col gap-4">
@@ -212,16 +192,14 @@ export function SimpleCashStep({
                     <p className="text-xs font-semibold text-gray-900 uppercase tracking-wide">
                         Actual Cash
                     </p>
-                    <div className="p-6 px-3 border border-gray-100 rounded-2xl bg-gray-50">
-                        <input
-                            type="text"
-                            inputMode="numeric"
-                            value={localValue}
-                            onChange={(e) => handleChange(e.target.value)}
-                            placeholder="0"
-                            className="text-4xl font-bold text-gray-900 border-none outline-none bg-transparent w-full"
-                        />
-                    </div>
+                    <NumberInput
+                        value={seedValue}
+                        currency
+                        onChange={(val) => {
+                            setActualCash(val);
+                            onActualCashChange(val);
+                        }}
+                    />
                     <p className="text-sm text-gray-600">
                         Expected: {formatRupiah(expectedCash)}
                     </p>
@@ -264,7 +242,7 @@ export function SimpleCashStep({
             </div>
 
             <button
-                onClick={handleConfirm}
+                onClick={() => onConfirmedChange(!confirmed)}
                 className="flex items-center gap-3 p-4 bg-white rounded-2xl w-full text-left"
             >
                 <div

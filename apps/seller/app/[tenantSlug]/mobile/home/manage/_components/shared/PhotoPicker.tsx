@@ -38,7 +38,7 @@ export function PhotoPicker({ previewUrl, onCapture, onRemove, onError, allowGal
 
     return (
         <div
-            className={`w-full h-52 rounded-xl overflow-hidden relative ${
+            className={`w-full h-52 rounded-xl overflow-hidden relative transition-transform active:scale-[0.97] ${
                 previewUrl && !isCompressing
                     ? "bg-black"
                     : "border-3 border-dashed border-brand"
@@ -78,7 +78,7 @@ export function PhotoPicker({ previewUrl, onCapture, onRemove, onError, allowGal
             ) : (
                 <button
                     onClick={() => inputRef.current?.click()}
-                    className="w-full h-full flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-transform"
+                    className="w-full h-full flex flex-col items-center justify-center gap-1.5"
                 >
                     {allowGallery ? (
                         <ImagePlus size={40} strokeWidth={2} className="text-brand" />

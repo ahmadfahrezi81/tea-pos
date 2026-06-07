@@ -224,7 +224,7 @@ export default function MobileAnalytics() {
                                                                     className="w-full text-left px-3 py-2 text-base text-gray-900 font-medium active:bg-gray-50 flex items-center justify-between gap-2.5"
                                                                 >
                                                                     Activity
-                                                                    <History size={18} strokeWidth={2.5} className="text-gray-900" />
+                                                                    <History size={18} strokeWidth={2} className="text-gray-900" />
                                                                 </button>
                                                                 <hr className="border-gray-100 mx-2" />
                                                                 <button
@@ -235,7 +235,7 @@ export default function MobileAnalytics() {
                                                                     className="w-full text-left px-3 py-2 text-base text-gray-900 font-medium active:bg-gray-50 flex items-center justify-between gap-2.5"
                                                                 >
                                                                     Sessions
-                                                                    <Users size={18} strokeWidth={2.5} className="text-gray-900" />
+                                                                    <Users size={18} strokeWidth={2} className="text-gray-900" />
                                                                 </button>
                                                             </div>
                                                         </>

@@ -89,6 +89,7 @@ export default function OpenStorePage() {
                         <span className="text-xs text-red-400 font-medium">Required</span>
                     </div>
                     <NumberInput
+                        currency
                         value={openingBalance}
                         onChange={(val) => {
                             setOpeningBalance(val);

@@ -94,7 +94,7 @@ export default function AddReimbursementPage() {
 
                 <div className="space-y-1.5">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Amount</p>
-                    <NumberInput value={amount} onChange={setAmount} />
+                    <NumberInput value={amount} onChange={setAmount} currency />
                 </div>
 
                 <div className="space-y-1.5">

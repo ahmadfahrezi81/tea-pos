@@ -371,7 +371,7 @@ export default function ManageCloseDayPage() {
     }
 
     return (
-        <div className="flex flex-col bg-gray-50">
+        <div className="flex flex-col">
             <DailyStepHeader
                 steps={STEPS}
                 currentStep={currentStep}
@@ -403,6 +403,7 @@ export default function ManageCloseDayPage() {
                     <SimpleCashStep
                         expectedCash={summary.expectedCash}
                         initialValue={actualCash || summary.expectedCash}
+                        confirmed={cashConfirmed}
                         onActualCashChange={setActualCash}
                         onConfirmedChange={setCashConfirmed}
                     />

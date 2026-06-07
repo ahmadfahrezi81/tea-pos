@@ -250,16 +250,14 @@ export default async function SummaryDetailPage({
                 {Object.keys(breakdown).length === 0 ? (
                     <p className="text-sm text-gray-400 text-center py-4">No sales recorded for this day</p>
                 ) : (
-                    <div className="space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
                         {Object.entries(breakdown)
                             .sort(([, a], [, b]) => b.quantity - a.quantity)
                             .map(([productName, data]) => (
-                                <div key={productName} className="flex justify-between items-center bg-slate-100 p-3 rounded-xl">
-                                    <span className="font-medium text-gray-800">{productName}</span>
-                                    <div className="text-right">
-                                        <p className="font-semibold text-gray-800">{data.quantity} cups</p>
-                                        <p className="text-sm text-gray-500">{formatRupiah(data.revenue)}</p>
-                                    </div>
+                                <div key={productName} className="bg-slate-100 p-2.5 rounded-xl">
+                                    <p className="font-semibold text-gray-800 text-sm truncate">{productName}</p>
+                                    <p className="font-bold text-gray-800">{data.quantity} cups</p>
+                                    <p className="text-sm text-gray-500">{formatRupiah(data.revenue)}</p>
                                 </div>
                             ))}
                     </div>
@@ -301,12 +299,16 @@ export default async function SummaryDetailPage({
                     {openingPhoto && (
                         <div className="space-y-1.5">
                             <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Opening</p>
-                            <div className="aspect-square w-full rounded-xl overflow-hidden bg-gray-100">
-                                <SummaryPhotoThumbnail
-                                    url={openingPhoto.url}
-                                    alt="Opening photo"
-                                    className="w-full h-full"
-                                />
+                            <div className="grid grid-cols-2 gap-2">
+                                <div className="bg-slate-50 rounded-xl overflow-hidden">
+                                    <div className="aspect-square">
+                                        <SummaryPhotoThumbnail
+                                            url={openingPhoto.url}
+                                            alt="Opening photo"
+                                            className="w-full h-full"
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}
