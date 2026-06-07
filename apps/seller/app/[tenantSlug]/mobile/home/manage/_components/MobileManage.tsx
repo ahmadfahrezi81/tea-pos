@@ -51,7 +51,7 @@ export default function MobileManage() {
                         className="flex-1 flex items-center gap-3 p-4 active:bg-gray-50 transition-colors text-left"
                     >
                         <div className="flex-1">
-                            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Claim Code</p>
+                            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Session Code</p>
                             <p className="text-2xl font-bold font-mono tracking-widest text-gray-900 mt-0.5">
                                 {codeRevealed ? session.claimCode : "••"}
                             </p>
@@ -63,7 +63,7 @@ export default function MobileManage() {
                 ) : (
                     <div className="flex-1 flex items-center gap-3 p-4">
                         <div className="flex-1">
-                            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Claim Code</p>
+                            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Session Code</p>
                             <p className="text-lg font-medium text-gray-300 mt-0.5">—</p>
                         </div>
                     </div>
