@@ -229,16 +229,12 @@ function EventNode({
 
 export default function EventsPage() {
     const { summaryId } = useParams<{ summaryId: string }>();
-    const { summary, segments, isLoading } = useDayActivity(summaryId);
-
-    const orderCount = segments.filter((s) => s.type === "order_created").length;
-    const eventCount = segments.filter((s) => s.type !== "order_created").length;
+    const { segments, isLoading } = useDayActivity(summaryId);
 
     return (
         <div className="flex flex-col gap-3 pb-24">
             {isLoading ? (
                 <>
-                    <div className="bg-white rounded-2xl px-4 py-3 h-14 animate-pulse" />
                     <div className="bg-white rounded-2xl p-3">
                         {Array.from({ length: 5 }).map((_, i) => (
                             <div key={i} className="flex gap-3">
@@ -261,48 +257,7 @@ export default function EventsPage() {
                     </p>
                 </div>
             ) : (
-                <>
-                    <div className="bg-white rounded-2xl px-4 py-3 flex items-center gap-4 text-sm">
-                        <div>
-                            <span className="font-bold text-gray-900">
-                                {orderCount}
-                            </span>
-                            <span className="text-gray-500 ml-1">orders</span>
-                        </div>
-                        <div className="w-px h-4 bg-gray-200" />
-                        <div>
-                            <span className="font-bold text-gray-900">
-                                {eventCount}
-                            </span>
-                            <span className="text-gray-500 ml-1">
-                                {eventCount === 1 ? "event" : "events"}
-                            </span>
-                        </div>
-                        {summary && (
-                            <>
-                                <div className="w-px h-4 bg-gray-200" />
-                                <div>
-                                    <span className="font-bold text-gray-900">
-                                        {formatRupiah(summary.totalSales)}
-                                    </span>
-                                    <span className="text-gray-500 ml-1">sales</span>
-                                </div>
-                                {summary.variance !== null && (
-                                    <>
-                                        <div className="w-px h-4 bg-gray-200" />
-                                        <div>
-                                            <span className={`font-bold ${summary.variance >= 0 ? "text-green-600" : "text-red-500"}`}>
-                                                {summary.variance >= 0 ? "+" : ""}{formatRupiah(summary.variance)}
-                                            </span>
-                                            <span className="text-gray-500 ml-1">var</span>
-                                        </div>
-                                    </>
-                                )}
-                            </>
-                        )}
-                    </div>
-
-                    <div className="bg-white rounded-2xl p-3">
+                <div className="bg-white rounded-2xl p-3">
                         {segments.map((segment, i) =>
                             segment.type === "order_created" ? (
                                 <OrderRow
@@ -318,8 +273,7 @@ export default function EventsPage() {
                                 />
                             ),
                         )}
-                    </div>
-                </>
+                </div>
             )}
         </div>
     );

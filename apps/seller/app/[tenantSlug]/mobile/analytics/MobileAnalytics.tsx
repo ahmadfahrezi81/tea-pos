@@ -215,16 +215,16 @@ export default function MobileAnalytics() {
                                                                 className="fixed inset-0 z-10"
                                                                 onClick={() => setOpenMenuId(null)}
                                                             />
-                                                            <div className="absolute right-0 top-9 z-20 bg-white rounded-xl shadow-lg border border-gray-100 py-1 w-40">
+                                                            <div className="absolute right-0 top-9 z-20 bg-white rounded-xl shadow-lg border border-gray-100 py-1 w-48">
                                                                 <button
                                                                     onClick={() => {
                                                                         setOpenMenuId(null);
                                                                         navigation.push(url(`/mobile/analytics/daily/${summary.id}/events`));
                                                                     }}
-                                                                    className="w-full text-left px-3 py-2 text-sm text-gray-900 font-medium active:bg-gray-50 flex items-center justify-between gap-2.5"
+                                                                    className="w-full text-left px-3 py-2 text-base text-gray-900 font-medium active:bg-gray-50 flex items-center justify-between gap-2.5"
                                                                 >
                                                                     Activity
-                                                                    <History size={15} strokeWidth={2.5} className="text-gray-900" />
+                                                                    <History size={18} strokeWidth={2.5} className="text-gray-900" />
                                                                 </button>
                                                                 <hr className="border-gray-100 mx-2" />
                                                                 <button
@@ -232,10 +232,10 @@ export default function MobileAnalytics() {
                                                                         setOpenMenuId(null);
                                                                         navigation.push(url(`/mobile/analytics/daily/${summary.id}/sessions?storeId=${selectedStoreId}&date=${summary.date}`));
                                                                     }}
-                                                                    className="w-full text-left px-3 py-2 text-sm text-gray-900 font-medium active:bg-gray-50 flex items-center justify-between gap-2.5"
+                                                                    className="w-full text-left px-3 py-2 text-base text-gray-900 font-medium active:bg-gray-50 flex items-center justify-between gap-2.5"
                                                                 >
                                                                     Sessions
-                                                                    <Users size={15} strokeWidth={2.5} className="text-gray-900" />
+                                                                    <Users size={18} strokeWidth={2.5} className="text-gray-900" />
                                                                 </button>
                                                             </div>
                                                         </>
