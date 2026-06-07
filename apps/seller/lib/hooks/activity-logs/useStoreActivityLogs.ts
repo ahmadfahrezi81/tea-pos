@@ -1,6 +1,6 @@
 import useSWR from "swr";
 import { activityLogsApi } from "@/lib/api/activity-logs";
-import type { TimelineEventResponse, EventSegment } from "@tea-pos/features/activity-logs/schema";
+import type { TimelineEventResponse, DayActivityResponse } from "@tea-pos/features/activity-logs/schema";
 
 export function useStoreActivityLogs(storeId?: string, date?: string) {
     const { data = [], ...rest } = useSWR<TimelineEventResponse[]>(
@@ -11,11 +11,11 @@ export function useStoreActivityLogs(storeId?: string, date?: string) {
     return { events: data, ...rest };
 }
 
-export function useDayActivity(storeId?: string, date?: string) {
-    const { data = [], ...rest } = useSWR<EventSegment[]>(
-        storeId && date ? `day-activity-${storeId}-${date}` : null,
-        () => activityLogsApi.dayActivity({ storeId: storeId!, date: date! }),
+export function useDayActivity(summaryId?: string) {
+    const { data, ...rest } = useSWR<DayActivityResponse>(
+        summaryId ? `day-activity-${summaryId}` : null,
+        () => activityLogsApi.dayActivity({ summaryId: summaryId! }),
         { revalidateOnFocus: false, dedupingInterval: 60_000 },
     );
-    return { segments: data, ...rest };
+    return { summary: data?.summary ?? null, segments: data?.segments ?? [], ...rest };
 }

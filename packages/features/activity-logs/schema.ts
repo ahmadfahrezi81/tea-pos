@@ -11,6 +11,11 @@ export const ListActivityLogsQuery = z.object({
 });
 export type ListActivityLogsQuery = z.infer<typeof ListActivityLogsQuery>;
 
+export const GetDayActivityQuery = z.object({
+    summaryId: UUIDSchema,
+});
+export type GetDayActivityQuery = z.infer<typeof GetDayActivityQuery>;
+
 // ============================================================================
 // ENUMS
 // ============================================================================
@@ -116,6 +121,22 @@ export type ActivityLogMetadataMap = {
 };
 
 // ============================================================================
+// DAY ACTIVITY RESPONSE
+// ============================================================================
+
+export const DayActivitySummaryContext = z.object({
+    date: z.string(),
+    storeName: z.string(),
+    totalSales: z.number(),
+    totalOrders: z.number(),
+    totalCups: z.number(),
+    openingBalance: z.number(),
+    variance: z.number().nullable(),
+    closedAt: z.string().nullable(),
+});
+export type DayActivitySummaryContext = z.infer<typeof DayActivitySummaryContext>;
+
+// ============================================================================
 // DAY ACTIVITY SEGMENT
 // ============================================================================
 
@@ -130,6 +151,11 @@ export const EventSegment = z.object({
     refTable: z.string().nullable(),
 });
 
+export const DayActivityResponse = z.object({
+    summary: DayActivitySummaryContext,
+    segments: z.array(EventSegment),
+});
+
 // ============================================================================
 // TYPE EXPORTS
 // ============================================================================
@@ -139,3 +165,4 @@ export type ActivityLogInsert = z.infer<typeof ActivityLogInsert>;
 export type ActivityLogResponse = z.infer<typeof ActivityLogResponse>;
 export type ActivityLogListResponse = z.infer<typeof ActivityLogListResponse>;
 export type EventSegment = z.infer<typeof EventSegment>;
+export type DayActivityResponse = z.infer<typeof DayActivityResponse>;

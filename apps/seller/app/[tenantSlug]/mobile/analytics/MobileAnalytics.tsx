@@ -219,7 +219,7 @@ export default function MobileAnalytics() {
                                                                 <button
                                                                     onClick={() => {
                                                                         setOpenMenuId(null);
-                                                                        navigation.push(url(`/mobile/analytics/daily/${summary.id}/events?storeId=${selectedStoreId}&date=${summary.date}`));
+                                                                        navigation.push(url(`/mobile/analytics/daily/${summary.id}/events`));
                                                                     }}
                                                                     className="w-full text-left px-3 py-2 text-sm text-gray-900 font-medium active:bg-gray-50 flex items-center justify-between gap-2.5"
                                                                 >
