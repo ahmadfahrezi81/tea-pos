@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePayrollUserInfo } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
+import { NumberInput } from "../../../home/manage/_components/shared/NumberInput";
 import type { PayrollUserInfoResponse } from "@tea-pos/features/payroll-user-info/schema";
 
 function EditForm({ info, update }: {
@@ -11,7 +12,7 @@ function EditForm({ info, update }: {
 }) {
     const router = useRouter();
     const [bankName, setBankName] = useState(info?.bankName ?? "");
-    const [bankAccountNumber, setBankAccountNumber] = useState(info?.bankAccountNumber ?? "");
+    const [bankAccountNumber, setBankAccountNumber] = useState(parseInt(info?.bankAccountNumber ?? "") || 0);
     const [bankAccountHolder, setBankAccountHolder] = useState(info?.bankAccountHolder ?? "");
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -22,7 +23,7 @@ function EditForm({ info, update }: {
         try {
             await update({
                 bankName: bankName.trim() || undefined,
-                bankAccountNumber: bankAccountNumber.trim() || undefined,
+                bankAccountNumber: bankAccountNumber ? String(bankAccountNumber) : undefined,
                 bankAccountHolder: bankAccountHolder.trim() || undefined,
             });
             router.back();
@@ -48,13 +49,10 @@ function EditForm({ info, update }: {
                 </div>
                 <div className="space-y-1.5">
                     <p className="text-xs font-medium text-gray-500">Account number</p>
-                    <input
-                        type="text"
-                        inputMode="numeric"
+                    <NumberInput
                         value={bankAccountNumber}
-                        onChange={(e) => setBankAccountNumber(e.target.value.replace(/\D/g, ""))}
-                        placeholder="e.g. 1234567890"
-                        className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-brand/40"
+                        onChange={setBankAccountNumber}
+                        placeholder="1234567890"
                     />
                 </div>
                 <div className="space-y-1.5">

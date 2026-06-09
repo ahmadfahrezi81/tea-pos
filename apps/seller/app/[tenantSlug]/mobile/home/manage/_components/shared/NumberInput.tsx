@@ -8,12 +8,13 @@ interface NumberInputProps {
     placeholder?: string;
     currency?: boolean;
     unit?: string;
+    prefix?: string;
 }
 
 const formatDisplay = (val: number) =>
     val === 0 ? "" : val.toLocaleString("id-ID");
 
-export function NumberInput({ value, onChange, placeholder = "0", currency = false, unit }: NumberInputProps) {
+export function NumberInput({ value, onChange, placeholder = "0", currency = false, unit, prefix }: NumberInputProps) {
     const [localValue, setLocalValue] = useState(formatDisplay(value));
     const dirty = useRef(false);
 
@@ -33,8 +34,8 @@ export function NumberInput({ value, onChange, placeholder = "0", currency = fal
 
     return (
         <div className="flex items-center gap-2 p-4 px-3 border border-gray-100 rounded-2xl bg-gray-50">
-            {currency && (
-                <span className="text-3xl font-bold text-gray-400 shrink-0">Rp</span>
+            {(currency || prefix) && (
+                <span className="text-3xl font-bold text-gray-400 shrink-0">{prefix ?? "Rp"}</span>
             )}
             <input
                 type="text"
