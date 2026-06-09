@@ -1,35 +1,29 @@
 "use client";
 
-import { useReimbursements } from "@/lib/hooks/reimbursements/useReimbursements";
+import { usePayrollClaims } from "@/lib/hooks/payroll-claims/usePayrollClaims";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
-import { REIMBURSEMENT_TYPE_LABELS } from "@tea-pos/features/reimbursements/schema";
 import { FormFooter } from "@/components/shared/FormFooter";
 import { ReceiptText } from "lucide-react";
+import { format } from "date-fns";
 
-function StatusBadge({ status }: { status: string }) {
-    const styles: Record<string, string> = {
-        pending: "bg-gray-100 text-gray-600",
-        approved: "bg-blue-100 text-blue-700",
-        rejected: "bg-red-100 text-red-600",
-        paid: "bg-green-100 text-green-700",
-    };
-    const labels: Record<string, string> = {
-        pending: "Pending",
-        approved: "Approved",
-        rejected: "Rejected",
-        paid: "Paid ✓",
-    };
-    return (
-        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${styles[status] ?? styles.pending}`}>
-            {labels[status] ?? status}
-        </span>
-    );
-}
+const STATUS_STYLE: Record<string, string> = {
+    pending: "bg-gray-100 text-gray-600",
+    approved: "bg-blue-100 text-blue-700",
+    rejected: "bg-red-100 text-red-600",
+    paid: "bg-green-100 text-green-700",
+};
+
+const STATUS_LABEL: Record<string, string> = {
+    pending: "Pending",
+    approved: "Approved",
+    rejected: "Rejected",
+    paid: "Paid ✓",
+};
 
 export default function ReimbursementsPage() {
     const { url } = useTenantSlug();
-    const { claims, isLoading } = useReimbursements();
+    const { claims, isLoading } = usePayrollClaims();
 
     const inner = isLoading ? (
         <div className="flex-1 flex items-center justify-center">
@@ -46,15 +40,21 @@ export default function ReimbursementsPage() {
                 <li key={claim.id} className="flex items-center justify-between px-4 py-3">
                     <div>
                         <p className="text-base font-medium text-gray-800">
-                            {REIMBURSEMENT_TYPE_LABELS[claim.type]}
+                            {claim.claimTypeName ?? claim.claimTypeId ?? "—"}
                         </p>
-                        <p className="text-sm text-gray-400">{claim.date}</p>
+                        <p className="text-sm text-gray-400">
+                            {format(new Date(claim.date), "d MMM yyyy")}
+                        </p>
                     </div>
                     <div className="text-right flex flex-col items-end gap-1">
                         <p className="text-base font-semibold text-gray-900">
                             Rp {claim.amount.toLocaleString("id-ID")}
                         </p>
-                        <StatusBadge status={claim.status} />
+                        <span
+                            className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLE[claim.status] ?? STATUS_STYLE.pending}`}
+                        >
+                            {STATUS_LABEL[claim.status] ?? claim.status}
+                        </span>
                     </div>
                 </li>
             ))}

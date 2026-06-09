@@ -244,7 +244,7 @@ export const mobileRoutes = {
         parent: "/mobile/account/earnings",
     },
     "/mobile/account/reimbursements": {
-        title: "Reimbursements",
+        title: "My Claims",
         subPage: true,
         inlineHeader: true,
         isChart: false,
@@ -257,6 +257,13 @@ export const mobileRoutes = {
         inlineHeader: false,
         isChart: false,
         parent: "/mobile/account/reimbursements",
+    },
+    "/mobile/account/payroll-info": {
+        title: "Payroll Info",
+        subPage: true,
+        inlineHeader: false,
+        isChart: false,
+        parent: "/mobile/account",
     },
 } satisfies Record<string, RouteConfig>;
 

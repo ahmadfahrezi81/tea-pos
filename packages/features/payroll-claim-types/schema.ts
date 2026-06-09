@@ -1,0 +1,65 @@
+import { z } from "zod";
+import { UUIDSchema } from "../shared/common-schema";
+
+// ============================================================================
+// INPUT SCHEMAS
+// ============================================================================
+
+export const CreatePayrollClaimTypeInput = z
+    .object({
+        name: z.string().min(1).max(100),
+        slug: z.string().min(1).max(100).regex(/^[A-Z0-9_]+$/, "Slug must be uppercase letters, digits, and underscores"),
+        frequency: z.enum(["weekly", "monthly", "one_time"]),
+    })
+    .openapi({ title: "CreatePayrollClaimTypeInput" });
+
+export const UpdatePayrollClaimTypeInput = z
+    .object({
+        name: z.string().min(1).max(100).optional(),
+        isEnabled: z.boolean().optional(),
+    })
+    .openapi({ title: "UpdatePayrollClaimTypeInput" });
+
+export const SetClaimEligibilityInput = z
+    .object({
+        userId: UUIDSchema,
+        claimTypeIds: z.array(UUIDSchema),
+    })
+    .openapi({ title: "SetClaimEligibilityInput" });
+
+export const GetClaimEligibilityQuery = z
+    .object({
+        userId: UUIDSchema,
+    })
+    .openapi({ title: "GetClaimEligibilityQuery" });
+
+// ============================================================================
+// RESPONSE SCHEMAS
+// ============================================================================
+
+export const PayrollClaimTypeResponse = z
+    .object({
+        id: UUIDSchema,
+        tenantId: UUIDSchema,
+        name: z.string(),
+        slug: z.string(),
+        frequency: z.enum(["weekly", "monthly", "one_time"]),
+        isEnabled: z.boolean(),
+        createdAt: z.string().nullable(),
+    })
+    .openapi({ title: "PayrollClaimTypeResponse" });
+
+export const PayrollClaimTypeListResponse = z
+    .object({ claimTypes: z.array(PayrollClaimTypeResponse) })
+    .openapi({ title: "PayrollClaimTypeListResponse" });
+
+// ============================================================================
+// TYPE EXPORTS
+// ============================================================================
+
+export type CreatePayrollClaimTypeInput = z.infer<typeof CreatePayrollClaimTypeInput>;
+export type UpdatePayrollClaimTypeInput = z.infer<typeof UpdatePayrollClaimTypeInput>;
+export type SetClaimEligibilityInput = z.infer<typeof SetClaimEligibilityInput>;
+export type GetClaimEligibilityQuery = z.infer<typeof GetClaimEligibilityQuery>;
+export type PayrollClaimTypeResponse = z.infer<typeof PayrollClaimTypeResponse>;
+export type PayrollClaimTypeListResponse = z.infer<typeof PayrollClaimTypeListResponse>;

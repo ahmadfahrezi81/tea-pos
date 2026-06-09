@@ -14,12 +14,21 @@ export async function GET(request: NextRequest) {
         const supabase = getServiceClient();
         const tenantId = await getCurrentTenantId();
 
-        const query = GetPayslipQuery.safeParse(Object.fromEntries(new URL(request.url).searchParams));
+        const query = GetPayslipQuery.safeParse(
+            Object.fromEntries(new URL(request.url).searchParams),
+        );
         if (!query.success) return badRequest("Invalid query parameters");
 
-        const targetUserId = user.role === "ADMIN" && query.data.userId ? query.data.userId : user.id;
+        const targetUserId =
+            user.role === "ADMIN" && query.data.userId ? query.data.userId : user.id;
 
-        const payslip = await getPayslip(supabase, { tenantId, userId: targetUserId, periodId: query.data.periodId });
+        const payslip = await getPayslip(supabase, {
+            tenantId,
+            userId: targetUserId,
+            periodId: query.data.periodId,
+        });
         return ok(payslip);
-    } catch (error) { return handleError("GET /api/payroll/payslip", error); }
+    } catch (error) {
+        return handleError("GET /api/payroll/payslip", error);
+    }
 }

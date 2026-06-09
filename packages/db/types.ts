@@ -92,8 +92,240 @@ export type Database = {
           },
         ]
       }
-      payroll_entries: {
+      payroll_claim_eligibility: {
         Row: {
+          claim_type_id: string
+          created_at: string | null
+          id: string
+          removed_at: string | null
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          claim_type_id: string
+          created_at?: string | null
+          id?: string
+          removed_at?: string | null
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          claim_type_id?: string
+          created_at?: string | null
+          id?: string
+          removed_at?: string | null
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_claim_eligibility_claim_type_id_fkey"
+            columns: ["claim_type_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_claim_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_claim_eligibility_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_claim_eligibility_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_claim_types: {
+        Row: {
+          created_at: string | null
+          frequency: string
+          id: string
+          is_enabled: boolean
+          name: string
+          slug: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          frequency: string
+          id?: string
+          is_enabled?: boolean
+          name: string
+          slug: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          frequency?: string
+          id?: string
+          is_enabled?: boolean
+          name?: string
+          slug?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_claim_types_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_claims: {
+        Row: {
+          amount: number
+          claim_type_id: string | null
+          created_at: string
+          date: string
+          frequency: string | null
+          id: string
+          notes: string | null
+          paid_at: string | null
+          paid_by: string | null
+          payment_proof_url: string | null
+          payroll_period_id: string
+          photo_url: string | null
+          status: string
+          store_id: string | null
+          tenant_id: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          claim_type_id?: string | null
+          created_at?: string
+          date: string
+          frequency?: string | null
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          paid_by?: string | null
+          payment_proof_url?: string | null
+          payroll_period_id: string
+          photo_url?: string | null
+          status?: string
+          store_id?: string | null
+          tenant_id: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          claim_type_id?: string | null
+          created_at?: string
+          date?: string
+          frequency?: string | null
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          paid_by?: string | null
+          payment_proof_url?: string | null
+          payroll_period_id?: string
+          photo_url?: string | null
+          status?: string
+          store_id?: string | null
+          tenant_id?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_claims_claim_type_id_fkey"
+            columns: ["claim_type_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_claim_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_claims_paid_by_fkey"
+            columns: ["paid_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_claims_payroll_period_id_fkey"
+            columns: ["payroll_period_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_periods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_claims_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_claims_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_claims_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_commission_types: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_enabled: boolean
+          name: string
+          slug: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean
+          name: string
+          slug: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean
+          name?: string
+          slug?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_commission_types_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_commissions: {
+        Row: {
+          commission_type_id: string | null
           created_at: string | null
           daily_summary_id: string
           date: string
@@ -101,6 +333,7 @@ export type Database = {
           id: string
           payroll_period_id: string
           rate_per_cup: number
+          rate_per_unit: number
           status: string
           store_id: string
           tenant_id: string
@@ -108,6 +341,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          commission_type_id?: string | null
           created_at?: string | null
           daily_summary_id: string
           date: string
@@ -115,6 +349,7 @@ export type Database = {
           id?: string
           payroll_period_id: string
           rate_per_cup: number
+          rate_per_unit: number
           status?: string
           store_id: string
           tenant_id: string
@@ -122,6 +357,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          commission_type_id?: string | null
           created_at?: string | null
           daily_summary_id?: string
           date?: string
@@ -129,6 +365,7 @@ export type Database = {
           id?: string
           payroll_period_id?: string
           rate_per_cup?: number
+          rate_per_unit?: number
           status?: string
           store_id?: string
           tenant_id?: string
@@ -137,35 +374,42 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "payroll_entries_daily_summary_id_fkey"
+            foreignKeyName: "payroll_commissions_commission_type_id_fkey"
+            columns: ["commission_type_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_commission_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_commissions_daily_summary_id_fkey"
             columns: ["daily_summary_id"]
             isOneToOne: false
             referencedRelation: "store_daily_summaries"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "payroll_entries_payroll_period_id_fkey"
+            foreignKeyName: "payroll_commissions_payroll_period_id_fkey"
             columns: ["payroll_period_id"]
             isOneToOne: false
             referencedRelation: "payroll_periods"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "payroll_entries_store_id_fkey"
+            foreignKeyName: "payroll_commissions_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "payroll_entries_tenant_id_fkey"
+            foreignKeyName: "payroll_commissions_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "payroll_entries_user_id_fkey"
+            foreignKeyName: "payroll_commissions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
@@ -175,42 +419,42 @@ export type Database = {
       }
       payroll_payouts: {
         Row: {
+          claims_total: number
+          commissions_total: number
           created_at: string
-          cups_pay_total: number
           id: string
           paid_at: string | null
           paid_by: string | null
           payment_proof_url: string | null
           payroll_period_id: string
-          reimbursements_total: number
           status: string
           tenant_id: string
           total_pay: number
           user_id: string
         }
         Insert: {
+          claims_total?: number
+          commissions_total?: number
           created_at?: string
-          cups_pay_total?: number
           id?: string
           paid_at?: string | null
           paid_by?: string | null
           payment_proof_url?: string | null
           payroll_period_id: string
-          reimbursements_total?: number
           status?: string
           tenant_id: string
           total_pay?: number
           user_id: string
         }
         Update: {
+          claims_total?: number
+          commissions_total?: number
           created_at?: string
-          cups_pay_total?: number
           id?: string
           paid_at?: string | null
           paid_by?: string | null
           payment_proof_url?: string | null
           payroll_period_id?: string
-          reimbursements_total?: number
           status?: string
           tenant_id?: string
           total_pay?: number
@@ -282,73 +526,60 @@ export type Database = {
           },
         ]
       }
-      payroll_reimbursements: {
+      payroll_user_info: {
         Row: {
-          amount: number
-          created_at: string
-          date: string
+          bank_account_holder: string | null
+          bank_account_number: string | null
+          bank_name: string | null
+          commission_type_id: string | null
+          created_at: string | null
           id: string
-          notes: string | null
-          payroll_period_id: string | null
-          photo_url: string | null
-          status: string
-          store_id: string | null
+          rate_per_cup: number
           tenant_id: string
-          type: string
+          updated_at: string | null
           user_id: string
         }
         Insert: {
-          amount: number
-          created_at?: string
-          date: string
+          bank_account_holder?: string | null
+          bank_account_number?: string | null
+          bank_name?: string | null
+          commission_type_id?: string | null
+          created_at?: string | null
           id?: string
-          notes?: string | null
-          payroll_period_id?: string | null
-          photo_url?: string | null
-          status?: string
-          store_id?: string | null
+          rate_per_cup: number
           tenant_id: string
-          type: string
+          updated_at?: string | null
           user_id: string
         }
         Update: {
-          amount?: number
-          created_at?: string
-          date?: string
+          bank_account_holder?: string | null
+          bank_account_number?: string | null
+          bank_name?: string | null
+          commission_type_id?: string | null
+          created_at?: string | null
           id?: string
-          notes?: string | null
-          payroll_period_id?: string | null
-          photo_url?: string | null
-          status?: string
-          store_id?: string | null
+          rate_per_cup?: number
           tenant_id?: string
-          type?: string
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "reimbursements_payroll_period_id_fkey"
-            columns: ["payroll_period_id"]
+            foreignKeyName: "payroll_user_info_commission_type_id_fkey"
+            columns: ["commission_type_id"]
             isOneToOne: false
-            referencedRelation: "payroll_periods"
+            referencedRelation: "payroll_commission_types"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "reimbursements_store_id_fkey"
-            columns: ["store_id"]
-            isOneToOne: false
-            referencedRelation: "stores"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reimbursements_tenant_id_fkey"
+            foreignKeyName: "payroll_user_info_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "reimbursements_user_id_fkey"
+            foreignKeyName: "payroll_user_info_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
@@ -1369,9 +1600,6 @@ export type Database = {
       }
       users: {
         Row: {
-          bank_account_holder: string | null
-          bank_account_number: string | null
-          bank_name: string | null
           created_at: string | null
           email: string
           full_name: string
@@ -1382,9 +1610,6 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          bank_account_holder?: string | null
-          bank_account_number?: string | null
-          bank_name?: string | null
           created_at?: string | null
           email: string
           full_name: string
@@ -1395,9 +1620,6 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          bank_account_holder?: string | null
-          bank_account_number?: string | null
-          bank_name?: string | null
           created_at?: string | null
           email?: string
           full_name?: string

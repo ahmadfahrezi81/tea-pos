@@ -2,7 +2,7 @@
 
 import useSWR from "swr";
 import { ordersApi } from "@/lib/api/orders";
-import { commissionConfigsApi } from "@/lib/api/commission-configs";
+import { payrollUserInfoApi } from "@/lib/api/payroll-user-info";
 
 interface TodayCupsResult {
     totalCups: number;
@@ -16,9 +16,9 @@ export function useTodayCups(storeId?: string, userId?: string, date?: string) {
     return useSWR<TodayCupsResult>(
         key,
         async () => {
-            const [ordersResult, rateResult] = await Promise.all([
+            const [ordersResult, infoResult] = await Promise.all([
                 ordersApi.list({ storeId: storeId!, date: date! }),
-                commissionConfigsApi.getRate({ userId: userId! }),
+                payrollUserInfoApi.get().catch(() => null),
             ]);
 
             const totalCups = ordersResult.orders
@@ -28,7 +28,7 @@ export function useTodayCups(storeId?: string, userId?: string, date?: string) {
                     0,
                 );
 
-            const ratePerCup = rateResult.rate;
+            const ratePerCup = infoResult?.ratePerCup ?? 0;
 
             return {
                 totalCups,

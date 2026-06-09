@@ -5,10 +5,9 @@ import { useAuth } from "@/lib/context/AuthContext";
 import VersionInfo from "@/components/shared/VersionInfo";
 import { useRouter } from "next/navigation";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
-import { Pencil, Bell, Globe, ChevronRight, UserCircle, Banknote, ReceiptText } from "lucide-react";
+import { Pencil, Bell, Globe, ChevronRight, UserCircle, Banknote, ReceiptText, Wallet } from "lucide-react";
 import Image from "next/image";
 import { navigation } from "@tea-pos/utils/navigation";
-import { useFlags } from "@/lib/context/FlagsContext";
 
 // ============================================================================
 // SETTINGS ROW
@@ -54,7 +53,6 @@ export default function AccountProfile() {
     const router = useRouter();
     const { url } = useTenantSlug();
     const { user, avatarUrl } = useAuth();
-    const { flags: { isReimbursementEnabled }, isLoading: flagsLoading } = useFlags();
 
     const handleLogout = useCallback(async () => {
         const shouldLogout = window.confirm(
@@ -114,9 +112,13 @@ export default function AccountProfile() {
                 />
                 <SettingsRow
                     icon={<ReceiptText size={22} strokeWidth={2} className="text-gray-900" />}
-                    label="Reimbursements"
+                    label="My Claims"
                     onClick={() => navigation.push(url("/mobile/account/reimbursements"))}
-                    disabled={flagsLoading ? false : !isReimbursementEnabled}
+                />
+                <SettingsRow
+                    icon={<Wallet size={22} strokeWidth={2} className="text-gray-900" />}
+                    label="Payroll Info"
+                    onClick={() => navigation.push(url("/mobile/account/payroll-info"))}
                 />
                 <SettingsRow
                     icon={<Bell size={22} strokeWidth={2} className="text-gray-900" />}

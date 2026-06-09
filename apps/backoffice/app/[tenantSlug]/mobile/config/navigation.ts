@@ -42,7 +42,19 @@ export const mobileRoutes = {
         parent: "/mobile/pay",
     },
     "/mobile/pay/reimbursements": {
-        title: "Reimbursements",
+        title: "Claims",
+        subPage: true,
+        inlineHeader: false,
+        parent: "/mobile/pay",
+    },
+    "/mobile/pay/claim-types": {
+        title: "Claim Types",
+        subPage: true,
+        inlineHeader: false,
+        parent: "/mobile/pay",
+    },
+    "/mobile/pay/commission-types": {
+        title: "Commission Types",
         subPage: true,
         inlineHeader: false,
         parent: "/mobile/pay",

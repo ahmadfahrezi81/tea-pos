@@ -2,7 +2,7 @@ import { getServiceClient } from "@/lib/supabase/service";
 import { getCurrentTenantId } from "@tea-pos/utils/server-config/tenant";
 import { NextRequest } from "next/server";
 import { UpdatePayoutInput } from "@tea-pos/features/payroll/schema";
-import { updatePayoutStatus, bundleReimbursementsIntoPeriod, getPayout } from "@tea-pos/services/payroll";
+import { updatePayoutStatus } from "@tea-pos/services/payroll";
 import { ok, badRequest, unauthorized, forbidden, handleError } from "@/lib/api/response";
 import { getRequestUser } from "@/lib/auth/get-request-user";
 
@@ -18,17 +18,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
         const body = UpdatePayoutInput.safeParse(await request.json());
         if (!body.success) return badRequest("Validation failed");
-
-        if (body.data.status === "approved") {
-            const payout = await getPayout(supabase, { id, tenantId });
-            if (payout) {
-                await bundleReimbursementsIntoPeriod(supabase, {
-                    tenantId,
-                    periodId: payout.payrollPeriodId,
-                    userId: payout.userId as string,
-                });
-            }
-        }
 
         const result = await updatePayoutStatus(supabase, {
             id, tenantId, actorId: user.id,
