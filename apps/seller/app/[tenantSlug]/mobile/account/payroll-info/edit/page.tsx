@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePayrollUserInfo } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
-import { NumberInput } from "../../../home/manage/_components/shared/NumberInput";
+import { NumberInput } from "../../../../../home/manage/_components/shared/NumberInput";
 import type { PayrollUserInfoResponse } from "@tea-pos/features/payroll-user-info/schema";
 
 function EditForm({ info, update }: {

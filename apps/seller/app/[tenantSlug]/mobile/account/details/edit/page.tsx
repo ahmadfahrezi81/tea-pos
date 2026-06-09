@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCurrentUser } from "@/lib/hooks/user/useCurrentUser";
 import { usersApi } from "@/lib/api/users";
-import { NumberInput } from "../../../home/manage/_components/shared/NumberInput";
+import { NumberInput } from "../../../../../../home/manage/_components/shared/NumberInput";
 import type { User } from "@tea-pos/features/users/schema";
 
 function splitFullName(fullName: string) {
