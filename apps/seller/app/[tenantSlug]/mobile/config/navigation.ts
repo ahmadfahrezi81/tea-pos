@@ -229,34 +229,34 @@ export const mobileRoutes = {
         isChart: false,
         parent: "/mobile/home/manage/report",
     },
-    "/mobile/account/earnings": {
+    "/mobile/more/earnings": {
         title: "My Pay",
         subPage: true,
         inlineHeader: false,
         isChart: false,
-        parent: "/mobile/account",
+        parent: "/mobile/more",
     },
-    "/mobile/account/earnings/*": {
+    "/mobile/more/earnings/*": {
         title: "Pay Details",
         subPage: true,
         inlineHeader: false,
         isChart: false,
-        parent: "/mobile/account/earnings",
+        parent: "/mobile/more/earnings",
     },
-    "/mobile/account/reimbursements": {
+    "/mobile/more/reimbursements": {
         title: "My Claims",
         subPage: true,
         inlineHeader: true,
         isChart: false,
-        parent: "/mobile/account",
+        parent: "/mobile/more",
         headerAction: "add",
     },
-    "/mobile/account/reimbursements/add": {
+    "/mobile/more/reimbursements/add": {
         title: "New Claim",
         subPage: true,
         inlineHeader: false,
         isChart: false,
-        parent: "/mobile/account/reimbursements",
+        parent: "/mobile/more/reimbursements",
     },
     "/mobile/account/payroll-info": {
         title: "Payroll Info",
@@ -291,8 +291,8 @@ export const resolveRoute = (path: string): RouteConfig | null => {
         return mobileRoutes["/mobile/analytics/daily/*"];
     }
 
-    if (path.includes("/mobile/account/earnings/")) {
-        return mobileRoutes["/mobile/account/earnings/*"];
+    if (path.includes("/mobile/more/earnings/")) {
+        return mobileRoutes["/mobile/more/earnings/*"];
     }
 
     return null;

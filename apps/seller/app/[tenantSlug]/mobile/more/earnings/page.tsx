@@ -76,7 +76,7 @@ export default function EarningsPage() {
                             <button
                                 key={period.id}
                                 onClick={() =>
-                                    navigation.push(url(`/mobile/account/earnings/${period.id}`))
+                                    navigation.push(url(`/mobile/more/earnings/${period.id}`))
                                 }
                                 className="w-full bg-white rounded-xl p-4 flex items-center gap-3 text-left active:bg-gray-50"
                             >

@@ -68,7 +68,7 @@ export default function ReimbursementsPage() {
             </div>
             <FormFooter
                 label="New Claim"
-                onSubmit={() => navigation.push(url("/mobile/account/reimbursements/add"))}
+                onSubmit={() => navigation.push(url("/mobile/more/reimbursements/add"))}
             />
         </>
     );

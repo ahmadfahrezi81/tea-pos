@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/context/AuthContext";
 import VersionInfo from "@/components/shared/VersionInfo";
 import { useRouter } from "next/navigation";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
-import { Pencil, Bell, Globe, ChevronRight, UserCircle, Banknote, ReceiptText, Wallet } from "lucide-react";
+import { Pencil, Bell, Globe, ChevronRight, UserCircle, Wallet } from "lucide-react";
 import Image from "next/image";
 import { navigation } from "@tea-pos/utils/navigation";
 
@@ -104,16 +104,6 @@ export default function AccountProfile() {
                     icon={<Pencil size={22} strokeWidth={2} className="text-gray-900" />}
                     label="Personal Details"
                     onClick={() => navigation.push(url("/mobile/account/details"))}
-                />
-                <SettingsRow
-                    icon={<Banknote size={22} strokeWidth={2} className="text-gray-900" />}
-                    label="My Pay"
-                    onClick={() => navigation.push(url("/mobile/account/earnings"))}
-                />
-                <SettingsRow
-                    icon={<ReceiptText size={22} strokeWidth={2} className="text-gray-900" />}
-                    label="My Claims"
-                    onClick={() => navigation.push(url("/mobile/account/reimbursements"))}
                 />
                 <SettingsRow
                     icon={<Wallet size={22} strokeWidth={2} className="text-gray-900" />}

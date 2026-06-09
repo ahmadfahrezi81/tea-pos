@@ -9,6 +9,8 @@ import {
     ChevronRight,
     Rocket,
     Cloud,
+    Banknote,
+    ReceiptText,
 } from "lucide-react";
 import { useStore } from "@/lib/context/StoreContext";
 import { useFastOrderMode } from "@/lib/context/FastOrderModeContext";
@@ -94,6 +96,19 @@ export default function MoreMenu() {
 
     return (
         <div className="space-y-4">
+            <div className="bg-white rounded-2xl px-4 py-1">
+                <SettingsRow
+                    icon={<Banknote size={22} strokeWidth={2} className="text-gray-900" />}
+                    label="My Pay"
+                    onClick={() => navigation.push(url("/mobile/more/earnings"))}
+                />
+                <SettingsRow
+                    icon={<ReceiptText size={22} strokeWidth={2} className="text-gray-900" />}
+                    label="My Claims"
+                    onClick={() => navigation.push(url("/mobile/more/reimbursements"))}
+                />
+            </div>
+
             <h3 className="text-lg font-semibold text-gray-800 mb-1">
                 Quick Settings
             </h3>
