@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCurrentUser } from "@/lib/hooks/user/useCurrentUser";
 import { usersApi } from "@/lib/api/users";
+import { NumberInput } from "../../../../../../home/manage/_components/shared/NumberInput";
 import type { User } from "@tea-pos/features/users/schema";
 
 function splitFullName(fullName: string) {
@@ -11,12 +12,20 @@ function splitFullName(fullName: string) {
     return { firstName: parts[0] ?? "", lastName: parts.slice(1).join(" ") };
 }
 
+function stripPhonePrefix(phone: string | null): string {
+    if (!phone) return "";
+    if (phone.startsWith("+62")) return phone.slice(3);
+    if (phone.startsWith("62")) return phone.slice(2);
+    if (phone.startsWith("0")) return phone.slice(1);
+    return phone.replace(/\D/g, "");
+}
+
 function EditForm({ user, mutate }: { user: User; mutate: () => void }) {
     const router = useRouter();
     const { firstName: initFirst, lastName: initLast } = splitFullName(user.fullName);
     const [firstName, setFirstName] = useState(initFirst);
     const [lastName, setLastName] = useState(initLast);
-    const [phoneNumber, setPhoneNumber] = useState(user.phoneNumber ?? "");
+    const [phoneDigits, setPhoneDigits] = useState(stripPhonePrefix(user.phoneNumber));
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -27,7 +36,7 @@ function EditForm({ user, mutate }: { user: User; mutate: () => void }) {
             const fullName = [firstName.trim(), lastName.trim()].filter(Boolean).join(" ");
             await usersApi.update({
                 fullName: fullName || undefined,
-                phoneNumber: phoneNumber.trim() || null,
+                phoneNumber: phoneDigits.trim() ? `+62${phoneDigits.trim()}` : null,
             });
             mutate();
             router.back();
@@ -63,13 +72,13 @@ function EditForm({ user, mutate }: { user: User; mutate: () => void }) {
                 </div>
                 <div className="space-y-1.5">
                     <p className="text-xs font-medium text-gray-500">Phone Number</p>
-                    <input
-                        type="tel"
-                        inputMode="tel"
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
-                        placeholder="e.g. +62 812 3456 7890"
-                        className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-brand/40"
+                    <NumberInput
+                        compact
+                        asString
+                        prefix="+62"
+                        value={phoneDigits}
+                        onChange={setPhoneDigits}
+                        placeholder="812 345 6789"
                     />
                 </div>
                 {error && <p className="text-sm text-red-500">{error}</p>}
