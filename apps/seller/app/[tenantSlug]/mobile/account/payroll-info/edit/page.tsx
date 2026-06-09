@@ -50,6 +50,7 @@ function EditForm({ info, update }: {
                 <div className="space-y-1.5">
                     <p className="text-xs font-medium text-gray-500">Account number</p>
                     <NumberInput
+                        raw
                         value={bankAccountNumber}
                         onChange={setBankAccountNumber}
                         placeholder="1234567890"

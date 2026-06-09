@@ -75,6 +75,7 @@ function EditForm({ user, mutate }: { user: User; mutate: () => void }) {
                     <p className="text-xs font-medium text-gray-500">Phone Number</p>
                     <NumberInput
                         prefix="+62"
+                        raw
                         value={phoneDigits}
                         onChange={setPhoneDigits}
                         placeholder="812 345 6789"

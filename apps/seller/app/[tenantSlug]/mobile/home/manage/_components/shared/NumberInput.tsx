@@ -9,26 +9,29 @@ interface NumberInputProps {
     currency?: boolean;
     unit?: string;
     prefix?: string;
+    /** Skip thousand-separator formatting — for phone numbers, bank accounts, etc. */
+    raw?: boolean;
 }
 
 const formatDisplay = (val: number) =>
     val === 0 ? "" : val.toLocaleString("id-ID");
 
-export function NumberInput({ value, onChange, placeholder = "0", currency = false, unit, prefix }: NumberInputProps) {
-    const [localValue, setLocalValue] = useState(formatDisplay(value));
+export function NumberInput({ value, onChange, placeholder = "0", currency = false, unit, prefix, raw = false }: NumberInputProps) {
+    const display = (val: number) => raw ? (val === 0 ? "" : String(val)) : formatDisplay(val);
+    const [localValue, setLocalValue] = useState(display(value));
     const dirty = useRef(false);
 
     useEffect(() => {
         if (!dirty.current) {
-            setLocalValue(formatDisplay(value));
+            setLocalValue(display(value));
         }
     }, [value]);
 
-    const handleChange = (raw: string) => {
+    const handleChange = (input: string) => {
         dirty.current = true;
-        const digits = raw.replace(/\D/g, "");
+        const digits = input.replace(/\D/g, "");
         const num = parseInt(digits) || 0;
-        setLocalValue(digits === "" ? "" : num.toLocaleString("id-ID"));
+        setLocalValue(digits === "" ? "" : raw ? digits : num.toLocaleString("id-ID"));
         onChange(num);
     };
 
