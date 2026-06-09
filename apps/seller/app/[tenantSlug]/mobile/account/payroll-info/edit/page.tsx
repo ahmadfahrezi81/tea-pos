@@ -52,7 +52,7 @@ function EditForm({ info, update }: {
                         type="text"
                         inputMode="numeric"
                         value={bankAccountNumber}
-                        onChange={(e) => setBankAccountNumber(e.target.value)}
+                        onChange={(e) => setBankAccountNumber(e.target.value.replace(/\D/g, ""))}
                         placeholder="e.g. 1234567890"
                         className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-brand/40"
                     />
