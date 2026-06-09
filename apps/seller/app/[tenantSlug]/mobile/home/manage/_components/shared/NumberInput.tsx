@@ -61,11 +61,9 @@ export function NumberInput({
 
     if (compact) {
         return (
-            <div className="flex items-center gap-1.5 px-3 py-2.5 border border-gray-200 rounded-xl bg-white focus-within:ring-2 focus-within:ring-brand/40">
+            <div className="flex items-center gap-1.5 w-full px-3 py-2.5 border border-gray-200 rounded-xl focus-within:outline-none focus-within:ring-2 focus-within:ring-brand/40">
                 {showPrefix && (
-                    <span className="text-base font-semibold text-gray-400 shrink-0">
-                        {showPrefix}
-                    </span>
+                    <span className="text-base text-gray-500 shrink-0">{showPrefix}</span>
                 )}
                 <input
                     type="text"
@@ -73,12 +71,10 @@ export function NumberInput({
                     value={localValue}
                     onChange={(e) => handleChange(e.target.value)}
                     placeholder={placeholder}
-                    className="text-base font-medium text-gray-900 border-none outline-none bg-transparent w-full min-w-0"
+                    className="text-base text-gray-900 border-none outline-none bg-transparent w-full min-w-0"
                 />
                 {unit && (
-                    <span className="text-base font-semibold text-gray-400 shrink-0">
-                        {unit}
-                    </span>
+                    <span className="text-base text-gray-500 shrink-0">{unit}</span>
                 )}
             </div>
         );
