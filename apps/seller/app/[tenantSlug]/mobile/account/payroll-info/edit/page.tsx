@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePayrollUserInfo } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
-import { NumberInput } from "../../../../../home/manage/_components/shared/NumberInput";
 import type { PayrollUserInfoResponse } from "@tea-pos/features/payroll-user-info/schema";
 
 function EditForm({ info, update }: {
@@ -49,12 +48,13 @@ function EditForm({ info, update }: {
                 </div>
                 <div className="space-y-1.5">
                     <p className="text-xs font-medium text-gray-500">Account number</p>
-                    <NumberInput
-                        compact
-                        asString
+                    <input
+                        type="text"
+                        inputMode="numeric"
                         value={bankAccountNumber}
-                        onChange={setBankAccountNumber}
-                        placeholder="1234567890"
+                        onChange={(e) => setBankAccountNumber(e.target.value)}
+                        placeholder="e.g. 1234567890"
+                        className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-brand/40"
                     />
                 </div>
                 <div className="space-y-1.5">
