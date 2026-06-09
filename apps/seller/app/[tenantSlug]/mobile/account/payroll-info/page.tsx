@@ -1,104 +1,54 @@
 "use client";
 
-import { useState } from "react";
 import { usePayrollUserInfo } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
-import { FormFooter } from "@/components/shared/FormFooter";
-import type { PayrollUserInfoResponse } from "@tea-pos/features/payroll-user-info/schema";
+import { Copy, Check } from "lucide-react";
+import { useState } from "react";
 
-function PayrollInfoForm({ info, update }: {
-    info: PayrollUserInfoResponse | null;
-    update: (input: { bankName?: string; bankAccountNumber?: string; bankAccountHolder?: string }) => Promise<PayrollUserInfoResponse>;
-}) {
-    const [bankName, setBankName] = useState(info?.bankName ?? "");
-    const [bankAccountNumber, setBankAccountNumber] = useState(info?.bankAccountNumber ?? "");
-    const [bankAccountHolder, setBankAccountHolder] = useState(info?.bankAccountHolder ?? "");
-    const [isSaving, setIsSaving] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [saved, setSaved] = useState(false);
-
-    const handleSave = async () => {
-        setIsSaving(true);
-        setError(null);
-        setSaved(false);
-        try {
-            await update({
-                bankName: bankName.trim() || undefined,
-                bankAccountNumber: bankAccountNumber.trim() || undefined,
-                bankAccountHolder: bankAccountHolder.trim() || undefined,
-            });
-            setSaved(true);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to save");
-        } finally {
-            setIsSaving(false);
-        }
+const FieldRow = ({ label, value, copyable = false }: { label: string; value: string; copyable?: boolean }) => {
+    const [copied, setCopied] = useState(false);
+    const handleCopy = () => {
+        navigator.clipboard.writeText(value);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
     };
-
     return (
-        <>
-            <div className="space-y-3 flex-1">
-                <div className="bg-white rounded-xl p-4 space-y-4">
-                    <p className="text-xs text-gray-400 uppercase font-semibold tracking-wide">Bank Details</p>
-
-                    <div className="space-y-1.5">
-                        <p className="text-xs font-medium text-gray-500">Bank name</p>
-                        <input
-                            type="text"
-                            value={bankName}
-                            onChange={(e) => setBankName(e.target.value)}
-                            placeholder="e.g. BCA, Mandiri, BNI"
-                            className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-brand/40"
-                        />
-                    </div>
-
-                    <div className="space-y-1.5">
-                        <p className="text-xs font-medium text-gray-500">Account number</p>
-                        <input
-                            type="text"
-                            inputMode="numeric"
-                            value={bankAccountNumber}
-                            onChange={(e) => setBankAccountNumber(e.target.value)}
-                            placeholder="e.g. 1234567890"
-                            className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-brand/40"
-                        />
-                    </div>
-
-                    <div className="space-y-1.5">
-                        <p className="text-xs font-medium text-gray-500">Account holder name</p>
-                        <input
-                            type="text"
-                            value={bankAccountHolder}
-                            onChange={(e) => setBankAccountHolder(e.target.value)}
-                            placeholder="As printed on the account"
-                            className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-brand/40"
-                        />
-                    </div>
-
-                    {error && <p className="text-sm text-red-500">{error}</p>}
-                    {saved && <p className="text-sm text-green-600">Saved successfully.</p>}
-                </div>
+        <div className="py-4 border-b border-gray-100 last:border-none">
+            <p className="text-xs text-gray-500 font-medium mb-1">{label}</p>
+            <div className="flex items-center justify-between gap-3">
+                <p className="text-base text-gray-900 font-medium">{value || "—"}</p>
+                {copyable && value && (
+                    <button onClick={handleCopy} className="shrink-0 text-gray-400 active:scale-95 transition-transform">
+                        {copied ? <Check size={18} className="text-green-500" /> : <Copy size={18} />}
+                    </button>
+                )}
             </div>
-
-            <FormFooter
-                label="Save"
-                loadingLabel="Saving..."
-                onSubmit={handleSave}
-                isLoading={isSaving}
-            />
-        </>
+        </div>
     );
-}
+};
+
+const SkeletonRow = () => (
+    <div className="py-4 border-b border-gray-100 last:border-none space-y-2">
+        <div className="h-3 w-20 bg-gray-200 rounded animate-pulse" />
+        <div className="h-5 w-40 bg-gray-100 rounded animate-pulse" />
+    </div>
+);
 
 export default function PayrollInfoPage() {
-    const { info, isLoading, update } = usePayrollUserInfo();
+    const { info, isLoading } = usePayrollUserInfo();
 
-    if (isLoading) {
-        return (
-            <div className="flex-1 flex items-center justify-center">
-                <div className="w-7 h-7 border-3 border-brand border-t-transparent rounded-full animate-spin" />
+    return (
+        <div className="space-y-4">
+            <div className="bg-white rounded-xl px-4">
+                {isLoading ? (
+                    <><SkeletonRow /><SkeletonRow /><SkeletonRow /></>
+                ) : (
+                    <>
+                        <FieldRow label="Bank Name" value={info?.bankName ?? ""} />
+                        <FieldRow label="Account Number" value={info?.bankAccountNumber ?? ""} copyable />
+                        <FieldRow label="Account Holder" value={info?.bankAccountHolder ?? ""} />
+                    </>
+                )}
             </div>
-        );
-    }
-
-    return <PayrollInfoForm key={info?.id ?? "new"} info={info} update={update} />;
+        </div>
+    );
 }

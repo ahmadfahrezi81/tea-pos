@@ -16,7 +16,7 @@ export type RouteConfig = {
     inlineHeader: boolean;
     isChart: boolean;
     parent: string | null | "lastRootTab";
-    headerAction?: "add";
+    headerAction?: "add" | "edit";
     hideStorePicker?: boolean;
     footerCta?: string;
     scrollPaddingBottom?: string;
@@ -261,9 +261,17 @@ export const mobileRoutes = {
     "/mobile/account/payroll-info": {
         title: "Payroll Info",
         subPage: true,
-        inlineHeader: false,
+        inlineHeader: true,
         isChart: false,
         parent: "/mobile/account",
+        headerAction: "edit",
+    },
+    "/mobile/account/payroll-info/edit": {
+        title: "Edit Payroll Info",
+        subPage: true,
+        inlineHeader: false,
+        isChart: false,
+        parent: "/mobile/account/payroll-info",
     },
 } satisfies Record<string, RouteConfig>;
 

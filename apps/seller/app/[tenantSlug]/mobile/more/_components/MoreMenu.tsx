@@ -109,9 +109,6 @@ export default function MoreMenu() {
                 />
             </div>
 
-            <h3 className="text-lg font-semibold text-gray-800 mb-1">
-                Quick Settings
-            </h3>
             <div className="bg-white rounded-2xl px-4 py-1">
                 <SettingsRow
                     icon={<Rocket size={22} strokeWidth={2} className="text-gray-900" />}
