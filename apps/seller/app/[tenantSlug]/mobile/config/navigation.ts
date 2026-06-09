@@ -144,9 +144,17 @@ export const mobileRoutes = {
     "/mobile/account/details": {
         title: "Personal Details",
         subPage: true,
-        inlineHeader: false,
+        inlineHeader: true,
         isChart: false,
         parent: "/mobile/account",
+        headerAction: "edit",
+    },
+    "/mobile/account/details/edit": {
+        title: "Edit Personal Details",
+        subPage: true,
+        inlineHeader: false,
+        isChart: false,
+        parent: "/mobile/account/details",
     },
     "/mobile/notifications": {
         title: "Notifications",

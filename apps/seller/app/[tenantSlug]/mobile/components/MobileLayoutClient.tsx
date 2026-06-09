@@ -135,7 +135,7 @@ export default function MobileLayoutClient({
     const currentTitle = currentRoute?.title ?? "Mobile";
     const currentIsSubPage = currentRoute?.subPage ?? false;
     const isInlineHeader = currentRoute?.inlineHeader ?? false;
-    const hasHeaderAction = currentRoute?.headerAction === "add";
+    const hasHeaderAction = !!currentRoute?.headerAction;
     const footerCtaLabel = currentRoute?.footerCta;
     const parentSuffix = currentRoute?.parent;
     const parentPath = !parentSuffix
