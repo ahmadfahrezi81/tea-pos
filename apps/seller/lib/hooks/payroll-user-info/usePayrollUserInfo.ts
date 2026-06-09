@@ -9,7 +9,7 @@ export function usePayrollUserInfo() {
     const { user } = useAuth();
     const userId = user?.id;
 
-    const { data, error, mutate, isLoading } = useSWR<PayrollUserInfoResponse>(
+    const { data, error, mutate, isLoading } = useSWR<PayrollUserInfoResponse | null>(
         userId ? `payroll-user-info-${userId}` : null,
         () => payrollUserInfoApi.get(),
         { revalidateOnFocus: false, dedupingInterval: 5000 },

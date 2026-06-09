@@ -146,7 +146,7 @@ export async function createPayrollCommissions(
         log("payroll_commission_updated", {
             refId: (commission as { id: string }).id,
             refTable: "payroll_commissions",
-            metadata: { user_id: userId, total_cups: totalCups, rate_per_unit: ratePerUnit, gross_pay: grossPay },
+            metadata: { user_id: userId, total_cups: totalCups, rate_per_cup: ratePerUnit, gross_pay: grossPay },
         });
     }
 

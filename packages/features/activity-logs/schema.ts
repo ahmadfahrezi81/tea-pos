@@ -36,11 +36,14 @@ export const ActivityLogType = z.enum([
     "session_ended",
     "commission_config_updated",
     "payroll_entry_updated",
+    "payroll_commission_updated",
     "payroll_period_updated",
     "supply_request_created",
     "incident_report_created",
     "reimbursement_submitted",
     "reimbursement_status_updated",
+    "claim_submitted",
+    "claim_status_updated",
     "payroll_payout_updated",
 ]);
 
@@ -112,11 +115,14 @@ export type ActivityLogMetadataMap = {
     session_ended:              Record<string, never>;
     commission_config_updated:  { user_id: string; rate_per_cup: number; effective_date: string };
     payroll_entry_updated:      { user_id?: string; total_cups?: number; rate_per_cup?: number; gross_pay?: number; status?: string };
+    payroll_commission_updated: { user_id?: string; total_cups?: number; rate_per_cup?: number; gross_pay?: number; status?: string };
     payroll_period_updated:     { status: string };
     supply_request_created:     { type: string };
     incident_report_created:    { type: string };
     reimbursement_submitted:    { type: string; amount: number; date: string };
     reimbursement_status_updated: { status: string };
+    claim_submitted:            { claim_type_id: string; amount: number; date: string };
+    claim_status_updated:       { status: string };
     payroll_payout_updated:     { status: string };
 };
 
