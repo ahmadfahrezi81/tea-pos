@@ -18,7 +18,7 @@ export async function GET(_request: NextRequest) {
         const tenantId = await getCurrentTenantId();
 
         const info = await getPayrollUserInfo(supabase, { tenantId, userId: user.id });
-        if (!info) return err("Payroll info not found", 404);
+        if (!info) return ok(null);
 
         const parsed = PayrollUserInfoResponse.safeParse(info);
         return ok(parsed.success ? parsed.data : info);

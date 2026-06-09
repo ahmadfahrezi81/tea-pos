@@ -4,7 +4,9 @@ import { PayrollUserInfoResponse } from "@tea-pos/features/payroll-user-info/sch
 
 export const payrollUserInfoApi = {
     get: async () => {
-        return PayrollUserInfoResponse.parse(await apiFetch<unknown>("/api/payroll-user-info"));
+        const data = await apiFetch<unknown>("/api/payroll-user-info");
+        if (!data) return null;
+        return PayrollUserInfoResponse.parse(data);
     },
 
     update: async (input: UpdatePayrollUserInfoInput) => {
