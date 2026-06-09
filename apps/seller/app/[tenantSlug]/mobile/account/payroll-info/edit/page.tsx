@@ -12,7 +12,7 @@ function EditForm({ info, update }: {
 }) {
     const router = useRouter();
     const [bankName, setBankName] = useState(info?.bankName ?? "");
-    const [bankAccountNumber, setBankAccountNumber] = useState(parseInt(info?.bankAccountNumber ?? "") || 0);
+    const [bankAccountNumber, setBankAccountNumber] = useState(Number(info?.bankAccountNumber?.replace(/\D/g, "") || 0));
     const [bankAccountHolder, setBankAccountHolder] = useState(info?.bankAccountHolder ?? "");
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
