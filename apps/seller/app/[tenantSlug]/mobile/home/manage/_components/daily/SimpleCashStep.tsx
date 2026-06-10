@@ -148,7 +148,7 @@
 import { useState, useEffect } from "react";
 import { Check } from "lucide-react";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
-import { NumberInput } from "../shared/NumberInput";
+import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
 
 interface SimpleCashStepProps {
     expectedCash: number;

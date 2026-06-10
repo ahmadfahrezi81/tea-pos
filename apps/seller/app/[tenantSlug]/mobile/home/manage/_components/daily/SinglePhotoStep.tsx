@@ -2,7 +2,7 @@
 
 import { SummaryPhotoThumbnail } from "./SummaryPhotoThumbnail";
 import { PhotoPicker } from "../shared/PhotoPicker";
-import { NumberInput } from "../shared/NumberInput";
+import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
 import { PhotoType } from "@tea-pos/features/summaries/photos-schema";
 import {
     SlottedPhoto,

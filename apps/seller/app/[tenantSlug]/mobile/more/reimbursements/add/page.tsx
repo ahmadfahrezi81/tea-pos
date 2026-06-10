@@ -7,7 +7,7 @@ import { usePayrollClaims, useClaimableTypes, useClaimableDates } from "@/lib/ho
 import { usePayrollPeriods } from "@/lib/hooks/payroll/usePayroll";
 import { apiFetch } from "@/lib/api/client";
 import { SelectInput } from "../../../home/manage/_components/shared/SelectInput";
-import { NumberInput } from "../../../home/manage/_components/shared/NumberInput";
+import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
 import { Textarea } from "../../../home/manage/_components/shared/Textarea";
 import { PhotoPicker } from "../../../home/manage/_components/shared/PhotoPicker";
 import { FormFooter } from "@/components/shared/FormFooter";

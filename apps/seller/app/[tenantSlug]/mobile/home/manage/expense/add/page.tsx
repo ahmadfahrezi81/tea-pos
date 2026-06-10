@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/context/StoreContext";
 import { useSummaries } from "@/lib/hooks/summaries/useDailySummaries";
 import { SelectInput } from "../../_components/shared/SelectInput";
-import { NumberInput } from "../../_components/shared/NumberInput";
+import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
 import { FormFooter } from "@/components/shared/FormFooter";
 import { getTodayLocalStr, getCurrentLocalMonth } from "@tea-pos/utils/time";
 

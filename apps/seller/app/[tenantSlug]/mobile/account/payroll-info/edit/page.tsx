@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePayrollUserInfo } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
 import { useBanks } from "@/lib/hooks/banks/useBanks";
-import { NumberInput } from "../../../home/manage/_components/shared/NumberInput";
+import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
+import { TextInput } from "@tea-pos/ui/custom/TextInput";
 import { Drawer } from "vaul";
 import { X, ChevronRight } from "lucide-react";
 import type { PayrollUserInfoResponse } from "@tea-pos/features/payroll-user-info/schema";
@@ -122,12 +123,10 @@ function EditForm({ info, update }: {
                     </div>
                     <div className="space-y-1.5">
                         <p className="text-xs font-medium text-gray-500">Account holder name</p>
-                        <input
-                            type="text"
+                        <TextInput
                             value={bankAccountHolder}
-                            onChange={(e) => setBankAccountHolder(e.target.value)}
+                            onChange={setBankAccountHolder}
                             placeholder="As printed on the account"
-                            className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-brand/40"
                         />
                     </div>
                     {error && <p className="text-sm text-red-500">{error}</p>}

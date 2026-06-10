@@ -9,7 +9,7 @@ import { navigation } from "@tea-pos/utils/navigation";
 import { useFlags } from "@/lib/context/FlagsContext";
 import { getTodayLocalStr } from "@tea-pos/utils/time";
 import { PhotoPicker } from "../_components/shared/PhotoPicker";
-import { NumberInput } from "../_components/shared/NumberInput";
+import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
 import { FormFooter } from "@/components/shared/FormFooter";
 
 export default function OpenStorePage() {

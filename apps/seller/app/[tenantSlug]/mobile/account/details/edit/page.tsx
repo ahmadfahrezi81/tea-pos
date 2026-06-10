@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCurrentUser } from "@/lib/hooks/user/useCurrentUser";
 import { usersApi } from "@/lib/api/users";
-import { NumberInput } from "../../../home/manage/_components/shared/NumberInput";
+import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
+import { TextInput } from "@tea-pos/ui/custom/TextInput";
 import type { User } from "@tea-pos/features/users/schema";
 
 function stripPhonePrefix(phone: string | null): number {
@@ -53,23 +54,11 @@ function EditForm({ user, mutate }: { user: User; mutate: () => void }) {
             <div className="bg-white rounded-xl p-4 space-y-4">
                 <div className="space-y-1.5">
                     <p className="text-xs font-medium text-gray-500">First Name</p>
-                    <input
-                        type="text"
-                        value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
-                        placeholder="First name"
-                        className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-brand/40"
-                    />
+                    <TextInput value={firstName} onChange={setFirstName} placeholder="First name" />
                 </div>
                 <div className="space-y-1.5">
                     <p className="text-xs font-medium text-gray-500">Last Name</p>
-                    <input
-                        type="text"
-                        value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
-                        placeholder="Last name"
-                        className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-brand/40"
-                    />
+                    <TextInput value={lastName} onChange={setLastName} placeholder="Last name" />
                 </div>
                 <div className="space-y-1.5">
                     <p className="text-xs font-medium text-gray-500">Phone Number</p>
