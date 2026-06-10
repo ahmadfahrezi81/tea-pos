@@ -72,10 +72,6 @@ export default function EditCommissionTypePage({ params }: { params: Promise<{ i
                     <TextInput value={name} onChange={setName} placeholder="e.g. Seller Standard" className="text-base font-medium" />
                 </div>
                 <div className="space-y-1.5">
-                    <p className="text-sm font-medium text-gray-700">Rate per cup</p>
-                    <NumberInput value={ratePerCup} onChange={setRatePerCup} currency prefix="Rp" />
-                </div>
-                <div className="space-y-1.5">
                     <p className="text-sm font-medium text-gray-700">Slug</p>
                     <div className="flex items-center gap-2 px-3 py-2.5 border border-gray-100 rounded-2xl bg-gray-50">
                         <p className="flex-1 font-mono text-base text-gray-500">{type.slug}</p>
@@ -95,6 +91,10 @@ export default function EditCommissionTypePage({ params }: { params: Promise<{ i
                             {copied ? <Check size={16} /> : <Copy size={16} />}
                         </button>
                     </div>
+                </div>
+                <div className="space-y-1.5">
+                    <p className="text-sm font-medium text-gray-700">Rate per cup</p>
+                    <NumberInput value={ratePerCup} onChange={setRatePerCup} currency prefix="Rp" />
                 </div>
                 {error && <p className="text-sm text-red-500">{error}</p>}
             </div>

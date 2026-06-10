@@ -5,8 +5,35 @@ import { useRouter } from "next/navigation";
 import { usePayrollUserInfo } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
 import { usePayrollCommissionTypes } from "@/lib/hooks/payroll-commission-types/usePayrollCommissionTypes";
 import { useTenantUsers } from "@/lib/hooks/users/useTenantUsers";
+import { TextInput } from "@tea-pos/ui/custom/TextInput";
 import { FormFooter } from "@/components/shared/FormFooter";
-import { Check } from "lucide-react";
+import { Check, UserCircle } from "lucide-react";
+
+function InitialsAvatar({ name }: { name: string }) {
+    const initials = name
+        .split(" ")
+        .map((w) => w[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase();
+
+    return (
+        <div className="w-16 h-16 rounded-2xl bg-brand/10 flex items-center justify-center shrink-0">
+            {initials ? (
+                <span className="text-xl font-bold text-brand">{initials}</span>
+            ) : (
+                <UserCircle size={40} className="text-brand" />
+            )}
+        </div>
+    );
+}
+
+const ROLE_LABEL: Record<string, string> = {
+    ADMIN: "Admin",
+    USER: "Staff",
+    DRIVER: "Driver",
+    SUPPLIER: "Supplier",
+};
 
 export default function StaffPayrollInfoPage({ params }: { params: Promise<{ userId: string }> }) {
     const { userId } = use(params);
@@ -16,19 +43,33 @@ export default function StaffPayrollInfoPage({ params }: { params: Promise<{ use
     const { commissionTypes, isLoading: typesLoading } = usePayrollCommissionTypes();
 
     const user = users.find((u) => u.id === userId);
+
     const [selectedTypeId, setSelectedTypeId] = useState<string | null>(null);
+    const [bankName, setBankName] = useState("");
+    const [bankAccountNumber, setBankAccountNumber] = useState("");
+    const [bankAccountHolder, setBankAccountHolder] = useState("");
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (info) setSelectedTypeId(info.commissionTypeId ?? null);
-    }, [info?.commissionTypeId]);
+        if (info) {
+            setSelectedTypeId(info.commissionTypeId ?? null);
+            setBankName(info.bankName ?? "");
+            setBankAccountNumber(info.bankAccountNumber ?? "");
+            setBankAccountHolder(info.bankAccountHolder ?? "");
+        }
+    }, [info?.commissionTypeId, info?.bankName, info?.bankAccountNumber, info?.bankAccountHolder]);
 
     const handleSave = async () => {
         setSaving(true);
         setError(null);
         try {
-            await update({ commissionTypeId: selectedTypeId ?? undefined });
+            await update({
+                commissionTypeId: selectedTypeId ?? undefined,
+                bankName: bankName || null,
+                bankAccountNumber: bankAccountNumber || null,
+                bankAccountHolder: bankAccountHolder || null,
+            });
             router.back();
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to save");
@@ -42,6 +83,7 @@ export default function StaffPayrollInfoPage({ params }: { params: Promise<{ use
     if (isLoading) {
         return (
             <div className="space-y-3">
+                <div className="bg-white rounded-xl h-24 animate-pulse" />
                 {[1, 2, 3].map((i) => <div key={i} className="bg-white rounded-xl h-16 animate-pulse" />)}
             </div>
         );
@@ -51,13 +93,22 @@ export default function StaffPayrollInfoPage({ params }: { params: Promise<{ use
 
     return (
         <div className="space-y-4">
+            {/* User Info Card */}
             {user && (
-                <div className="bg-white rounded-xl p-4">
-                    <p className="text-base font-semibold text-gray-900">{user.fullName}</p>
-                    <p className="text-sm text-gray-400">{user.role}</p>
+                <div className="bg-white rounded-xl p-4 flex items-center gap-4">
+                    <InitialsAvatar name={user.fullName} />
+                    <div className="flex-1 min-w-0 space-y-0.5">
+                        <p className="text-lg font-semibold text-gray-900 truncate">{user.fullName}</p>
+                        <p className="text-sm text-gray-500">{ROLE_LABEL[user.role] ?? user.role}</p>
+                        <p className="text-sm text-gray-400 truncate">{user.email}</p>
+                        {user.phoneNumber && (
+                            <p className="text-sm text-gray-400">{user.phoneNumber}</p>
+                        )}
+                    </div>
                 </div>
             )}
 
+            {/* Commission Type */}
             <div className="space-y-2">
                 <p className="text-xs font-medium text-gray-400 uppercase tracking-wide px-1">Commission Type</p>
 
@@ -91,6 +142,25 @@ export default function StaffPayrollInfoPage({ params }: { params: Promise<{ use
                         </button>
                     ))
                 )}
+            </div>
+
+            {/* Bank Info */}
+            <div className="space-y-2">
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide px-1">Bank Details</p>
+                <div className="bg-white rounded-xl p-4 space-y-4">
+                    <div className="space-y-1.5">
+                        <p className="text-sm font-medium text-gray-700">Bank Name</p>
+                        <TextInput value={bankName} onChange={setBankName} placeholder="e.g. BCA" className="text-base font-medium" />
+                    </div>
+                    <div className="space-y-1.5">
+                        <p className="text-sm font-medium text-gray-700">Account Number</p>
+                        <TextInput value={bankAccountNumber} onChange={setBankAccountNumber} placeholder="e.g. 1234567890" className="text-base font-medium" />
+                    </div>
+                    <div className="space-y-1.5">
+                        <p className="text-sm font-medium text-gray-700">Account Holder</p>
+                        <TextInput value={bankAccountHolder} onChange={setBankAccountHolder} placeholder="e.g. Budi Santoso" className="text-base font-medium" />
+                    </div>
+                </div>
             </div>
 
             {error && <p className="text-sm text-red-500 px-1">{error}</p>}
