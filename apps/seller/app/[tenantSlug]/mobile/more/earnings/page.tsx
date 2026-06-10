@@ -3,7 +3,6 @@
 import { useAuth } from "@/lib/context/AuthContext";
 import { usePayrollPeriods } from "@/lib/hooks/payroll/usePayroll";
 import { usePayouts } from "@/lib/hooks/payroll/usePayouts";
-import { usePayrollUserInfo } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
 import { getISOWeek, parseISO, format } from "date-fns";
@@ -33,9 +32,6 @@ export default function EarningsPage() {
     const { url } = useTenantSlug();
     const { periods, isLoading: periodsLoading } = usePayrollPeriods();
     const { payouts, isLoading: payoutsLoading } = usePayouts(user?.id ? { userId: user.id } : undefined);
-    const { info, isLoading: infoLoading } = usePayrollUserInfo();
-
-    const isLoading = periodsLoading || payoutsLoading || infoLoading;
 
     const payoutByPeriod = payouts.reduce<Record<string, typeof payouts[0]>>((acc, p) => {
         acc[p.payrollPeriodId] = p;
@@ -44,22 +40,7 @@ export default function EarningsPage() {
 
     return (
         <div className="space-y-3">
-            {/* Rate card */}
-            <div className="bg-white rounded-xl p-4">
-                <p className="text-xs text-gray-500 mb-0.5">Your rate</p>
-                {infoLoading ? (
-                    <div className="h-5 w-32 bg-gray-100 rounded animate-pulse" />
-                ) : !info || info.ratePerCup === 0 ? (
-                    <p className="text-base font-medium text-amber-600">No rate configured — contact admin</p>
-                ) : (
-                    <p className="text-xl font-bold text-gray-900">
-                        Rp {info.ratePerCup.toLocaleString("id-ID")} / cup
-                    </p>
-                )}
-            </div>
-
-            {/* Period list */}
-            {isLoading ? (
+            {periodsLoading || payoutsLoading ? (
                 <div className="space-y-2">
                     {[1, 2, 3].map((i) => <div key={i} className="bg-white rounded-xl p-4 h-16 animate-pulse" />)}
                 </div>
@@ -75,24 +56,17 @@ export default function EarningsPage() {
                         return (
                             <button
                                 key={period.id}
-                                onClick={() =>
-                                    navigation.push(url(`/mobile/more/earnings/${period.id}`))
-                                }
+                                onClick={() => navigation.push(url(`/mobile/more/earnings/${period.id}`))}
                                 className="w-full bg-white rounded-xl p-4 flex items-center gap-3 text-left active:bg-gray-50"
                             >
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-0.5">
                                         <span className="text-base font-semibold text-gray-900">
-                                            Week {weekNum} ·{" "}
-                                            {formatDateRange(period.startDate, period.endDate)}
+                                            Week {weekNum} · {formatDateRange(period.startDate, period.endDate)}
                                         </span>
-                                        <span
-                                            className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLE[status] ?? STATUS_STYLE.pending}`}
-                                        >
+                                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLE[status] ?? STATUS_STYLE.pending}`}>
                                             {STATUS_LABEL[status] ?? status}
-                                            {status === "paid" && payout?.paidAt
-                                                ? ` · ${format(new Date(payout.paidAt), "d MMM")}`
-                                                : ""}
+                                            {status === "paid" && payout?.paidAt ? ` · ${format(new Date(payout.paidAt), "d MMM")}` : ""}
                                         </span>
                                     </div>
                                     {payout ? (
@@ -101,9 +75,7 @@ export default function EarningsPage() {
                                             {payout.claimsTotal > 0 && (
                                                 <span className="text-gray-400">
                                                     {" · "}
-                                                    Rp {payout.commissionsTotal.toLocaleString("id-ID")}{" "}
-                                                    commissions + Rp{" "}
-                                                    {payout.claimsTotal.toLocaleString("id-ID")} claims
+                                                    Rp {payout.commissionsTotal.toLocaleString("id-ID")} commissions + Rp {payout.claimsTotal.toLocaleString("id-ID")} claims
                                                 </span>
                                             )}
                                         </p>

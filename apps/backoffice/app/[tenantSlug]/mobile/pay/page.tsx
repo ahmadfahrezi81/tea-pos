@@ -3,7 +3,7 @@
 import { usePayrollPeriods, usePayouts } from "@/lib/hooks/payroll/usePayroll";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
-import { ChevronRight, Users, DollarSign, ReceiptText, Tag, Award } from "lucide-react";
+import { ChevronRight, Users, ReceiptText, Tag, Award, UserCog } from "lucide-react";
 import { getISOWeek, format, startOfISOWeek, endOfISOWeek } from "date-fns";
 
 function MenuRow({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
@@ -60,12 +60,21 @@ export default function PayOverviewPage() {
                 )}
             </div>
 
-            <div className="bg-white rounded-xl px-4">
-                <MenuRow icon={<Users size={20} />} label="Staff Pay Periods" onClick={() => navigation.push(url("/mobile/pay/periods"))} />
-                <MenuRow icon={<DollarSign size={20} />} label="Commission Rates" onClick={() => navigation.push(url("/mobile/pay/rates"))} />
-                <MenuRow icon={<ReceiptText size={20} />} label="Claims" onClick={() => navigation.push(url("/mobile/pay/reimbursements"))} />
-                <MenuRow icon={<Tag size={20} />} label="Claim Types" onClick={() => navigation.push(url("/mobile/pay/claim-types"))} />
-                <MenuRow icon={<Award size={20} />} label="Commission Types" onClick={() => navigation.push(url("/mobile/pay/commission-types"))} />
+            <div className="space-y-1">
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide px-1">Operations</p>
+                <div className="bg-white rounded-xl px-4">
+                    <MenuRow icon={<Users size={20} />} label="Staff Pay Periods" onClick={() => navigation.push(url("/mobile/pay/periods"))} />
+                    <MenuRow icon={<ReceiptText size={20} />} label="Claims" onClick={() => navigation.push(url("/mobile/pay/claims"))} />
+                    <MenuRow icon={<UserCog size={20} />} label="Staff Payroll Info" onClick={() => navigation.push(url("/mobile/pay/staff"))} />
+                </div>
+            </div>
+
+            <div className="space-y-1">
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide px-1">Config</p>
+                <div className="bg-white rounded-xl px-4">
+<MenuRow icon={<Award size={20} />} label="Commission Types" onClick={() => navigation.push(url("/mobile/pay/commission-types"))} />
+                    <MenuRow icon={<Tag size={20} />} label="Claim Types" onClick={() => navigation.push(url("/mobile/pay/claim-types"))} />
+                </div>
             </div>
         </div>
     );

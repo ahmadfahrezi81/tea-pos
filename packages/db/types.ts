@@ -291,6 +291,7 @@ export type Database = {
           id: string
           is_enabled: boolean
           name: string
+          rate_per_cup: number
           slug: string
           tenant_id: string
           updated_at: string | null
@@ -300,6 +301,7 @@ export type Database = {
           id?: string
           is_enabled?: boolean
           name: string
+          rate_per_cup?: number
           slug: string
           tenant_id: string
           updated_at?: string | null
@@ -309,6 +311,7 @@ export type Database = {
           id?: string
           is_enabled?: boolean
           name?: string
+          rate_per_cup?: number
           slug?: string
           tenant_id?: string
           updated_at?: string | null
@@ -333,7 +336,6 @@ export type Database = {
           id: string
           payroll_period_id: string
           rate_per_cup: number
-          rate_per_unit: number
           status: string
           store_id: string
           tenant_id: string
@@ -349,7 +351,6 @@ export type Database = {
           id?: string
           payroll_period_id: string
           rate_per_cup: number
-          rate_per_unit: number
           status?: string
           store_id: string
           tenant_id: string
@@ -365,7 +366,6 @@ export type Database = {
           id?: string
           payroll_period_id?: string
           rate_per_cup?: number
-          rate_per_unit?: number
           status?: string
           store_id?: string
           tenant_id?: string
@@ -534,7 +534,6 @@ export type Database = {
           commission_type_id: string | null
           created_at: string | null
           id: string
-          rate_per_cup: number
           tenant_id: string
           updated_at: string | null
           user_id: string
@@ -546,7 +545,6 @@ export type Database = {
           commission_type_id?: string | null
           created_at?: string | null
           id?: string
-          rate_per_cup: number
           tenant_id: string
           updated_at?: string | null
           user_id: string
@@ -558,7 +556,6 @@ export type Database = {
           commission_type_id?: string | null
           created_at?: string | null
           id?: string
-          rate_per_cup?: number
           tenant_id?: string
           updated_at?: string | null
           user_id?: string
@@ -1307,48 +1304,6 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      tenant_commission_configs: {
-        Row: {
-          created_at: string | null
-          effective_date: string
-          id: string
-          rate_per_cup: number
-          tenant_id: string
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          effective_date: string
-          id?: string
-          rate_per_cup: number
-          tenant_id: string
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          effective_date?: string
-          id?: string
-          rate_per_cup?: number
-          tenant_id?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "commission_configs_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tenant_commission_configs_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]

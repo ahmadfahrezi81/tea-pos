@@ -118,9 +118,17 @@ export async function createPayrollCommissions(
             continue;
         }
 
-        const ratePerUnit = (info.ratePerCup as number) ?? 0;
         const commissionTypeId = (info.commissionTypeId as string | null) ?? null;
-        const grossPay = totalCups * ratePerUnit;
+        let ratePerCup = 0;
+        if (commissionTypeId) {
+            const { data: commissionType } = await supabase
+                .from("payroll_commission_types")
+                .select("rate_per_cup")
+                .eq("id", commissionTypeId)
+                .single();
+            ratePerCup = commissionType?.rate_per_cup ?? 0;
+        }
+        const grossPay = totalCups * ratePerCup;
 
         const { data: commission, error: commissionError } = await supabase
             .from("payroll_commissions")
@@ -132,7 +140,7 @@ export async function createPayrollCommissions(
                 daily_summary_id: dailySummaryId,
                 date,
                 total_cups: totalCups,
-                rate_per_unit: ratePerUnit,
+                rate_per_cup: ratePerCup,
                 commission_type_id: commissionTypeId,
                 gross_pay: grossPay,
             })
@@ -146,7 +154,7 @@ export async function createPayrollCommissions(
         log("payroll_commission_updated", {
             refId: (commission as { id: string }).id,
             refTable: "payroll_commissions",
-            metadata: { user_id: userId, total_cups: totalCups, rate_per_cup: ratePerUnit, gross_pay: grossPay },
+            metadata: { user_id: userId, total_cups: totalCups, rate_per_cup: ratePerCup, gross_pay: grossPay },
         });
     }
 
@@ -405,7 +413,7 @@ export async function getPayslip(
         .filter((c) => c.status === "approved" || c.status === "paid")
         .reduce((s, c) => s + ((c.amount as number) ?? 0), 0);
     const totalPay = commissionsTotal + claimsTotal;
-    const ratePerUnit = commissions[0] ? ((commissions[0].ratePerUnit as number) ?? 0) : 0;
+    const ratePerCup = commissions[0] ? ((commissions[0].ratePerCup as number) ?? 0) : 0;
 
     return {
         period: toCamelKeys(periodResult.data),
@@ -415,7 +423,7 @@ export async function getPayslip(
         commissionsTotal,
         claimsTotal,
         totalPay,
-        ratePerUnit,
+        ratePerCup,
     };
 }
 

@@ -17,7 +17,6 @@ export * from "../stores/user-assignments-schema";
 export * from "../summaries/schema";
 export * from "../summaries/photos-schema";
 export * from "../sessions/schema";
-export * from "../commission-configs/schema";
 export * from "../payroll/schema";
 export * from "../tenants/schema";
 export * from "../tenants/user-assignments-schema";

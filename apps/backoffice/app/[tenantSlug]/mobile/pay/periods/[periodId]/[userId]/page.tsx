@@ -258,10 +258,10 @@ export default function UserPayDetailPage({
         commissionsTotal: number;
         claimsTotal: number;
         totalPay: number;
-        ratePerUnit: number;
+        ratePerCup: number;
     };
 
-    const { period, payout, commissions, claims, commissionsTotal, claimsTotal, totalPay, ratePerUnit } =
+    const { period, payout, commissions, claims, commissionsTotal, claimsTotal, totalPay, ratePerCup } =
         ps;
     const status = payout?.status ?? null;
     const weekNum = getISOWeek(parseISO(period.startDate));
@@ -346,7 +346,7 @@ export default function UserPayDetailPage({
                 </div>
 
                 <Divider />
-                <Row left={`${totalCups} cups × Rp ${ratePerUnit.toLocaleString("id-ID")}`} />
+                <Row left={`${totalCups} cups × Rp ${ratePerCup.toLocaleString("id-ID")}`} />
                 <Row
                     left="Commissions"
                     right={`Rp ${commissionsTotal.toLocaleString("id-ID")}`}

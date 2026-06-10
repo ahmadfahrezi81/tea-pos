@@ -71,12 +71,12 @@ export default function PayslipPage({ params }: { params: Promise<{ periodId: st
     const ps = payslip as {
         period: { startDate: string; endDate: string };
         payout: { status: string; paidAt: string | null; paymentProofUrl: string | null } | null;
-        commissions: Array<{ date: string; totalCups: number; grossPay: number; ratePerUnit: number }>;
+        commissions: Array<{ date: string; totalCups: number; grossPay: number; ratePerCup: number }>;
         claims: Array<{ id: string; claimTypeName?: string | null; claimTypeId: string | null; amount: number; status: string }>;
         commissionsTotal: number;
         claimsTotal: number;
         totalPay: number;
-        ratePerUnit: number;
+        ratePerCup: number;
     };
 
     const {
@@ -87,7 +87,7 @@ export default function PayslipPage({ params }: { params: Promise<{ periodId: st
         commissionsTotal,
         claimsTotal,
         totalPay,
-        ratePerUnit,
+        ratePerCup,
     } = ps;
 
     const weekNum = getISOWeek(parseISO(period.startDate));
@@ -150,7 +150,7 @@ export default function PayslipPage({ params }: { params: Promise<{ periodId: st
 
                 <Divider />
                 <Row
-                    left={`${totalCups} cups × Rp ${ratePerUnit.toLocaleString("id-ID")}`}
+                    left={`${totalCups} cups × Rp ${ratePerCup.toLocaleString("id-ID")}`}
                 />
                 <Row
                     left="Commissions"

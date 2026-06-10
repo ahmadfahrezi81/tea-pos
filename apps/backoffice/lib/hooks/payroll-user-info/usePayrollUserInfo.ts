@@ -2,7 +2,7 @@
 
 import useSWR from "swr";
 import { apiFetch, buildParams } from "@/lib/api/client";
-import type { PayrollUserInfoResponse } from "@tea-pos/features/payroll-user-info/schema";
+import type { AdminUpdatePayrollUserInfoInput, PayrollUserInfoResponse } from "@tea-pos/features/payroll-user-info/schema";
 import { PayrollUserInfoResponse as PayrollUserInfoResponseSchema } from "@tea-pos/features/payroll-user-info/schema";
 
 export function usePayrollUserInfo(userId: string | undefined) {
@@ -16,5 +16,18 @@ export function usePayrollUserInfo(userId: string | undefined) {
         { revalidateOnFocus: false, dedupingInterval: 5000 },
     );
 
-    return { info: data ?? null, isLoading, error, mutate };
+    const update = async (input: AdminUpdatePayrollUserInfoInput) => {
+        if (!userId) return;
+        const sp = buildParams({ userId } as Record<string, unknown>);
+        const raw = await apiFetch<unknown>(`/api/payroll-user-info?${sp}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(input),
+        });
+        const updated = PayrollUserInfoResponseSchema.parse(raw);
+        await mutate(updated, false);
+        return updated;
+    };
+
+    return { info: data ?? null, isLoading, error, mutate, update };
 }

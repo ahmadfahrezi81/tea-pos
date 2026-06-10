@@ -18,7 +18,22 @@
       "Bash(pnpm --filter @tea-pos/services tsc --noEmit)",
       "Bash(pnpm --filter seller tsc --noEmit)",
       "Bash(pnpm --filter seller exec tsc --noEmit)",
-      "Bash(pnpm tsc *)"
+      "Bash(pnpm tsc *)",
+      "Bash(ln *)",
+      "Bash(pnpm install *)",
+      "Bash(pnpm *)",
+      "Bash(rm /Volumes/DevSSD/Projects/Personal/tea-pos/apps/backoffice/lib/api/commission-configs.ts)",
+      "Bash(rm /Volumes/DevSSD/Projects/Personal/tea-pos/apps/backoffice/lib/hooks/commission-configs/useCommissionConfig.ts)",
+      "Bash(rmdir /Volumes/DevSSD/Projects/Personal/tea-pos/apps/backoffice/lib/hooks/commission-configs/)",
+      "Bash(mkdir -p /Volumes/DevSSD/Projects/Personal/tea-pos/apps/seller/app/\\\\[tenantSlug\\\\]/mobile/account/payroll-info)",
+      "Bash(mkdir -p /Volumes/DevSSD/Projects/Personal/tea-pos/apps/backoffice/app/api/payroll/claim-types/\\\\[id\\\\]/eligibility)",
+      "Bash(mkdir -p /Volumes/DevSSD/Projects/Personal/tea-pos/apps/backoffice/app/api/payroll/commission-types/\\\\[id\\\\])",
+      "Bash(mkdir -p /Volumes/DevSSD/Projects/Personal/tea-pos/apps/backoffice/app/\\\\[tenantSlug\\\\]/mobile/pay/claim-types)",
+      "Bash(mkdir -p /Volumes/DevSSD/Projects/Personal/tea-pos/apps/backoffice/app/\\\\[tenantSlug\\\\]/mobile/pay/commission-types)",
+      "Bash(mkdir -p /Volumes/DevSSD/Projects/Personal/tea-pos/apps/backoffice/lib/hooks/payroll-claim-types)",
+      "Bash(mkdir -p /Volumes/DevSSD/Projects/Personal/tea-pos/apps/backoffice/lib/hooks/payroll-commission-types)",
+      "Bash(rm \"/Volumes/DevSSD/Projects/Personal/tea-pos/apps/backoffice/app/[tenantSlug]/mobile/pay/rates/page.tsx\")",
+      "Bash(rmdir \"/Volumes/DevSSD/Projects/Personal/tea-pos/apps/backoffice/app/[tenantSlug]/mobile/pay/rates\")"
     ]
   }
 }

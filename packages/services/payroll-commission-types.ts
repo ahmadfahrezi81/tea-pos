@@ -17,11 +17,11 @@ export async function listPayrollCommissionTypes(
 
 export async function createPayrollCommissionType(
     supabase: SupabaseClient,
-    { tenantId, name, slug }: { tenantId: string; name: string; slug: string },
+    { tenantId, name, slug, ratePerCup }: { tenantId: string; name: string; slug: string; ratePerCup: number },
 ) {
     const { data, error } = await supabase
         .from("payroll_commission_types")
-        .insert({ tenant_id: tenantId, name, slug })
+        .insert({ tenant_id: tenantId, name, slug, rate_per_cup: ratePerCup })
         .select()
         .single();
 
@@ -31,11 +31,12 @@ export async function createPayrollCommissionType(
 
 export async function updatePayrollCommissionType(
     supabase: SupabaseClient,
-    { id, tenantId, name, isEnabled }: { id: string; tenantId: string; name?: string; isEnabled?: boolean },
+    { id, tenantId, name, isEnabled, ratePerCup }: { id: string; tenantId: string; name?: string; isEnabled?: boolean; ratePerCup?: number },
 ) {
     const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (name !== undefined) updates.name = name;
     if (isEnabled !== undefined) updates.is_enabled = isEnabled;
+    if (ratePerCup !== undefined) updates.rate_per_cup = ratePerCup;
 
     const { data, error } = await supabase
         .from("payroll_commission_types")

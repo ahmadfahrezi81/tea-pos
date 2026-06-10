@@ -35,14 +35,14 @@ export const mobileRoutes = {
         inlineHeader: false,
         parent: "/mobile/pay",
     },
-    "/mobile/pay/rates": {
-        title: "Commission Rates",
+    "/mobile/pay/claims": {
+        title: "Claims",
         subPage: true,
         inlineHeader: false,
         parent: "/mobile/pay",
     },
-    "/mobile/pay/reimbursements": {
-        title: "Claims",
+    "/mobile/pay/staff": {
+        title: "Staff Payroll Info",
         subPage: true,
         inlineHeader: false,
         parent: "/mobile/pay",
@@ -50,14 +50,28 @@ export const mobileRoutes = {
     "/mobile/pay/claim-types": {
         title: "Claim Types",
         subPage: true,
-        inlineHeader: false,
+        inlineHeader: true,
+        headerAction: "add",
         parent: "/mobile/pay",
+    },
+    "/mobile/pay/claim-types/add": {
+        title: "New Claim Type",
+        subPage: true,
+        inlineHeader: false,
+        parent: "/mobile/pay/claim-types",
     },
     "/mobile/pay/commission-types": {
         title: "Commission Types",
         subPage: true,
-        inlineHeader: false,
+        inlineHeader: true,
+        headerAction: "add",
         parent: "/mobile/pay",
+    },
+    "/mobile/pay/commission-types/add": {
+        title: "New Commission Type",
+        subPage: true,
+        inlineHeader: false,
+        parent: "/mobile/pay/commission-types",
     },
     "/mobile/supply": {
         title: "Supply",
@@ -94,6 +108,33 @@ export const resolveRoute = (path: string): RouteConfig | null => {
         (k) => !k.includes("*") && path.endsWith(k),
     );
     if (key) return mobileRoutes[key as keyof typeof mobileRoutes];
+
+    if (path.includes("/mobile/pay/claim-types/") && path.endsWith("/edit")) {
+        return {
+            title: "Edit Claim Type",
+            subPage: true,
+            inlineHeader: false,
+            parent: "/mobile/pay/claim-types",
+        };
+    }
+
+    if (path.includes("/mobile/pay/staff/")) {
+        return {
+            title: "Payroll Info",
+            subPage: true,
+            inlineHeader: false,
+            parent: "/mobile/pay/staff",
+        };
+    }
+
+    if (path.includes("/mobile/pay/commission-types/") && path.endsWith("/edit")) {
+        return {
+            title: "Edit Commission Type",
+            subPage: true,
+            inlineHeader: false,
+            parent: "/mobile/pay/commission-types",
+        };
+    }
 
     if (path.includes("/mobile/pay/periods/")) {
         const suffix = path.split("/mobile/pay/periods/")[1] ?? "";

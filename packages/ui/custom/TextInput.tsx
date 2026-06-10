@@ -5,9 +5,10 @@ interface TextInputProps {
     onChange: (value: string) => void;
     placeholder?: string;
     type?: string;
+    className?: string;
 }
 
-export function TextInput({ value, onChange, placeholder, type = "text" }: TextInputProps) {
+export function TextInput({ value, onChange, placeholder, type = "text", className = "text-2xl font-bold" }: TextInputProps) {
     return (
         <div className="flex items-center gap-2 p-4 px-3 border border-gray-100 rounded-2xl bg-gray-50">
             <input
@@ -15,7 +16,7 @@ export function TextInput({ value, onChange, placeholder, type = "text" }: TextI
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={placeholder}
-                className="text-2xl font-bold text-gray-900 border-none outline-none bg-transparent w-full min-w-0 placeholder:text-gray-300"
+                className={`${className} text-gray-900 border-none outline-none bg-transparent w-full min-w-0 placeholder:text-gray-300`}
             />
         </div>
     );

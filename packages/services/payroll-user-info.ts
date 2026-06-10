@@ -21,7 +21,6 @@ export async function upsertPayrollUserInfo(
         tenantId,
         userId,
         commissionTypeId,
-        ratePerCup,
         bankName,
         bankAccountNumber,
         bankAccountHolder,
@@ -29,7 +28,6 @@ export async function upsertPayrollUserInfo(
         tenantId: string;
         userId: string;
         commissionTypeId?: string | null;
-        ratePerCup?: number;
         bankName?: string | null;
         bankAccountNumber?: string | null;
         bankAccountHolder?: string | null;
@@ -43,7 +41,6 @@ export async function upsertPayrollUserInfo(
         .maybeSingle();
 
     const row = existing as {
-        rate_per_cup: number;
         commission_type_id: string | null;
         bank_name: string | null;
         bank_account_number: string | null;
@@ -53,7 +50,6 @@ export async function upsertPayrollUserInfo(
     const merged = {
         tenant_id: tenantId,
         user_id: userId,
-        rate_per_cup: ratePerCup !== undefined ? ratePerCup : (row?.rate_per_cup ?? 0),
         commission_type_id: commissionTypeId !== undefined ? commissionTypeId : (row?.commission_type_id ?? null),
         bank_name: bankName !== undefined ? bankName : (row?.bank_name ?? null),
         bank_account_number: bankAccountNumber !== undefined ? bankAccountNumber : (row?.bank_account_number ?? null),

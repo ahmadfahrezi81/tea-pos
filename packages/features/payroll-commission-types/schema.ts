@@ -9,6 +9,7 @@ export const CreatePayrollCommissionTypeInput = z
     .object({
         name: z.string().min(1).max(100),
         slug: z.string().min(1).max(100).regex(/^[A-Z0-9_]+$/, "Slug must be uppercase letters, digits, and underscores"),
+        ratePerCup: z.number().int().nonnegative(),
     })
     .openapi({ title: "CreatePayrollCommissionTypeInput" });
 
@@ -16,6 +17,7 @@ export const UpdatePayrollCommissionTypeInput = z
     .object({
         name: z.string().min(1).max(100).optional(),
         isEnabled: z.boolean().optional(),
+        ratePerCup: z.number().int().nonnegative().optional(),
     })
     .openapi({ title: "UpdatePayrollCommissionTypeInput" });
 
@@ -30,6 +32,7 @@ export const PayrollCommissionTypeResponse = z
         name: z.string(),
         slug: z.string(),
         isEnabled: z.boolean(),
+        ratePerCup: z.number(),
         createdAt: z.string().nullable(),
     })
     .openapi({ title: "PayrollCommissionTypeResponse" });

@@ -15,7 +15,6 @@ export const UpdatePayrollUserInfoInput = z
 
 export const AdminUpdatePayrollUserInfoInput = z
     .object({
-        ratePerCup: z.number().int().nonnegative().optional(),
         commissionTypeId: UUIDSchema.nullable().optional(),
         bankName: z.string().max(100).nullable().optional(),
         bankAccountNumber: z.string().max(50).nullable().optional(),
@@ -39,7 +38,6 @@ export const PayrollUserInfoResponse = z
         tenantId: UUIDSchema,
         userId: UUIDSchema,
         commissionTypeId: UUIDSchema.nullable(),
-        ratePerCup: z.number(),
         bankName: z.string().nullable(),
         bankAccountNumber: z.string().nullable(),
         bankAccountHolder: z.string().nullable(),
