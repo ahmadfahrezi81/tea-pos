@@ -10,6 +10,7 @@ export const CreatePayrollClaimTypeInput = z
         name: z.string().min(1).max(100),
         slug: z.string().min(1).max(100).regex(/^[A-Z0-9_]+$/, "Slug must be uppercase letters, digits, and underscores"),
         frequency: z.enum(["weekly", "monthly", "one_time"]),
+        amount: z.number().int().min(0).default(0),
     })
     .openapi({ title: "CreatePayrollClaimTypeInput" });
 
@@ -17,6 +18,7 @@ export const UpdatePayrollClaimTypeInput = z
     .object({
         name: z.string().min(1).max(100).optional(),
         isEnabled: z.boolean().optional(),
+        amount: z.number().int().min(0).optional(),
     })
     .openapi({ title: "UpdatePayrollClaimTypeInput" });
 
@@ -45,6 +47,7 @@ export const PayrollClaimTypeResponse = z
         slug: z.string(),
         frequency: z.enum(["weekly", "monthly", "one_time"]),
         isEnabled: z.boolean(),
+        amount: z.number().int().default(0),
         createdAt: z.string().nullable(),
     })
     .openapi({ title: "PayrollClaimTypeResponse" });

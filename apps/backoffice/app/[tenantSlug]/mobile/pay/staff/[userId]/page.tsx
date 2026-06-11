@@ -5,35 +5,9 @@ import { useRouter } from "next/navigation";
 import { usePayrollUserInfo } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
 import { usePayrollCommissionTypes } from "@/lib/hooks/payroll-commission-types/usePayrollCommissionTypes";
 import { useTenantUsers } from "@/lib/hooks/users/useTenantUsers";
-import { TextInput } from "@tea-pos/ui/custom/TextInput";
 import { FormFooter } from "@/components/shared/FormFooter";
 import { Check, UserCircle } from "lucide-react";
-
-function InitialsAvatar({ name }: { name: string }) {
-    const initials = name
-        .split(" ")
-        .map((w) => w[0])
-        .join("")
-        .slice(0, 2)
-        .toUpperCase();
-
-    return (
-        <div className="w-16 h-16 rounded-2xl bg-brand/10 flex items-center justify-center shrink-0">
-            {initials ? (
-                <span className="text-xl font-bold text-brand">{initials}</span>
-            ) : (
-                <UserCircle size={40} className="text-brand" />
-            )}
-        </div>
-    );
-}
-
-const ROLE_LABEL: Record<string, string> = {
-    ADMIN: "Admin",
-    USER: "Staff",
-    DRIVER: "Driver",
-    SUPPLIER: "Supplier",
-};
+import Image from "next/image";
 
 export default function StaffPayrollInfoPage({ params }: { params: Promise<{ userId: string }> }) {
     const { userId } = use(params);
@@ -45,31 +19,20 @@ export default function StaffPayrollInfoPage({ params }: { params: Promise<{ use
     const user = users.find((u) => u.id === userId);
 
     const [selectedTypeId, setSelectedTypeId] = useState<string | null>(null);
-    const [bankName, setBankName] = useState("");
-    const [bankAccountNumber, setBankAccountNumber] = useState("");
-    const [bankAccountHolder, setBankAccountHolder] = useState("");
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (info) {
             setSelectedTypeId(info.commissionTypeId ?? null);
-            setBankName(info.bankName ?? "");
-            setBankAccountNumber(info.bankAccountNumber ?? "");
-            setBankAccountHolder(info.bankAccountHolder ?? "");
         }
-    }, [info?.commissionTypeId, info?.bankName, info?.bankAccountNumber, info?.bankAccountHolder]);
+    }, [info?.commissionTypeId]);
 
     const handleSave = async () => {
         setSaving(true);
         setError(null);
         try {
-            await update({
-                commissionTypeId: selectedTypeId ?? undefined,
-                bankName: bankName || null,
-                bankAccountNumber: bankAccountNumber || null,
-                bankAccountHolder: bankAccountHolder || null,
-            });
+            await update({ commissionTypeId: selectedTypeId ?? undefined });
             router.back();
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to save");
@@ -90,25 +53,34 @@ export default function StaffPayrollInfoPage({ params }: { params: Promise<{ use
     }
 
     const enabledTypes = commissionTypes.filter((t) => t.isEnabled);
+    const hasBankInfo = info?.bankName || info?.bankAccountNumber;
 
     return (
         <div className="space-y-4">
-            {/* User Info Card */}
+            {/* User card */}
             {user && (
                 <div className="bg-white rounded-xl p-4 flex items-center gap-4">
-                    <InitialsAvatar name={user.fullName} />
+                    {user.avatarUrl ? (
+                        <Image
+                            src={user.avatarUrl}
+                            alt={user.fullName}
+                            width={56}
+                            height={56}
+                            className="w-14 h-14 rounded-2xl object-cover shrink-0"
+                        />
+                    ) : (
+                        <div className="w-14 h-14 rounded-2xl bg-brand/10 flex items-center justify-center shrink-0">
+                            <UserCircle size={32} className="text-brand" />
+                        </div>
+                    )}
                     <div className="flex-1 min-w-0 space-y-0.5">
                         <p className="text-lg font-semibold text-gray-900 truncate">{user.fullName}</p>
-                        <p className="text-sm text-gray-500">{ROLE_LABEL[user.role] ?? user.role}</p>
                         <p className="text-sm text-gray-400 truncate">{user.email}</p>
-                        {user.phoneNumber && (
-                            <p className="text-sm text-gray-400">{user.phoneNumber}</p>
-                        )}
                     </div>
                 </div>
             )}
 
-            {/* Commission Type */}
+            {/* Commission type */}
             <div className="space-y-2">
                 <p className="text-xs font-medium text-gray-400 uppercase tracking-wide px-1">Commission Type</p>
 
@@ -144,22 +116,34 @@ export default function StaffPayrollInfoPage({ params }: { params: Promise<{ use
                 )}
             </div>
 
-            {/* Bank Info */}
+            {/* Bank details — read-only */}
             <div className="space-y-2">
                 <p className="text-xs font-medium text-gray-400 uppercase tracking-wide px-1">Bank Details</p>
-                <div className="bg-white rounded-xl p-4 space-y-4">
-                    <div className="space-y-1.5">
-                        <p className="text-sm font-medium text-gray-700">Bank Name</p>
-                        <TextInput value={bankName} onChange={setBankName} placeholder="e.g. BCA" className="text-base font-medium" />
-                    </div>
-                    <div className="space-y-1.5">
-                        <p className="text-sm font-medium text-gray-700">Account Number</p>
-                        <TextInput value={bankAccountNumber} onChange={setBankAccountNumber} placeholder="e.g. 1234567890" className="text-base font-medium" />
-                    </div>
-                    <div className="space-y-1.5">
-                        <p className="text-sm font-medium text-gray-700">Account Holder</p>
-                        <TextInput value={bankAccountHolder} onChange={setBankAccountHolder} placeholder="e.g. Budi Santoso" className="text-base font-medium" />
-                    </div>
+                <div className="bg-white rounded-xl px-4">
+                    {hasBankInfo ? (
+                        <>
+                            {info?.bankName && (
+                                <div className="py-3.5 border-b border-gray-100">
+                                    <p className="text-xs text-gray-400 mb-0.5">Bank</p>
+                                    <p className="text-base font-medium text-gray-900">{info.bankName}</p>
+                                </div>
+                            )}
+                            {info?.bankAccountNumber && (
+                                <div className="py-3.5 border-b border-gray-100">
+                                    <p className="text-xs text-gray-400 mb-0.5">Account number</p>
+                                    <p className="text-base font-medium text-gray-900 font-mono">{info.bankAccountNumber}</p>
+                                </div>
+                            )}
+                            {info?.bankAccountHolder && (
+                                <div className="py-3.5">
+                                    <p className="text-xs text-gray-400 mb-0.5">Account holder</p>
+                                    <p className="text-base font-medium text-gray-900">{info.bankAccountHolder}</p>
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        <p className="py-4 text-sm text-gray-400">No bank details set by staff yet.</p>
+                    )}
                 </div>
             </div>
 

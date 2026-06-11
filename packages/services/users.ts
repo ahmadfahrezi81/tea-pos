@@ -33,9 +33,22 @@ export async function listTenantUsers(
     if (error) throw error;
 
     type Row = { users: unknown };
-    return toCamelKeys(
+    const users = toCamelKeys(
         ((data as Row[]).map((r) => r.users).filter(Boolean) as Record<string, unknown>[])
+    ) as Array<Record<string, unknown>>;
+
+    const avatarUrls = await Promise.all(
+        users.map(async (u) => {
+            try {
+                const { data: authUser } = await supabase.auth.admin.getUserById(u["id"] as string);
+                return (authUser?.user?.user_metadata?.["avatar_url"] as string | undefined) ?? null;
+            } catch {
+                return null;
+            }
+        }),
     );
+
+    return users.map((u, i) => ({ ...u, avatarUrl: avatarUrls[i] }));
 }
 
 export interface UpdateUserParams {

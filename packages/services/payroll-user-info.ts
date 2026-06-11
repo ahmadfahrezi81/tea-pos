@@ -1,6 +1,19 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { toCamelKeys } from "@tea-pos/utils/schemas";
 
+export async function listPayrollUserInfos(
+    supabase: SupabaseClient,
+    { tenantId }: { tenantId: string },
+) {
+    const { data, error } = await supabase
+        .from("payroll_user_info")
+        .select("*")
+        .eq("tenant_id", tenantId);
+
+    if (error) throw error;
+    return (data ?? []).map((row) => toCamelKeys(row) as Record<string, unknown>);
+}
+
 export async function getPayrollUserInfo(
     supabase: SupabaseClient,
     { tenantId, userId }: { tenantId: string; userId: string },

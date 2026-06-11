@@ -31,3 +31,12 @@ export function usePayrollUserInfo(userId: string | undefined) {
 
     return { info: data ?? null, isLoading, error, mutate, update };
 }
+
+export function useAllPayrollUserInfos() {
+    const { data, error, isLoading } = useSWR<{ infos: PayrollUserInfoResponse[] }>(
+        "payroll-user-infos-all",
+        () => apiFetch<{ infos: PayrollUserInfoResponse[] }>("/api/payroll-user-info"),
+        { revalidateOnFocus: false, dedupingInterval: 10_000 },
+    );
+    return { infos: data?.infos ?? [], isLoading, error };
+}

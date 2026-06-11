@@ -7,7 +7,7 @@ import { useTenantUsers } from "@/lib/hooks/users/useTenantUsers";
 import { apiFetch } from "@/lib/api/client";
 import { TextInput } from "@tea-pos/ui/custom/TextInput";
 import { FormFooter } from "@/components/shared/FormFooter";
-import { Copy, Check, Search } from "lucide-react";
+import { Copy, Check, Search, X } from "lucide-react";
 import { useToast } from "@/lib/context/ToastContext";
 
 function EligibilityToggle({
@@ -52,11 +52,9 @@ export default function EditClaimTypePage({ params }: { params: Promise<{ id: st
     const [name, setName] = useState("");
     const [isEnabled, setIsEnabled] = useState(true);
     const [search, setSearch] = useState("");
-    // userId -> their full new claimTypeIds list (pending, not yet saved)
     const { showToast } = useToast();
     const [copied, setCopied] = useState(false);
     const [pendingEligibility, setPendingEligibility] = useState<Record<string, string[]>>({});
-    // userId -> local visual override
     const [eligibilityOverrides, setEligibilityOverrides] = useState<Record<string, boolean>>({});
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -149,6 +147,12 @@ export default function EditClaimTypePage({ params }: { params: Promise<{ id: st
                         </button>
                     </div>
                 </div>
+                <div className="space-y-1.5">
+                    <p className="text-sm font-medium text-gray-700">Amount</p>
+                    <div className="px-3 py-2.5 border border-gray-100 rounded-2xl bg-gray-50">
+                        <p className="text-base text-gray-500">Rp {(type.amount ?? 0).toLocaleString("id-ID")}</p>
+                    </div>
+                </div>
                 {error && <p className="text-sm text-red-500">{error}</p>}
             </div>
 
@@ -161,6 +165,11 @@ export default function EditClaimTypePage({ params }: { params: Promise<{ id: st
                     placeholder="Search staff..."
                     className="flex-1 text-base text-gray-800 placeholder:text-gray-400 bg-transparent outline-none"
                 />
+                {search && (
+                    <button onClick={() => setSearch("")} className="text-gray-400 active:text-gray-600 shrink-0">
+                        <X size={16} />
+                    </button>
+                )}
             </div>
 
             <div className="space-y-2">

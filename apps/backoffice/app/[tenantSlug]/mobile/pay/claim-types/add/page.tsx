@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePayrollClaimTypes } from "@/lib/hooks/payroll-claim-types/usePayrollClaimTypes";
 import { TextInput } from "@tea-pos/ui/custom/TextInput";
+import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
 import { FormFooter } from "@/components/shared/FormFooter";
 
 const FREQUENCY_LABEL: Record<string, string> = {
@@ -18,6 +19,7 @@ export default function AddClaimTypePage() {
     const [name, setName] = useState("");
     const [slug, setSlug] = useState("");
     const [frequency, setFrequency] = useState<"weekly" | "monthly" | "one_time">("weekly");
+    const [amount, setAmount] = useState(0);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -26,7 +28,7 @@ export default function AddClaimTypePage() {
         setSaving(true);
         setError(null);
         try {
-            await create({ name: name.trim(), slug: slug.trim().toUpperCase().replace(/\s+/g, "_"), frequency });
+            await create({ name: name.trim(), slug: slug.trim().toUpperCase().replace(/\s+/g, "_"), frequency, amount });
             router.back();
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to create");
@@ -50,6 +52,10 @@ export default function AddClaimTypePage() {
                         placeholder="e.g. LUNCH_ALLOWANCE"
                         className="text-base font-medium"
                     />
+                </div>
+                <div className="space-y-1.5">
+                    <p className="text-sm font-medium text-gray-700">Amount</p>
+                    <NumberInput value={amount} onChange={setAmount} currency prefix="Rp" />
                 </div>
                 <div className="space-y-1.5">
                     <p className="text-sm font-medium text-gray-700">Frequency</p>

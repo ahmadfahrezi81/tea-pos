@@ -6,7 +6,7 @@ import {
     AdminUpdatePayrollUserInfoInput,
     PayrollUserInfoResponse,
 } from "@tea-pos/features/payroll-user-info/schema";
-import { getPayrollUserInfo, upsertPayrollUserInfo } from "@tea-pos/services/payroll-user-info";
+import { getPayrollUserInfo, listPayrollUserInfos, upsertPayrollUserInfo } from "@tea-pos/services/payroll-user-info";
 import { ok, err, badRequest, unauthorized, forbidden, handleError } from "@/lib/api/response";
 import { getRequestUser } from "@/lib/auth/get-request-user";
 
@@ -25,7 +25,11 @@ export async function GET(request: NextRequest) {
         if (!query.success) return badRequest("Invalid query parameters");
 
         const targetUserId = query.data.userId;
-        if (!targetUserId) return badRequest("userId is required");
+
+        if (!targetUserId) {
+            const infos = await listPayrollUserInfos(supabase, { tenantId });
+            return ok({ infos });
+        }
 
         const info = await getPayrollUserInfo(supabase, { tenantId, userId: targetUserId });
         if (!info) return err("Payroll info not found", 404);

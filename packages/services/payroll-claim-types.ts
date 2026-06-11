@@ -17,11 +17,11 @@ export async function listPayrollClaimTypes(
 
 export async function createPayrollClaimType(
     supabase: SupabaseClient,
-    { tenantId, name, slug, frequency }: { tenantId: string; name: string; slug: string; frequency: string },
+    { tenantId, name, slug, frequency, amount = 0 }: { tenantId: string; name: string; slug: string; frequency: string; amount?: number },
 ) {
     const { data, error } = await supabase
         .from("payroll_claim_types")
-        .insert({ tenant_id: tenantId, name, slug, frequency })
+        .insert({ tenant_id: tenantId, name, slug, frequency, amount })
         .select()
         .single();
 
@@ -31,11 +31,12 @@ export async function createPayrollClaimType(
 
 export async function updatePayrollClaimType(
     supabase: SupabaseClient,
-    { id, tenantId, name, isEnabled }: { id: string; tenantId: string; name?: string; isEnabled?: boolean },
+    { id, tenantId, name, isEnabled, amount }: { id: string; tenantId: string; name?: string; isEnabled?: boolean; amount?: number },
 ) {
     const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (name !== undefined) updates.name = name;
     if (isEnabled !== undefined) updates.is_enabled = isEnabled;
+    if (amount !== undefined) updates.amount = amount;
 
     const { data, error } = await supabase
         .from("payroll_claim_types")

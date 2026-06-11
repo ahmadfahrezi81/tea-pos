@@ -115,6 +115,7 @@ export const UserResponse = z
         bankName: z.string().nullable().optional(),
         bankAccountNumber: z.string().nullable().optional(),
         bankAccountHolder: z.string().nullable().optional(),
+        avatarUrl: z.string().nullable().optional(),
     })
     .openapi({ title: "UserResponse" });
 

@@ -143,6 +143,7 @@ export type Database = {
       }
       payroll_claim_types: {
         Row: {
+          amount: number
           created_at: string | null
           frequency: string
           id: string
@@ -153,6 +154,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          amount?: number
           created_at?: string | null
           frequency: string
           id?: string
@@ -163,6 +165,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          amount?: number
           created_at?: string | null
           frequency?: string
           id?: string
