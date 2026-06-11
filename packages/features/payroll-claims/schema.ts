@@ -81,6 +81,7 @@ export const ClaimableTypeResponse = z
         id: z.string(),
         name: z.string(),
         frequency: z.enum(["weekly", "monthly", "one_time"]),
+        amount: z.number().int().default(0),
         claimable: z.boolean(),
     })
     .openapi({ title: "ClaimableTypeResponse" });

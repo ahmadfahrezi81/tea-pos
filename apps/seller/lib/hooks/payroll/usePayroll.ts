@@ -9,6 +9,20 @@ import type {
     ListPayrollCommissionsQuery,
 } from "@tea-pos/features/payroll/schema";
 
+export function useCurrentPayrollPeriod() {
+    const { data, error, isLoading } = useSWR(
+        "payroll-period-current",
+        () => payrollApi.getCurrentPeriod(),
+        { revalidateOnFocus: false, dedupingInterval: 60000 },
+    );
+
+    return {
+        period: data?.period ?? null,
+        isLoading,
+        error,
+    };
+}
+
 export function usePayrollPeriods(params?: Partial<ListPayrollPeriodsQuery>) {
     const key = `payroll-periods-${params?.status ?? "all"}`;
 

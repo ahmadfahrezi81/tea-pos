@@ -4,10 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/context/AuthContext";
 import { usePayrollClaims, useClaimableTypes, useClaimableDates } from "@/lib/hooks/payroll-claims/usePayrollClaims";
-import { usePayrollPeriods } from "@/lib/hooks/payroll/usePayroll";
+import { useCurrentPayrollPeriod } from "@/lib/hooks/payroll/usePayroll";
 import { apiFetch } from "@/lib/api/client";
 import { SelectInput } from "../../../home/manage/_components/shared/SelectInput";
-import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
 import { Textarea } from "../../../home/manage/_components/shared/Textarea";
 import { PhotoPicker } from "../../../home/manage/_components/shared/PhotoPicker";
 import { FormFooter } from "@/components/shared/FormFooter";
@@ -31,8 +30,7 @@ export default function AddClaimPage() {
     const router = useRouter();
     const { user } = useAuth();
     const { create } = usePayrollClaims();
-    const { periods } = usePayrollPeriods({ status: "pending" });
-    const currentPeriod = periods[0] ?? null;
+    const { period: currentPeriod, isLoading: periodLoading } = useCurrentPayrollPeriod();
 
     const { types, isLoading: typesLoading } = useClaimableTypes(
         currentPeriod ? { periodId: currentPeriod.id } : null,
@@ -42,7 +40,6 @@ export default function AddClaimPage() {
     );
 
     const [selectedTypeId, setSelectedTypeId] = useState("");
-    const [amount, setAmount] = useState(0);
     const [date, setDate] = useState(getLocalToday());
     const [notes, setNotes] = useState("");
     const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -52,6 +49,7 @@ export default function AddClaimPage() {
 
     const selectedType = types.find((t) => t.id === selectedTypeId);
     const isWeekly = selectedType?.frequency === "weekly";
+    const amount = selectedType?.amount ?? 0;
 
     const typeOptions = types
         .filter((t) => t.claimable)
@@ -94,12 +92,10 @@ export default function AddClaimPage() {
             <div className="bg-white rounded-xl p-4 space-y-4">
                 <div className="space-y-1.5">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Type</p>
-                    {typesLoading ? (
+                    {periodLoading || typesLoading ? (
                         <div className="h-12 bg-gray-100 rounded-xl animate-pulse" />
                     ) : typeOptions.length === 0 ? (
-                        <p className="text-sm text-gray-400 py-2">
-                            {currentPeriod ? "No claimable types available for this period." : "No active payroll period."}
-                        </p>
+                        <p className="text-sm text-gray-400 py-2">No claimable types available for this period.</p>
                     ) : (
                         <SelectInput
                             options={typeOptions}
@@ -112,7 +108,11 @@ export default function AddClaimPage() {
 
                 <div className="space-y-1.5">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Amount</p>
-                    <NumberInput value={amount} onChange={setAmount} currency />
+                    <div className="px-3 py-2.5 border border-gray-200 rounded-xl bg-gray-50">
+                        <p className={`text-base ${selectedType ? "text-gray-800 font-medium" : "text-gray-400"}`}>
+                            {selectedType ? `Rp ${amount.toLocaleString("id-ID")}` : "Select a type first"}
+                        </p>
+                    </div>
                 </div>
 
                 <div className="space-y-1.5">

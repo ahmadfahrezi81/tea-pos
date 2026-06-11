@@ -15,8 +15,16 @@ import {
     PayrollCommissionResponse,
     PayoutListResponse,
 } from "@tea-pos/features/payroll/schema";
+import { z } from "zod";
+
+const CurrentPeriodResponse = z.object({ period: PayrollPeriodResponse });
 
 export const payrollApi = {
+    getCurrentPeriod: async () => {
+        const data = await apiFetch<unknown>("/api/payroll/periods/current");
+        return CurrentPeriodResponse.parse(data);
+    },
+
     getPeriods: async (params?: Partial<ListPayrollPeriodsQuery>) => {
         const sp = buildParams((params ?? {}) as Record<string, unknown>);
         return PayrollPeriodListResponse.parse(await apiFetch<unknown>(`/api/payroll/periods?${sp}`));

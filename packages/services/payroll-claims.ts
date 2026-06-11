@@ -349,7 +349,7 @@ export async function getClaimableTypes(
     // Fetch the enabled types
     const { data: types } = await supabase
         .from("payroll_claim_types")
-        .select("id, name, frequency")
+        .select("id, name, frequency, amount")
         .eq("tenant_id", tenantId)
         .eq("is_enabled", true)
         .in("id", typeIds);
@@ -368,7 +368,7 @@ export async function getClaimableTypes(
     type ClaimRow = { claim_type_id: string; payroll_period_id: string; date: string };
     const claims = (existingClaims ?? []) as ClaimRow[];
 
-    return (types as Array<{ id: string; name: string; frequency: string }>).map((type) => {
+    return (types as Array<{ id: string; name: string; frequency: string; amount: number }>).map((type) => {
         let claimable = true;
 
         if (type.frequency === "weekly") {
@@ -383,6 +383,6 @@ export async function getClaimableTypes(
             claimable = !claims.some((c) => c.claim_type_id === type.id);
         }
 
-        return { id: type.id, name: type.name, frequency: type.frequency, claimable };
+        return { id: type.id, name: type.name, frequency: type.frequency, amount: type.amount ?? 0, claimable };
     });
 }
