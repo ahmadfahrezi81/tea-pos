@@ -109,6 +109,7 @@ export default function PayslipPage({ params }: { params: Promise<{ periodId: st
     const totalCups = commissions.reduce((s, e) => s + e.totalCups, 0);
     const status = payout?.status ?? "pending";
     const approvedClaims = claims.filter((c) => c.status === "approved" || c.status === "paid");
+    const pendingClaims = claims.filter((c) => c.status === "pending");
 
     const hasBankInfo = payrollInfo?.bankName || payrollInfo?.bankAccountNumber;
 
@@ -160,7 +161,7 @@ export default function PayslipPage({ params }: { params: Promise<{ periodId: st
                 <Divider />
 
                 {/* Claims */}
-                {approvedClaims.length > 0 && (
+                {(approvedClaims.length > 0 || pendingClaims.length > 0) && (
                     <>
                         <Row left="CLAIMS" />
                         {approvedClaims.map((c) => (
@@ -168,6 +169,14 @@ export default function PayslipPage({ params }: { params: Promise<{ periodId: st
                                 key={c.id}
                                 left={c.claimTypeName ?? c.claimTypeId ?? "—"}
                                 right={`Rp ${c.amount.toLocaleString("id-ID")}`}
+                            />
+                        ))}
+                        {pendingClaims.map((c) => (
+                            <Row
+                                key={c.id}
+                                left={c.claimTypeName ?? c.claimTypeId ?? "—"}
+                                right="Pending review"
+                                muted
                             />
                         ))}
                         <Divider />

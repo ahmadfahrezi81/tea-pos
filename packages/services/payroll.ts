@@ -234,7 +234,10 @@ export async function upsertPayout(
         .eq("user_id", userId)
         .maybeSingle();
 
-    if (existing) return toCamelKeys(existing);
+    // Don't mutate a settled payout
+    if (existing && (existing as { status: string }).status === "paid") {
+        return toCamelKeys(existing);
+    }
 
     // Compute commissions total
     const { data: commissions } = await supabase
@@ -249,7 +252,7 @@ export async function upsertPayout(
         0,
     );
 
-    // Compute claims total from approved claims in period (period_id is always set now)
+    // Compute claims total from approved claims in period
     const { data: claims } = await supabase
         .from("payroll_claims")
         .select("amount")
@@ -264,6 +267,18 @@ export async function upsertPayout(
     );
 
     const totalPay = commissionsTotal + claimsTotal;
+
+    if (existing) {
+        const { data, error } = await supabase
+            .from("payroll_payouts")
+            .update({ commissions_total: commissionsTotal, claims_total: claimsTotal, total_pay: totalPay })
+            .eq("id", (existing as { id: string }).id)
+            .select()
+            .single();
+
+        if (error || !data) throw new Error(error?.message ?? "Failed to update payout");
+        return toCamelKeys(data);
+    }
 
     const { data, error } = await supabase
         .from("payroll_payouts")

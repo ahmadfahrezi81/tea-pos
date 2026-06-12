@@ -200,10 +200,16 @@ export default function UserPayDetailPage({
     const { info: payrollUserInfo } = usePayrollUserInfo(userId);
     const [actionLoading, setActionLoading] = useState(false);
     const [showPaySheet, setShowPaySheet] = useState(false);
+    const [showPendingWarning, setShowPendingWarning] = useState(false);
 
     const targetUser = users.find((u) => u.id === userId);
 
     const handleUpsertPayout = async () => {
+        if (pendingClaims.length > 0 && !showPendingWarning) {
+            setShowPendingWarning(true);
+            return;
+        }
+        setShowPendingWarning(false);
         setActionLoading(true);
         try {
             await payrollApi.upsertPayout({ periodId, userId });
@@ -280,6 +286,7 @@ export default function UserPayDetailPage({
     );
     const totalCups = commissions.reduce((s, e) => s + e.totalCups, 0);
     const approvedClaims = claims.filter((c) => c.status === "approved" || c.status === "paid");
+    const pendingClaims = claims.filter((c) => c.status === "pending");
     const hasBankInfo = payrollUserInfo?.bankName || payrollUserInfo?.bankAccountNumber;
 
     return (
@@ -354,7 +361,7 @@ export default function UserPayDetailPage({
                 />
                 <Divider />
 
-                {approvedClaims.length > 0 && (
+                {(approvedClaims.length > 0 || pendingClaims.length > 0) && (
                     <>
                         <Row left="CLAIMS" />
                         {approvedClaims.map((c) => (
@@ -362,6 +369,14 @@ export default function UserPayDetailPage({
                                 key={c.id}
                                 left={c.claimTypeName ?? c.claimTypeId ?? "—"}
                                 right={`Rp ${c.amount.toLocaleString("id-ID")}`}
+                            />
+                        ))}
+                        {pendingClaims.map((c) => (
+                            <Row
+                                key={c.id}
+                                left={c.claimTypeName ?? c.claimTypeId ?? "—"}
+                                right="Pending"
+                                muted
                             />
                         ))}
                         <Divider />
@@ -391,14 +406,34 @@ export default function UserPayDetailPage({
 
             {/* Actions */}
             {status === null && (
-                <div className="fixed bottom-0 left-0 right-0 p-4 pb-8 bg-white border-t border-gray-100">
-                    <button
-                        onClick={handleUpsertPayout}
-                        disabled={actionLoading}
-                        className="w-full py-3.5 bg-brand text-white font-bold rounded-xl active:opacity-80 disabled:opacity-40"
-                    >
-                        {actionLoading ? "Loading..." : "Load Payout"}
-                    </button>
+                <div className="fixed bottom-0 left-0 right-0 p-4 pb-8 bg-white border-t border-gray-100 space-y-3">
+                    {showPendingWarning && (
+                        <div className="bg-amber-50 rounded-xl px-4 py-3 space-y-1">
+                            <p className="text-sm font-semibold text-amber-800">
+                                {pendingClaims.length} claim{pendingClaims.length !== 1 ? "s" : ""} still pending review
+                            </p>
+                            <p className="text-xs text-amber-700">
+                                Pending claims won't be included in this payout. Approve them first or load anyway.
+                            </p>
+                        </div>
+                    )}
+                    <div className={showPendingWarning ? "flex gap-3" : ""}>
+                        {showPendingWarning && (
+                            <button
+                                onClick={() => setShowPendingWarning(false)}
+                                className="flex-1 py-3.5 bg-gray-100 text-gray-700 font-bold rounded-xl active:opacity-80"
+                            >
+                                Go Back
+                            </button>
+                        )}
+                        <button
+                            onClick={handleUpsertPayout}
+                            disabled={actionLoading}
+                            className={`${showPendingWarning ? "flex-1" : "w-full"} py-3.5 bg-brand text-white font-bold rounded-xl active:opacity-80 disabled:opacity-40`}
+                        >
+                            {actionLoading ? "Loading..." : showPendingWarning ? "Load Anyway" : "Load Payout"}
+                        </button>
+                    </div>
                 </div>
             )}
 

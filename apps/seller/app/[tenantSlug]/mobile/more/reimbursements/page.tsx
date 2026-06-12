@@ -1,10 +1,8 @@
 "use client";
 
-import { usePayrollClaims } from "@/lib/hooks/payroll-claims/usePayrollClaims";
-import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
-import { navigation } from "@tea-pos/utils/navigation";
-import { FormFooter } from "@/components/shared/FormFooter";
-import { ReceiptText } from "lucide-react";
+import { usePayrollClaims, useClaimableTypes } from "@/lib/hooks/payroll-claims/usePayrollClaims";
+import { useCurrentPayrollPeriod } from "@/lib/hooks/payroll/usePayroll";
+import { ReceiptText, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 
 const STATUS_STYLE: Record<string, string> = {
@@ -21,55 +19,89 @@ const STATUS_LABEL: Record<string, string> = {
     paid: "Paid ✓",
 };
 
-export default function ReimbursementsPage() {
-    const { url } = useTenantSlug();
-    const { claims, isLoading } = usePayrollClaims();
+const FREQ_LABEL: Record<string, string> = {
+    weekly: "Weekly",
+    monthly: "Monthly",
+    one_time: "One-time",
+};
 
-    const inner = isLoading ? (
-        <div className="flex-1 flex items-center justify-center">
-            <div className="w-7 h-7 border-3 border-brand border-t-transparent rounded-full animate-spin" />
-        </div>
-    ) : claims.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-center">
-            <ReceiptText size={40} className="text-gray-300 mb-3" />
-            <p className="text-gray-500 text-sm">No claims yet.</p>
-        </div>
-    ) : (
-        <ul className="divide-y divide-gray-100">
-            {claims.map((claim) => (
-                <li key={claim.id} className="flex items-center justify-between px-4 py-3">
-                    <div>
-                        <p className="text-base font-medium text-gray-800">
-                            {claim.claimTypeName ?? claim.claimTypeId ?? "—"}
-                        </p>
-                        <p className="text-sm text-gray-400">
-                            {format(new Date(claim.date), "d MMM yyyy")}
-                        </p>
-                    </div>
-                    <div className="text-right flex flex-col items-end gap-1">
-                        <p className="text-base font-semibold text-gray-900">
-                            Rp {claim.amount.toLocaleString("id-ID")}
-                        </p>
-                        <span
-                            className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLE[claim.status] ?? STATUS_STYLE.pending}`}
-                        >
-                            {STATUS_LABEL[claim.status] ?? claim.status}
-                        </span>
-                    </div>
-                </li>
-            ))}
-        </ul>
+export default function ReimbursementsPage() {
+    const { claims, isLoading: claimsLoading } = usePayrollClaims();
+    const { period: currentPeriod, isLoading: periodLoading } = useCurrentPayrollPeriod();
+    const { types, isLoading: typesLoading } = useClaimableTypes(
+        currentPeriod ? { periodId: currentPeriod.id } : null,
     );
 
     return (
-        <>
-            <div className="flex-1 bg-white rounded-2xl flex flex-col">
-                {inner}
+        <div className="space-y-3">
+            {/* Entitlements */}
+            <div className="bg-white rounded-2xl p-4 space-y-3">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Your Entitlements</p>
+                {periodLoading || typesLoading ? (
+                    <div className="flex gap-3">
+                        {[1, 2].map((i) => (
+                            <div key={i} className="w-36 h-20 bg-gray-100 rounded-xl animate-pulse shrink-0" />
+                        ))}
+                    </div>
+                ) : types.length === 0 ? (
+                    <p className="text-sm text-gray-400">No entitlements for this period.</p>
+                ) : (
+                    <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1">
+                        {types.map((type) => (
+                            <div
+                                key={type.id}
+                                className={`shrink-0 w-40 rounded-xl p-3 border space-y-1.5 ${type.claimable ? "border-brand/20 bg-brand/5" : "border-gray-100 bg-gray-50"}`}
+                            >
+                                <div className="flex items-start justify-between gap-1">
+                                    <p className="text-sm font-semibold text-gray-800 leading-tight">{type.name}</p>
+                                    {!type.claimable && <CheckCircle size={14} className="text-green-500 shrink-0 mt-0.5" />}
+                                </div>
+                                <p className="text-base font-bold text-gray-900">Rp {(type.amount ?? 0).toLocaleString("id-ID")}</p>
+                                <p className={`text-xs font-medium ${type.claimable ? "text-brand" : "text-gray-400"}`}>
+                                    {FREQ_LABEL[type.frequency] ?? type.frequency} · {type.claimable ? "Available" : type.frequency === "one_time" ? "Used" : "Claimed"}
+                                </p>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
-            <FormFooter
-                label="New Claim"
-                onSubmit={() => navigation.push(url("/mobile/more/reimbursements/add"))}
-            />
-        </>
+
+            {/* Claims history */}
+            <div className="bg-white rounded-2xl">
+                {claimsLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                        <div className="w-7 h-7 border-3 border-brand border-t-transparent rounded-full animate-spin" />
+                    </div>
+                ) : claims.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center text-center py-12">
+                        <ReceiptText size={40} className="text-gray-300 mb-3" />
+                        <p className="text-gray-500 text-sm">No claims yet.</p>
+                    </div>
+                ) : (
+                    <ul className="divide-y divide-gray-100">
+                        {claims.map((claim) => (
+                            <li key={claim.id} className="flex items-center justify-between px-4 py-3">
+                                <div>
+                                    <p className="text-base font-medium text-gray-800">
+                                        {claim.claimTypeName ?? claim.claimTypeId ?? "—"}
+                                    </p>
+                                    <p className="text-sm text-gray-400">
+                                        {format(new Date(claim.date), "d MMM yyyy")}
+                                    </p>
+                                </div>
+                                <div className="text-right flex flex-col items-end gap-1">
+                                    <p className="text-base font-semibold text-gray-900">
+                                        Rp {claim.amount.toLocaleString("id-ID")}
+                                    </p>
+                                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLE[claim.status] ?? STATUS_STYLE.pending}`}>
+                                        {STATUS_LABEL[claim.status] ?? claim.status}
+                                    </span>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </div>
+        </div>
     );
 }
