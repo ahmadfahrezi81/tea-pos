@@ -369,6 +369,35 @@ export async function listSessionsByMonth(supabase: SupabaseClient, params: List
     return { sessionsBySummaryId };
 }
 
+// ─── User session activity (streak grid) ─────────────────────────────────────
+
+export async function listUserSessionDates(
+    supabase: SupabaseClient,
+    { tenantId, userId, weeks = 16 }: { tenantId: string; userId: string; weeks?: number },
+): Promise<string[]> {
+    const tz = parseInt(process.env.TIMEZONE_OFFSET ?? "7", 10);
+    const from = new Date();
+    from.setDate(from.getDate() - weeks * 7);
+    from.setUTCHours(0 - tz, 0, 0, 0);
+
+    const { data, error } = await supabase
+        .from("store_sessions")
+        .select("started_at")
+        .eq("tenant_id", tenantId)
+        .eq("user_id", userId)
+        .gte("started_at", from.toISOString());
+
+    if (error) throw error;
+
+    const dates = new Set<string>();
+    for (const row of data ?? []) {
+        const local = new Date(new Date(row.started_at).getTime() + tz * 60 * 60 * 1000);
+        dates.add(local.toISOString().slice(0, 10));
+    }
+
+    return Array.from(dates).sort();
+}
+
 // ─── Sessions by summary (detail view) ───────────────────────────────────────
 
 export async function listSessionsBySummary(

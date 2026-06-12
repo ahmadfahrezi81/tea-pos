@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/context/AuthContext";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import {
     MapPin,
-    Building2,
+    Store,
     ChevronRight,
     Rocket,
     Cloud,
@@ -14,8 +14,10 @@ import {
 } from "lucide-react";
 import { useStore } from "@/lib/context/StoreContext";
 import { useFastOrderMode } from "@/lib/context/FastOrderModeContext";
+import { useFlags } from "@/lib/context/FlagsContext";
 import { navigation } from "@tea-pos/utils/navigation";
 import { WeatherDrawer } from "../../home/pos/_components/WeatherDrawer";
+import SessionStreak from "./SessionStreak";
 
 // ============================================================================
 // SETTINGS ROW
@@ -90,48 +92,59 @@ export default function MoreMenu() {
     const { user } = useAuth();
     const { assignedStores } = useStore();
     const { fastOrderMode, toggleFastOrderMode } = useFastOrderMode();
+    const { flags: { isFastOrderEnabled } } = useFlags();
     const [isWeatherOpen, setIsWeatherOpen] = useState(false);
 
     if (!user) return null;
 
     return (
         <div className="space-y-4">
-            <div className="bg-white rounded-2xl px-4 py-1">
-                <SettingsRow
-                    icon={<Banknote size={22} strokeWidth={2} className="text-gray-900" />}
-                    label="My Pay"
-                    onClick={() => navigation.push(url("/mobile/more/earnings"))}
-                />
-                <SettingsRow
-                    icon={<ReceiptText size={22} strokeWidth={2} className="text-gray-900" />}
-                    label="My Claims"
-                    onClick={() => navigation.push(url("/mobile/more/reimbursements"))}
-                />
-            </div>
+            <SessionStreak />
 
-            <div className="bg-white rounded-2xl px-4 py-1">
-                <SettingsRow
-                    icon={<Rocket size={22} strokeWidth={2} className="text-gray-900" />}
-                    label="Fast Order Mode"
-                    onClick={toggleFastOrderMode}
-                    right={<FastOrderToggle enabled={fastOrderMode} />}
-                />
-                <SettingsRow
-                    icon={<Cloud size={22} strokeWidth={2} className="text-gray-900" />}
-                    label="Weather"
-                    onClick={() => setIsWeatherOpen(true)}
-                />
-                <SettingsRow
-                    icon={<Building2 size={22} strokeWidth={2} className="text-gray-900" />}
-                    label="Assigned Stores"
-                    onClick={() => navigation.push(url("/mobile/more/stores"))}
-                />
-                <SettingsRow
-                    icon={<MapPin size={22} strokeWidth={2} className="text-gray-900" />}
-                    label="Location Feedback"
-                    onClick={() => navigation.push(url("/mobile/more/map"))}
-                />
-            </div>
+            <section className="space-y-2">
+                <p className="pl-3 text-xs font-bold uppercase tracking-widest text-gray-700">Personal</p>
+                <div className="bg-white rounded-2xl px-4 py-1">
+                    <SettingsRow
+                        icon={<Banknote size={22} strokeWidth={2} className="text-gray-900" />}
+                        label="My Pay"
+                        onClick={() => navigation.push(url("/mobile/more/earnings"))}
+                    />
+                    <SettingsRow
+                        icon={<ReceiptText size={22} strokeWidth={2} className="text-gray-900" />}
+                        label="My Claims"
+                        onClick={() => navigation.push(url("/mobile/more/reimbursements"))}
+                    />
+                    <SettingsRow
+                        icon={<Store size={22} strokeWidth={2} className="text-gray-900" />}
+                        label="My Stores"
+                        onClick={() => navigation.push(url("/mobile/more/stores"))}
+                    />
+                </div>
+            </section>
+
+            <section className="space-y-2">
+                <p className="pl-3 text-xs font-bold uppercase tracking-widest text-gray-700">Store</p>
+                <div className="bg-white rounded-2xl px-4 py-1">
+                    {isFastOrderEnabled && (
+                        <SettingsRow
+                            icon={<Rocket size={22} strokeWidth={2} className="text-gray-900" />}
+                            label="Fast Order Mode"
+                            onClick={toggleFastOrderMode}
+                            right={<FastOrderToggle enabled={fastOrderMode} />}
+                        />
+                    )}
+                    <SettingsRow
+                        icon={<Cloud size={22} strokeWidth={2} className="text-gray-900" />}
+                        label="Weather"
+                        onClick={() => setIsWeatherOpen(true)}
+                    />
+                    <SettingsRow
+                        icon={<MapPin size={22} strokeWidth={2} className="text-gray-900" />}
+                        label="Location Feedback"
+                        onClick={() => navigation.push(url("/mobile/more/map"))}
+                    />
+                </div>
+            </section>
 
             <WeatherDrawer
                 isOpen={isWeatherOpen}

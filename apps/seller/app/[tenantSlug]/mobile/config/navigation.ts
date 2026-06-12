@@ -112,7 +112,7 @@ export const mobileRoutes = {
         hideStorePicker: true,
     },
     "/mobile/more/stores": {
-        title: "Assigned Stores",
+        title: "My Stores",
         subPage: true,
         inlineHeader: false,
         isChart: false,

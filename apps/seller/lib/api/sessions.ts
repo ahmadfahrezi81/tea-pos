@@ -67,4 +67,9 @@ export const sessionsApi = {
             await apiFetch<unknown>(`/api/sessions/summary/${encodeURIComponent(summaryId)}`),
         );
     },
+
+    getActivity: async (weeks?: number): Promise<{ dates: string[] }> => {
+        const sp = weeks ? `?weeks=${weeks}` : "";
+        return apiFetch<{ dates: string[] }>(`/api/sessions/activity${sp}`);
+    },
 };

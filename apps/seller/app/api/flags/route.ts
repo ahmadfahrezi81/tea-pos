@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
             isReportEnabled: evaluation.isEnabled(FLAGS.FEATURE.REPORT),
             isRequestEnabled: evaluation.isEnabled(FLAGS.FEATURE.REQUEST),
             isReimbursementEnabled: evaluation.isEnabled(FLAGS.FEATURE.REIMBURSEMENT),
+            isFastOrderEnabled: evaluation.isEnabled(FLAGS.FEATURE.FAST_ORDER),
             isSkipManagePhotosEnabled: evaluation.isEnabled(FLAGS.OPS.SKIP_MANAGE_PHOTOS),
         });
     } catch (error) {

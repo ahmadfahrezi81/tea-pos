@@ -9,6 +9,7 @@ const DEFAULT_FLAGS: Flags = {
     isReportEnabled: false,
     isRequestEnabled: false,
     isReimbursementEnabled: false,
+    isFastOrderEnabled: false,
     isSkipManagePhotosEnabled: false,
 };
 

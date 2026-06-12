@@ -6,6 +6,7 @@ export const FlagsResponse = z.object({
     isReportEnabled: z.boolean(),
     isRequestEnabled: z.boolean(),
     isReimbursementEnabled: z.boolean(),
+    isFastOrderEnabled: z.boolean(),
     isSkipManagePhotosEnabled: z.boolean(),
 });
 
