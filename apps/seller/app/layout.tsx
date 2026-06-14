@@ -50,8 +50,9 @@ export default async function RootLayout({
         initialUser = null;
     }
     const localeCookie = cookieStore.get("locale")?.value;
+    const resolvedLocale = localeCookie ?? initialUser?.preferredLanguage;
     const initialLocale: Locale | undefined =
-        localeCookie === "en" || localeCookie === "id" ? localeCookie : undefined;
+        resolvedLocale === "en" || resolvedLocale === "id" ? resolvedLocale : undefined;
 
     return (
         <html lang="en" suppressHydrationWarning>
