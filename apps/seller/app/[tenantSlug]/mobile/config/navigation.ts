@@ -20,6 +20,7 @@ export type RouteConfig = {
     hideStorePicker?: boolean;
     footerCta?: string;
     scrollPaddingBottom?: string;
+    preserveScroll?: boolean;
 };
 
 export const mobileRoutes = {
@@ -87,6 +88,7 @@ export const mobileRoutes = {
         inlineHeader: false,
         isChart: false,
         parent: null,
+        preserveScroll: true,
     },
     "/mobile/analytics/chart": {
         title: "Monthly Chart",

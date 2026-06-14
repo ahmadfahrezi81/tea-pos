@@ -21,6 +21,7 @@ import { MobileHeader } from "./MobileHeader";
 import { MobileFooterNav } from "./MobileFooterNav";
 import { MobileOverlayContext } from "./MobileOverlayContext";
 import { MobileFooterSlotContext } from "./MobileFooterSlotContext";
+import { MobileScrollContext } from "./MobileScrollContext";
 import { resolveRoute, rootTabSuffixes, tabGroups } from "../config/navigation";
 
 interface MobileLayoutClientProps {
@@ -59,12 +60,25 @@ export default function MobileLayoutClient({
 
     const handleNavClick = useCallback(
         (path: string) => {
-            if (path === pathname) return;
+            if (path === pathname) {
+                scrollContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+                return;
+            }
+            const currentRoute = resolveRoute(pathname);
+            if (currentRoute?.preserveScroll) {
+                const cleanPath = path.split("?")[0];
+                const isTabSwitch = rootTabPaths.includes(cleanPath);
+                if (isTabSwitch) {
+                    sessionStorage.removeItem(`scroll:${pathname}`);
+                } else if (scrollContainerRef.current) {
+                    sessionStorage.setItem(`scroll:${pathname}`, String(scrollContainerRef.current.scrollTop));
+                }
+            }
             setOptimisticPath(path.split("?")[0]);
             setIsTransitioning(true);
             router.push(path);
         },
-        [pathname, router],
+        [pathname, router, rootTabPaths],
     );
 
     useEffect(() => {
@@ -157,6 +171,7 @@ export default function MobileLayoutClient({
     const scrollPaddingBottom = currentRoute?.scrollPaddingBottom ?? (!!footerCtaLabel ? "pb-32" : "pb-28");
 
     return (
+        <MobileScrollContext.Provider value={{ scrollRef: scrollContainerRef }}>
         <MobileFooterSlotContext.Provider value={{ setFooterSlot }}>
         <MobileOverlayContext.Provider value={{ setOverlay }}>
             {/* Shell — always rendered so header/footer are on screen from first paint */}
@@ -301,5 +316,6 @@ export default function MobileLayoutClient({
             )}
         </MobileOverlayContext.Provider>
         </MobileFooterSlotContext.Provider>
+        </MobileScrollContext.Provider>
     );
 }

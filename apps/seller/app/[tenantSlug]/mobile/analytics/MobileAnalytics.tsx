@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { Drawer } from "vaul";
 import { useSummaries } from "@/lib/hooks/summaries/useDailySummaries";
-import type { SessionUserResponse } from "@tea-pos/features/sessions/schema";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 import { toIndonesiaMonthYear } from "@tea-pos/utils/server-config/timezone";
 import { getCurrentLocalMonth } from "@tea-pos/utils/time";
-import { Calendar, CalendarDays, AlertTriangle, Receipt, MoreVertical, Info, Activity, UserCircle, History, Users } from "lucide-react";
+import { Calendar, CalendarDays, AlertTriangle, Receipt, MoreVertical, Info, UserCircle, History, Users, X } from "lucide-react";
 import { SkeletonValue } from "@/components/shared/SkeletonValue";
 import { useStore } from "@/lib/context/StoreContext";
 import {
@@ -16,6 +17,7 @@ import {
 } from "../analytics/utils/summariesHelpers";
 import { navigation } from "@tea-pos/utils/navigation";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
+import { useMobileScroll } from "../components/MobileScrollContext";
 
 import dynamic from "next/dynamic";
 const MiniDailySalesChart = dynamic(
@@ -32,11 +34,14 @@ const MiniDailySalesChart = dynamic(
 export default function MobileAnalytics() {
     const { selectedStoreId } = useStore();
     const { url } = useTenantSlug();
+    const { scrollRef } = useMobileScroll();
+    const pathname = usePathname();
+    const scrollRestored = useRef(false);
 
     const [selectedMonth, setSelectedMonth] = useState<string>(
         getCurrentLocalMonth(),
     );
-    const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+    const [activeSummary, setActiveSummary] = useState<{ id: string; date: string } | null>(null);
 
     const {
         data: summariesData,
@@ -48,6 +53,17 @@ export default function MobileAnalytics() {
         () => summariesData?.summaries.filter((s) => !s.closedAt) ?? [],
         [summariesData?.summaries],
     );
+
+    useEffect(() => {
+        if (summariesData && !scrollRestored.current && scrollRef.current) {
+            const saved = sessionStorage.getItem(`scroll:${pathname}`);
+            if (saved) {
+                scrollRef.current.scrollTop = parseInt(saved, 10);
+                sessionStorage.removeItem(`scroll:${pathname}`);
+            }
+            scrollRestored.current = true;
+        }
+    }, [summariesData, scrollRef, pathname]);
 
     if (summariesError) {
         return (
@@ -193,55 +209,12 @@ export default function MobileAnalytics() {
                                                     )}
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-0.5 -mr-2">
-                                                <button
-                                                    onClick={() =>
-                                                        navigation.push(url(`/mobile/analytics/daily/${summary.id}`))
-                                                    }
-                                                    className="size-8 shrink-0 flex items-center justify-center text-gray-500 active:opacity-60"
-                                                >
-                                                    <Info size={22} strokeWidth={2.5} />
-                                                </button>
-                                                <div className="relative">
-                                                    <button
-                                                        onClick={() => setOpenMenuId(openMenuId === summary.id ? null : summary.id)}
-                                                        className={`size-8 shrink-0 flex items-center justify-center text-gray-500 active:opacity-60 rounded-lg transition-colors ${openMenuId === summary.id ? "bg-gray-100" : ""}`}
-                                                    >
-                                                        <MoreVertical size={22} strokeWidth={2.5} />
-                                                    </button>
-                                                    {openMenuId === summary.id && (
-                                                        <>
-                                                            <div
-                                                                className="fixed inset-0 z-10"
-                                                                onClick={() => setOpenMenuId(null)}
-                                                            />
-                                                            <div className="absolute right-0 top-9 z-20 bg-white rounded-xl shadow-lg border border-gray-100 py-1 w-48">
-                                                                <button
-                                                                    onClick={() => {
-                                                                        setOpenMenuId(null);
-                                                                        navigation.push(url(`/mobile/analytics/daily/${summary.id}/events`));
-                                                                    }}
-                                                                    className="w-full text-left px-3 py-2 text-base text-gray-900 font-medium active:bg-gray-50 flex items-center justify-between gap-2.5"
-                                                                >
-                                                                    Activity
-                                                                    <History size={18} strokeWidth={2} className="text-gray-900" />
-                                                                </button>
-                                                                <hr className="border-gray-100 mx-2" />
-                                                                <button
-                                                                    onClick={() => {
-                                                                        setOpenMenuId(null);
-                                                                        navigation.push(url(`/mobile/analytics/daily/${summary.id}/sessions?storeId=${selectedStoreId}&date=${summary.date}`));
-                                                                    }}
-                                                                    className="w-full text-left px-3 py-2 text-base text-gray-900 font-medium active:bg-gray-50 flex items-center justify-between gap-2.5"
-                                                                >
-                                                                    Sessions
-                                                                    <Users size={18} strokeWidth={2} className="text-gray-900" />
-                                                                </button>
-                                                            </div>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </div>
+                                            <button
+                                                onClick={() => setActiveSummary({ id: summary.id, date: summary.date })}
+                                                className="size-8 shrink-0 flex items-center justify-center text-gray-500 active:opacity-60 rounded-lg transition-colors"
+                                            >
+                                                <MoreVertical size={22} strokeWidth={2.5} />
+                                            </button>
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-2 rounded-2xl p-2 bg-slate-100 text-gray-800">
@@ -404,6 +377,63 @@ export default function MobileAnalytics() {
                 </div>
             )}
 
+            <Drawer.Root open={!!activeSummary} onOpenChange={(open) => !open && setActiveSummary(null)}>
+            <Drawer.Portal>
+                <Drawer.Overlay className="fixed inset-0 bg-black/60 z-50" />
+                <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl px-4 pt-5 pb-8 focus:outline-none">
+                    <div className="absolute top-2 left-0 right-0 flex justify-center">
+                        <div className="w-8 h-1 rounded-full bg-gray-300" />
+                    </div>
+                    <div className="flex items-center justify-between mb-4">
+                        <Drawer.Title className="text-xl font-bold text-gray-900">
+                            {activeSummary ? formatDate(activeSummary.date) : ""}
+                        </Drawer.Title>
+                        <Drawer.Description className="sr-only">Daily summary options</Drawer.Description>
+                        <button
+                            onClick={() => setActiveSummary(null)}
+                            className="p-1.5 rounded-full text-gray-900 hover:bg-gray-100 -mr-2"
+                        >
+                            <X size={26} />
+                        </button>
+                    </div>
+                    <div className="space-y-3">
+                        <button
+                            onClick={() => {
+                                if (!activeSummary) return;
+                                setActiveSummary(null);
+                                navigation.push(url(`/mobile/analytics/daily/${activeSummary.id}`));
+                            }}
+                            className="w-full flex items-center gap-3 py-5 border-b transition-colors"
+                        >
+                            <Info size={20} strokeWidth={2} className="text-gray-900" />
+                            <span className="text-lg text-gray-900">Details</span>
+                        </button>
+                        <button
+                            onClick={() => {
+                                if (!activeSummary) return;
+                                setActiveSummary(null);
+                                navigation.push(url(`/mobile/analytics/daily/${activeSummary.id}/events`));
+                            }}
+                            className="w-full flex items-center gap-3 py-5 border-b transition-colors"
+                        >
+                            <History size={20} strokeWidth={2} className="text-gray-900" />
+                            <span className="text-lg text-gray-900">Activity</span>
+                        </button>
+                        <button
+                            onClick={() => {
+                                if (!activeSummary) return;
+                                setActiveSummary(null);
+                                navigation.push(url(`/mobile/analytics/daily/${activeSummary.id}/sessions?storeId=${selectedStoreId}&date=${activeSummary.date}`));
+                            }}
+                            className="w-full flex items-center gap-3 py-5 transition-colors"
+                        >
+                            <Users size={20} strokeWidth={2} className="text-gray-900" />
+                            <span className="text-lg text-gray-900">Sessions</span>
+                        </button>
+                    </div>
+                </Drawer.Content>
+            </Drawer.Portal>
+        </Drawer.Root>
         </div>
     );
 }
