@@ -30,16 +30,6 @@ import { useT } from "@/lib/hooks/useT";
 // CONSTANTS
 // ============================================================================
 
-const STEPS = [
-    { label: "Ice" },
-    { label: "Syrup" },
-    { label: "Bags" },
-    { label: "Cups" },
-    { label: "Waste" },
-    { label: "Cash" },
-    { label: "Review" },
-];
-
 const PHOTO_STEP_COUNT = 5;
 const STEP_CASH = 5;
 const STEP_REVIEW = 6;
@@ -58,6 +48,34 @@ export default function ManageCloseDayPage() {
     const { showToast } = useToast();
     const { flags: { isSkipManagePhotosEnabled: skipManagePhotos } } = useFlags();
     const t = useT();
+
+    const STEPS = useMemo(() => [
+        { label: t("manage.closeSteps.ice") },
+        { label: t("manage.closeSteps.syrup") },
+        { label: t("manage.closeSteps.bags") },
+        { label: t("manage.closeSteps.cups") },
+        { label: t("manage.closeSteps.waste") },
+        { label: t("manage.closeSteps.cash") },
+        { label: t("manage.closeSteps.review") },
+    ], [t]);
+
+    const photoSlots = useMemo(() =>
+        PHOTO_SLOTS.map((slot) => ({
+            ...slot,
+            label: slot.type === "closing:ice"
+                ? t("manage.photoLabels.iceBin")
+                : slot.type === "closing:syrup"
+                  ? t("manage.photoLabels.syrup")
+                  : slot.type === "closing:bags"
+                    ? t("manage.photoLabels.bags")
+                    : slot.type === "closing:cups"
+                      ? t("manage.photoLabels.cups")
+                      : slot.type === "closing:tea"
+                        ? t("manage.photoLabels.teaWaste")
+                        : slot.label,
+        })),
+        [t],
+    );
 
     const paramSummaryId = searchParams.get("summaryId");
     const paramMonth = searchParams.get("month");
@@ -176,7 +194,7 @@ export default function ManageCloseDayPage() {
         setError(null);
 
         if (currentStep < PHOTO_STEP_COUNT && summaryId && selectedStoreId) {
-            const slot = PHOTO_SLOTS[currentStep];
+            const slot = photoSlots[currentStep];
             const localPhoto = getSlotPhoto(slot.type);
             const existingSaved = getSavedSlotPhoto(slot.type);
             const currentQuantity = quantities[slot.type] ?? existingSaved?.quantity ?? null;
@@ -253,6 +271,7 @@ export default function ManageCloseDayPage() {
         goToStep,
         getSlotPhoto,
         getSavedSlotPhoto,
+        photoSlots,
     ]);
 
     const handleConfirm = useCallback(async () => {
@@ -291,7 +310,7 @@ export default function ManageCloseDayPage() {
     const isLastStep = currentStep === STEPS.length - 1;
     const isBusy = isUploading || isSubmitting;
 
-    const currentSlot = currentStep < PHOTO_STEP_COUNT ? PHOTO_SLOTS[currentStep] : null;
+    const currentSlot = currentStep < PHOTO_STEP_COUNT ? photoSlots[currentStep] : null;
     const currentStepHasPhoto = currentSlot
         ? !!getSlotPhoto(currentSlot.type) || !!getSavedSlotPhoto(currentSlot.type)
         : true;

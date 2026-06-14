@@ -35,7 +35,7 @@ export function TakeOverCard({
 
     return (
         <div className="text-center w-full max-w-xs mx-auto">
-            <Icon icon="fluent-emoji:locked-with-key" width={100} height={100} className="mx-auto mb-5" />
+            <Icon icon="fluent-emoji:locked-with-key" width={70} height={70} className="mx-auto mb-3" />
             <p className="font-bold text-gray-900 text-2xl tracking-tight">{t("home.takeover.takenBy")}</p>
             {userName && (
                 <div className="flex items-center gap-2 mt-1 justify-center bg-slate-100 rounded-xl px-2 py-2 pr-4 w-fit mx-auto">
@@ -55,7 +55,7 @@ export function TakeOverCard({
                     <p className="text-lg font-bold text-gray-900 truncate">{userName}</p>
                 </div>
             )}
-            <p className="text-base text-gray-500 mt-4 mb-7">
+            <p className="text-sm text-gray-500 mt-2 mb-3 leading-tight">
                 {t("home.takeover.askCode")}
             </p>
             <input

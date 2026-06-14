@@ -98,7 +98,7 @@ export default function OpenStorePage() {
                             setBalanceConfirmed(true);
                         }}
                     />
-                    <p className="text-xs text-gray-400">Cash on hand at the start of the day</p>
+                    <p className="text-xs text-gray-400">{t("manage.openingBalanceDesc")}</p>
                 </div>
             )}
 
@@ -123,7 +123,7 @@ export default function OpenStorePage() {
                     }}
                     onError={(msg) => setError(msg)}
                 />
-                <p className="text-xs text-gray-400 mt-2">Proof of store opening condition</p>
+                <p className="text-xs text-gray-400 mt-2">{t("manage.openingPhotoDesc")}</p>
             </div>
 
             {error && (

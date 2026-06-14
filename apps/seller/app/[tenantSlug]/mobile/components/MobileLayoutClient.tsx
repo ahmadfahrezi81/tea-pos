@@ -134,14 +134,15 @@ export default function MobileLayoutClient({
                     tab.variant && currentPath.includes(tab.variant.pathContains)
                         ? tab.variant
                         : null;
+                const label = v?.labelKey ? t(v.labelKey) : v?.label ?? (tab.labelKey ? t(tab.labelKey) : tab.label);
                 return {
                     path: url(tab.pathSuffix),
-                    label: v?.label ?? tab.label,
+                    label,
                     icon: v?.icon ?? tab.icon,
                     matchPaths: tab.matchSuffixes.map(url),
                 };
             }),
-        [currentPath, url],
+        [currentPath, url, t],
     );
 
     useEffect(() => {
@@ -149,11 +150,11 @@ export default function MobileLayoutClient({
     }, [tabs]);
 
     const currentRoute = resolveRoute(currentPath);
-    const currentTitle = currentRoute?.title ?? "Mobile";
+    const currentTitle = currentRoute?.titleKey ? t(currentRoute.titleKey) : currentRoute?.title ?? "Mobile";
     const currentIsSubPage = currentRoute?.subPage ?? false;
     const isInlineHeader = currentRoute?.inlineHeader ?? false;
     const hasHeaderAction = !!currentRoute?.headerAction;
-    const footerCtaLabel = currentRoute?.footerCta;
+    const footerCtaLabel = currentRoute?.footerCtaKey ? t(currentRoute.footerCtaKey) : currentRoute?.footerCta;
     const parentSuffix = currentRoute?.parent;
     const parentPath = !parentSuffix
         ? url("/mobile")
@@ -170,7 +171,7 @@ export default function MobileLayoutClient({
             ? "pt-27"
             : "pt-19";
 
-    const scrollPaddingBottom = currentRoute?.scrollPaddingBottom ?? (!!footerCtaLabel ? "pb-32" : "pb-28");
+    const scrollPaddingBottom = currentRoute?.scrollPaddingBottom ?? (!!footerCtaLabel ? "pb-28" : "pb-24");
 
     return (
         <MobileScrollContext.Provider value={{ scrollRef: scrollContainerRef }}>
@@ -215,8 +216,7 @@ export default function MobileLayoutClient({
                     )}
                     {overlay && (
                         <div
-                            className={`absolute inset-x-0 top-0 z-10 ${scrollPaddingTop} pb-5 px-3`}
-                            style={{ bottom: 'var(--mobile-footer-h)' }}
+                            className={`absolute inset-0 z-10 flex items-center justify-center`}
                         >
                             {overlay}
                         </div>

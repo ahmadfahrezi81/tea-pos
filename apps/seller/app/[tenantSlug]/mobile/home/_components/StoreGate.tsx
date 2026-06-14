@@ -34,7 +34,6 @@ export function StoreGate({ gate, isPosInUse, onTransfer, sessionUserName, sessi
         <div className="bg-white rounded-2xl w-full h-full flex flex-col items-center justify-center p-6">
             {isPosInUse && onTransfer ? (
                 <div className="w-full">
-                    <p className="font-mono text-md font-semibold text-gray-700 text-center">{getWeekInfo().label}</p>
                     <TakeOverCard
                         onTransfer={onTransfer}
                         userName={sessionUserName}

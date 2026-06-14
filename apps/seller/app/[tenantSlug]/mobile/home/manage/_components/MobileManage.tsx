@@ -68,7 +68,7 @@ export default function MobileManage() {
                     >
                         <div className="flex-1">
                             <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">
-                                Session Code
+                                {t("manage.sessionCode")}
                             </p>
                             <p className="text-2xl font-bold font-mono tracking-widest text-gray-900 mt-0.5">
                                 {codeRevealed ? session.claimCode : "••"}
@@ -86,7 +86,7 @@ export default function MobileManage() {
                     <div className="flex-1 flex items-center gap-3 p-4">
                         <div className="flex-1">
                             <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">
-                                Session Code
+                                {t("manage.sessionCode")}
                             </p>
                             <p className="text-lg font-medium text-gray-300 mt-0.5">
                                 —
@@ -100,19 +100,19 @@ export default function MobileManage() {
                     onClick={() => setIsWeatherOpen(true)}
                     className="flex-1 flex items-center gap-3 p-4 active:bg-gray-50 transition-colors text-left"
                 >
-                    <div className="w-12 h-12 flex items-center justify-center shrink-0">
+                    <div className="w-14 h-14 flex items-center justify-center shrink-0">
                         {WeatherIcon ? (
-                            <WeatherIcon width={48} height={48} />
+                            <WeatherIcon width={56} height={56} />
                         ) : (
-                            <Cloud size={28} className="text-blue-400" />
+                            <Cloud size={32} className="text-blue-400" />
                         )}
                     </div>
                     <div>
-                        <p className="text-xs text-gray-500 font-medium">
-                            Weather
+                        <p className="text-sm text-gray-500 font-medium">
+                            {t("manage.weather")}
                         </p>
-                        <p className="text-sm font-semibold text-gray-800">
-                            Forecast
+                        <p className="text-sm font-semibold text-gray-800 -mt-1">
+                            {t("manage.forecast")}
                         </p>
                     </div>
                 </button>

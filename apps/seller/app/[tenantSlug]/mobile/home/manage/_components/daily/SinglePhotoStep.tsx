@@ -8,21 +8,13 @@ import {
     SlottedPhoto,
     SavedSlottedPhoto,
 } from "@tea-pos/features/summaries/photos-schema";
+import { useT } from "@/lib/hooks/useT";
 
 const QUANTITY_CONFIG: Partial<
     Record<PhotoType, { unit: string; placeholder: string }>
 > = {
     "closing:cups": { unit: "pcs", placeholder: "0" },
     "closing:tea": { unit: "L", placeholder: "0" },
-};
-
-const STEP_DESCRIPTION: Partial<Record<PhotoType, string>> = {
-    "closing:ice":   "Photo the remaining ice in the bin at end of day.",
-    "closing:syrup": "Photo the remaining syrup bottles.",
-    "closing:bags":  "Photo the remaining bags.",
-    "closing:cups":  "Count and photo the remaining cups.",
-    "closing:tea":   "Measure and photo the remaining tea waste.",
-    "opening":       "Take a photo of the opening setup.",
 };
 
 interface SinglePhotoStepProps {
@@ -48,14 +40,25 @@ export function SinglePhotoStep({
     onSavedPhotoDelete,
     onQuantityChange,
 }: SinglePhotoStepProps) {
+    const t = useT();
     const quantityConfig = QUANTITY_CONFIG[type] ?? null;
+
+    const getDescription = (): string => {
+        if (type === "closing:ice") return t("manage.photoDescriptions.ice");
+        if (type === "closing:syrup") return t("manage.photoDescriptions.syrup");
+        if (type === "closing:bags") return t("manage.photoDescriptions.bags");
+        if (type === "closing:cups") return t("manage.photoDescriptions.cups");
+        if (type === "closing:tea") return t("manage.photoDescriptions.tea");
+        if (type === "opening") return t("manage.photoDescriptions.opening");
+        return "Take a photo and input the amount if needed.";
+    };
 
     return (
         <div className="flex flex-col gap-3 pt-0">
             <div>
                 <h2 className="text-2xl font-bold text-gray-900">{label}</h2>
                 <p className="text-sm text-gray-600 mt-0.5">
-                    {STEP_DESCRIPTION[type] ?? "Take a photo and input the amount if needed."}
+                    {getDescription()}
                 </p>
             </div>
 
