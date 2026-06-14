@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { PillSwitcher } from "./PillSwitcher";
 import type { TimelineEventResponse } from "@tea-pos/features/activity-logs/schema";
 import { EVENT_COLOR, EVENT_ICON, EVENT_LABEL, formatEventTime } from "@/lib/constants/activity-log-events";
+import { getWeekInfo } from "@tea-pos/utils/week";
 
 // ─── Time helpers ─────────────────────────────────────────────────────────────
 
@@ -194,7 +195,7 @@ export function AtAGlance({
                         {greeting}
                     </p>
                     <p className="text-base text-gray-600">
-                        {formatDate()} · {displayTime}
+                        {getWeekInfo().label} · {formatDate()}
                     </p>
                 </div>
                 <PillSwitcher />

@@ -15,6 +15,7 @@ import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { useStore } from "@/lib/context/StoreContext";
 import { StorePickerDrawer } from "./StorePickerDrawer";
 import { navigation } from "@tea-pos/utils/navigation";
+import { getWeekInfo } from "@tea-pos/utils/week";
 import { useIsIPhonePWA } from "@/lib/usePWA";
 import { MobileHeader } from "./MobileHeader";
 import { MobileFooterNav } from "./MobileFooterNav";
@@ -235,7 +236,7 @@ export default function MobileLayoutClient({
             {!shellReady && (
                 <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center">
                     <div className="text-center" role="status" aria-live="polite">
-                        <div className="mb-8">
+                        <div className="mb-4">
                             <Image
                                 src="/icons/icon-192x192.png"
                                 alt="Logo"
@@ -245,6 +246,7 @@ export default function MobileLayoutClient({
                                 className="rounded-xl shadow-2xl mx-auto"
                             />
                         </div>
+                        <p className="font-mono text-lg font-semibold text-gray-700 mb-2">{getWeekInfo().label}</p>
                         <div className="w-64 h-4 loading-track">
                             <div className="loading-bar">
                                 <div className="absolute top-0 left-0 right-0 h-1/2 rounded-full bg-gradient-to-b from-white/20 to-transparent" />

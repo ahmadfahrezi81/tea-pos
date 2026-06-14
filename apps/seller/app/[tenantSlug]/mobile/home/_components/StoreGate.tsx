@@ -5,6 +5,7 @@ import { Icon } from "@iconify/react";
 import { TakeOverCard } from "./TakeOverCard";
 import { navigation } from "@tea-pos/utils/navigation";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
+import { getWeekInfo } from "@tea-pos/utils/week";
 
 function GateIcon({ icon }: { icon: string }) {
     const [loaded, setLoaded] = useState(false);
@@ -30,20 +31,25 @@ export function StoreGate({ gate, isPosInUse, onTransfer, sessionUserName, sessi
     return (
         <div className="bg-white rounded-2xl w-full h-full flex flex-col items-center justify-center p-6">
             {isPosInUse && onTransfer ? (
-                <TakeOverCard
-                    onTransfer={onTransfer}
-                    userName={sessionUserName}
-                    userAvatarUrl={sessionUserAvatarUrl}
-                />
+                <div className="w-full">
+                    <p className="font-mono text-md font-semibold text-gray-700 text-center">{getWeekInfo().label}</p>
+                    <TakeOverCard
+                        onTransfer={onTransfer}
+                        userName={sessionUserName}
+                        userAvatarUrl={sessionUserAvatarUrl}
+                    />
+                </div>
             ) : gate === "closed" ? (
                 <div className="text-center w-full max-w-xs">
                     <GateIcon icon="fluent-emoji:alarm-clock" />
+                    <p className="font-mono text-md font-semibold text-gray-700">{getWeekInfo().label}</p>
                     <p className="font-bold text-gray-900 text-2xl tracking-tight">Store is closed</p>
                     <p className="text-base text-gray-500 mt-2">Today&apos;s session has ended.</p>
                 </div>
             ) : (
                 <div className="text-center w-full max-w-xs">
                     <GateIcon icon="fluent-emoji:convenience-store" />
+                    <p className="font-mono text-md font-semibold text-gray-700">{getWeekInfo().label}</p>
                     <p className="font-bold text-gray-900 text-2xl tracking-tight">Store not open yet</p>
                     <p className="text-base text-gray-500 mt-2 mb-7">
                         Open the store to start taking orders today.

@@ -99,7 +99,10 @@ export default function MoreMenu() {
 
     return (
         <div className="space-y-4">
-            <SessionStreak />
+            <section className="space-y-2">
+                <p className="pl-3 text-xs font-bold uppercase tracking-widest text-gray-700">Activity</p>
+                <SessionStreak />
+            </section>
 
             <section className="space-y-2">
                 <p className="pl-3 text-xs font-bold uppercase tracking-widest text-gray-700">Personal</p>
