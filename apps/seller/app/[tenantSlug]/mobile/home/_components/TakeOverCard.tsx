@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Loader2, UserCircle } from "lucide-react";
 import { Icon } from "@iconify/react";
 import Image from "next/image";
+import { useT } from "@/lib/hooks/useT";
 
 export function TakeOverCard({
     onTransfer,
@@ -17,6 +18,7 @@ export function TakeOverCard({
     const [claimCode, setClaimCode] = useState("");
     const [transferError, setTransferError] = useState<string | null>(null);
     const [isTransferring, setIsTransferring] = useState(false);
+    const t = useT();
 
     const handleTakeOver = async () => {
         if (claimCode.length !== 2) return;
@@ -34,7 +36,7 @@ export function TakeOverCard({
     return (
         <div className="text-center w-full max-w-xs mx-auto">
             <Icon icon="fluent-emoji:locked-with-key" width={100} height={100} className="mx-auto mb-5" />
-            <p className="font-bold text-gray-900 text-2xl tracking-tight">Session already taken by</p>
+            <p className="font-bold text-gray-900 text-2xl tracking-tight">{t("home.takeover.takenBy")}</p>
             {userName && (
                 <div className="flex items-center gap-2 mt-1 justify-center bg-slate-100 rounded-xl px-2 py-2 pr-4 w-fit mx-auto">
                     {userAvatarUrl ? (
@@ -54,7 +56,7 @@ export function TakeOverCard({
                 </div>
             )}
             <p className="text-base text-gray-500 mt-4 mb-7">
-                Ask the current seller for their 2-digit code to take over.
+                {t("home.takeover.askCode")}
             </p>
             <input
                 type="text"
@@ -80,7 +82,7 @@ export function TakeOverCard({
                 {isTransferring ? (
                     <Loader2 size={18} className="animate-spin mx-auto" />
                 ) : (
-                    "Take Over"
+                    t("home.takeover.takeOver")
                 )}
             </button>
         </div>

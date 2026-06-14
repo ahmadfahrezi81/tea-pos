@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useState, useMemo } from "react";
 import { createPortal } from "react-dom";
+import { useT } from "@/lib/hooks/useT";
 import { PillSwitcher } from "./PillSwitcher";
 import type { TimelineEventResponse } from "@tea-pos/features/activity-logs/schema";
 import { EVENT_COLOR, EVENT_ICON, EVENT_LABEL, formatEventTime } from "@/lib/constants/activity-log-events";
@@ -36,11 +37,11 @@ function formatDate(): string {
     });
 }
 
-function getGreeting(): string {
+function getGreetingKey(): "morning" | "afternoon" | "evening" {
     const hour = new Date().getHours();
-    if (hour < 12) return "Good Morning";
-    if (hour < 17) return "Good Afternoon";
-    return "Good Evening";
+    if (hour < 12) return "morning";
+    if (hour < 17) return "afternoon";
+    return "evening";
 }
 
 function formatTimeShort(minutes: number): string {
@@ -105,7 +106,8 @@ export function AtAGlance({
     const eventRefs = useRef<Record<string, HTMLDivElement | null>>({});
     const [activeEventId, setActiveEventId] = useState<string | null>(null);
 
-    const greeting = useMemo(() => getGreeting(), []);
+    const t = useT();
+    const greeting = t(`home.greeting.${getGreetingKey()}`);
 
     const displayTime = currentTime
         ? formatTime(timeToMinutes(currentTime))

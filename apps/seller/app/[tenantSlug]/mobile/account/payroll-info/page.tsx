@@ -3,6 +3,7 @@
 import { usePayrollUserInfo } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
 import { Copy, Check } from "lucide-react";
 import { useState } from "react";
+import { useT } from "@/lib/hooks/useT";
 
 const FieldRow = ({ label, value, copyable = false }: { label: string; value: string; copyable?: boolean }) => {
     const [copied, setCopied] = useState(false);
@@ -35,6 +36,7 @@ const SkeletonRow = () => (
 
 export default function PayrollInfoPage() {
     const { info, isLoading } = usePayrollUserInfo();
+    const t = useT();
 
     return (
         <div className="space-y-4">
@@ -43,9 +45,9 @@ export default function PayrollInfoPage() {
                     <><SkeletonRow /><SkeletonRow /><SkeletonRow /></>
                 ) : (
                     <>
-                        <FieldRow label="Bank Name" value={info?.bankName ?? ""} />
-                        <FieldRow label="Account Number" value={info?.bankAccountNumber ?? ""} copyable />
-                        <FieldRow label="Account Holder" value={info?.bankAccountHolder ?? ""} />
+                        <FieldRow label={t("account.bankName")} value={info?.bankName ?? ""} />
+                        <FieldRow label={t("account.accountNumber")} value={info?.bankAccountNumber ?? ""} copyable />
+                        <FieldRow label={t("account.accountHolder")} value={info?.bankAccountHolder ?? ""} />
                     </>
                 )}
             </div>

@@ -8,6 +8,7 @@ import { SelectInput } from "../../_components/shared/SelectInput";
 import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
 import { FormFooter } from "@/components/shared/FormFooter";
 import { getTodayLocalStr, getCurrentLocalMonth } from "@tea-pos/utils/time";
+import { useT } from "@/lib/hooks/useT";
 
 const EXPENSE_OPTIONS = [
     { value: "Ice", label: "Ice" },
@@ -18,6 +19,7 @@ const EXPENSE_OPTIONS = [
 export default function AddExpensePage() {
     const router = useRouter();
     const { selectedStoreId } = useStore();
+    const t = useT();
 
     const todayStr = useMemo(() => getTodayLocalStr(), []);
     const currentMonth = useMemo(() => getCurrentLocalMonth(), []);
@@ -75,7 +77,7 @@ export default function AddExpensePage() {
         <div className="space-y-3 pb-4">
             <div className="bg-white rounded-xl p-4 space-y-4">
                 <div className="space-y-1.5">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Type</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("manage.type")}</p>
                     <SelectInput
                         options={EXPENSE_OPTIONS}
                         value={label}
@@ -88,7 +90,7 @@ export default function AddExpensePage() {
                 </div>
 
                 <div className="space-y-1.5">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Amount</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("manage.amount")}</p>
                     <NumberInput value={amount} onChange={setAmount} currency />
                 </div>
 
@@ -98,8 +100,8 @@ export default function AddExpensePage() {
             </div>
 
             <FormFooter
-                label="Submit Store Expense"
-                loadingLabel="Saving..."
+                label={t("manage.submitExpense")}
+                loadingLabel={t("common.loading")}
                 onSubmit={handleSubmit}
                 disabled={!isValid}
                 isLoading={isSubmitting}

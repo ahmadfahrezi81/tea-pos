@@ -23,6 +23,7 @@ import { MobileOverlayContext } from "./MobileOverlayContext";
 import { MobileFooterSlotContext } from "./MobileFooterSlotContext";
 import { MobileScrollContext } from "./MobileScrollContext";
 import { resolveRoute, rootTabSuffixes, tabGroups } from "../config/navigation";
+import { useT } from "@/lib/hooks/useT";
 
 interface MobileLayoutClientProps {
     children: ReactNode;
@@ -46,6 +47,7 @@ export default function MobileLayoutClient({
     const lastRootTabRef = useRef<string>(url("/mobile/more"));
 
     const { user, avatarUrl, mutate: refreshProfile } = useAuth();
+    const t = useT();
     const { data: storesData } = useStores();
     const { selectedStore, setIsPickerOpen, isPickerOpen } = useStore();
     const isIPhonePWA = useIsIPhonePWA();
@@ -269,7 +271,7 @@ export default function MobileLayoutClient({
                         </div>
                         <div className="mt-4 text-xs text-gray-600 text-center">
                             <span className="font-mono text-xs opacity-90">
-                                Loading ...
+                                {t("common.loading")}
                             </span>
                         </div>
                     </div>
@@ -291,24 +293,23 @@ export default function MobileLayoutClient({
                             />
                         </div>
                         <h2 className="text-lg font-semibold text-gray-800 mb-2">
-                            Authentication Required
+                            {t("common.authRequired")}
                         </h2>
                         <p className="text-gray-600 mb-6 text-sm">
-                            Unable to load your profile. Please check your
-                            connection and try again.
+                            {t("common.authRequiredSub")}
                         </p>
                         <div className="flex gap-3 justify-center">
                             <button
                                 onClick={() => window.location.reload()}
                                 className="px-4 py-2 bg-brand text-white rounded-lg text-sm font-medium"
                             >
-                                Refresh Page
+                                {t("common.refresh")}
                             </button>
                             <button
                                 onClick={() => refreshProfile()}
                                 className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium"
                             >
-                                Retry
+                                {t("common.retry")}
                             </button>
                         </div>
                     </div>

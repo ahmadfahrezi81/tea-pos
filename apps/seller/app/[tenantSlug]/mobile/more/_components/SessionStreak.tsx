@@ -3,6 +3,7 @@
 import { useRef, useEffect } from "react";
 import { useSessionActivity } from "@/lib/hooks/sessions/useSessionActivity";
 import { getWeekInfo } from "@tea-pos/utils/week";
+import { useT } from "@/lib/hooks/useT";
 
 const PAST_WEEKS = 3;
 const TZ_MS = parseInt(process.env.NEXT_PUBLIC_TIMEZONE_OFFSET ?? "7") * 3_600_000;
@@ -33,6 +34,7 @@ export default function SessionStreak() {
     const { dates, isLoading } = useSessionActivity(4);
     const worked = new Set(dates);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const t = useT();
 
     useEffect(() => {
         requestAnimationFrame(() => {
@@ -57,7 +59,7 @@ export default function SessionStreak() {
             <div ref={scrollRef} className="flex gap-5 overflow-x-auto [&::-webkit-scrollbar]:hidden">
                 {weeks.map(({ weekNum, days, isCurrent, todayIso }) => (
                     <div key={weekNum} className="flex-none flex flex-col gap-1.5">
-                        <p className="text-xs font-semibold text-gray-600">Week {weekNum}{isCurrent && " (current)"}</p>
+                        <p className="text-xs font-semibold text-gray-600">Week {weekNum}{isCurrent && ` (${t("common.current")})`}</p>
                         <div className="flex gap-1.5">
                             {days.map((iso) => {
                                 const isUpcoming = iso > todayIso;

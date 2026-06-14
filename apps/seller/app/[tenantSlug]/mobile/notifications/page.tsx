@@ -6,6 +6,7 @@ import { Cloud, CloudSun, Store } from "lucide-react";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { formatTimeAgo } from "@tea-pos/utils/formatTimeAgo";
 import { navigation } from "@tea-pos/utils/navigation";
+import { useT } from "@/lib/hooks/useT";
 
 const typeStyles: Record<string, { bg: string; dot: string; label: string }> = {
     weather_forecast: {
@@ -45,6 +46,7 @@ function NotificationIcon({ type }: { type: string }) {
 export default function NotificationsPage() {
     const { data, isLoading } = useNotifications();
     const { url } = useTenantSlug();
+    const t = useT();
 
     const notifications = data?.notifications ?? [];
 
@@ -80,7 +82,7 @@ export default function NotificationsPage() {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-gray-400">
                 <Cloud className="w-10 h-10 mb-3" />
-                <p className="text-sm">No notifications yet</p>
+                <p className="text-sm">{t("notifications.empty")}</p>
             </div>
         );
     }

@@ -1,5 +1,5 @@
 import { apiFetch } from "./client";
-import { UserResponse, UpdateUserInput } from "@tea-pos/features/users/schema";
+import { UserResponse, UpdateUserInput, UpdateUserLanguageInput } from "@tea-pos/features/users/schema";
 
 export const usersApi = {
     get: async () => {
@@ -19,5 +19,13 @@ export const usersApi = {
                 body: JSON.stringify(input),
             }),
         );
+    },
+
+    updateLanguage: async (input: UpdateUserLanguageInput) => {
+        await apiFetch<unknown>("/api/users/language", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(input),
+        });
     },
 };

@@ -8,6 +8,7 @@ import { navigation } from "@tea-pos/utils/navigation";
 import { getISOWeek, parseISO, format } from "date-fns";
 import { ChevronRight } from "lucide-react";
 import type { PayrollPeriodResponse } from "@tea-pos/features/payroll/schema";
+import { useT } from "@/lib/hooks/useT";
 
 function formatDateRange(startDate: string, endDate: string) {
     return `${format(parseISO(startDate), "MMM d")}–${format(parseISO(endDate), "MMM d")}`;
@@ -20,18 +21,12 @@ const STATUS_STYLE: Record<string, string> = {
     paid: "bg-green-100 text-green-700",
 };
 
-const STATUS_LABEL: Record<string, string> = {
-    pending: "Waiting",
-    approved: "Ready",
-    on_hold: "Being reviewed",
-    paid: "Paid ✓",
-};
-
 export default function EarningsPage() {
     const { user } = useAuth();
     const { url } = useTenantSlug();
     const { periods, isLoading: periodsLoading } = usePayrollPeriods();
     const { payouts, isLoading: payoutsLoading } = usePayouts(user?.id ? { userId: user.id } : undefined);
+    const t = useT();
 
     const payoutByPeriod = payouts.reduce<Record<string, typeof payouts[0]>>((acc, p) => {
         acc[p.payrollPeriodId] = p;
@@ -45,7 +40,7 @@ export default function EarningsPage() {
                     {[1, 2, 3].map((i) => <div key={i} className="bg-white rounded-xl p-4 h-16 animate-pulse" />)}
                 </div>
             ) : periods.length === 0 ? (
-                <p className="text-center text-gray-400 py-10 text-base">No pay periods yet.</p>
+                <p className="text-center text-gray-400 py-10 text-base">{t("earnings.noPeriods")}</p>
             ) : (
                 <div className="space-y-2">
                     {(periods as PayrollPeriodResponse[]).map((period) => {
@@ -65,7 +60,7 @@ export default function EarningsPage() {
                                             Week {weekNum} · {formatDateRange(period.startDate, period.endDate)}
                                         </span>
                                         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLE[status] ?? STATUS_STYLE.pending}`}>
-                                            {STATUS_LABEL[status] ?? status}
+                                            {status === "pending" ? t("earnings.statusWaiting") : status === "approved" ? t("earnings.statusReady") : status === "on_hold" ? t("earnings.statusReview") : status === "paid" ? t("earnings.statusPaid") : status}
                                             {status === "paid" && payout?.paidAt ? ` · ${format(new Date(payout.paidAt), "d MMM")}` : ""}
                                         </span>
                                     </div>
@@ -75,12 +70,12 @@ export default function EarningsPage() {
                                             {payout.claimsTotal > 0 && (
                                                 <span className="text-gray-400">
                                                     {" · "}
-                                                    Rp {payout.commissionsTotal.toLocaleString("id-ID")} commissions + Rp {payout.claimsTotal.toLocaleString("id-ID")} claims
+                                                    Rp {payout.commissionsTotal.toLocaleString("id-ID")} {t("earnings.commissionsLabel")} + Rp {payout.claimsTotal.toLocaleString("id-ID")} {t("earnings.claimsLabel")}
                                                 </span>
                                             )}
                                         </p>
                                     ) : (
-                                        <p className="text-sm text-gray-400">Tap to view details</p>
+                                        <p className="text-sm text-gray-400">{t("earnings.tapToView")}</p>
                                     )}
                                 </div>
                                 <ChevronRight size={18} className="text-gray-400 shrink-0" />

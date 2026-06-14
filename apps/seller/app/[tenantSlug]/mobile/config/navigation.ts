@@ -268,6 +268,13 @@ export const mobileRoutes = {
         isChart: false,
         parent: "/mobile/more/reimbursements",
     },
+    "/mobile/account/language": {
+        title: "Language",
+        subPage: true,
+        inlineHeader: false,
+        isChart: false,
+        parent: "/mobile/account",
+    },
     "/mobile/account/payroll-info": {
         title: "Payroll Info",
         subPage: true,

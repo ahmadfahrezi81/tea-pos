@@ -2,6 +2,7 @@
 
 import { useCallback } from "react";
 import { useAuth } from "@/lib/context/AuthContext";
+import { useT } from "@/lib/hooks/useT";
 import VersionInfo from "@/components/shared/VersionInfo";
 import { useRouter } from "next/navigation";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
@@ -53,11 +54,10 @@ export default function AccountProfile() {
     const router = useRouter();
     const { url } = useTenantSlug();
     const { user, avatarUrl } = useAuth();
+    const t = useT();
 
     const handleLogout = useCallback(async () => {
-        const shouldLogout = window.confirm(
-            "Are you sure you want to log out?",
-        );
+        const shouldLogout = window.confirm(t("account.logoutConfirm"));
         if (shouldLogout) {
             await fetch("/api/auth/signout", {
                 method: "POST",
@@ -102,23 +102,23 @@ export default function AccountProfile() {
             <div className="bg-white rounded-2xl px-4 py-1">
                 <SettingsRow
                     icon={<Pencil size={22} strokeWidth={2} className="text-gray-900" />}
-                    label="Personal Details"
+                    label={t("account.personalDetails")}
                     onClick={() => navigation.push(url("/mobile/account/details"))}
                 />
                 <SettingsRow
                     icon={<Wallet size={22} strokeWidth={2} className="text-gray-900" />}
-                    label="Payroll Info"
+                    label={t("account.payrollInfo")}
                     onClick={() => navigation.push(url("/mobile/account/payroll-info"))}
                 />
                 <SettingsRow
                     icon={<Bell size={22} strokeWidth={2} className="text-gray-900" />}
-                    label="Notifications"
+                    label={t("account.notifications")}
                     disabled
                 />
                 <SettingsRow
                     icon={<Globe size={22} strokeWidth={2} className="text-gray-900" />}
-                    label="Language"
-                    disabled
+                    label={t("account.language")}
+                    onClick={() => navigation.push(url("/mobile/account/language"))}
                 />
             </div>
 
@@ -131,7 +131,7 @@ export default function AccountProfile() {
                     onClick={handleLogout}
                     className="text-sm font-semibold text-red-500 py-2 px-6"
                 >
-                    Log Out
+                    {t("common.logout")}
                 </button>
             </div>
         </div>

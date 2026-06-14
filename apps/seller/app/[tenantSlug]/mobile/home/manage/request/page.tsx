@@ -5,10 +5,12 @@ import { useSupplyRequests } from "@/lib/hooks/requests/useSupplyRequests";
 import { SUPPLY_REQUEST_TYPE_LABELS, SUPPLY_REQUEST_TYPES } from "@tea-pos/features/requests/schema";
 import type { SupplyRequestType } from "@tea-pos/features/requests/schema";
 import { PackageSearch } from "lucide-react";
+import { useT } from "@/lib/hooks/useT";
 
 export default function RequestPage() {
     const { selectedStoreId } = useStore();
     const { requests, isLoading } = useSupplyRequests(selectedStoreId);
+    const t = useT();
 
     const inner = isLoading ? (
         <div className="flex-1 flex items-center justify-center">
@@ -17,7 +19,7 @@ export default function RequestPage() {
     ) : requests.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center text-center">
             <PackageSearch size={40} className="text-gray-300 mb-3" />
-            <p className="text-gray-500 text-sm">No supply requests today.</p>
+            <p className="text-gray-500 text-sm">{t("manage.noRequests")}</p>
         </div>
     ) : (
         <ul className="divide-y divide-gray-100">

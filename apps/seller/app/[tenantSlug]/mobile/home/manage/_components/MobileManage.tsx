@@ -21,6 +21,7 @@ import {
     AlertTriangle,
 } from "lucide-react";
 import { useFlags } from "@/lib/context/FlagsContext";
+import { useT } from "@/lib/hooks/useT";
 
 export default function MobileManage() {
     const { url } = useTenantSlug();
@@ -33,6 +34,7 @@ export default function MobileManage() {
     } = useFlags();
     const [isWeatherOpen, setIsWeatherOpen] = useState(false);
     const [codeRevealed, setCodeRevealed] = useState(false);
+    const t = useT();
 
     const currentLocalHour = getCurrentLocalHour();
 
@@ -128,7 +130,7 @@ export default function MobileManage() {
                             }
                         />
                     }
-                    label="Store Expenses"
+                    label={t("manage.expenses")}
                     onClick={() =>
                         navigation.push(url("/mobile/home/manage/expense"))
                     }
@@ -147,7 +149,7 @@ export default function MobileManage() {
                                 }
                             />
                         }
-                        label="Store Requests"
+                        label={t("manage.requests")}
                         onClick={() =>
                             navigation.push(url("/mobile/home/manage/request"))
                         }
@@ -163,7 +165,7 @@ export default function MobileManage() {
                                 className="text-orange-500"
                             />
                         }
-                        label="Store Reports"
+                        label={t("manage.reports")}
                         onClick={() =>
                             navigation.push(url("/mobile/home/manage/report"))
                         }
@@ -179,7 +181,7 @@ export default function MobileManage() {
                             }
                         />
                     }
-                    label="Close Day"
+                    label={t("manage.closeDay")}
                     onClick={() =>
                         navigation.push(url("/mobile/home/manage/close"))
                     }

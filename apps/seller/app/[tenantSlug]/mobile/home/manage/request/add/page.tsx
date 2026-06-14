@@ -12,6 +12,7 @@ import { SelectInput } from "../../_components/shared/SelectInput";
 import { Textarea } from "../../_components/shared/Textarea";
 import { PhotoPicker } from "../../_components/shared/PhotoPicker";
 import { FormFooter } from "@/components/shared/FormFooter";
+import { useT } from "@/lib/hooks/useT";
 
 const TYPE_OPTIONS = SUPPLY_REQUEST_TYPES.map((t) => ({
     value: t,
@@ -23,6 +24,7 @@ export default function AddRequestPage() {
     const { selectedStoreId } = useStore();
     const { summaryId } = useSession(selectedStoreId);
     const { create } = useSupplyRequests(selectedStoreId);
+    const t = useT();
 
     const todayStr = useMemo(() => getTodayLocalStr(), []);
 
@@ -69,7 +71,7 @@ export default function AddRequestPage() {
         <div className="space-y-3 pb-4">
             <div className="bg-white rounded-xl p-4 space-y-4">
                 <div className="space-y-1.5">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Type</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("manage.type")}</p>
                     <SelectInput
                         options={TYPE_OPTIONS}
                         value={selectedType}
@@ -83,7 +85,7 @@ export default function AddRequestPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Notes</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("manage.notes")}</p>
                     <Textarea
                         value={notes}
                         onChange={setNotes}
@@ -94,7 +96,7 @@ export default function AddRequestPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Photo</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("manage.photo")}</p>
                     <PhotoPicker
                         previewUrl={photoPreview}
                         onCapture={(file, url) => { setPhotoFile(file); setPhotoPreview(url); }}
@@ -107,8 +109,8 @@ export default function AddRequestPage() {
             </div>
 
             <FormFooter
-                label="Submit Store Request"
-                loadingLabel="Sending..."
+                label={t("manage.submitRequest")}
+                loadingLabel={t("common.loading")}
                 onSubmit={handleSubmit}
                 disabled={!selectedType}
                 isLoading={isSubmitting}

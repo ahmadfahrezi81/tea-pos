@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/context/AuthContext";
+import { useT } from "@/lib/hooks/useT";
 import { usePayrollClaims, useClaimableTypes, useClaimableDates } from "@/lib/hooks/payroll-claims/usePayrollClaims";
 import { useCurrentPayrollPeriod } from "@/lib/hooks/payroll/usePayroll";
 import { apiFetch } from "@/lib/api/client";
@@ -20,6 +21,7 @@ function getLocalToday() {
 export default function AddClaimPage() {
     const router = useRouter();
     const { user } = useAuth();
+    const t = useT();
     const { create } = usePayrollClaims();
     const { period: currentPeriod, isLoading: periodLoading } = useCurrentPayrollPeriod();
 
@@ -38,7 +40,7 @@ export default function AddClaimPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const selectedType = types.find((t) => t.id === selectedTypeId);
+    const selectedType = types.find((type) => type.id === selectedTypeId);
     const isWeekly = selectedType?.frequency === "weekly";
     const amount = selectedType?.amount ?? 0;
 
@@ -48,8 +50,8 @@ export default function AddClaimPage() {
         : getLocalToday();
 
     const typeOptions = types
-        .filter((t) => t.claimable)
-        .map((t) => ({ value: t.id, label: t.name }));
+        .filter((type) => type.claimable)
+        .map((type) => ({ value: type.id, label: type.name }));
 
     const isValid = !!selectedTypeId && amount > 0 && (!isWeekly || claimableDates.includes(effectiveDate));
 
@@ -73,7 +75,7 @@ export default function AddClaimPage() {
             await create({ claimTypeId: selectedTypeId, amount, date: effectiveDate, notes: notes.trim() || undefined, photoUrl });
             router.back();
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to submit claim");
+            setError(err instanceof Error ? err.message : t("claims.failedToSubmit"));
         } finally {
             setIsSubmitting(false);
         }
@@ -83,20 +85,20 @@ export default function AddClaimPage() {
         <div className="space-y-3 pb-4">
             <div className="bg-white rounded-xl p-4 space-y-4">
                 <div className="space-y-1.5">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Type</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("claims.typeLabel")}</p>
                     {periodLoading || typesLoading ? (
                         <div className="h-12 bg-gray-100 rounded-xl animate-pulse" />
                     ) : types.length === 0 ? (
-                        <p className="text-sm text-gray-400 py-2">You have no claim entitlements. Contact your manager.</p>
+                        <p className="text-sm text-gray-400 py-2">{t("claims.noClaimEntitlements")}</p>
                     ) : typeOptions.length === 0 ? (
-                        <p className="text-sm text-gray-400 py-2">All your entitlements for this period have already been submitted.</p>
+                        <p className="text-sm text-gray-400 py-2">{t("claims.allSubmitted")}</p>
                     ) : (
                         <SelectInput
                             options={typeOptions}
                             value={selectedTypeId}
                             onChange={(v) => {
                                 setSelectedTypeId(v);
-                                const newType = types.find((t) => t.id === v);
+                                const newType = types.find((type) => type.id === v);
                                 if (newType?.frequency === "weekly" && claimableDates.length > 0) {
                                     const today = getLocalToday();
                                     setDate(claimableDates.includes(today) ? today : claimableDates[claimableDates.length - 1]);
@@ -104,26 +106,26 @@ export default function AddClaimPage() {
                                     setDate("");
                                 }
                             }}
-                            placeholder="Select type..."
+                            placeholder={t("claims.selectType")}
                         />
                     )}
                 </div>
 
                 {selectedType && <>
                     <div className="space-y-1.5">
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Amount</p>
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("claims.amountLabel")}</p>
                         <div className="px-3 py-2.5 border border-gray-200 rounded-xl bg-gray-50">
                             <p className="text-base font-medium text-gray-800">Rp {amount.toLocaleString("id-ID")}</p>
                         </div>
                     </div>
 
                     <div className="space-y-1.5">
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Date</p>
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("claims.dateLabel")}</p>
                         {isWeekly ? (
                             datesLoading ? (
                                 <div className="h-12 bg-gray-100 rounded-xl animate-pulse" />
                             ) : claimableDates.length === 0 ? (
-                                <p className="text-sm text-gray-400 py-2">No worked dates found for this period.</p>
+                                <p className="text-sm text-gray-400 py-2">{t("claims.noWorkedDates")}</p>
                             ) : (
                                 <select
                                     value={effectiveDate}
@@ -147,18 +149,18 @@ export default function AddClaimPage() {
                     </div>
 
                     <div className="space-y-1.5">
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Notes (optional)</p>
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("claims.notesLabel")}</p>
                         <Textarea
                             value={notes}
                             onChange={setNotes}
-                            placeholder="Any details..."
+                            placeholder={t("claims.notesPlaceholder")}
                             rows={3}
                             maxLength={500}
                         />
                     </div>
 
                     <div className="space-y-1.5">
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Receipt photo (optional)</p>
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("claims.receiptPhoto")}</p>
                         <PhotoPicker
                             previewUrl={photoPreview}
                             onCapture={(file, url) => { setPhotoFile(file); setPhotoPreview(url); }}
@@ -173,8 +175,8 @@ export default function AddClaimPage() {
             </div>
 
             <FormFooter
-                label="Submit Claim"
-                loadingLabel="Submitting..."
+                label={t("claims.submitClaim")}
+                loadingLabel={t("claims.submitting")}
                 onSubmit={handleSubmit}
                 disabled={!isValid || typeOptions.length === 0}
                 isLoading={isSubmitting}

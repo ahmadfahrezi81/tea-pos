@@ -9,6 +9,7 @@ import { TextInput } from "@tea-pos/ui/custom/TextInput";
 import { Drawer } from "vaul";
 import { X, ChevronRight } from "lucide-react";
 import type { PayrollUserInfoResponse } from "@tea-pos/features/payroll-user-info/schema";
+import { useT } from "@/lib/hooks/useT";
 
 function BankPickerDrawer({
     isOpen,
@@ -20,6 +21,7 @@ function BankPickerDrawer({
     onSelect: (name: string) => void;
 }) {
     const banks = useBanks();
+    const t = useT();
     const [query, setQuery] = useState("");
     const filtered = banks.filter((b) =>
         b.name.toLowerCase().includes(query.toLowerCase()),
@@ -30,13 +32,13 @@ function BankPickerDrawer({
             <Drawer.Portal>
                 <Drawer.Overlay className="fixed inset-0 bg-black/60 z-50" />
                 <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl flex flex-col focus:outline-none" style={{ maxHeight: "80dvh" }}>
-                    <Drawer.Title className="sr-only">Select bank</Drawer.Title>
+                    <Drawer.Title className="sr-only">{t("account.selectBankTitle")}</Drawer.Title>
                     <Drawer.Description className="sr-only">Choose your bank from the list</Drawer.Description>
                     <div className="absolute top-2 left-0 right-0 flex justify-center">
                         <div className="w-8 h-1 rounded-full bg-gray-300" />
                     </div>
                     <div className="flex items-center justify-between px-4 pt-5 pb-3 shrink-0">
-                        <p className="text-lg font-semibold text-gray-900">Select Bank</p>
+                        <p className="text-lg font-semibold text-gray-900">{t("account.selectBankTitle")}</p>
                         <button onClick={onClose} className="p-1.5 rounded-full text-gray-400 active:bg-gray-100">
                             <X size={20} />
                         </button>
@@ -46,7 +48,7 @@ function BankPickerDrawer({
                             type="text"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
-                            placeholder="Search bank..."
+                            placeholder={t("account.searchBank")}
                             className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-brand/40"
                         />
                     </div>
@@ -72,6 +74,7 @@ function EditForm({ info, update }: {
     update: (input: { bankName?: string; bankAccountNumber?: string; bankAccountHolder?: string }) => Promise<PayrollUserInfoResponse>;
 }) {
     const router = useRouter();
+    const t = useT();
     const [bankName, setBankName] = useState(info?.bankName ?? "");
     const [bankAccountNumber, setBankAccountNumber] = useState(Number(info?.bankAccountNumber?.replace(/\D/g, "") || 0));
     const [bankAccountHolder, setBankAccountHolder] = useState(info?.bankAccountHolder ?? "");
@@ -90,7 +93,7 @@ function EditForm({ info, update }: {
             });
             router.back();
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to save");
+            setError(err instanceof Error ? err.message : t("account.failedToSave"));
         } finally {
             setIsSaving(false);
         }
@@ -101,19 +104,19 @@ function EditForm({ info, update }: {
             <div className="space-y-4">
                 <div className="bg-white rounded-xl p-4 space-y-4">
                     <div className="space-y-1.5">
-                        <p className="text-xs font-medium text-gray-500">Bank name</p>
+                        <p className="text-xs font-medium text-gray-500">{t("account.bankNameLabel")}</p>
                         <button
                             onClick={() => setIsBankPickerOpen(true)}
                             className="w-full flex items-center justify-between px-3 py-2.5 border border-gray-200 rounded-xl text-base focus:outline-none active:ring-2 active:ring-brand/40 text-left"
                         >
                             <span className={bankName ? "text-gray-900" : "text-gray-400"}>
-                                {bankName || "Select bank"}
+                                {bankName || t("account.selectBank")}
                             </span>
                             <ChevronRight size={18} className="text-gray-400 shrink-0" />
                         </button>
                     </div>
                     <div className="space-y-1.5">
-                        <p className="text-xs font-medium text-gray-500">Account number</p>
+                        <p className="text-xs font-medium text-gray-500">{t("account.accountNumberLabel")}</p>
                         <NumberInput
                             raw
                             value={bankAccountNumber}
@@ -122,11 +125,11 @@ function EditForm({ info, update }: {
                         />
                     </div>
                     <div className="space-y-1.5">
-                        <p className="text-xs font-medium text-gray-500">Account holder name</p>
+                        <p className="text-xs font-medium text-gray-500">{t("account.accountHolderLabel")}</p>
                         <TextInput
                             value={bankAccountHolder}
                             onChange={setBankAccountHolder}
-                            placeholder="As printed on the account"
+                            placeholder={t("account.accountHolderPlaceholder")}
                         />
                     </div>
                     {error && <p className="text-sm text-red-500">{error}</p>}
@@ -137,7 +140,7 @@ function EditForm({ info, update }: {
                     disabled={isSaving}
                     className="w-full py-4 bg-brand text-white font-bold rounded-xl active:opacity-80 disabled:opacity-40 text-base"
                 >
-                    {isSaving ? "Saving..." : "Save"}
+                    {isSaving ? t("account.saving") : t("common.save")}
                 </button>
             </div>
 

@@ -3,6 +3,7 @@
 import { useCurrentUser } from "@/lib/hooks/user/useCurrentUser";
 import { Copy, Check } from "lucide-react";
 import { useState } from "react";
+import { useT } from "@/lib/hooks/useT";
 
 const FieldRow = ({ label, value, copyable = false }: { label: string; value: string; copyable?: boolean }) => {
     const [copied, setCopied] = useState(false);
@@ -42,9 +43,10 @@ function splitFullName(fullName: string) {
 
 export default function MobilePersonalDetails() {
     const { user, isLoading, isError } = useCurrentUser();
+    const t = useT();
 
     if (isError) {
-        return <div className="bg-white rounded-2xl p-6 text-center text-sm text-gray-600">Failed to load profile details.</div>;
+        return <div className="bg-white rounded-2xl p-6 text-center text-sm text-gray-600">{t("account.failedToLoad")}</div>;
     }
 
     const { firstName, lastName } = user ? splitFullName(user.fullName) : { firstName: "—", lastName: "—" };
@@ -55,12 +57,12 @@ export default function MobilePersonalDetails() {
                 <><SkeletonRow /><SkeletonRow /><SkeletonRow /><SkeletonRow /><SkeletonRow /><SkeletonRow /></>
             ) : (
                 <>
-                    <FieldRow label="Email" value={user?.email ?? "—"} />
-                    <FieldRow label="User ID" value={formatUserId(user?.id ?? "")} copyable />
-                    <FieldRow label="First Name" value={firstName} />
-                    <FieldRow label="Last Name" value={lastName} />
-                    <FieldRow label="Phone Number" value={user?.phoneNumber ?? "—"} />
-                    <FieldRow label="Member Since" value={formatDate(user?.createdAt ?? null)} />
+                    <FieldRow label={t("account.email")} value={user?.email ?? "—"} />
+                    <FieldRow label={t("account.userId")} value={formatUserId(user?.id ?? "")} copyable />
+                    <FieldRow label={t("account.firstName")} value={firstName} />
+                    <FieldRow label={t("account.lastName")} value={lastName} />
+                    <FieldRow label={t("account.phoneNumber")} value={user?.phoneNumber ?? "—"} />
+                    <FieldRow label={t("account.memberSince")} value={formatDate(user?.createdAt ?? null)} />
                 </>
             )}
         </div>

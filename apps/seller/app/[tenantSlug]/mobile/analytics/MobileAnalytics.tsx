@@ -18,6 +18,7 @@ import {
 import { navigation } from "@tea-pos/utils/navigation";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { useMobileScroll } from "../components/MobileScrollContext";
+import { useT } from "@/lib/hooks/useT";
 
 import dynamic from "next/dynamic";
 const MiniDailySalesChart = dynamic(
@@ -42,6 +43,7 @@ export default function MobileAnalytics() {
         getCurrentLocalMonth(),
     );
     const [activeSummary, setActiveSummary] = useState<{ id: string; date: string } | null>(null);
+    const t = useT();
 
     const {
         data: summariesData,
@@ -82,23 +84,23 @@ export default function MobileAnalytics() {
                 <div className="bg-white p-4 rounded-2xl">
                     <div className="flex items-center gap-2 mb-3">
                         <Receipt size={20} className="text-gray-600" />
-                        <h3 className="font-semibold text-gray-800">Monthly Summary</h3>
+                        <h3 className="font-semibold text-gray-800">{t("analytics.monthlyTotals")}</h3>
                     </div>
                     <div className="grid grid-cols-4 gap-2">
                         <div className="text-center">
                             <p className="text-xl font-bold text-blue-600">
                                 <SkeletonValue loading={summariesLoading} className="h-7 w-8">{summariesData?.monthlyTotals?.totalOrders ?? 0}</SkeletonValue>
                             </p>
-                            <p className="text-sm text-gray-600">Orders</p>
+                            <p className="text-sm text-gray-600">{t("analytics.orders")}</p>
                         </div>
                         <div className="text-center">
                             <p className="text-xl font-bold text-orange-600">
                                 <SkeletonValue loading={summariesLoading} className="h-7 w-8">{summariesData?.monthlyTotals?.totalCups ?? 0}</SkeletonValue>
                             </p>
-                            <p className="text-sm text-gray-600">Cups</p>
+                            <p className="text-sm text-gray-600">{t("analytics.cups")}</p>
                         </div>
                         <div className="text-center col-span-2 border-l-2 border-gray-300">
-                            <p className="text-sm text-gray-600">Total Sales</p>
+                            <p className="text-sm text-gray-600">{t("analytics.totalSales")}</p>
                             <p className="text-xl font-bold text-green-600">
                                 <SkeletonValue loading={summariesLoading} className="h-7 w-24">{formatRupiah(summariesData?.monthlyTotals?.totalSales ?? 0)}</SkeletonValue>
                             </p>
@@ -113,11 +115,11 @@ export default function MobileAnalytics() {
                     <div className="flex items-center gap-2 mb-2">
                         <AlertTriangle size={20} className="text-red-600" />
                         <h3 className="font-semibold text-red-800">
-                            {unclosedSummaries.length - 1} Overdue Unclosed Day(s)
+                            {unclosedSummaries.length - 1} {t("analytics.unclosedWarning")}
                         </h3>
                     </div>
                     <p className="text-sm text-red-700">
-                        Please close these days to maintain accurate financial records.
+                        {t("analytics.unclosedSub")}
                     </p>
                 </div>
             )}
@@ -126,7 +128,7 @@ export default function MobileAnalytics() {
             <div className="bg-white p-4 rounded-2xl">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                     <CalendarDays size={16} className="inline mr-1" />
-                    Select Month
+                    {t("analytics.selectMonth")}
                 </label>
                 <input
                     type="month"
@@ -179,7 +181,7 @@ export default function MobileAnalytics() {
                         <div className="bg-white p-8 rounded-2xl text-center">
                             <Calendar size={48} className="mx-auto text-gray-400 mb-4" />
                             <p className="text-gray-600">
-                                No daily summary found for selected month
+                                {t("analytics.noSummary")}
                             </p>
                         </div>
                     ) : (
@@ -200,11 +202,11 @@ export default function MobileAnalytics() {
                                                     </h3>
                                                     {summary.closedAt ? (
                                                         <span className="bg-red-100 text-red-800 px-2 py-0.5 rounded-full text-sm font-medium self-center">
-                                                            Closed
+                                                            {t("analytics.statusClosed")}
                                                         </span>
                                                     ) : (
                                                         <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-sm font-medium self-center">
-                                                            Open
+                                                            {t("analytics.statusOpen")}
                                                         </span>
                                                     )}
                                                 </div>
@@ -219,32 +221,32 @@ export default function MobileAnalytics() {
 
                                         <div className="grid grid-cols-2 gap-2 rounded-2xl p-2 bg-slate-100 text-gray-800">
                                             <div>
-                                                <p className="text-xs">Opening Balance</p>
+                                                <p className="text-xs">{t("analytics.openingBalance")}</p>
                                                 <p className="text-lg font-extrabold text-blue-600">
                                                     {formatRupiah(summary.openingBalance)}
                                                 </p>
                                             </div>
                                             <div>
-                                                <p className="text-xs">Total Sales</p>
+                                                <p className="text-xs">{t("analytics.totalSales")}</p>
                                                 <p className="text-lg font-extrabold text-green-600">
                                                     {formatRupiah(summary.totalSales)}
                                                 </p>
                                             </div>
                                             <div>
-                                                <p className="text-xs">Opening + Sales</p>
+                                                <p className="text-xs">{t("analytics.openingPlusSales")}</p>
                                                 <p className="text-lg font-extrabold text-purple-600">
                                                     {formatRupiah(summary.openingBalance + summary.totalSales)}
                                                 </p>
                                             </div>
                                             <div className="flex gap-4">
                                                 <div>
-                                                    <p className="text-xs">Orders</p>
+                                                    <p className="text-xs">{t("analytics.orders")}</p>
                                                     <p className="text-lg font-extrabold text-blue-600">
                                                         {summary.totalOrders}
                                                     </p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs">Cups</p>
+                                                    <p className="text-xs">{t("analytics.cups")}</p>
                                                     <p className="text-lg font-extrabold text-orange-600">
                                                         {summary.totalCups}
                                                     </p>
@@ -252,17 +254,17 @@ export default function MobileAnalytics() {
                                             </div>
                                             <hr className="col-span-2 border-gray-300" />
                                             <div>
-                                                <p className="text-xs">Net Expected Cash</p>
+                                                <p className="text-xs">{t("analytics.expectedCash")}</p>
                                                 <p className="text-lg font-extrabold text-purple-600">
                                                     {formatRupiah(summary.expectedCash)}
                                                 </p>
                                             </div>
                                             <div>
-                                                <p className="text-xs">Actual Cash (Counted)</p>
+                                                <p className="text-xs">{t("analytics.actualCash")}</p>
                                                 <p className="text-lg font-extrabold text-orange-600">
                                                     {summary.actualCash !== null
                                                         ? formatRupiah(summary.actualCash)
-                                                        : "Not counted"}
+                                                        : t("analytics.notCounted")}
                                                 </p>
                                             </div>
                                         </div>
@@ -300,7 +302,7 @@ export default function MobileAnalytics() {
                                         {dailyExpenses.length > 0 && (
                                             <div>
                                                 <h4 className="text-gray-800 text-sm font-semibold mb-1">
-                                                    Expenses of the Day
+                                                    {t("analytics.expensesOfDay")}
                                                 </h4>
                                                 <div className="bg-red-50 border border-red-200 p-2 rounded-lg">
                                                     {dailyExpenses.map((expense) => (
@@ -329,7 +331,7 @@ export default function MobileAnalytics() {
                                         {summary.variance !== null && (
                                             <div>
                                                 <h4 className="text-gray-800 text-sm font-semibold mb-1">
-                                                    Variance
+                                                    {t("analytics.variance")}
                                                 </h4>
                                                 <p
                                                     className={`text-sm px-3 py-2 rounded-lg font-medium ${
@@ -347,7 +349,7 @@ export default function MobileAnalytics() {
                                         {summary.notes && (
                                             <div>
                                                 <h4 className="text-gray-800 text-sm font-semibold mb-1">
-                                                    Notes
+                                                    {t("analytics.notes")}
                                                 </h4>
                                                 <p className="text-sm text-gray-700 bg-slate-100 p-2 rounded-xl">
                                                     {summary.notes}
@@ -366,7 +368,7 @@ export default function MobileAnalytics() {
                                                 }
                                                 className="w-full bg-red-500 text-white py-4 px-4 rounded-xl text-sm font-semibold active:scale-95"
                                             >
-                                                Close Day
+                                                {t("analytics.closeDay")}
                                             </button>
                                         </div>
                                     )}
@@ -406,7 +408,7 @@ export default function MobileAnalytics() {
                             className="w-full flex items-center gap-3 py-5 border-b transition-colors"
                         >
                             <Info size={20} strokeWidth={2} className="text-gray-900" />
-                            <span className="text-lg text-gray-900">Details</span>
+                            <span className="text-lg text-gray-900">{t("analytics.details")}</span>
                         </button>
                         <button
                             onClick={() => {
@@ -417,7 +419,7 @@ export default function MobileAnalytics() {
                             className="w-full flex items-center gap-3 py-5 border-b transition-colors"
                         >
                             <History size={20} strokeWidth={2} className="text-gray-900" />
-                            <span className="text-lg text-gray-900">Activity</span>
+                            <span className="text-lg text-gray-900">{t("analytics.activity")}</span>
                         </button>
                         <button
                             onClick={() => {
@@ -428,7 +430,7 @@ export default function MobileAnalytics() {
                             className="w-full flex items-center gap-3 py-5 transition-colors"
                         >
                             <Users size={20} strokeWidth={2} className="text-gray-900" />
-                            <span className="text-lg text-gray-900">Sessions</span>
+                            <span className="text-lg text-gray-900">{t("analytics.sessions")}</span>
                         </button>
                     </div>
                 </Drawer.Content>

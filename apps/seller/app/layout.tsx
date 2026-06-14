@@ -4,7 +4,9 @@ import { cookies } from "next/headers";
 import { SWRConfig } from "swr";
 import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "@/lib/context/AuthContext";
+import { LanguageProvider } from "@/lib/context/LanguageContext";
 import { FeaturesProvider } from "@/lib/context/features-provider";
+import type { Locale } from "@tea-pos/utils/translations";
 
 export const viewport: Viewport = {
     themeColor: [
@@ -47,6 +49,9 @@ export default async function RootLayout({
     } catch {
         initialUser = null;
     }
+    const localeCookie = cookieStore.get("locale")?.value;
+    const initialLocale: Locale | undefined =
+        localeCookie === "en" || localeCookie === "id" ? localeCookie : undefined;
 
     return (
         <html lang="en" suppressHydrationWarning>
@@ -56,8 +61,10 @@ export default async function RootLayout({
                 >
                     <FeaturesProvider>
                         <AuthProvider initialUser={initialUser}>
-                            {children}
-                            <Analytics />
+                            <LanguageProvider initialLocale={initialLocale}>
+                                {children}
+                                <Analytics />
+                            </LanguageProvider>
                         </AuthProvider>
                     </FeaturesProvider>
                 </SWRConfig>

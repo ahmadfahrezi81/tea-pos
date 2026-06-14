@@ -1,5 +1,6 @@
 "use client";
 import { useMemo, useRef, useEffect, useState } from "react";
+import { useT } from "@/lib/hooks/useT";
 import useDailySales from "@/lib/hooks/analytics/useDailySales";
 import {
     Area,
@@ -56,6 +57,7 @@ export default function DailySalesChart({ storeId, month }: Props) {
     const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const brandColor = useBrandColor();
     const [isScrolling, setIsScrolling] = useState(false);
+    const t = useT();
 
     const chartConfig = useMemo(
         () =>
@@ -174,7 +176,7 @@ export default function DailySalesChart({ storeId, month }: Props) {
                     key={isScrolling ? "avg" : "total"}
                 >
                     <p className="text-xs text-gray-800">
-                        {isScrolling ? "Avg / day" : "Total"}
+                        {isScrolling ? t("analytics.avgPerDay") : t("analytics.total")}
                     </p>
                     <p className="text-2xl font-bold text-brand">
                         {isScrolling ? avgCups : totalCups}

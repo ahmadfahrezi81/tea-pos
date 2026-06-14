@@ -1563,6 +1563,7 @@ export type Database = {
           full_name: string
           id: string
           phone_number: string | null
+          preferred_language: string
           role: string
           status: string
           updated_at: string | null
@@ -1573,6 +1574,7 @@ export type Database = {
           full_name: string
           id: string
           phone_number?: string | null
+          preferred_language?: string
           role: string
           status?: string
           updated_at?: string | null
@@ -1583,6 +1585,7 @@ export type Database = {
           full_name?: string
           id?: string
           phone_number?: string | null
+          preferred_language?: string
           role?: string
           status?: string
           updated_at?: string | null
@@ -1639,6 +1642,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      payroll_claims_month_key: { Args: { d: string }; Returns: string }
       user_tenant_ids: { Args: never; Returns: string[] }
     }
     Enums: {

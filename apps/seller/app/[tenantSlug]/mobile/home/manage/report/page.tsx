@@ -5,10 +5,12 @@ import { useIncidentReports } from "@/lib/hooks/reports/useIncidentReports";
 import { INCIDENT_CATEGORIES, INCIDENT_CATEGORY_LABELS } from "@tea-pos/features/reports/schema";
 import type { IncidentCategory } from "@tea-pos/features/reports/schema";
 import { ClipboardList } from "lucide-react";
+import { useT } from "@/lib/hooks/useT";
 
 export default function ReportPage() {
     const { selectedStoreId } = useStore();
     const { reports, isLoading } = useIncidentReports(selectedStoreId);
+    const t = useT();
 
     const inner = isLoading ? (
         <div className="flex-1 flex items-center justify-center">
@@ -17,7 +19,7 @@ export default function ReportPage() {
     ) : reports.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center text-center">
             <ClipboardList size={40} className="text-gray-300 mb-3" />
-            <p className="text-gray-500 text-sm">No reports filed today.</p>
+            <p className="text-gray-500 text-sm">{t("manage.noReports")}</p>
         </div>
     ) : (
         <ul className="divide-y divide-gray-100">

@@ -4,6 +4,7 @@ import { usePayrollClaims, useClaimableTypes } from "@/lib/hooks/payroll-claims/
 import { useCurrentPayrollPeriod } from "@/lib/hooks/payroll/usePayroll";
 import { ReceiptText, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
+import { useT } from "@/lib/hooks/useT";
 
 const STATUS_STYLE: Record<string, string> = {
     pending: "bg-gray-100 text-gray-600",
@@ -12,31 +13,19 @@ const STATUS_STYLE: Record<string, string> = {
     paid: "bg-green-100 text-green-700",
 };
 
-const STATUS_LABEL: Record<string, string> = {
-    pending: "Pending",
-    approved: "Approved",
-    rejected: "Rejected",
-    paid: "Paid ✓",
-};
-
-const FREQ_LABEL: Record<string, string> = {
-    weekly: "Weekly",
-    monthly: "Monthly",
-    one_time: "One-time",
-};
-
 export default function ReimbursementsPage() {
     const { claims, isLoading: claimsLoading } = usePayrollClaims();
     const { period: currentPeriod, isLoading: periodLoading } = useCurrentPayrollPeriod();
     const { types, isLoading: typesLoading } = useClaimableTypes(
         currentPeriod ? { periodId: currentPeriod.id } : null,
     );
+    const t = useT();
 
     return (
         <div className="space-y-3">
             {/* Entitlements */}
             <div className="bg-white rounded-2xl p-4 space-y-3">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Your Entitlements</p>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{t("claims.entitlements")}</p>
                 {periodLoading || typesLoading ? (
                     <div className="flex gap-3">
                         {[1, 2].map((i) => (
@@ -44,7 +33,7 @@ export default function ReimbursementsPage() {
                         ))}
                     </div>
                 ) : types.length === 0 ? (
-                    <p className="text-sm text-gray-400">No entitlements for this period.</p>
+                    <p className="text-sm text-gray-400">{t("claims.noEntitlements")}</p>
                 ) : (
                     <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1">
                         {types.map((type) => (
@@ -58,7 +47,7 @@ export default function ReimbursementsPage() {
                                 </div>
                                 <p className="text-base font-bold text-gray-900">Rp {(type.amount ?? 0).toLocaleString("id-ID")}</p>
                                 <p className={`text-xs font-medium ${type.claimable ? "text-brand" : "text-gray-400"}`}>
-                                    {FREQ_LABEL[type.frequency] ?? type.frequency} · {type.claimable ? "Available" : type.frequency === "one_time" ? "Used" : "Claimed"}
+                                    {(type.frequency === "weekly" ? t("claims.freqWeekly") : type.frequency === "monthly" ? t("claims.freqMonthly") : type.frequency === "one_time" ? t("claims.freqOneTime") : type.frequency)} · {type.claimable ? t("claims.available") : type.frequency === "one_time" ? t("claims.used") : t("claims.claimed")}
                                 </p>
                             </div>
                         ))}
@@ -75,7 +64,7 @@ export default function ReimbursementsPage() {
                 ) : claims.length === 0 ? (
                     <div className="flex flex-col items-center justify-center text-center py-12">
                         <ReceiptText size={40} className="text-gray-300 mb-3" />
-                        <p className="text-gray-500 text-sm">No claims yet.</p>
+                        <p className="text-gray-500 text-sm">{t("claims.noClaims")}</p>
                     </div>
                 ) : (
                     <ul className="divide-y divide-gray-100">
@@ -94,7 +83,7 @@ export default function ReimbursementsPage() {
                                         Rp {claim.amount.toLocaleString("id-ID")}
                                     </p>
                                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLE[claim.status] ?? STATUS_STYLE.pending}`}>
-                                        {STATUS_LABEL[claim.status] ?? claim.status}
+                                        {claim.status === "pending" ? t("claims.statusPending") : claim.status === "approved" ? t("claims.statusApproved") : claim.status === "rejected" ? t("claims.statusRejected") : claim.status === "paid" ? t("claims.statusPaid") : claim.status}
                                     </span>
                                 </div>
                             </li>

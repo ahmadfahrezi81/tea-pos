@@ -24,6 +24,7 @@ import { useToast } from "@/lib/context/ToastContext";
 import { useFlags } from "@/lib/context/FlagsContext";
 import { getTodayLocalStr, getCurrentLocalMonth } from "@tea-pos/utils/time";
 import { useMobileFooterSlot } from "../../../components/MobileFooterSlotContext";
+import { useT } from "@/lib/hooks/useT";
 
 // ============================================================================
 // CONSTANTS
@@ -56,6 +57,7 @@ export default function ManageCloseDayPage() {
     const { mutate: mutateSession } = useSession(selectedStoreId);
     const { showToast } = useToast();
     const { flags: { isSkipManagePhotosEnabled: skipManagePhotos } } = useFlags();
+    const t = useT();
 
     const paramSummaryId = searchParams.get("summaryId");
     const paramMonth = searchParams.get("month");
@@ -319,7 +321,7 @@ export default function ManageCloseDayPage() {
                         disabled={isBusy}
                         className="flex items-center justify-center px-5 py-4 rounded-xl bg-gray-100 text-gray-900 font-semibold text-base active:scale-[0.98] transition-transform disabled:opacity-50"
                     >
-                        Previous
+                        {t("manage.previous")}
                     </button>
                 )}
                 {isLastStep ? (
@@ -328,7 +330,7 @@ export default function ManageCloseDayPage() {
                         disabled={isBusy || !confirmed}
                         className="flex-1 flex items-center justify-center gap-2 py-4 rounded-xl bg-red-500 text-white font-semibold text-base active:scale-[0.98] transition-transform disabled:opacity-50"
                     >
-                        {isSubmitting ? <><Loader2 size={18} className="animate-spin" />Closing...</> : "Close Day"}
+                        {isSubmitting ? <><Loader2 size={18} className="animate-spin" />{t("manage.closing")}</> : t("manage.closeDay")}
                     </button>
                 ) : (
                     <button
@@ -336,7 +338,7 @@ export default function ManageCloseDayPage() {
                         disabled={nextDisabled}
                         className="flex-1 flex items-center justify-center gap-2 py-4 rounded-xl bg-brand text-white font-semibold text-base active:scale-[0.98] transition-transform disabled:opacity-50"
                     >
-                        {isUploading ? <><Loader2 size={18} className="animate-spin" />Uploading...</> : "Next"}
+                        {isUploading ? <><Loader2 size={18} className="animate-spin" />{t("manage.uploading")}</> : t("manage.next")}
                     </button>
                 )}
             </div>
@@ -355,7 +357,7 @@ export default function ManageCloseDayPage() {
     if (!summaryId || !summary) {
         return (
             <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
-                <p className="text-gray-500 text-sm">No open summary found.</p>
+                <p className="text-gray-500 text-sm">{t("manage.noOpenSummary")}</p>
                 <button
                     onClick={() =>
                         navigation.push(
@@ -364,7 +366,7 @@ export default function ManageCloseDayPage() {
                     }
                     className="mt-4 text-brand text-sm font-medium"
                 >
-                    Go back
+                    {t("manage.goBack")}
                 </button>
             </div>
         );

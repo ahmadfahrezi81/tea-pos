@@ -7,6 +7,7 @@ import mapboxgl from "mapbox-gl";
 import useCustomerFeedbacks from "@/lib/hooks/customer-feedbacks/useCustomerFeedbacks";
 import { formatTimeAgo } from "@tea-pos/utils/formatTimeAgo";
 import type { CustomerFeedbackResponse } from "@tea-pos/features/customer-feedbacks/schema";
+import { useT } from "@/lib/hooks/useT";
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN!;
 
@@ -30,12 +31,12 @@ function getLocalDateKey(dateStr: string): string {
     return local.toISOString().split("T")[0];
 }
 
-function formatDayLabel(dateKey: string): string {
+function formatDayLabel(dateKey: string, t: (key: string) => string): string {
     const now = new Date(Date.now() + TZ_OFFSET * 60 * 60 * 1000);
     const today = now.toISOString().split("T")[0];
     const yesterday = new Date(now.getTime() - 86400000).toISOString().split("T")[0];
-    if (dateKey === today) return "Today";
-    if (dateKey === yesterday) return "Yesterday";
+    if (dateKey === today) return t("map.today");
+    if (dateKey === yesterday) return t("map.yesterday");
     return new Date(dateKey).toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric" });
 }
 
@@ -74,12 +75,12 @@ function getDateRangeCutoff(range: DateRange): Date | null {
 
 // ─── Filter Drawer ────────────────────────────────────────────────────────────
 
-const DATE_RANGE_OPTIONS: { value: DateRange; label: string }[] = [
-    { value: "all", label: "All time" },
-    { value: "today", label: "Today" },
-    { value: "week", label: "Last 7 days" },
-    { value: "month", label: "Last 30 days" },
-];
+const DATE_RANGE_KEYS: Record<DateRange, string> = {
+    all: "map.allTime",
+    today: "map.today",
+    week: "map.last7Days",
+    month: "map.last30Days",
+};
 
 function FilterDrawer({
     isOpen,
@@ -98,6 +99,7 @@ function FilterDrawer({
     onUsersChange: (v: string[]) => void;
     allUsers: string[];
 }) {
+    const t = useT();
     const toggleUser = (user: string) => {
         onUsersChange(
             selectedUsers.includes(user)
@@ -116,32 +118,32 @@ function FilterDrawer({
                     </div>
 
                     <div className="flex items-center justify-between mb-5">
-                        <Drawer.Title className="text-lg font-bold text-gray-900">Filter</Drawer.Title>
+                        <Drawer.Title className="text-lg font-bold text-gray-900">{t("map.filter")}</Drawer.Title>
                         <Drawer.Description className="sr-only">Filter feedback by date and user</Drawer.Description>
                         <button onClick={onClose} className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500">
                             <X size={20} />
                         </button>
                     </div>
 
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Date Range</p>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">{t("map.dateRange")}</p>
                     <div className="flex flex-col gap-1 mb-5">
-                        {DATE_RANGE_OPTIONS.map((opt) => (
+                        {(Object.entries(DATE_RANGE_KEYS) as [DateRange, string][]).map(([value, key]) => (
                             <button
-                                key={opt.value}
-                                onClick={() => onDateRangeChange(opt.value)}
+                                key={value}
+                                onClick={() => onDateRangeChange(value)}
                                 className="flex items-center justify-between px-3 py-3 rounded-xl active:bg-gray-50"
                             >
-                                <span className={`text-[15px] font-medium ${dateRange === opt.value ? "text-brand" : "text-gray-800"}`}>
-                                    {opt.label}
+                                <span className={`text-[15px] font-medium ${dateRange === value ? "text-brand" : "text-gray-800"}`}>
+                                    {t(key)}
                                 </span>
-                                {dateRange === opt.value && <Check size={16} className="text-brand" />}
+                                {dateRange === value && <Check size={16} className="text-brand" />}
                             </button>
                         ))}
                     </div>
 
                     {allUsers.length > 0 && (
                         <>
-                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Submitted By</p>
+                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">{t("map.submittedByFilter")}</p>
                             <div className="flex flex-col gap-1">
                                 {allUsers.map((user) => {
                                     const active = selectedUsers.includes(user);
@@ -174,6 +176,7 @@ export default function FeedbackHistory() {
     const mapRef = useRef<mapboxgl.Map | null>(null);
     const markersRef = useRef<mapboxgl.Marker[]>([]);
     const initializedRef = useRef(false);
+    const t = useT();
 
     const [query, setQuery] = useState("");
     const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -302,7 +305,7 @@ export default function FeedbackHistory() {
                             type="text"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
-                            placeholder="Search feedback..."
+                            placeholder={t("map.search")}
                             className="flex-1 text-base text-gray-800 placeholder:text-gray-400 bg-transparent outline-none"
                         />
                         {query && (
@@ -336,19 +339,19 @@ export default function FeedbackHistory() {
                 ) : feedbacks.length === 0 ? (
                     <div className="bg-white rounded-2xl flex flex-col items-center justify-center py-16 text-gray-400 gap-2">
                         <MessageSquare size={28} className="opacity-50" />
-                        <p className="text-sm">No feedback submitted yet</p>
+                        <p className="text-sm">{t("map.noFeedback")}</p>
                     </div>
                 ) : filtered.length === 0 ? (
                     <div className="bg-white rounded-2xl flex flex-col items-center justify-center py-16 text-gray-400 gap-2">
                         <Search size={28} className="opacity-50" />
-                        <p className="text-sm">No results found</p>
+                        <p className="text-sm">{t("map.noResults")}</p>
                     </div>
                 ) : (
                     <div className="flex flex-col gap-4 pb-2">
                         {groupByDay(filtered).map(({ dateKey, items }) => (
                             <div key={dateKey}>
                                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1 mb-2">
-                                    {formatDayLabel(dateKey)}
+                                    {formatDayLabel(dateKey, t)}
                                 </p>
                                 <div className="flex flex-col gap-2.5">
                                     {items.map((fb) => (
@@ -370,7 +373,7 @@ export default function FeedbackHistory() {
                                                             {fb.locationDisplay}
                                                         </p>
                                                         <span className="shrink-0 bg-brand text-white text-xs font-bold px-1.5 py-0 rounded-full">
-                                                            {getLocationCount(fb)} {getLocationCount(fb) === 1 ? "vote" : "votes"}
+                                                            {getLocationCount(fb)} {getLocationCount(fb) === 1 ? t("map.vote") : t("map.votes")}
                                                         </span>
                                                     </div>
                                                     <span className="text-sm text-gray-400 shrink-0 pt-0.5">
@@ -380,13 +383,13 @@ export default function FeedbackHistory() {
                                                 <p className="text-sm text-gray-400 truncate mt-0.5">{fb.locationName}</p>
                                                 <div className="mt-1 space-y-1">
                                                     <p className="text-sm text-gray-500">
-                                                        <span className="font-semibold text-gray-700">Submitted by </span>
-                                                        {fb.userName ?? "Unknown"}
+                                                        <span className="font-semibold text-gray-700">{t("map.submittedBy")} </span>
+                                                        {fb.userName ?? t("common.unknown")}
                                                     </p>
                                                     {fb.notes && (
                                                         <>
                                                             <p className="text-sm text-gray-500">
-                                                                <span className="font-semibold text-gray-700">Notes</span>
+                                                                <span className="font-semibold text-gray-700">{t("analytics.notes")}</span>
                                                             </p>
                                                             <div className="bg-slate-100 rounded-lg px-3 py-2">
                                                                 <p className="text-sm text-gray-600 leading-relaxed">{fb.notes}</p>

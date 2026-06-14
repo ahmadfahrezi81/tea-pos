@@ -69,6 +69,7 @@ export function AuthProvider({
               status: "active",
               createdAt: null,
               updatedAt: null,
+              preferredLanguage: "en" as const,
           }
         : null;
 

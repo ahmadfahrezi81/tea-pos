@@ -6,6 +6,7 @@ import { usePayrollUserInfo } from "@/lib/hooks/payroll-user-info/usePayrollUser
 import { parseISO, format, eachDayOfInterval, getISOWeek, getISOWeekYear } from "date-fns";
 import Image from "next/image";
 import { useState } from "react";
+import { useT } from "@/lib/hooks/useT";
 
 const DIVIDER = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";
 
@@ -34,13 +35,6 @@ function Row({
     );
 }
 
-const STATUS_LABELS: Record<string, string> = {
-    pending: "WAITING FOR PAYMENT",
-    approved: "APPROVED — WILL BE PAID SOON",
-    on_hold: "ON HOLD — BEING REVIEWED",
-    paid: "PAID",
-};
-
 const STATUS_COLORS: Record<string, string> = {
     pending: "text-gray-500",
     approved: "text-blue-600",
@@ -53,6 +47,7 @@ export default function PayslipPage({ params }: { params: Promise<{ periodId: st
     const { payslip, isLoading } = usePayslip(periodId);
     const { info: payrollInfo } = usePayrollUserInfo();
     const [showProof, setShowProof] = useState(false);
+    const t = useT();
 
     if (isLoading) {
         return (
@@ -65,7 +60,7 @@ export default function PayslipPage({ params }: { params: Promise<{ periodId: st
     }
 
     if (!payslip || !("period" in (payslip as object))) {
-        return <p className="text-center text-gray-400 py-10">Period not found.</p>;
+        return <p className="text-center text-gray-400 py-10">{t("earnings.periodNotFound")}</p>;
     }
 
     const ps = payslip as {
@@ -143,7 +138,7 @@ export default function PayslipPage({ params }: { params: Promise<{ periodId: st
                             <Row
                                 key={`${dateStr}-${i}`}
                                 left={i === 0 ? format(day, "EEE d MMM") : ""}
-                                right={`${e.totalCups} cups`}
+                                right={`${e.totalCups} ${t("earnings.cups")}`}
                             />
                         ));
                     })}
@@ -151,10 +146,10 @@ export default function PayslipPage({ params }: { params: Promise<{ periodId: st
 
                 <Divider />
                 <Row
-                    left={`${totalCups} cups × Rp ${ratePerCup.toLocaleString("id-ID")}`}
+                    left={`${totalCups} ${t("earnings.cups")} × Rp ${ratePerCup.toLocaleString("id-ID")}`}
                 />
                 <Row
-                    left="Commissions"
+                    left={t("earnings.commissionsRow")}
                     right={`Rp ${commissionsTotal.toLocaleString("id-ID")}`}
                     bold
                 />
@@ -163,7 +158,7 @@ export default function PayslipPage({ params }: { params: Promise<{ periodId: st
                 {/* Claims */}
                 {(approvedClaims.length > 0 || pendingClaims.length > 0) && (
                     <>
-                        <Row left="CLAIMS" />
+                        <Row left={t("earnings.claimsRow").toUpperCase()} />
                         {approvedClaims.map((c) => (
                             <Row
                                 key={c.id}
@@ -175,7 +170,7 @@ export default function PayslipPage({ params }: { params: Promise<{ periodId: st
                             <Row
                                 key={c.id}
                                 left={c.claimTypeName ?? c.claimTypeId ?? "—"}
-                                right="Pending review"
+                                right={t("earnings.pendingReview")}
                                 muted
                             />
                         ))}
@@ -183,7 +178,7 @@ export default function PayslipPage({ params }: { params: Promise<{ periodId: st
                     </>
                 )}
 
-                <Row left="TOTAL" right={`Rp ${totalPay.toLocaleString("id-ID")}`} bold />
+                <Row left={t("earnings.totalRow").toUpperCase()} right={`Rp ${totalPay.toLocaleString("id-ID")}`} bold />
                 <Divider />
 
                 {/* Status */}
@@ -191,7 +186,7 @@ export default function PayslipPage({ params }: { params: Promise<{ periodId: st
                     <p
                         className={`text-sm font-bold tracking-wide font-mono ${STATUS_COLORS[status] ?? "text-gray-500"}`}
                     >
-                        {STATUS_LABELS[status] ?? status.toUpperCase()}
+                        {status === "pending" ? t("earnings.statusWaitingLong") : status === "approved" ? t("earnings.statusReadyLong") : status === "on_hold" ? t("earnings.statusReviewLong") : status === "paid" ? t("earnings.statusPaidLong") : status.toUpperCase()}
                     </p>
                     {status === "paid" && payout?.paidAt && (
                         <p className="text-xs text-gray-500">
@@ -211,7 +206,7 @@ export default function PayslipPage({ params }: { params: Promise<{ periodId: st
                                         onClick={() => setShowProof(true)}
                                         className="text-xs text-brand active:opacity-70 underline"
                                     >
-                                        View transfer screenshot
+                                        {t("earnings.viewProof")}
                                     </button>
                                     {showProof && (
                                         <div
@@ -233,7 +228,7 @@ export default function PayslipPage({ params }: { params: Promise<{ periodId: st
                     )}
                     {!hasBankInfo && status !== "paid" && (
                         <p className="text-xs text-amber-600">
-                            Add your bank details in Payroll Info so admin can pay you.
+                            {t("earnings.addBankDetails")}
                         </p>
                     )}
                 </div>

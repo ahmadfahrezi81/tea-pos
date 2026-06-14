@@ -1,11 +1,13 @@
 "use client";
 import { useStores } from "@/lib/hooks/stores/useStores";
 import { Store } from "lucide-react";
+import { useT } from "@/lib/hooks/useT";
 
 export default function MobileProfileStores() {
     const { data: storeData, isLoading } = useStores();
     const stores = storeData?.stores ?? [];
     const assignments = storeData?.assignments ?? {};
+    const t = useT();
 
     return (
         <div className="space-y-3">
@@ -21,7 +23,7 @@ export default function MobileProfileStores() {
                         </div>
                     ))
                 ) : stores.length === 0 ? (
-                    <p className="px-4 py-5 text-sm text-gray-400">No stores assigned yet.</p>
+                    <p className="px-4 py-5 text-sm text-gray-400">{t("more.noStores")}</p>
                 ) : (
                     stores.map((store) => {
                         const isDefault = assignments[store.id]?.some((a) => a.isDefault);
@@ -33,7 +35,7 @@ export default function MobileProfileStores() {
                                 <p className="flex-1 text-[15px] font-medium text-gray-800">{store.name}</p>
                                 {isDefault && (
                                     <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
-                                        Default
+                                        {t("more.default")}
                                     </span>
                                 )}
                             </div>

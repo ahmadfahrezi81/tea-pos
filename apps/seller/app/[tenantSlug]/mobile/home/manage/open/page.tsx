@@ -11,6 +11,7 @@ import { getTodayLocalStr } from "@tea-pos/utils/time";
 import { PhotoPicker } from "../_components/shared/PhotoPicker";
 import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
 import { FormFooter } from "@/components/shared/FormFooter";
+import { useT } from "@/lib/hooks/useT";
 
 export default function OpenStorePage() {
     const { selectedStoreId, selectedStore } = useStore();
@@ -18,6 +19,7 @@ export default function OpenStorePage() {
     const { gate, openStore, resumeSession } = useSession(selectedStoreId);
     const { uploadPhoto } = useSummaryPhotos();
     const { flags: { isSkipManagePhotosEnabled: skipManagePhotos } } = useFlags();
+    const t = useT();
 
     const todayStr = useMemo(() => getTodayLocalStr(), []);
     const [openingBalance, setOpeningBalance] = useState(0);
@@ -66,11 +68,11 @@ export default function OpenStorePage() {
         <div className="space-y-4 pb-4">
             <div className="bg-white rounded-xl p-4 space-y-3">
                 <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Store</p>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">{t("manage.storeLabel")}</p>
                     <p className="font-semibold text-gray-800 mt-0.5">{selectedStore?.name ?? "Unknown Store"}</p>
                 </div>
                 <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Date</p>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">{t("manage.date")}</p>
                     <p className="font-semibold text-gray-800 mt-0.5">
                         {new Date().toLocaleDateString("en-US", {
                             weekday: "long",
@@ -85,8 +87,8 @@ export default function OpenStorePage() {
             {gate !== "no_session" && (
                 <div className="bg-white rounded-xl p-4 space-y-2">
                     <div className="flex items-center gap-1">
-                        <span className="text-sm font-medium text-gray-700">Opening Balance</span>
-                        <span className="text-xs text-red-400 font-medium">Required</span>
+                        <span className="text-sm font-medium text-gray-700">{t("manage.openingBalanceLabel")}</span>
+                        <span className="text-xs text-red-400 font-medium">{t("manage.required")}</span>
                     </div>
                     <NumberInput
                         currency
@@ -102,11 +104,11 @@ export default function OpenStorePage() {
 
             <div className="bg-white rounded-xl p-4">
                 <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-medium text-gray-700">Opening Photo</span>
+                    <span className="text-sm font-medium text-gray-700">{t("manage.openingPhoto")}</span>
                     {skipPhotos ? (
-                        <span className="text-xs text-gray-400 font-medium">(optional)</span>
+                        <span className="text-xs text-gray-400 font-medium">{t("manage.optional")}</span>
                     ) : (
-                        <span className="text-xs text-red-400 font-medium">Required</span>
+                        <span className="text-xs text-red-400 font-medium">{t("manage.required")}</span>
                     )}
                 </div>
                 <PhotoPicker
@@ -131,8 +133,8 @@ export default function OpenStorePage() {
             )}
 
             <FormFooter
-                label="Open Store"
-                loadingLabel="Opening..."
+                label={t("manage.openStore")}
+                loadingLabel={t("manage.opening")}
                 onSubmit={handleSubmit}
                 disabled={!canSubmit}
                 isLoading={isSubmitting}

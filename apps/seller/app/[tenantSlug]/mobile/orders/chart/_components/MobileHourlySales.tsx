@@ -2,6 +2,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { CalendarDays } from "lucide-react";
 import { useSearchParams } from "next/navigation";
+import { useT } from "@/lib/hooks/useT";
 import {
     Area,
     AreaChart,
@@ -55,6 +56,7 @@ export default function MobileHourlySales() {
     const searchParams = useSearchParams();
     const scrollRef = useRef<HTMLDivElement>(null);
     const brandColor = useBrandColor();
+    const t = useT();
 
     const [selectedDate, setSelectedDate] = useState(
         searchParams.get("date") || formatDateForInput(new Date()),
@@ -64,10 +66,11 @@ export default function MobileHourlySales() {
         () =>
             ({
                 cups: {
-                    label: "Cups Sold",
+                    label: t("orders.cupsLabel"),
                     color: brandColor,
                 },
             }) satisfies ChartConfig,
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         [brandColor],
     );
 
@@ -113,7 +116,7 @@ export default function MobileHourlySales() {
             <div className="bg-white p-4 rounded-2xl">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                     <CalendarDays size={16} className="inline mr-1" />
-                    Select Date
+                    {t("orders.selectDate")}
                 </label>
                 <input
                     type="date"
@@ -135,14 +138,14 @@ export default function MobileHourlySales() {
                 <div className="flex items-start justify-between mb-3">
                     <div>
                         <h3 className="font-semibold text-gray-800 text-lg">
-                            Hourly Sales
+                            {t("orders.hourlySales")}
                         </h3>
                         <p className="text-sm text-gray-400">
-                            Cup sales throughout the day
+                            {t("orders.hourlySalesSubtitle")}
                         </p>
                     </div>
                     <div className="text-right">
-                        <p className="text-xs text-gray-800">Total</p>
+                        <p className="text-xs text-gray-800">{t("analytics.total")}</p>
                         <p className="text-2xl font-bold text-brand">
                             {totalCups}
                         </p>
@@ -150,7 +153,7 @@ export default function MobileHourlySales() {
                 </div>
                 {hourlySales.length === 0 ? (
                     <div className="h-[200px] flex items-center justify-center text-gray-500 text-sm">
-                        No sales data for this date
+                        {t("orders.noSalesData")}
                     </div>
                 ) : (
                     <div

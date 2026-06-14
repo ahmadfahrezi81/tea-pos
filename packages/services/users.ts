@@ -51,6 +51,18 @@ export async function listTenantUsers(
     return users.map((u, i) => ({ ...u, avatarUrl: avatarUrls[i] }));
 }
 
+export async function updateUserLanguage(
+    supabase: SupabaseClient,
+    { userId, language }: { userId: string; language: "en" | "id" },
+) {
+    const { error } = await supabase
+        .from("users")
+        .update({ preferred_language: language })
+        .eq("id", userId);
+
+    if (error) throw Object.assign(new Error(error.message), { status: 500 });
+}
+
 export interface UpdateUserParams {
     userId: string;
     fullName?: string;

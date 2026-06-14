@@ -11,9 +11,9 @@ import {
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 import { SummaryPhotoThumbnail } from "@/app/[tenantSlug]/mobile/home/manage/_components/daily/SummaryPhotoThumbnail";
 import type { EventSegment } from "@tea-pos/features/activity-logs/schema";
+import { useT } from "@/lib/hooks/useT";
 
-// ─── Shared timeline row — grid enforces left-column width so indicators
-//     of any size always share the same center axis ──────────────────────────
+// ─── Shared timeline row ──────────────────────────────────────────────────────
 
 function TimelineRow({
     indicator,
@@ -46,6 +46,7 @@ function OrderRow({
     segment: EventSegment;
     isLast: boolean;
 }) {
+    const t = useT();
     const amount =
         typeof segment.metadata?.total_amount === "number"
             ? (segment.metadata.total_amount as number)
@@ -77,7 +78,7 @@ function OrderRow({
                     )}
                     {cups !== null && (
                         <span className="text-xs text-gray-400">
-                            {cups} {cups === 1 ? "cup" : "cups"}
+                            {cups} {t("orders.cups")}
                         </span>
                     )}
                     {method && (
@@ -103,6 +104,7 @@ function EventNode({
     segment: EventSegment;
     isLast: boolean;
 }) {
+    const t = useT();
     const Icon = EVENT_ICON[segment.type];
     const colorClass = EVENT_COLOR[segment.type] ?? "bg-gray-400";
     const label = EVENT_LABEL[segment.type] ?? segment.type;
@@ -182,7 +184,7 @@ function EventNode({
                 {openingBalance !== null && (
                     <div className="bg-slate-100 rounded-xl px-3 py-2 flex items-center justify-between">
                         <span className="text-xs text-gray-500">
-                            Opening balance
+                            {t("analytics.openingBalance")}
                         </span>
                         <span className="text-sm font-bold text-blue-600">
                             {formatRupiah(openingBalance)}
@@ -193,7 +195,7 @@ function EventNode({
                 {totalSales !== null && (
                     <div className="bg-slate-100 rounded-xl px-3 py-2 flex items-center justify-between">
                         <span className="text-xs text-gray-500">
-                            Total sales
+                            {t("analytics.totalSales")}
                         </span>
                         <span className="text-sm font-bold text-green-600">
                             {formatRupiah(totalSales)}
@@ -204,7 +206,7 @@ function EventNode({
                 {variance !== null && (
                     <div className="bg-slate-100 rounded-xl px-3 py-2 flex items-center justify-between">
                         <span className="text-xs text-gray-500">
-                            Variance
+                            {t("analytics.variance")}
                         </span>
                         <span className={`text-sm font-bold ${variance >= 0 ? "text-green-600" : "text-red-500"}`}>
                             {variance >= 0 ? "+" : ""}{formatRupiah(variance)}
@@ -230,6 +232,7 @@ function EventNode({
 export default function EventsPage() {
     const { summaryId } = useParams<{ summaryId: string }>();
     const { segments, isLoading } = useDayActivity(summaryId);
+    const t = useT();
 
     return (
         <div className="flex flex-col gap-3 pb-24">
@@ -253,7 +256,7 @@ export default function EventsPage() {
             ) : segments.length === 0 ? (
                 <div className="bg-white rounded-2xl p-8 text-center">
                     <p className="text-gray-400 text-sm">
-                        No activity recorded for this day.
+                        {t("daily.noActivity")}
                     </p>
                 </div>
             ) : (

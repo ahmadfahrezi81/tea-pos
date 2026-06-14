@@ -8,6 +8,7 @@ import { Cloud } from "lucide-react";
 import { Bebas_Neue } from "next/font/google";
 import { useMemo } from "react";
 import { format } from "date-fns";
+import { useT } from "@/lib/hooks/useT";
 
 const bebas = Bebas_Neue({
     weight: "400",
@@ -68,6 +69,7 @@ function getCurrentHourTemp(hourly: HourlyWeather[]): HourlyWeather | null {
 export default function WeatherNotificationPage() {
     const { id } = useParams<{ id: string }>();
     const { data, isLoading } = useNotifications();
+    const t = useT();
 
     const notification = data?.notifications.find((n) => n.id === id);
     const metadata = notification?.metadata as WeatherMetadata | null;
@@ -91,7 +93,7 @@ export default function WeatherNotificationPage() {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-gray-400">
                 <Cloud className="w-10 h-10 mb-3" />
-                <p className="text-sm">Notification not found</p>
+                <p className="text-sm">{t("notifications.notFound")}</p>
             </div>
         );
     }
@@ -173,7 +175,7 @@ export default function WeatherNotificationPage() {
                                 <p
                                     className={`font-semibold w-16 text-gray-800 ${isCurrent ? "text-md" : "text-sm "}`}
                                 >
-                                    {isCurrent ? "Now" : formatHour(hour.time)}
+                                    {isCurrent ? t("notifications.now") : formatHour(hour.time)}
                                 </p>
 
                                 <div className="flex items-center gap-1.5 flex-1">
@@ -202,7 +204,7 @@ export default function WeatherNotificationPage() {
             ) : (
                 <div className="flex flex-col items-center justify-center py-10 text-gray-400">
                     <Cloud className="w-8 h-8 mb-2" />
-                    <p className="text-sm">No hourly data available</p>
+                    <p className="text-sm">{t("notifications.noHourlyData")}</p>
                 </div>
             )}
         </div>

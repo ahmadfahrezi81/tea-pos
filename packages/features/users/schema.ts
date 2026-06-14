@@ -65,6 +65,12 @@ export const UpdateUserInput = z
     })
     .openapi({ title: "UpdateUserInput" });
 
+export const UpdateUserLanguageInput = z
+    .object({
+        language: z.enum(["en", "id"]),
+    })
+    .openapi({ title: "UpdateUserLanguageInput" });
+
 // export const UpdateUserInputWithId = z
 //     .object({
 //         userId: UUIDSchema.openapi({
@@ -116,6 +122,7 @@ export const UserResponse = z
         bankAccountNumber: z.string().nullable().optional(),
         bankAccountHolder: z.string().nullable().optional(),
         avatarUrl: z.string().nullable().optional(),
+        preferredLanguage: z.enum(["en", "id"]).default("en"),
     })
     .openapi({ title: "UserResponse" });
 
@@ -162,6 +169,7 @@ export const UpdateUserResponse = z
 export type CreateUserInput = z.infer<typeof CreateUserInput>;
 export type UpdateUserInput = z.infer<typeof UpdateUserInput>;
 export type UpdateUserInputWithId = z.infer<typeof UpdateUserInputWithId>;
+export type UpdateUserLanguageInput = z.infer<typeof UpdateUserLanguageInput>;
 export type UserResponse = z.infer<typeof UserResponse>;
 export type UserListResponse = z.infer<typeof UserListResponse>;
 export type CreateUserResponse = z.infer<typeof CreateUserResponse>;

@@ -7,6 +7,7 @@ import { usersApi } from "@/lib/api/users";
 import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
 import { TextInput } from "@tea-pos/ui/custom/TextInput";
 import type { User } from "@tea-pos/features/users/schema";
+import { useT } from "@/lib/hooks/useT";
 
 function stripPhonePrefix(phone: string | null): number {
     if (!phone) return 0;
@@ -23,6 +24,7 @@ function splitFullName(fullName: string) {
 
 function EditForm({ user, mutate }: { user: User; mutate: () => void }) {
     const router = useRouter();
+    const t = useT();
     const { firstName: initFirst, lastName: initLast } = splitFullName(user.fullName);
     const [firstName, setFirstName] = useState(initFirst);
     const [lastName, setLastName] = useState(initLast);
@@ -43,7 +45,7 @@ function EditForm({ user, mutate }: { user: User; mutate: () => void }) {
             mutate();
             router.back();
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to save");
+            setError(err instanceof Error ? err.message : t("account.failedToSave"));
         } finally {
             setIsSaving(false);
         }
@@ -53,15 +55,15 @@ function EditForm({ user, mutate }: { user: User; mutate: () => void }) {
         <div className="space-y-4">
             <div className="bg-white rounded-xl p-4 space-y-4">
                 <div className="space-y-1.5">
-                    <p className="text-xs font-medium text-gray-500">First Name</p>
-                    <TextInput value={firstName} onChange={setFirstName} placeholder="First name" />
+                    <p className="text-xs font-medium text-gray-500">{t("account.firstName")}</p>
+                    <TextInput value={firstName} onChange={setFirstName} placeholder={t("account.firstNamePlaceholder")} />
                 </div>
                 <div className="space-y-1.5">
-                    <p className="text-xs font-medium text-gray-500">Last Name</p>
-                    <TextInput value={lastName} onChange={setLastName} placeholder="Last name" />
+                    <p className="text-xs font-medium text-gray-500">{t("account.lastName")}</p>
+                    <TextInput value={lastName} onChange={setLastName} placeholder={t("account.lastNamePlaceholder")} />
                 </div>
                 <div className="space-y-1.5">
-                    <p className="text-xs font-medium text-gray-500">Phone Number</p>
+                    <p className="text-xs font-medium text-gray-500">{t("account.phoneNumber")}</p>
                     <NumberInput
                         prefix="+62"
                         raw
@@ -78,7 +80,7 @@ function EditForm({ user, mutate }: { user: User; mutate: () => void }) {
                 disabled={isSaving}
                 className="w-full py-4 bg-brand text-white font-bold rounded-xl active:opacity-80 disabled:opacity-40 text-base"
             >
-                {isSaving ? "Saving..." : "Save"}
+                {isSaving ? t("account.saving") : t("common.save")}
             </button>
         </div>
     );

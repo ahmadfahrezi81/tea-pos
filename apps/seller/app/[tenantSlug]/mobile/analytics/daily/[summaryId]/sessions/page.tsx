@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useSessionsBySummary } from "@/lib/hooks/sessions/useSessionsBySummary";
 import type { SessionDetailItem } from "@tea-pos/features/sessions/schema";
 import { UserCircle, ArrowRightLeft } from "lucide-react";
+import { useT } from "@/lib/hooks/useT";
 
 function formatTime(iso: string): string {
     return new Date(iso).toLocaleTimeString("id-ID", {
@@ -32,6 +33,7 @@ function SessionCard({
     session: SessionDetailItem;
     previousUserName: string | null;
 }) {
+    const t = useT();
     return (
         <div className="bg-white rounded-2xl p-4 space-y-3">
             <div className="flex items-center justify-between">
@@ -49,7 +51,7 @@ function SessionCard({
                             <UserCircle size={20} className="text-brand" />
                         </div>
                     )}
-                    <p className="font-bold text-gray-900">{session.userName ?? "Unknown"}</p>
+                    <p className="font-bold text-gray-900">{session.userName ?? t("common.unknown")}</p>
                 </div>
                 <span
                     className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
@@ -58,7 +60,7 @@ function SessionCard({
                             : "bg-gray-100 text-gray-600"
                     }`}
                 >
-                    {session.status === "active" ? "Active" : "Ended"}
+                    {session.status === "active" ? t("daily.sessionActive") : t("daily.sessionEnded")}
                 </span>
             </div>
 
@@ -67,7 +69,7 @@ function SessionCard({
                     <span className="font-semibold text-gray-800">{formatTime(session.startedAt)}</span>
                     <span className="text-gray-400 mx-1.5">→</span>
                     <span className="font-semibold text-gray-800">
-                        {session.endedAt ? formatTime(session.endedAt) : "now"}
+                        {session.endedAt ? formatTime(session.endedAt) : t("daily.sessionNow")}
                     </span>
                 </div>
                 <span className="text-sm font-bold text-brand">
@@ -78,7 +80,7 @@ function SessionCard({
             {previousUserName && (
                 <div className="flex items-center gap-1.5 text-xs text-gray-500">
                     <ArrowRightLeft size={12} className="shrink-0" />
-                    <span>Taken over from <span className="font-semibold text-gray-700">{previousUserName}</span></span>
+                    <span>{t("daily.takenOver")} <span className="font-semibold text-gray-700">{previousUserName}</span></span>
                 </div>
             )}
         </div>
@@ -88,6 +90,7 @@ function SessionCard({
 export default function SessionsPage() {
     const { summaryId } = useParams<{ summaryId: string }>();
     const { data, isLoading } = useSessionsBySummary(summaryId);
+    const t = useT();
 
     const sessions: SessionDetailItem[] = data?.sessions ?? [];
     const uniqueUsers = new Set(sessions.map((s) => s.userId)).size;
@@ -111,19 +114,19 @@ export default function SessionsPage() {
                 </div>
             ) : sessions.length === 0 ? (
                 <div className="bg-white rounded-2xl p-8 text-center">
-                    <p className="text-gray-400 text-sm">No sessions recorded for this day.</p>
+                    <p className="text-gray-400 text-sm">{t("daily.noSessions")}</p>
                 </div>
             ) : (
                 <>
                     <div className="bg-white rounded-2xl px-4 py-3 flex items-center gap-4 text-sm">
                         <div>
                             <span className="font-bold text-gray-900">{sessions.length}</span>
-                            <span className="text-gray-500 ml-1">{sessions.length === 1 ? "session" : "sessions"}</span>
+                            <span className="text-gray-500 ml-1">{sessions.length === 1 ? t("daily.session") : t("daily.sessions")}</span>
                         </div>
                         <div className="w-px h-4 bg-gray-200" />
                         <div>
                             <span className="font-bold text-gray-900">{uniqueUsers}</span>
-                            <span className="text-gray-500 ml-1">{uniqueUsers === 1 ? "person" : "people"}</span>
+                            <span className="text-gray-500 ml-1">{uniqueUsers === 1 ? t("daily.person") : t("daily.people")}</span>
                         </div>
                     </div>
 
