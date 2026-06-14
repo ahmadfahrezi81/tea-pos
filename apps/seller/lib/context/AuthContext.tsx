@@ -4,6 +4,7 @@ import useSWR from "swr";
 import { createClient } from "@/lib/supabase";
 import { User, UserResponse } from "@tea-pos/features/users/schema";
 import { toCamelKeys } from "@tea-pos/utils/schemas";
+import type { Locale } from "@tea-pos/utils/translations";
 
 const supabase = createClient();
 
@@ -57,6 +58,7 @@ export function AuthProvider({
         email?: string;
         fullName?: string;
         avatarUrl?: string;
+        preferredLanguage?: string;
     } | null;
 }) {
     const fallbackData: User | null = initialUser
@@ -69,7 +71,7 @@ export function AuthProvider({
               status: "active",
               createdAt: null,
               updatedAt: null,
-              preferredLanguage: "en" as const,
+              preferredLanguage: (initialUser.preferredLanguage ?? "en") as Locale,
           }
         : null;
 

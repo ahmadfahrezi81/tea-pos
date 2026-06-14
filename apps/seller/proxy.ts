@@ -29,10 +29,11 @@ function setUserCookie(
     fullName = "",
     email = "",
     avatarUrl = "",
+    preferredLanguage = "en",
 ) {
     response.cookies.set(
         "x-user-info",
-        JSON.stringify({ id: userId, role, fullName, email, avatarUrl }),
+        JSON.stringify({ id: userId, role, fullName, email, avatarUrl, preferredLanguage }),
         {
             httpOnly: false,
             secure: process.env.NODE_ENV === "production",
@@ -140,7 +141,7 @@ export async function proxy(request: NextRequest) {
         const avatarUrl = (user.user_metadata?.avatar_url as string) ?? "";
         const { data: profile } = await supabase
             .from("users")
-            .select("role, full_name, email")
+            .select("role, full_name, email, preferred_language")
             .eq("id", user.id)
             .single();
 
@@ -154,6 +155,7 @@ export async function proxy(request: NextRequest) {
                 profile?.full_name ?? "",
                 profile?.email ?? "",
                 avatarUrl,
+                profile?.preferred_language ?? "en",
             );
         }
     }
