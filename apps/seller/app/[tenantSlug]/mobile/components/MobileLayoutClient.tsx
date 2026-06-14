@@ -171,7 +171,13 @@ export default function MobileLayoutClient({
             ? "pt-27"
             : "pt-19";
 
-    const scrollPaddingBottom = currentRoute?.scrollPaddingBottom ?? (!!footerCtaLabel ? "pb-28" : "pb-24");
+    const scrollPaddingBottom = currentRoute?.scrollPaddingBottom ?? (
+        !!footerCtaLabel
+            ? "pb-32"
+            : isIPhonePWA
+              ? "pb-30"
+              : "pb-24"
+    );
 
     return (
         <MobileScrollContext.Provider value={{ scrollRef: scrollContainerRef }}>

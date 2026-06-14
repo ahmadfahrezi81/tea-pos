@@ -8,7 +8,18 @@ import { useSummaries } from "@/lib/hooks/summaries/useDailySummaries";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 import { toIndonesiaMonthYear } from "@tea-pos/utils/server-config/timezone";
 import { getCurrentLocalMonth } from "@tea-pos/utils/time";
-import { Calendar, CalendarDays, AlertTriangle, Receipt, MoreVertical, Info, UserCircle, History, Users, X } from "lucide-react";
+import {
+    Calendar,
+    CalendarDays,
+    AlertTriangle,
+    Receipt,
+    MoreVertical,
+    Info,
+    UserCircle,
+    History,
+    Users,
+    X,
+} from "lucide-react";
 import { SkeletonValue } from "@/components/shared/SkeletonValue";
 import { useStore } from "@/lib/context/StoreContext";
 import {
@@ -31,7 +42,6 @@ const MiniDailySalesChart = dynamic(
     },
 );
 
-
 export default function MobileAnalytics() {
     const { selectedStoreId } = useStore();
     const { url } = useTenantSlug();
@@ -42,7 +52,10 @@ export default function MobileAnalytics() {
     const [selectedMonth, setSelectedMonth] = useState<string>(
         getCurrentLocalMonth(),
     );
-    const [activeSummary, setActiveSummary] = useState<{ id: string; date: string } | null>(null);
+    const [activeSummary, setActiveSummary] = useState<{
+        id: string;
+        date: string;
+    } | null>(null);
     const t = useT();
 
     const {
@@ -84,25 +97,53 @@ export default function MobileAnalytics() {
                 <div className="bg-white p-4 rounded-2xl">
                     <div className="flex items-center gap-2 mb-3">
                         <Receipt size={20} className="text-gray-600" />
-                        <h3 className="font-semibold text-gray-800">{t("analytics.monthlyTotals")}</h3>
+                        <h3 className="font-semibold text-gray-800">
+                            {t("analytics.monthlyTotals")}
+                        </h3>
                     </div>
                     <div className="grid grid-cols-4 gap-2">
                         <div className="text-center">
                             <p className="text-xl font-bold text-blue-600">
-                                <SkeletonValue loading={summariesLoading} className="h-7 w-8">{summariesData?.monthlyTotals?.totalOrders ?? 0}</SkeletonValue>
+                                <SkeletonValue
+                                    loading={summariesLoading}
+                                    className="h-7 w-8"
+                                >
+                                    {summariesData?.monthlyTotals
+                                        ?.totalOrders ?? 0}
+                                </SkeletonValue>
                             </p>
-                            <p className="text-sm text-gray-600">{t("analytics.orders")}</p>
+                            <p className="text-sm text-gray-600">
+                                {t("analytics.orders")}
+                            </p>
                         </div>
                         <div className="text-center">
                             <p className="text-xl font-bold text-orange-600">
-                                <SkeletonValue loading={summariesLoading} className="h-7 w-8">{summariesData?.monthlyTotals?.totalCups ?? 0}</SkeletonValue>
+                                <SkeletonValue
+                                    loading={summariesLoading}
+                                    className="h-7 w-8"
+                                >
+                                    {summariesData?.monthlyTotals?.totalCups ??
+                                        0}
+                                </SkeletonValue>
                             </p>
-                            <p className="text-sm text-gray-600">{t("analytics.cups")}</p>
+                            <p className="text-sm text-gray-600">
+                                {t("analytics.cups")}
+                            </p>
                         </div>
                         <div className="text-center col-span-2 border-l-2 border-gray-300">
-                            <p className="text-sm text-gray-600">{t("analytics.totalSales")}</p>
+                            <p className="text-sm text-gray-600">
+                                {t("analytics.totalSales")}
+                            </p>
                             <p className="text-xl font-bold text-green-600">
-                                <SkeletonValue loading={summariesLoading} className="h-7 w-24">{formatRupiah(summariesData?.monthlyTotals?.totalSales ?? 0)}</SkeletonValue>
+                                <SkeletonValue
+                                    loading={summariesLoading}
+                                    className="h-7 w-24"
+                                >
+                                    {formatRupiah(
+                                        summariesData?.monthlyTotals
+                                            ?.totalSales ?? 0,
+                                    )}
+                                </SkeletonValue>
                             </p>
                         </div>
                     </div>
@@ -111,14 +152,15 @@ export default function MobileAnalytics() {
 
             {/* Unclosed Days Warning */}
             {unclosedSummaries.length > 1 && (
-                <div className="bg-red-50 border border-red-200 p-3.5 rounded-lg">
+                <div className="bg-red-100 p-3.5 rounded-xl">
                     <div className="flex items-center gap-2 mb-2">
                         <AlertTriangle size={20} className="text-red-600" />
                         <h3 className="font-semibold text-red-800">
-                            {unclosedSummaries.length - 1} {t("analytics.unclosedWarning")}
+                            {unclosedSummaries.length - 1}{" "}
+                            {t("analytics.unclosedWarning")}
                         </h3>
                     </div>
-                    <p className="text-sm text-red-700">
+                    <p className="text-sm text-red-800">
                         {t("analytics.unclosedSub")}
                     </p>
                 </div>
@@ -155,7 +197,9 @@ export default function MobileAnalytics() {
                 </h3>
                 <span className="text-sm text-gray-500">
                     {summariesData?.summaries?.length ?? 0}{" "}
-                    {(summariesData?.summaries?.length ?? 0) === 1 ? "summary" : "summaries"}
+                    {(summariesData?.summaries?.length ?? 0) === 1
+                        ? "summary"
+                        : "summaries"}
                 </span>
             </div>
 
@@ -164,7 +208,10 @@ export default function MobileAnalytics() {
                 <div className="space-y-3">
                     {summariesLoading ? (
                         Array.from({ length: 3 }).map((_, i) => (
-                            <div key={i} className="bg-white rounded-2xl p-3 animate-pulse space-y-3">
+                            <div
+                                key={i}
+                                className="bg-white rounded-2xl p-3 animate-pulse space-y-3"
+                            >
                                 <div className="flex justify-between">
                                     <div className="h-7 w-32 bg-gray-200 rounded-md" />
                                     <div className="h-7 w-7 bg-gray-200 rounded-full" />
@@ -177,16 +224,23 @@ export default function MobileAnalytics() {
                                 </div>
                             </div>
                         ))
-                    ) : !summariesData?.summaries || summariesData.summaries.length === 0 ? (
+                    ) : !summariesData?.summaries ||
+                      summariesData.summaries.length === 0 ? (
                         <div className="bg-white p-8 rounded-2xl text-center">
-                            <Calendar size={48} className="mx-auto text-gray-400 mb-4" />
+                            <Calendar
+                                size={48}
+                                className="mx-auto text-gray-400 mb-4"
+                            />
                             <p className="text-gray-600">
                                 {t("analytics.noSummary")}
                             </p>
                         </div>
                     ) : (
                         summariesData.summaries.map((summary) => {
-                            const dailyExpenses = getExpensesForDate(summariesData, summary.date);
+                            const dailyExpenses = getExpensesForDate(
+                                summariesData,
+                                summary.date,
+                            );
 
                             return (
                                 <div
@@ -198,55 +252,90 @@ export default function MobileAnalytics() {
                                             <div>
                                                 <div className="flex items-center gap-2">
                                                     <h3 className="text-xl font-bold text-gray-800">
-                                                        {formatDate(summary.date)}
+                                                        {formatDate(
+                                                            summary.date,
+                                                        )}
                                                     </h3>
                                                     {summary.closedAt ? (
                                                         <span className="bg-red-100 text-red-800 px-2 py-0.5 rounded-full text-sm font-medium self-center">
-                                                            {t("analytics.statusClosed")}
+                                                            {t(
+                                                                "analytics.statusClosed",
+                                                            )}
                                                         </span>
                                                     ) : (
                                                         <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-sm font-medium self-center">
-                                                            {t("analytics.statusOpen")}
+                                                            {t(
+                                                                "analytics.statusOpen",
+                                                            )}
                                                         </span>
                                                     )}
                                                 </div>
                                             </div>
                                             <button
-                                                onClick={() => setActiveSummary({ id: summary.id, date: summary.date })}
+                                                onClick={() =>
+                                                    setActiveSummary({
+                                                        id: summary.id,
+                                                        date: summary.date,
+                                                    })
+                                                }
                                                 className="size-8 shrink-0 flex items-center justify-center text-gray-500 active:opacity-60 rounded-lg transition-colors"
                                             >
-                                                <MoreVertical size={22} strokeWidth={2.5} />
+                                                <MoreVertical
+                                                    size={22}
+                                                    strokeWidth={2.5}
+                                                />
                                             </button>
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-2 rounded-2xl p-2 bg-slate-100 text-gray-800">
                                             <div>
-                                                <p className="text-xs">{t("analytics.openingBalance")}</p>
+                                                <p className="text-xs">
+                                                    {t(
+                                                        "analytics.openingBalance",
+                                                    )}
+                                                </p>
                                                 <p className="text-lg font-extrabold text-blue-600">
-                                                    {formatRupiah(summary.openingBalance)}
+                                                    {formatRupiah(
+                                                        summary.openingBalance,
+                                                    )}
                                                 </p>
                                             </div>
                                             <div>
-                                                <p className="text-xs">{t("analytics.totalSales")}</p>
+                                                <p className="text-xs">
+                                                    {t("analytics.totalSales")}
+                                                </p>
                                                 <p className="text-lg font-extrabold text-green-600">
-                                                    {formatRupiah(summary.totalSales)}
+                                                    {formatRupiah(
+                                                        summary.totalSales,
+                                                    )}
                                                 </p>
                                             </div>
                                             <div>
-                                                <p className="text-xs">{t("analytics.openingPlusSales")}</p>
+                                                <p className="text-xs">
+                                                    {t(
+                                                        "analytics.openingPlusSales",
+                                                    )}
+                                                </p>
                                                 <p className="text-lg font-extrabold text-purple-600">
-                                                    {formatRupiah(summary.openingBalance + summary.totalSales)}
+                                                    {formatRupiah(
+                                                        summary.openingBalance +
+                                                            summary.totalSales,
+                                                    )}
                                                 </p>
                                             </div>
                                             <div className="flex gap-4">
                                                 <div>
-                                                    <p className="text-xs">{t("analytics.orders")}</p>
+                                                    <p className="text-xs">
+                                                        {t("analytics.orders")}
+                                                    </p>
                                                     <p className="text-lg font-extrabold text-blue-600">
                                                         {summary.totalOrders}
                                                     </p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs">{t("analytics.cups")}</p>
+                                                    <p className="text-xs">
+                                                        {t("analytics.cups")}
+                                                    </p>
                                                     <p className="text-lg font-extrabold text-orange-600">
                                                         {summary.totalCups}
                                                     </p>
@@ -254,44 +343,70 @@ export default function MobileAnalytics() {
                                             </div>
                                             <hr className="col-span-2 border-gray-300" />
                                             <div>
-                                                <p className="text-xs">{t("analytics.expectedCash")}</p>
+                                                <p className="text-xs">
+                                                    {t(
+                                                        "analytics.expectedCash",
+                                                    )}
+                                                </p>
                                                 <p className="text-lg font-extrabold text-purple-600">
-                                                    {formatRupiah(summary.expectedCash)}
+                                                    {formatRupiah(
+                                                        summary.expectedCash,
+                                                    )}
                                                 </p>
                                             </div>
                                             <div>
-                                                <p className="text-xs">{t("analytics.actualCash")}</p>
+                                                <p className="text-xs">
+                                                    {t("analytics.actualCash")}
+                                                </p>
                                                 <p className="text-lg font-extrabold text-orange-600">
                                                     {summary.actualCash !== null
-                                                        ? formatRupiah(summary.actualCash)
-                                                        : t("analytics.notCounted")}
+                                                        ? formatRupiah(
+                                                              summary.actualCash,
+                                                          )
+                                                        : t(
+                                                              "analytics.notCounted",
+                                                          )}
                                                 </p>
                                             </div>
                                         </div>
 
-                                        {(summary.sessions ?? []).length > 0 && (
+                                        {(summary.sessions ?? []).length >
+                                            0 && (
                                             <div>
-<div className="flex flex-wrap gap-1.5">
-                                                    {(summary.sessions ?? []).map((s) => (
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {(
+                                                        summary.sessions ?? []
+                                                    ).map((s) => (
                                                         <div
                                                             key={s.userId}
                                                             className="flex items-center gap-2 bg-slate-100 rounded-xl p-1.5 pr-3.5 w-full"
                                                         >
                                                             {s.userAvatarUrl ? (
                                                                 <Image
-                                                                    src={s.userAvatarUrl}
-                                                                    alt={s.userName ?? ""}
+                                                                    src={
+                                                                        s.userAvatarUrl
+                                                                    }
+                                                                    alt={
+                                                                        s.userName ??
+                                                                        ""
+                                                                    }
                                                                     width={28}
                                                                     height={28}
                                                                     className="rounded-lg object-cover shrink-0"
                                                                 />
                                                             ) : (
                                                                 <div className="w-7 h-7 rounded-lg bg-brand/10 flex items-center justify-center shrink-0">
-                                                                    <UserCircle size={18} className="text-brand" />
+                                                                    <UserCircle
+                                                                        size={
+                                                                            18
+                                                                        }
+                                                                        className="text-brand"
+                                                                    />
                                                                 </div>
                                                             )}
                                                             <p className="text-base font-bold text-gray-900 truncate">
-                                                                {s.userName ?? "Unknown"}
+                                                                {s.userName ??
+                                                                    "Unknown"}
                                                             </p>
                                                         </div>
                                                     ))}
@@ -302,26 +417,40 @@ export default function MobileAnalytics() {
                                         {dailyExpenses.length > 0 && (
                                             <div>
                                                 <h4 className="text-gray-800 text-sm font-semibold mb-1">
-                                                    {t("analytics.expensesOfDay")}
+                                                    {t(
+                                                        "analytics.expensesOfDay",
+                                                    )}
                                                 </h4>
-                                                <div className="bg-red-50 border border-red-200 p-2 rounded-lg">
-                                                    {dailyExpenses.map((expense) => (
-                                                        <div
-                                                            key={expense.id}
-                                                            className="flex justify-between text-sm"
-                                                        >
-                                                            <span className="text-red-700">
-                                                                {expense.type}
-                                                            </span>
-                                                            <span className="font-medium text-red-800">
-                                                                -{formatRupiah(expense.amount)}
-                                                            </span>
-                                                        </div>
-                                                    ))}
-                                                    <div className="border-t border-red-300 mt-1 pt-1 flex justify-between font-medium">
-                                                        <span className="text-red-700">Total</span>
+                                                <div className="bg-red-100 p-2 rounded-xl">
+                                                    {dailyExpenses.map(
+                                                        (expense) => (
+                                                            <div
+                                                                key={expense.id}
+                                                                className="flex justify-between text-sm font-semibold text-red-800"
+                                                            >
+                                                                <span>
+                                                                    {
+                                                                        expense.type
+                                                                    }
+                                                                </span>
+                                                                <span>
+                                                                    -
+                                                                    {formatRupiah(
+                                                                        expense.amount,
+                                                                    )}
+                                                                </span>
+                                                            </div>
+                                                        ),
+                                                    )}
+                                                    <div className="border-t border-red-300 mt-1 pt-1 flex justify-between font-extrabold">
                                                         <span className="text-red-800">
-                                                            -{formatRupiah(summary.totalExpenses)}
+                                                            Total
+                                                        </span>
+                                                        <span className="text-red-800">
+                                                            -
+                                                            {formatRupiah(
+                                                                summary.totalExpenses,
+                                                            )}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -334,14 +463,18 @@ export default function MobileAnalytics() {
                                                     {t("analytics.variance")}
                                                 </h4>
                                                 <p
-                                                    className={`text-sm px-3 py-2 rounded-lg font-medium ${
+                                                    className={`text-sm px-3 py-2 rounded-xl font-bold ${
                                                         summary.variance >= 0
-                                                            ? "bg-green-50 border border-green-200 text-green-700"
-                                                            : "bg-red-50 border border-red-200 text-red-700"
+                                                            ? "bg-green-100 text-green-800"
+                                                            : "bg-red-100 text-red-800"
                                                     }`}
                                                 >
-                                                    {summary.variance >= 0 ? "+" : ""}
-                                                    {formatRupiah(summary.variance)}
+                                                    {summary.variance >= 0
+                                                        ? "+"
+                                                        : ""}
+                                                    {formatRupiah(
+                                                        summary.variance,
+                                                    )}
                                                 </p>
                                             </div>
                                         )}
@@ -363,7 +496,9 @@ export default function MobileAnalytics() {
                                             <button
                                                 onClick={() =>
                                                     navigation.push(
-                                                        url(`/mobile/home/manage/close?summaryId=${summary.id}&month=${summary.date.slice(0, 7)}`),
+                                                        url(
+                                                            `/mobile/home/manage/close?summaryId=${summary.id}&month=${summary.date.slice(0, 7)}`,
+                                                        ),
                                                     )
                                                 }
                                                 className="w-full bg-red-500 text-white py-4 px-4 rounded-xl text-sm font-semibold active:scale-95"
@@ -379,63 +514,100 @@ export default function MobileAnalytics() {
                 </div>
             )}
 
-            <Drawer.Root open={!!activeSummary} onOpenChange={(open) => !open && setActiveSummary(null)}>
-            <Drawer.Portal>
-                <Drawer.Overlay className="fixed inset-0 bg-black/60 z-50" />
-                <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl px-4 pt-5 pb-8 focus:outline-none">
-                    <div className="absolute top-2 left-0 right-0 flex justify-center">
-                        <div className="w-8 h-1 rounded-full bg-gray-300" />
-                    </div>
-                    <div className="flex items-center justify-between mb-4">
-                        <Drawer.Title className="text-xl font-bold text-gray-900">
-                            {activeSummary ? formatDate(activeSummary.date) : ""}
-                        </Drawer.Title>
-                        <Drawer.Description className="sr-only">Daily summary options</Drawer.Description>
-                        <button
-                            onClick={() => setActiveSummary(null)}
-                            className="p-1.5 rounded-full text-gray-900 hover:bg-gray-100 -mr-2"
-                        >
-                            <X size={26} />
-                        </button>
-                    </div>
-                    <div className="space-y-3">
-                        <button
-                            onClick={() => {
-                                if (!activeSummary) return;
-                                setActiveSummary(null);
-                                navigation.push(url(`/mobile/analytics/daily/${activeSummary.id}`));
-                            }}
-                            className="w-full flex items-center gap-3 py-5 border-b transition-colors"
-                        >
-                            <Info size={20} strokeWidth={2} className="text-gray-900" />
-                            <span className="text-lg text-gray-900">{t("analytics.details")}</span>
-                        </button>
-                        <button
-                            onClick={() => {
-                                if (!activeSummary) return;
-                                setActiveSummary(null);
-                                navigation.push(url(`/mobile/analytics/daily/${activeSummary.id}/events`));
-                            }}
-                            className="w-full flex items-center gap-3 py-5 border-b transition-colors"
-                        >
-                            <History size={20} strokeWidth={2} className="text-gray-900" />
-                            <span className="text-lg text-gray-900">{t("analytics.activity")}</span>
-                        </button>
-                        <button
-                            onClick={() => {
-                                if (!activeSummary) return;
-                                setActiveSummary(null);
-                                navigation.push(url(`/mobile/analytics/daily/${activeSummary.id}/sessions?storeId=${selectedStoreId}&date=${activeSummary.date}`));
-                            }}
-                            className="w-full flex items-center gap-3 py-5 transition-colors"
-                        >
-                            <Users size={20} strokeWidth={2} className="text-gray-900" />
-                            <span className="text-lg text-gray-900">{t("analytics.sessions")}</span>
-                        </button>
-                    </div>
-                </Drawer.Content>
-            </Drawer.Portal>
-        </Drawer.Root>
+            <Drawer.Root
+                open={!!activeSummary}
+                onOpenChange={(open) => !open && setActiveSummary(null)}
+            >
+                <Drawer.Portal>
+                    <Drawer.Overlay className="fixed inset-0 bg-black/60 z-50" />
+                    <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl px-4 pt-5 pb-8 focus:outline-none">
+                        <div className="absolute top-2 left-0 right-0 flex justify-center">
+                            <div className="w-8 h-1 rounded-full bg-gray-300" />
+                        </div>
+                        <div className="flex items-center justify-between mb-4">
+                            <Drawer.Title className="text-xl font-bold text-gray-900">
+                                {activeSummary
+                                    ? formatDate(activeSummary.date)
+                                    : ""}
+                            </Drawer.Title>
+                            <Drawer.Description className="sr-only">
+                                Daily summary options
+                            </Drawer.Description>
+                            <button
+                                onClick={() => setActiveSummary(null)}
+                                className="p-1.5 rounded-full text-gray-900 hover:bg-gray-100 -mr-2"
+                            >
+                                <X size={26} />
+                            </button>
+                        </div>
+                        <div className="space-y-3">
+                            <button
+                                onClick={() => {
+                                    if (!activeSummary) return;
+                                    setActiveSummary(null);
+                                    navigation.push(
+                                        url(
+                                            `/mobile/analytics/daily/${activeSummary.id}`,
+                                        ),
+                                    );
+                                }}
+                                className="w-full flex items-center gap-3 py-5 border-b transition-colors"
+                            >
+                                <Info
+                                    size={20}
+                                    strokeWidth={2}
+                                    className="text-gray-900"
+                                />
+                                <span className="text-lg text-gray-900">
+                                    {t("analytics.details")}
+                                </span>
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (!activeSummary) return;
+                                    setActiveSummary(null);
+                                    navigation.push(
+                                        url(
+                                            `/mobile/analytics/daily/${activeSummary.id}/events`,
+                                        ),
+                                    );
+                                }}
+                                className="w-full flex items-center gap-3 py-5 border-b transition-colors"
+                            >
+                                <History
+                                    size={20}
+                                    strokeWidth={2}
+                                    className="text-gray-900"
+                                />
+                                <span className="text-lg text-gray-900">
+                                    {t("analytics.activity")}
+                                </span>
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (!activeSummary) return;
+                                    setActiveSummary(null);
+                                    navigation.push(
+                                        url(
+                                            `/mobile/analytics/daily/${activeSummary.id}/sessions?storeId=${selectedStoreId}&date=${activeSummary.date}`,
+                                        ),
+                                    );
+                                }}
+                                className="w-full flex items-center gap-3 py-5 transition-colors"
+                            >
+                                <Users
+                                    size={20}
+                                    strokeWidth={2}
+                                    className="text-gray-900"
+                                />
+                                <span className="text-lg text-gray-900">
+                                    {t("analytics.sessions")}
+                                </span>
+                            </button>
+                        </div>
+                    </Drawer.Content>
+                </Drawer.Portal>
+            </Drawer.Root>
         </div>
     );
 }

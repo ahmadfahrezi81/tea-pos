@@ -1,14 +1,6 @@
 "use client";
 import { useMemo } from "react";
 import useProductSales from "@/lib/hooks/analytics/useProductSales";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from "@tea-pos/ui/components/card";
 import { Package } from "lucide-react";
 
 const generateColor = (index: number, total: number) => {
@@ -58,56 +50,48 @@ export default function ProductSalesChart({ storeId, month }: Props) {
     if (productChartData.length === 0) return null;
 
     return (
-        <Card className="py-4 gap-4 [&>*]:px-4">
-            <CardHeader>
-                <CardTitle>Product Sales</CardTitle>
-                <CardDescription>
+        <div className="bg-white rounded-2xl p-4">
+            <div className="mb-4">
+                <h3 className="font-semibold text-gray-800 text-lg">
+                    Product Sales
+                </h3>
+                <p className="text-sm text-gray-400">
                     Breakdown by product for the month
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="space-y-3">
-                    {productChartData.map((product) => (
-                        <div key={product.productId} className="space-y-1">
-                            <div className="flex items-center justify-between text-sm">
-                                <div className="flex items-center gap-2">
-                                    <div
-                                        className="w-3 h-3 rounded-sm"
-                                        style={{
-                                            backgroundColor: product.fill,
-                                        }}
-                                    />
-                                    <span className="font-medium">
-                                        {product.productName}
-                                    </span>
-                                </div>
-                                <span className="text-muted-foreground">
-                                    {product.quantity} cups (
-                                    {product.percentage}%)
-                                </span>
-                            </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2">
-                                <div
-                                    className="h-2 rounded-full transition-all"
-                                    style={{
-                                        width: `${product.percentage}%`,
-                                        backgroundColor: product.fill,
-                                    }}
-                                />
-                            </div>
+                </p>
+            </div>
+            <div className="space-y-4 mb-4">
+                {productChartData.map((product) => (
+                    <div key={product.productId} className="space-y-1.5">
+                        <div className="flex items-center justify-between text-sm">
+                            <span className="font-medium text-gray-800">
+                                {product.productName}
+                            </span>
+                            <span className="text-gray-500">
+                                {product.quantity} cups (
+                                {product.percentage}%)
+                            </span>
                         </div>
-                    ))}
-                </div>
-            </CardContent>
-            <CardFooter className="flex-col items-start gap-2 text-sm">
-                <div className="flex gap-2 leading-none font-medium">
-                    <Package className="h-4 w-4" />
+                        <div className="w-full bg-gray-200 rounded h-4">
+                            <div
+                                className="h-4 rounded transition-all"
+                                style={{
+                                    width: `${product.percentage}%`,
+                                    backgroundColor: product.fill,
+                                }}
+                            />
+                        </div>
+                    </div>
+                ))}
+            </div>
+            <div className="flex flex-col gap-2 text-sm pt-3 border-t border-gray-100">
+                <div className="flex gap-2 leading-none font-medium text-gray-800">
+                    <Package className="h-4 w-4 shrink-0" />
                     {productChartData.length} products sold this month
                 </div>
-                <div className="text-muted-foreground leading-none">
+                <div className="text-gray-500 leading-none">
                     Total: {totalProductQuantity} cups
                 </div>
-            </CardFooter>
-        </Card>
+            </div>
+        </div>
     );
 }

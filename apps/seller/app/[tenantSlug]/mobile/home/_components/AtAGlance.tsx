@@ -3,6 +3,8 @@
 import { useRef, useEffect, useState, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useT } from "@/lib/hooks/useT";
+import { useDayActivityBigEvents } from "@/lib/hooks/activity-logs/useStoreActivityLogs";
+import { useStore } from "@/lib/context/StoreContext";
 import { PillSwitcher } from "./PillSwitcher";
 import type { TimelineEventResponse } from "@tea-pos/features/activity-logs/schema";
 import { EVENT_COLOR, EVENT_ICON, EVENT_LABEL, formatEventTime } from "@/lib/constants/activity-log-events";
@@ -76,13 +78,6 @@ function TooltipPortal({ label, anchorRef }: { label: string; anchorRef: React.R
 
 // ─── AtAGlance ────────────────────────────────────────────────────────────────
 
-interface AtAGlanceProps {
-    openTime?: string;
-    closeTime?: string;
-    currentTime?: string;
-    events?: TimelineEventResponse[];
-}
-
 const MIN_BAR_WIDTH = 900;
 const BUFFER_MINUTES = 60;
 const ICON_SIZE = 36;
@@ -91,12 +86,23 @@ const MIN_HOUR_PX = 50;
 const BAR_PADDING_PX = 32; // px-4 × 2
 const HOUR_GAP_PX = 4; // gap-1
 
-export function AtAGlance({
-    openTime = "10:00",
-    closeTime = "22:00",
-    currentTime,
-    events = [],
-}: AtAGlanceProps) {
+interface AtAGlanceProps {
+    events?: TimelineEventResponse[];
+    summaryId?: string;
+}
+
+export function AtAGlance({ events: passedEvents, summaryId }: AtAGlanceProps) {
+    const { selectedStore } = useStore();
+    const { segments: fetchedEvents } = useDayActivityBigEvents(summaryId);
+
+    // Use passed events or fetch them
+    const events = useMemo(() => {
+        const sourceEvents = passedEvents ?? fetchedEvents;
+        return sourceEvents.filter((e) => e.type !== "order_created");
+    }, [passedEvents, fetchedEvents]);
+
+    const openTime = selectedStore?.openTime ?? "10:00";
+    const closeTime = selectedStore?.closeTime ?? "22:00";
     const open = timeToMinutes(openTime) - BUFFER_MINUTES;
     const close = timeToMinutes(closeTime) + BUFFER_MINUTES;
     const totalMinutes = close - open;
@@ -108,10 +114,6 @@ export function AtAGlance({
 
     const t = useT();
     const greeting = t(`home.greeting.${getGreetingKey()}`);
-
-    const displayTime = currentTime
-        ? formatTime(timeToMinutes(currentTime))
-        : new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 
     // Flex values and bar width — count-based: each hour gets enough room to fit N icons side-by-side
     const { hourFlexValues, dynamicBarWidth } = useMemo(() => {
@@ -160,7 +162,7 @@ export function AtAGlance({
     };
 
     const progressPos = useMemo(() => {
-        const now = getCurrentMinutes(currentTime);
+        const now = getCurrentMinutes();
         const rawIdx = (now - open) / 60;
         if (rawIdx <= 0) return 0;
         if (rawIdx >= numHours) return 1;
@@ -170,7 +172,7 @@ export function AtAGlance({
             Math.max((cumFlex[hourIdx] + frac * hourFlexValues[hourIdx]) / totalFlex, 0),
             1,
         );
-    }, [currentTime, open, numHours, cumFlex, hourFlexValues, totalFlex]);
+    }, [open, numHours, cumFlex, hourFlexValues, totalFlex]);
 
     useEffect(() => {
         const container = scrollRef.current;

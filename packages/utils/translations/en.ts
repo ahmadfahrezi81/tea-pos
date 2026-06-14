@@ -60,6 +60,9 @@ export const en = {
         updateOpeningBalance: "Update Opening Balance",
         avgPerDay: "Avg / day",
         total: "Total",
+        dailySalesTitle: "Daily Sales",
+        dailySalesSubtitle: "Cup sales throughout the month",
+        cupsSoldLabel: "Cups Sold",
     },
     daily: {
         store: "Store",
@@ -150,6 +153,7 @@ export const en = {
             tea: "Measure and photo the remaining tea waste.",
             opening: "Take a photo of the opening setup.",
         },
+        confirmSummary: "I confirm all the information above is correct.",
     },
     orders: {
         title: "Orders",

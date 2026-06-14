@@ -3,6 +3,7 @@ import { useState } from "react";
 import { CalendarDays } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useStore } from "@/lib/context/StoreContext";
+import { useT } from "@/lib/hooks/useT";
 
 import dynamic from "next/dynamic";
 const DailySalesChart = dynamic(() => import("./DailySalesChart"), {
@@ -33,6 +34,7 @@ const formatMonthForInput = (date: Date) => {
 export default function MobileDailySales() {
     const { selectedStoreId } = useStore();
     const searchParams = useSearchParams();
+    const t = useT();
 
     const [selectedMonth, setSelectedMonth] = useState(
         searchParams.get("month") || formatMonthForInput(new Date()),
@@ -44,7 +46,7 @@ export default function MobileDailySales() {
             <div className="bg-white p-4 rounded-2xl">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                     <CalendarDays size={16} className="inline mr-1" />
-                    Select Month
+                    {t("analytics.selectMonth")}
                 </label>
                 <input
                     type="month"

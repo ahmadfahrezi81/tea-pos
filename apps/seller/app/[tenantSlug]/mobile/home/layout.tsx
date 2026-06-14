@@ -41,11 +41,7 @@ export default function HomeLayout({
     if (showGate) {
         return (
             <div className="flex flex-col h-full gap-4">
-                <AtAGlance
-                    openTime={selectedStore?.openTime}
-                    closeTime={selectedStore?.closeTime}
-                    events={events}
-                />
+                <AtAGlance events={events} />
                 <div className="flex-1 min-h-0">
                     <StoreGate
                         gate={gate}
@@ -62,11 +58,7 @@ export default function HomeLayout({
     return (
         <div className="min-h-full flex flex-col gap-4">
             {isHomeRoot && (
-                <AtAGlance
-                    openTime={selectedStore?.openTime}
-                    closeTime={selectedStore?.closeTime}
-                    events={events}
-                />
+                <AtAGlance events={events} />
             )}
             <div
                 key={pathname}

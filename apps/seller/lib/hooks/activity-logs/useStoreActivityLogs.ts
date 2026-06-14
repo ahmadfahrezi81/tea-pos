@@ -19,3 +19,9 @@ export function useDayActivity(summaryId?: string) {
     );
     return { summary: data?.summary ?? null, segments: data?.segments ?? [], ...rest };
 }
+
+export function useDayActivityBigEvents(summaryId?: string) {
+    const { segments, ...rest } = useDayActivity(summaryId);
+    const bigEvents = segments.filter((s) => s.type !== "order_created");
+    return { segments: bigEvents, ...rest };
+}

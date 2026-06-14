@@ -63,6 +63,9 @@ export const id: DeepPartial<typeof en> = {
         updateOpeningBalance: "Perbarui Saldo Awal",
         avgPerDay: "Rata / hari",
         total: "Total",
+        dailySalesTitle: "Penjualan Harian",
+        dailySalesSubtitle: "Penjualan gelas sepanjang bulan",
+        cupsSoldLabel: "Gelas Terjual",
     },
     daily: {
         store: "Toko",
@@ -153,6 +156,7 @@ export const id: DeepPartial<typeof en> = {
             tea: "Ukur dan foto sisa limbah teh.",
             opening: "Ambil foto penyiapan pembukaan.",
         },
+        confirmSummary: "Saya konfirmasi semua informasi di atas sudah benar.",
     },
     orders: {
         title: "Pesanan",

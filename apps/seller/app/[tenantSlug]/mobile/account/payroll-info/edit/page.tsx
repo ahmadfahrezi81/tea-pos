@@ -126,11 +126,13 @@ function EditForm({ info, update }: {
                     </div>
                     <div className="space-y-1.5">
                         <p className="text-xs font-medium text-gray-500">{t("account.accountHolderLabel")}</p>
-                        <TextInput
-                            value={bankAccountHolder}
-                            onChange={setBankAccountHolder}
-                            placeholder={t("account.accountHolderPlaceholder")}
-                        />
+                        <div className="uppercase">
+                            <TextInput
+                                value={bankAccountHolder}
+                                onChange={(v) => setBankAccountHolder(v.toUpperCase())}
+                                placeholder={t("account.accountHolderPlaceholder")}
+                            />
+                        </div>
                     </div>
                     {error && <p className="text-sm text-red-500">{error}</p>}
                 </div>
