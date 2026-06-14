@@ -157,6 +157,13 @@ export async function proxy(request: NextRequest) {
                 avatarUrl,
                 profile?.preferred_language ?? "en",
             );
+            response.cookies.set("locale", profile?.preferred_language ?? "en", {
+                httpOnly: false,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "lax",
+                maxAge: USER_COOKIE_TTL,
+                path: "/",
+            });
         }
     }
 
