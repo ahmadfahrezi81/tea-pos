@@ -36,7 +36,7 @@ export default function ReimbursementsPage() {
                     <p className="text-sm text-gray-400">{t("claims.noEntitlements")}</p>
                 ) : (
                     <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1">
-                        {types.map((type) => (
+                        {types.map((type: any) => (
                             <div
                                 key={type.id}
                                 className={`shrink-0 w-40 rounded-xl p-3 border space-y-1.5 ${type.claimable ? "border-brand/20 bg-brand/5" : "border-gray-100 bg-gray-50"}`}

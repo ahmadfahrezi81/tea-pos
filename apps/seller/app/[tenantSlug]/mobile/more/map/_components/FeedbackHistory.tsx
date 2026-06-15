@@ -188,7 +188,7 @@ export default function FeedbackHistory() {
 
     const allUsers = useMemo(() => {
         const names = feedbacks.map((fb: CustomerFeedbackResponse) => fb.userName ?? "Unknown");
-        return Array.from(new Set(names)).sort();
+        return Array.from(new Set(names)).sort() as string[];
     }, [feedbacks]);
 
     const filtered = useMemo(() => {
@@ -282,7 +282,7 @@ export default function FeedbackHistory() {
 
         if (feedbacks.length > 1) {
             const bounds = new mapboxgl.LngLatBounds();
-            feedbacks.forEach((fb) => bounds.extend([fb.longitude, fb.latitude]));
+            feedbacks.forEach((fb: CustomerFeedbackResponse) => bounds.extend([fb.longitude, fb.latitude]));
             mapRef.current.fitBounds(bounds, { padding: 40, maxZoom: 14, duration: 800 });
         } else if (feedbacks.length === 1) {
             mapRef.current.flyTo({ center: [feedbacks[0].longitude, feedbacks[0].latitude], zoom: 13, duration: 800 });
