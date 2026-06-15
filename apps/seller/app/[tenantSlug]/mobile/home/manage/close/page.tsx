@@ -401,7 +401,7 @@ export default function ManageCloseDayPage() {
             <div className="flex-1 overflow-y-auto pt-2">
                 {currentStep < PHOTO_STEP_COUNT &&
                     (() => {
-                        const slot = PHOTO_SLOTS[currentStep];
+                        const slot = photoSlots[currentStep];
                         return (
                             <SinglePhotoStep
                                 key={slot.type}

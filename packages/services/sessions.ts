@@ -152,7 +152,6 @@ export async function openStore(supabase: SupabaseClient, params: OpenStoreParam
             store_id: storeId,
             tenant_id: tenantId,
             opened_by: userId,
-            closed_by: userId,
             date,
             opening_balance: openingBalance,
             opening_cash_breakdown: openingCashBreakdown ?? null,

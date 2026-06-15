@@ -156,6 +156,17 @@ export const id: DeepPartial<typeof en> = {
             tea: "Ukur dan foto sisa limbah teh.",
             opening: "Ambil foto penyiapan pembukaan.",
         },
+        cashStep: {
+            title: "Hitung Uang Tunai",
+            description: "Masukkan jumlah uang tunai yang Anda hitung.",
+            actualCash: "Uang Tunai Aktual",
+            expected: "Diharapkan:",
+            variance: "Selisih",
+            matchesPerfectly: "Uang tunai cocok sempurna",
+            overBy: "Kelebihan",
+            shortBy: "Kekurangan",
+            confirmCash: "Saya konfirmasi jumlah uang tunai sudah benar.",
+        },
         confirmSummary: "Saya konfirmasi semua informasi di atas sudah benar.",
     },
     orders: {
@@ -195,6 +206,9 @@ export const id: DeepPartial<typeof en> = {
         qrisPaid: "Terbayar",
         qrisExpired: "Kadaluarsa",
         qrisFailed: "Gagal",
+        tapToAdd: "Tambah",
+        items: "item",
+        viewCart: "Keranjang",
     },
     chats: {
         emptyTitle: "Kotak masuk kosong",

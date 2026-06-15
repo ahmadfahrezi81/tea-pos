@@ -540,71 +540,48 @@ export default function MobileAnalytics() {
                                 <X size={26} />
                             </button>
                         </div>
-                        <div className="space-y-3">
-                            <button
-                                onClick={() => {
-                                    if (!activeSummary) return;
-                                    setActiveSummary(null);
-                                    navigation.push(
-                                        url(
-                                            `/mobile/analytics/daily/${activeSummary.id}`,
-                                        ),
-                                    );
-                                }}
-                                className="w-full flex items-center gap-3 py-5 border-b transition-colors"
-                            >
-                                <Info
-                                    size={20}
-                                    strokeWidth={2}
-                                    className="text-gray-900"
-                                />
-                                <span className="text-lg text-gray-900">
-                                    {t("analytics.details")}
-                                </span>
-                            </button>
-                            <button
-                                onClick={() => {
-                                    if (!activeSummary) return;
-                                    setActiveSummary(null);
-                                    navigation.push(
-                                        url(
-                                            `/mobile/analytics/daily/${activeSummary.id}/events`,
-                                        ),
-                                    );
-                                }}
-                                className="w-full flex items-center gap-3 py-5 border-b transition-colors"
-                            >
-                                <History
-                                    size={20}
-                                    strokeWidth={2}
-                                    className="text-gray-900"
-                                />
-                                <span className="text-lg text-gray-900">
-                                    {t("analytics.activity")}
-                                </span>
-                            </button>
-                            <button
-                                onClick={() => {
-                                    if (!activeSummary) return;
-                                    setActiveSummary(null);
-                                    navigation.push(
-                                        url(
-                                            `/mobile/analytics/daily/${activeSummary.id}/sessions?storeId=${selectedStoreId}&date=${activeSummary.date}`,
-                                        ),
-                                    );
-                                }}
-                                className="w-full flex items-center gap-3 py-5 transition-colors"
-                            >
-                                <Users
-                                    size={20}
-                                    strokeWidth={2}
-                                    className="text-gray-900"
-                                />
-                                <span className="text-lg text-gray-900">
-                                    {t("analytics.sessions")}
-                                </span>
-                            </button>
-                        </div>
+                        {[
+                            {
+                                icon: Info,
+                                label: t("analytics.details"),
+                                href: `/mobile/analytics/daily/${activeSummary?.id}`,
+                            },
+                            {
+                                icon: History,
+                                label: t("analytics.activity"),
+                                href: `/mobile/analytics/daily/${activeSummary?.id}/events`,
+                            },
+                            {
+                                icon: Users,
+                                label: t("analytics.sessions"),
+                                href: `/mobile/analytics/daily/${activeSummary?.id}/sessions?storeId=${selectedStoreId}&date=${activeSummary?.date}`,
+                            },
+                        ].map((item, index, arr) => {
+                            const Icon = item.icon;
+                            const isLast = index === arr.length - 1;
+                            return (
+                                <button
+                                    key={item.label}
+                                    onClick={() => {
+                                        if (!activeSummary) return;
+                                        setActiveSummary(null);
+                                        navigation.push(url(item.href));
+                                    }}
+                                    className={`w-full flex items-center gap-3 py-5 transition-colors ${
+                                        !isLast ? "border-b" : ""
+                                    }`}
+                                >
+                                    <Icon
+                                        size={20}
+                                        strokeWidth={2}
+                                        className="text-gray-900"
+                                    />
+                                    <span className="text-lg text-gray-900">
+                                        {item.label}
+                                    </span>
+                                </button>
+                            );
+                        })}
                     </Drawer.Content>
                 </Drawer.Portal>
             </Drawer.Root>

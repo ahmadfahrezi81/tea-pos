@@ -1,6 +1,9 @@
 import useSWR from "swr";
 import { activityLogsApi } from "@/lib/api/activity-logs";
-import type { TimelineEventResponse, DayActivityResponse } from "@tea-pos/features/activity-logs/schema";
+import type {
+    TimelineEventResponse,
+    DayActivityResponse,
+} from "@tea-pos/features/activity-logs/schema";
 
 export function useStoreActivityLogs(storeId?: string, date?: string) {
     const { data = [], ...rest } = useSWR<TimelineEventResponse[]>(
@@ -17,11 +20,18 @@ export function useDayActivity(summaryId?: string) {
         () => activityLogsApi.dayActivity({ summaryId: summaryId! }),
         { revalidateOnFocus: false, dedupingInterval: 60_000 },
     );
-    return { summary: data?.summary ?? null, segments: data?.segments ?? [], ...rest };
+    return {
+        summary: data?.summary ?? null,
+        segments: data?.segments ?? [],
+        ...rest,
+    };
 }
 
 export function useDayActivityBigEvents(summaryId?: string) {
     const { segments, ...rest } = useDayActivity(summaryId);
-    const bigEvents = segments.filter((s) => s.type !== "order_created");
+    const bigEvents = segments.filter(
+        (s) =>
+            s.type !== "order_created" && s.type !== "summary_photo_uploaded",
+    );
     return { segments: bigEvents, ...rest };
 }

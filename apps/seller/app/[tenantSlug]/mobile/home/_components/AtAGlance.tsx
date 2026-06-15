@@ -95,11 +95,7 @@ export function AtAGlance({ events: passedEvents, summaryId }: AtAGlanceProps) {
     const { selectedStore } = useStore();
     const { segments: fetchedEvents } = useDayActivityBigEvents(summaryId);
 
-    // Use passed events or fetch them
-    const events = useMemo(() => {
-        const sourceEvents = passedEvents ?? fetchedEvents;
-        return sourceEvents.filter((e) => e.type !== "order_created");
-    }, [passedEvents, fetchedEvents]);
+    const events = passedEvents ?? fetchedEvents;
 
     const openTime = selectedStore?.openTime ?? "10:00";
     const closeTime = selectedStore?.closeTime ?? "22:00";

@@ -21,15 +21,13 @@ export default function HomeLayout({
     const isHomeRoot = isPos || isManage;
 
     const { selectedStoreId, selectedStore } = useStore();
-    const { gate, session, transferSession, isLoading: gateLoading } = useSession(selectedStoreId);
+    const { gate, session, summaryId, transferSession, isLoading: gateLoading } = useSession(selectedStoreId);
     const { user } = useAuth();
 
     const todayStr = useMemo(() => {
         const tz = parseInt(process.env.NEXT_PUBLIC_TIMEZONE_OFFSET ?? "7", 10);
         return new Date(Date.now() + tz * 3600 * 1000).toISOString().slice(0, 10);
     }, []);
-
-    const { events } = useStoreActivityLogs(selectedStoreId || undefined, todayStr);
 
     const isPosInUse = isHomeRoot && gate === "open" && session?.userId !== user?.id;
     const showGate =
@@ -41,7 +39,7 @@ export default function HomeLayout({
     if (showGate) {
         return (
             <div className="flex flex-col h-full gap-4">
-                <AtAGlance events={events} />
+                <AtAGlance summaryId={summaryId ?? undefined} />
                 <div className="flex-1 min-h-0">
                     <StoreGate
                         gate={gate}
@@ -58,7 +56,7 @@ export default function HomeLayout({
     return (
         <div className="min-h-full flex flex-col gap-4">
             {isHomeRoot && (
-                <AtAGlance events={events} />
+                <AtAGlance summaryId={summaryId ?? undefined} />
             )}
             <div
                 key={pathname}

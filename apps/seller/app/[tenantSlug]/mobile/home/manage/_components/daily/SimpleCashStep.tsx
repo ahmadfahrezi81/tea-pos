@@ -149,6 +149,7 @@ import { useState, useEffect } from "react";
 import { Check } from "lucide-react";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
+import { useT } from "@/lib/hooks/useT";
 
 interface SimpleCashStepProps {
     expectedCash: number;
@@ -165,6 +166,7 @@ export function SimpleCashStep({
     onActualCashChange,
     onConfirmedChange,
 }: SimpleCashStepProps) {
+    const t = useT();
     const seedValue = initialValue ?? expectedCash;
     const [actualCash, setActualCash] = useState(seedValue);
 
@@ -180,17 +182,17 @@ export function SimpleCashStep({
         <div className="flex flex-col gap-4">
             <div>
                 <h2 className="text-xl font-semibold text-gray-900">
-                    Count the Cash
+                    {t("manage.cashStep.title")}
                 </h2>
                 <p className="text-sm text-gray-500 mt-0.5">
-                    Enter the actual cash amount you counted.
+                    {t("manage.cashStep.description")}
                 </p>
             </div>
 
             <div className="bg-white p-4 flex flex-col gap-8 rounded-2xl">
                 <div className="bg-white rounded-2xl flex flex-col gap-2">
                     <p className="text-xs font-semibold text-gray-900 uppercase tracking-wide">
-                        Actual Cash
+                        {t("manage.cashStep.actualCash")}
                     </p>
                     <NumberInput
                         value={seedValue}
@@ -201,13 +203,13 @@ export function SimpleCashStep({
                         }}
                     />
                     <p className="text-sm text-gray-600">
-                        Expected: {formatRupiah(expectedCash)}
+                        {t("manage.cashStep.expected")} {formatRupiah(expectedCash)}
                     </p>
                 </div>
 
                 <div className="flex flex-col gap-2">
                     <p className="text-xs font-semibold text-gray-900 uppercase tracking-wide">
-                        Variance
+                        {t("manage.cashStep.variance")}
                     </p>
                     <div
                         className={`p-4 rounded-2xl ${
@@ -233,10 +235,10 @@ export function SimpleCashStep({
                     </div>
                     <p className="text-sm text-gray-600">
                         {isExact
-                            ? "Cash matches perfectly"
+                            ? t("manage.cashStep.matchesPerfectly")
                             : isOver
-                              ? `Over by ${formatRupiah(Math.abs(variance))}`
-                              : `Short by ${formatRupiah(Math.abs(variance))}`}
+                              ? `${t("manage.cashStep.overBy")} ${formatRupiah(Math.abs(variance))}`
+                              : `${t("manage.cashStep.shortBy")} ${formatRupiah(Math.abs(variance))}`}
                     </p>
                 </div>
             </div>
@@ -253,7 +255,7 @@ export function SimpleCashStep({
                     {confirmed && <Check size={12} className="text-white" />}
                 </div>
                 <p className="text-sm text-gray-700 font-medium">
-                    I confirm the cash amount is correct.
+                    {t("manage.cashStep.confirmCash")}
                 </p>
             </button>
 

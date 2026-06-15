@@ -2,16 +2,18 @@
 
 import Link from "next/link";
 import { usePathname, useParams } from "next/navigation";
+import { useT } from "@/lib/hooks/useT";
 
 export function PillSwitcher() {
     const pathname = usePathname();
     const { tenantSlug } = useParams<{ tenantSlug: string }>();
+    const t = useT();
 
     const base = `/${tenantSlug}/mobile/home/pos`;
 
     const tabs = [
-        { label: "POS", href: base },
-        { label: "Manage", href: `/${tenantSlug}/mobile/home/manage` },
+        { label: t("nav.pos"), href: base },
+        { label: t("nav.manage"), href: `/${tenantSlug}/mobile/home/manage` },
     ];
 
     const isActive = (href: string) =>

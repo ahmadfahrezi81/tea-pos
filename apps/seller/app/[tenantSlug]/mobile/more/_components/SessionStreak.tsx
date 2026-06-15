@@ -37,12 +37,13 @@ export default function SessionStreak() {
     const t = useT();
 
     useEffect(() => {
+        if (isLoading) return;
         requestAnimationFrame(() => {
             if (scrollRef.current) {
                 scrollRef.current.scrollTo({ left: scrollRef.current.scrollWidth, behavior: "auto" });
             }
         });
-    }, []);
+    }, [isLoading]);
 
     if (isLoading) {
         return (
