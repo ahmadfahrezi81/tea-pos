@@ -193,6 +193,11 @@ export default function ManageCloseDayPage() {
     const handleNext = useCallback(async () => {
         setError(null);
 
+        // Refresh summary before moving to review step to ensure expectedCash is fresh
+        if (currentStep === STEP_CASH && summaryId) {
+            await mutate();
+        }
+
         if (currentStep < PHOTO_STEP_COUNT && summaryId && selectedStoreId) {
             const slot = photoSlots[currentStep];
             const localPhoto = getSlotPhoto(slot.type);
@@ -243,16 +248,8 @@ export default function ManageCloseDayPage() {
         }
 
         if (currentStep === STEP_CASH && summaryId) {
-            setIsUploading(true);
-            try {
-                await updateSummary(summaryId, { actualCash, closingCashBreakdown: null });
-                await mutatePhotos();
-            } catch (err) {
-                setError(err instanceof Error ? err.message : "Failed to save cash");
-                setIsUploading(false);
-                return;
-            }
-            setIsUploading(false);
+            // Don't save actualCash here—only commit it when day is fully closed.
+            // This prevents stale cash counts if user abandons flow and keeps editing.
         }
 
         goToStep(currentStep + 1);
@@ -279,6 +276,8 @@ export default function ManageCloseDayPage() {
         setIsSubmitting(true);
         setError(null);
         try {
+            // Refresh summary one more time before final submission to ensure expectedCash is accurate
+            await mutate();
             await updateSummary(summaryId, {
                 actualCash,
                 closedAt: new Date().toISOString(),
@@ -293,7 +292,7 @@ export default function ManageCloseDayPage() {
         } finally {
             setIsSubmitting(false);
         }
-    }, [summaryId, summary, actualCash, updateSummary, url, STEP_KEY, paramSummaryId]);
+    }, [summaryId, summary, actualCash, updateSummary, url, STEP_KEY, paramSummaryId, mutate, showToast]);
 
     const handleSavedPhotoDelete = useCallback(
         async (id: string) => {

@@ -212,7 +212,26 @@ export function SummaryDetailsCard({
                 )}
             </div>
 
-            {/* ③ Sessions */}
+            {/* ③ Expenses */}
+            {expenses.length > 0 && (
+                <div className="bg-white rounded-2xl p-3 space-y-2">
+                    <h4 className="text-sm font-semibold text-gray-800">{t("daily.expenses")}</h4>
+                    <div className="bg-red-100 p-2 rounded-xl space-y-1">
+                        {expenses.map((expense) => (
+                            <div key={expense.id} className="flex justify-between text-sm">
+                                <span className="text-red-800">{expense.type}</span>
+                                <span className="font-bold text-red-800">-{formatRupiah(expense.amount)}</span>
+                            </div>
+                        ))}
+                        <div className="border-t border-red-300 pt-1 flex justify-between text-sm font-semibold">
+                            <span className="text-red-800">{t("manage.total")}</span>
+                            <span className="text-red-800">-{formatRupiah(summary.totalExpenses)}</span>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ④ Sessions */}
             {sessions.length > 0 && (
                 <div className="bg-white rounded-2xl p-3 space-y-2">
                     <h4 className="text-sm font-semibold text-gray-800">{t("daily.whoWorked")}</h4>
@@ -239,46 +258,7 @@ export function SummaryDetailsCard({
                 </div>
             )}
 
-            {/* ④ Product Breakdown */}
-            <div className="bg-white rounded-2xl p-3 space-y-2">
-                <h4 className="text-sm font-semibold text-gray-800">{t("daily.breakdown")}</h4>
-                {Object.keys(breakdown).length === 0 ? (
-                    <p className="text-sm text-gray-400 text-center py-4">{t("daily.noBreakdown")}</p>
-                ) : (
-                    <div className="grid grid-cols-2 gap-2">
-                        {Object.entries(breakdown)
-                            .sort(([, a], [, b]) => b.quantity - a.quantity)
-                            .map(([productName, data]) => (
-                                <div key={productName} className="bg-slate-100 p-2.5 rounded-xl">
-                                    <p className="font-semibold text-gray-800 text-sm truncate">{productName}</p>
-                                    <p className="font-bold text-gray-800">{data.quantity} {t("analytics.cups")}</p>
-                                    <p className="text-sm text-gray-500">{formatRupiah(data.revenue)}</p>
-                                </div>
-                            ))}
-                    </div>
-                )}
-            </div>
-
-            {/* ⑤ Expenses */}
-            {expenses.length > 0 && (
-                <div className="bg-white rounded-2xl p-3 space-y-2">
-                    <h4 className="text-sm font-semibold text-gray-800">{t("daily.expenses")}</h4>
-                    <div className="bg-red-100 p-2 rounded-xl space-y-1">
-                        {expenses.map((expense) => (
-                            <div key={expense.id} className="flex justify-between text-sm">
-                                <span className="text-red-800">{expense.type}</span>
-                                <span className="font-bold text-red-800">-{formatRupiah(expense.amount)}</span>
-                            </div>
-                        ))}
-                        <div className="border-t border-red-300 pt-1 flex justify-between text-sm font-semibold">
-                            <span className="text-red-800">{t("manage.total")}</span>
-                            <span className="text-red-800">-{formatRupiah(summary.totalExpenses)}</span>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* ⑥ Notes */}
+            {/* ⑤ Notes */}
             {summary.notes && (
                 <div className="bg-white rounded-2xl p-3 space-y-1">
                     <h4 className="text-sm font-semibold text-gray-800">{t("analytics.notes")}</h4>
@@ -286,7 +266,7 @@ export function SummaryDetailsCard({
                 </div>
             )}
 
-            {/* ⑦ Photos */}
+            {/* ⑥ Photos */}
             {hasPhotos && (
                 <div className="bg-white rounded-2xl p-3 space-y-4">
                     <h4 className="text-sm font-semibold text-gray-800">{t("daily.photos")}</h4>
@@ -338,6 +318,26 @@ export function SummaryDetailsCard({
                     )}
                 </div>
             )}
+
+            {/* ⑦ Product Breakdown */}
+            <div className="bg-white rounded-2xl p-3 space-y-2">
+                <h4 className="text-sm font-semibold text-gray-800">{t("daily.breakdown")}</h4>
+                {Object.keys(breakdown).length === 0 ? (
+                    <p className="text-sm text-gray-400 text-center py-4">{t("daily.noBreakdown")}</p>
+                ) : (
+                    <div className="grid grid-cols-2 gap-2">
+                        {Object.entries(breakdown)
+                            .sort(([, a], [, b]) => b.quantity - a.quantity)
+                            .map(([productName, data]) => (
+                                <div key={productName} className="bg-slate-100 p-2.5 rounded-xl">
+                                    <p className="font-semibold text-gray-800 text-sm truncate">{productName}</p>
+                                    <p className="font-bold text-gray-800">{data.quantity} {t("analytics.cups")}</p>
+                                    <p className="text-sm text-gray-500">{formatRupiah(data.revenue)}</p>
+                                </div>
+                            ))}
+                    </div>
+                )}
+            </div>
 
             {/* Confirmation (optional) */}
             {showConfirmation && (

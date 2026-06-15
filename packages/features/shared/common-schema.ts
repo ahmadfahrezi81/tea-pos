@@ -1,9 +1,23 @@
 // lib/schemas/common.ts
 import { z } from "zod";
-import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 
-// Extend Zod with OpenAPI support (only needs to be done once)
-extendZodWithOpenApi(z);
+// Try to load the OpenAPI extension; if it fails, use a polyfill
+let isOpenApiAvailable = false;
+
+try {
+  // eslint-disable-next-line global-require
+  const { extendZodWithOpenApi } = require("@asteasolutions/zod-to-openapi");
+  extendZodWithOpenApi(z);
+  isOpenApiAvailable = true;
+} catch (e) {
+  // Package not available; add a polyfill
+  const ZodType = Object.getPrototypeOf(z.string());
+  if (!ZodType.openapi) {
+    ZodType.openapi = function (config: any) {
+      return this;
+    };
+  }
+}
 
 // Common reusable schemas
 export const UUIDSchema = z.uuid().openapi({

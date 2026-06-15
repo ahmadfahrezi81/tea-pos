@@ -356,7 +356,7 @@ export const id: DeepPartial<typeof en> = {
         newLocationFeedback: "Feedback Lokasi Baru",
         account: "Akun",
         personalDetails: "Data Pribadi",
-        editPersonalDetails: "Sunting Data Pribadi",
+        editPersonalDetails: "Ubah Data Pribadi",
         notifications: "Notifikasi",
         weatherForecast: "Prakiraan Cuaca",
         daySummaryDetails: "Detail Ringkasan Hari",
@@ -371,6 +371,6 @@ export const id: DeepPartial<typeof en> = {
         myClaims: "Klaim Saya",
         newClaim: "Klaim Baru",
         payrollInfo: "Info Penggajian",
-        editPayrollInfo: "Sunting Info Penggajian",
+        editPayrollInfo: "Ubah Info Penggajian",
     },
 };

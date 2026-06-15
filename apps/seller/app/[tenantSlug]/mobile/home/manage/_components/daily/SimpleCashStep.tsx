@@ -172,7 +172,15 @@ export function SimpleCashStep({
 
     useEffect(() => {
         onActualCashChange(seedValue);
-    }, []);
+    }, [seedValue, onActualCashChange]);
+
+    // Reset to expectedCash if it changes (e.g., orders/expenses added)
+    useEffect(() => {
+        if (initialValue == null) {
+            setActualCash(expectedCash);
+            onActualCashChange(expectedCash);
+        }
+    }, [expectedCash, initialValue, onActualCashChange]);
 
     const variance = actualCash - expectedCash;
     const isExact = variance === 0;
@@ -195,7 +203,7 @@ export function SimpleCashStep({
                         {t("manage.cashStep.actualCash")}
                     </p>
                     <NumberInput
-                        value={seedValue}
+                        value={actualCash}
                         currency
                         onChange={(val) => {
                             setActualCash(val);
