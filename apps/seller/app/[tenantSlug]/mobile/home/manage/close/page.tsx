@@ -12,6 +12,8 @@ import {
     SlottedPhoto,
     SavedSlottedPhoto,
 } from "@tea-pos/features/summaries/photos-schema";
+import type { DailySummaryResponse } from "@tea-pos/features/summaries/schema";
+import type { SummaryPhotoResponse } from "@tea-pos/features/summaries/photos-schema";
 import { DailyStepHeader } from "../_components/daily/DailyStepHeader";
 import { SinglePhotoStep } from "../_components/daily/SinglePhotoStep";
 import { PHOTO_SLOTS } from "@tea-pos/features/shared/photo-slots";
@@ -96,8 +98,8 @@ export default function ManageCloseDayPage() {
     const summary = useMemo(
         () =>
             paramSummaryId
-                ? summariesData?.summaries.find((s) => s.id === paramSummaryId)
-                : summariesData?.summaries.find((s) => s.date === todayStr && !s.closedAt),
+                ? summariesData?.summaries.find((s: DailySummaryResponse) => s.id === paramSummaryId)
+                : summariesData?.summaries.find((s: DailySummaryResponse) => s.date === todayStr && !s.closedAt),
         [summariesData?.summaries, paramSummaryId, todayStr],
     );
     const summaryId = summary?.id ?? null;
@@ -110,8 +112,8 @@ export default function ManageCloseDayPage() {
     const savedPhotos: SavedSlottedPhoto[] = useMemo(
         () =>
             fetchedPhotos
-                .filter((p) => p.type.startsWith("closing:") || p.type === "opening")
-                .map((p) => ({
+                .filter((p: SummaryPhotoResponse) => p.type.startsWith("closing:") || p.type === "opening")
+                .map((p: SummaryPhotoResponse) => ({
                     id: p.id,
                     type: p.type as PhotoType,
                     url: p.url,

@@ -187,14 +187,14 @@ export default function FeedbackHistory() {
     const feedbacks = useMemo(() => data?.feedbacks ?? [], [data]);
 
     const allUsers = useMemo(() => {
-        const names = feedbacks.map((fb) => fb.userName ?? "Unknown");
+        const names = feedbacks.map((fb: CustomerFeedbackResponse) => fb.userName ?? "Unknown");
         return Array.from(new Set(names)).sort();
     }, [feedbacks]);
 
     const filtered = useMemo(() => {
         const cutoff = getDateRangeCutoff(dateRange);
         const q = query.trim().toLowerCase();
-        return feedbacks.filter((fb) => {
+        return feedbacks.filter((fb: CustomerFeedbackResponse) => {
             if (cutoff) {
                 const fbDate = new Date(fb.createdAt.replace(/\+\d{2}:\d{2}$/, "Z"));
                 if (fbDate < cutoff) return false;

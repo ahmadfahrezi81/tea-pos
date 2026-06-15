@@ -1,6 +1,7 @@
 "use client";
 import { useMemo } from "react";
 import useProductSales from "@/lib/hooks/analytics/useProductSales";
+import type { ProductSalesDataPoint } from "@tea-pos/features/analytics/schema";
 import { Package } from "lucide-react";
 
 const generateColor = (index: number, total: number) => {
@@ -27,7 +28,7 @@ export default function ProductSalesChart({ storeId, month }: Props) {
 
     const productChartData = useMemo(
         () =>
-            productSales.map((item, index) => ({
+            productSales.map((item: ProductSalesDataPoint, index: number) => ({
                 ...item,
                 fill: generateColor(index, productSales.length),
             })),
@@ -60,7 +61,7 @@ export default function ProductSalesChart({ storeId, month }: Props) {
                 </p>
             </div>
             <div className="space-y-4 mb-4">
-                {productChartData.map((product) => (
+                {productChartData.map((product: any) => (
                     <div key={product.productId} className="space-y-1.5">
                         <div className="flex items-center justify-between text-sm">
                             <span className="font-medium text-gray-800">

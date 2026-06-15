@@ -9,6 +9,7 @@ import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
 import { FormFooter } from "@/components/shared/FormFooter";
 import { getTodayLocalStr, getCurrentLocalMonth } from "@tea-pos/utils/time";
 import { useT } from "@/lib/hooks/useT";
+import type { DailySummaryResponse } from "@tea-pos/features/summaries/schema";
 
 const EXPENSE_OPTIONS = [
     { value: "Ice", label: "Ice" },
@@ -27,7 +28,7 @@ export default function AddExpensePage() {
     const { data: summariesData, isLoading, createExpenses } = useSummaries(selectedStoreId, currentMonth);
 
     const todaySummary = useMemo(
-        () => summariesData?.summaries.find((s) => s.date === todayStr && !s.closedAt),
+        () => summariesData?.summaries.find((s: DailySummaryResponse) => s.date === todayStr && !s.closedAt),
         [summariesData?.summaries, todayStr],
     );
 

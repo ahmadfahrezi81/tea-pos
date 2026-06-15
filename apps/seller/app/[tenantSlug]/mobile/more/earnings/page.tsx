@@ -28,7 +28,7 @@ export default function EarningsPage() {
     const { payouts, isLoading: payoutsLoading } = usePayouts(user?.id ? { userId: user.id } : undefined);
     const t = useT();
 
-    const payoutByPeriod = payouts.reduce<Record<string, typeof payouts[0]>>((acc, p) => {
+    const payoutByPeriod = payouts.reduce<Record<string, typeof payouts[0]>>((acc: Record<string, typeof payouts[0]>, p: typeof payouts[0]) => {
         acc[p.payrollPeriodId] = p;
         return acc;
     }, {});

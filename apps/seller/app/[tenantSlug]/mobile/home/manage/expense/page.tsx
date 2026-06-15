@@ -7,6 +7,7 @@ import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 import { Receipt } from "lucide-react";
 import { getTodayLocalStr, getCurrentLocalMonth } from "@tea-pos/utils/time";
 import { useT } from "@/lib/hooks/useT";
+import type { DailySummaryResponse } from "@tea-pos/features/summaries/schema";
 
 export default function ExpensePage() {
     const { selectedStoreId } = useStore();
@@ -17,7 +18,7 @@ export default function ExpensePage() {
     const { data: summariesData, isLoading } = useSummaries(selectedStoreId, currentMonth);
 
     const todaySummary = useMemo(
-        () => summariesData?.summaries.find((s) => s.date === todayStr && !s.closedAt),
+        () => summariesData?.summaries.find((s: DailySummaryResponse) => s.date === todayStr && !s.closedAt),
         [summariesData?.summaries, todayStr],
     );
 
@@ -40,7 +41,7 @@ export default function ExpensePage() {
         </div>
     ) : (
         <div className="divide-y divide-gray-100">
-            {existingExpenses.map((e) => (
+            {existingExpenses.map((e: any) => (
                 <div key={e.id} className="flex justify-between px-4 py-3">
                     <span className="text-base text-gray-700">{e.type}</span>
                     <span className="text-base font-medium text-gray-900">{formatRupiah(e.amount)}</span>

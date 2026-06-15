@@ -20,6 +20,7 @@ import {
     Users,
     X,
 } from "lucide-react";
+import type { DailySummaryResponse } from "@tea-pos/features/summaries/schema";
 import { SkeletonValue } from "@/components/shared/SkeletonValue";
 import { useStore } from "@/lib/context/StoreContext";
 import {
@@ -65,7 +66,7 @@ export default function MobileAnalytics() {
     } = useSummaries(selectedStoreId, selectedMonth);
 
     const unclosedSummaries = useMemo(
-        () => summariesData?.summaries.filter((s) => !s.closedAt) ?? [],
+        () => summariesData?.summaries.filter((s: DailySummaryResponse) => !s.closedAt) ?? [],
         [summariesData?.summaries],
     );
 
@@ -236,7 +237,7 @@ export default function MobileAnalytics() {
                             </p>
                         </div>
                     ) : (
-                        summariesData.summaries.map((summary) => {
+                        summariesData.summaries.map((summary: DailySummaryResponse) => {
                             const dailyExpenses = getExpensesForDate(
                                 summariesData,
                                 summary.date,
@@ -376,7 +377,7 @@ export default function MobileAnalytics() {
                                                 <div className="flex flex-wrap gap-1.5">
                                                     {(
                                                         summary.sessions ?? []
-                                                    ).map((s) => (
+                                                    ).map((s: any) => (
                                                         <div
                                                             key={s.userId}
                                                             className="flex items-center gap-2 bg-slate-100 rounded-xl p-1.5 pr-3.5 w-full"

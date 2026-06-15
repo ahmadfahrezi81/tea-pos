@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { ChartConfig, ChartContainer } from "@tea-pos/ui/components/chart";
 import { useBrandColor } from "@/lib/hooks/useBrandColor";
+import type { DayOfWeekSalesDataPoint } from "@tea-pos/features/analytics/schema";
 
 interface Props {
     storeId: string;
@@ -52,7 +53,7 @@ export default function DayOfWeekChart({ storeId, month }: Props) {
     const dayOfWeekChartData = useMemo(
         () =>
             (dayOfWeekData?.data ?? []).sort(
-                (a, b) =>
+                (a: DayOfWeekSalesDataPoint, b: DayOfWeekSalesDataPoint) =>
                     dayOrder.indexOf(a.dayOfWeek) -
                     dayOrder.indexOf(b.dayOfWeek),
             ),
@@ -61,7 +62,8 @@ export default function DayOfWeekChart({ storeId, month }: Props) {
 
     const bestDay = useMemo(() => {
         return dayOfWeekChartData.reduce(
-            (max, day) => (day.averageCups > max.averageCups ? day : max),
+            (max: DayOfWeekSalesDataPoint, day: DayOfWeekSalesDataPoint) =>
+                day.averageCups > max.averageCups ? day : max,
             dayOfWeekChartData[0],
         );
     }, [dayOfWeekChartData]);
@@ -155,7 +157,7 @@ export default function DayOfWeekChart({ storeId, month }: Props) {
                             fontSize={12}
                             formatter={(val: number) => Math.round(val)}
                         />
-                        {dayOfWeekChartData.map((entry) => (
+                        {dayOfWeekChartData.map((entry: DayOfWeekSalesDataPoint) => (
                             <Cell
                                 key={entry.dayOfWeek}
                                 fill={

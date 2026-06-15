@@ -181,7 +181,7 @@ export const SetExpenseModal = ({
                                             Current Expenses
                                         </h3>
                                         <div className="bg-gray-50 rounded-lg p-3 space-y-2">
-                                            {summary.expenses.map((expense) => (
+                                            {summary.expenses.map((expense: Expense) => (
                                                 <div
                                                     key={expense.id}
                                                     className="flex justify-between items-center"

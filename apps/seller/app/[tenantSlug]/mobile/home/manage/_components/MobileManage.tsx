@@ -8,6 +8,7 @@ import { useSession } from "@/lib/hooks/sessions/useSession";
 import { useAuth } from "@/lib/context/AuthContext";
 import useWeather from "@/lib/hooks/weather/useWeather";
 import { getWeatherMeta, isNightHour } from "@tea-pos/utils/weatherCode";
+import type { WeatherHourlyRow } from "@tea-pos/features/weather/schema";
 import { getCurrentLocalHour } from "@tea-pos/utils/time";
 import { WeatherDrawer } from "../../pos/_components/WeatherDrawer";
 import {
@@ -41,7 +42,7 @@ export default function MobileManage() {
     const WeatherIcon = useMemo(() => {
         if (!weatherData?.hourly) return null;
         const current =
-            weatherData.hourly.find((h) => h.hour === currentLocalHour) ??
+            weatherData.hourly.find((h: WeatherHourlyRow) => h.hour === currentLocalHour) ??
             weatherData.hourly[0];
         return getWeatherMeta(
             current.weatherCode,
