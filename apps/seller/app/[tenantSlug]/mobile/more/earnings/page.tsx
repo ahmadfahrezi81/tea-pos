@@ -58,6 +58,13 @@ export default function EarningsPage() {
         }, {});
     }, [commissions]);
 
+    const grossPayByPeriod = useMemo(() => {
+        return commissions.reduce<Record<string, number>>((acc, c) => {
+            acc[c.payrollPeriodId] = (acc[c.payrollPeriodId] ?? 0) + c.grossPay;
+            return acc;
+        }, {});
+    }, [commissions]);
+
     const periodsInMonth = useMemo(
         () => (periods as PayrollPeriodResponse[]).filter((p) => periodOverlapsMonth(p, month)),
         [periods, month],
@@ -75,6 +82,7 @@ export default function EarningsPage() {
         const status = payout?.status ?? "pending";
         const weekNum = getISOWeek(parseISO(period.startDate));
         const cups = cupsByPeriod[period.id] ?? 0;
+        const grossPay = grossPayByPeriod[period.id] ?? 0;
 
         return (
             <button
@@ -103,12 +111,10 @@ export default function EarningsPage() {
                                 </span>
                             )}
                         </p>
-                    ) : cups > 0 ? (
-                        <p className="text-sm text-gray-400">
-                            {cups} {t("earnings.cups")} · {t("earnings.tapToView")}
-                        </p>
                     ) : (
-                        <p className="text-sm text-gray-400">{t("earnings.tapToView")}</p>
+                        <p className="text-sm text-gray-400">
+                            {cups} {t("earnings.cups")} · Rp {grossPay.toLocaleString("id-ID")}
+                        </p>
                     )}
                 </div>
                 <ChevronRight size={18} className="text-gray-400 shrink-0" />

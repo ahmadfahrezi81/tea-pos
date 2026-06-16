@@ -35,6 +35,7 @@ export function PayCalendar({
     isLoading: boolean;
 }) {
     const { url } = useTenantSlug();
+    const todayKey = toDateKey(new Date());
 
     const weeks = useMemo(() => {
         const gridStart = startOfWeek(startOfMonth(month), { weekStartsOn: 1 });
@@ -99,6 +100,7 @@ export function PayCalendar({
                             const dateKey = toDateKey(day);
                             const worked = workedDates.has(dateKey);
                             const inMonth = isSameMonth(day, month);
+                            const isUpcoming = dateKey > todayKey;
 
                             return (
                                 <button
@@ -108,6 +110,8 @@ export function PayCalendar({
                                     className={`w-7 h-7 mx-auto flex items-center justify-center rounded-md text-xs ${
                                         worked
                                             ? "bg-brand text-white font-semibold"
+                                            : isUpcoming
+                                            ? "border border-dashed border-gray-300 text-gray-300"
                                             : inMonth
                                             ? "bg-gray-100 text-gray-700"
                                             : "text-gray-300"

@@ -387,7 +387,7 @@ export async function getPayslip(
             .single(),
         supabase
             .from("payroll_commissions")
-            .select("*")
+            .select("*, stores(name)")
             .eq("tenant_id", tenantId)
             .eq("payroll_period_id", periodId)
             .eq("user_id", userId)
@@ -412,7 +412,13 @@ export async function getPayslip(
         throw Object.assign(new Error("Period not found"), { status: 404 });
     }
 
-    const commissions = toCamelKeys(commissionsResult.data ?? []) as Record<string, unknown>[];
+    // Flatten joined store name into each commission row
+    const commissionsFlat = (commissionsResult.data ?? []).map((c) => {
+        const row = c as Record<string, unknown>;
+        const store = row.stores as { name: string } | null;
+        return { ...row, store_name: store?.name ?? null, stores: undefined };
+    });
+    const commissions = toCamelKeys(commissionsFlat) as Record<string, unknown>[];
 
     // Flatten joined claim type name into each claim row
     const claimsFlat = (claimsResult.data ?? []).map((c) => {

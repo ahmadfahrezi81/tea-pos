@@ -271,6 +271,9 @@ export const id: DeepPartial<typeof en> = {
         payConfig: "Konfigurasi Gaji",
         noRateConfigured: "Belum ada tarif yang diatur.",
         perCup: "per gelas",
+        periodLabel: "Periode",
+        forLabel: "Untuk",
+        payslipId: "ID Slip Gaji",
     },
     account: {
         personalDetails: "Data Pribadi",

@@ -268,6 +268,9 @@ export const en = {
         payConfig: "Pay Config",
         noRateConfigured: "No rate configured yet.",
         perCup: "per cup",
+        periodLabel: "Period",
+        forLabel: "For",
+        payslipId: "Payslip ID",
     },
     account: {
         personalDetails: "Personal Details",
