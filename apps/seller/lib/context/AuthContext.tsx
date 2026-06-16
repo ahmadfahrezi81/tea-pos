@@ -20,6 +20,7 @@ interface AuthContextType {
     avatarUrl: string | null;
     isLoading: boolean;
     mutate: () => Promise<User | null | undefined>;
+    signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -77,8 +78,12 @@ export function AuthProvider({
         },
     );
 
+    const signOut = async () => {
+        await fetch("/api/auth/signout", { method: "POST", credentials: "include" });
+    };
+
     return (
-        <AuthContext.Provider value={{ user, avatarUrl, isLoading, mutate }}>
+        <AuthContext.Provider value={{ user, avatarUrl, isLoading, mutate, signOut }}>
             {children}
         </AuthContext.Provider>
     );

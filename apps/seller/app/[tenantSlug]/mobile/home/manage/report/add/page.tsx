@@ -6,7 +6,7 @@ import { useStore } from "@/lib/context/StoreContext";
 import { getTodayLocalStr } from "@tea-pos/utils/time";
 import { useSession } from "@/lib/hooks/sessions/useSession";
 import { useIncidentReports } from "@/lib/hooks/reports/useIncidentReports";
-import { apiFetch } from "@/lib/api/client";
+import { useUpload } from "@/lib/hooks/upload/useUpload";
 import {
     INCIDENT_CATEGORIES,
     INCIDENT_CATEGORY_LABELS,
@@ -27,6 +27,7 @@ export default function AddReportPage() {
     const { selectedStoreId } = useStore();
     const { summaryId } = useSession(selectedStoreId);
     const { create } = useIncidentReports(selectedStoreId);
+    const { upload } = useUpload();
     const t = useT();
 
     const todayStr = useMemo(() => getTodayLocalStr(), []);
@@ -49,15 +50,7 @@ export default function AddReportPage() {
         try {
             let photoUrl: string | undefined;
             if (photoFile) {
-                const form = new FormData();
-                form.append("file", photoFile);
-                form.append("bucket", "store-reports");
-                form.append("subPath", `${selectedStoreId}/${todayStr}`);
-                const { url: uploadUrl } = await apiFetch<{ url: string }>(
-                    "/api/upload",
-                    { method: "POST", body: form },
-                );
-                photoUrl = uploadUrl;
+                photoUrl = await upload(photoFile, "store-reports", `${selectedStoreId}/${todayStr}`);
             }
             await create({
                 type: resolvedType,

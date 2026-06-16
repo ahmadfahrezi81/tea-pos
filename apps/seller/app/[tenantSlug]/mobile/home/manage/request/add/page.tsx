@@ -6,7 +6,7 @@ import { useStore } from "@/lib/context/StoreContext";
 import { getTodayLocalStr } from "@tea-pos/utils/time";
 import { useSession } from "@/lib/hooks/sessions/useSession";
 import { useSupplyRequests } from "@/lib/hooks/requests/useSupplyRequests";
-import { apiFetch } from "@/lib/api/client";
+import { useUpload } from "@/lib/hooks/upload/useUpload";
 import { SUPPLY_REQUEST_TYPES, SUPPLY_REQUEST_TYPE_LABELS } from "@tea-pos/features/requests/schema";
 import { SelectInput } from "../../_components/shared/SelectInput";
 import { Textarea } from "../../_components/shared/Textarea";
@@ -24,6 +24,7 @@ export default function AddRequestPage() {
     const { selectedStoreId } = useStore();
     const { summaryId } = useSession(selectedStoreId);
     const { create } = useSupplyRequests(selectedStoreId);
+    const { upload } = useUpload();
     const t = useT();
 
     const todayStr = useMemo(() => getTodayLocalStr(), []);
@@ -43,15 +44,7 @@ export default function AddRequestPage() {
         try {
             let photoUrl: string | undefined;
             if (photoFile) {
-                const form = new FormData();
-                form.append("file", photoFile);
-                form.append("bucket", "store-requests");
-                form.append("subPath", `${selectedStoreId}/${todayStr}`);
-                const { url: uploadUrl } = await apiFetch<{ url: string }>("/api/upload", {
-                    method: "POST",
-                    body: form,
-                });
-                photoUrl = uploadUrl;
+                photoUrl = await upload(photoFile, "store-requests", `${selectedStoreId}/${todayStr}`);
             }
             await create({
                 type: selectedType,

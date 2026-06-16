@@ -3,10 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCurrentUser } from "@/lib/hooks/user/useCurrentUser";
-import { usersApi } from "@/lib/api/users";
 import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
 import { TextInput } from "@tea-pos/ui/custom/TextInput";
-import type { User } from "@tea-pos/features/users/schema";
+import type { User, UpdateUserInput } from "@tea-pos/features/users/schema";
 import { useT } from "@/lib/hooks/useT";
 
 function stripPhonePrefix(phone: string | null): number {
@@ -22,7 +21,7 @@ function splitFullName(fullName: string) {
     return { firstName: parts[0] ?? "", lastName: parts.slice(1).join(" ") };
 }
 
-function EditForm({ user, mutate }: { user: User; mutate: () => void }) {
+function EditForm({ user, update }: { user: User; update: (input: UpdateUserInput) => Promise<User> }) {
     const router = useRouter();
     const t = useT();
     const { firstName: initFirst, lastName: initLast } = splitFullName(user.fullName);
@@ -38,11 +37,10 @@ function EditForm({ user, mutate }: { user: User; mutate: () => void }) {
         setError(null);
         try {
             const fullName = [firstName.trim(), lastName.trim()].filter(Boolean).join(" ");
-            await usersApi.update({
+            await update({
                 fullName: fullName || undefined,
                 phoneNumber: phoneDigits ? `+62${phoneDigits}` : null,
             });
-            mutate();
             router.back();
         } catch (err) {
             setError(err instanceof Error ? err.message : t("account.failedToSave"));
@@ -87,7 +85,7 @@ function EditForm({ user, mutate }: { user: User; mutate: () => void }) {
 }
 
 export default function EditPersonalDetailsPage() {
-    const { user, isLoading, mutate } = useCurrentUser();
+    const { user, isLoading, update } = useCurrentUser();
 
     if (isLoading) {
         return (
@@ -99,5 +97,5 @@ export default function EditPersonalDetailsPage() {
 
     if (!user) return null;
 
-    return <EditForm key={user.id} user={user} mutate={mutate} />;
+    return <EditForm key={user.id} user={user} update={update} />;
 }

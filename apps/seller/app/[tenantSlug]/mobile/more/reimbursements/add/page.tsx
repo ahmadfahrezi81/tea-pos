@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/context/AuthContext";
 import { useT } from "@/lib/hooks/useT";
 import { usePayrollClaims, useClaimableTypes, useClaimableDates } from "@/lib/hooks/payroll-claims/usePayrollClaims";
 import { useCurrentPayrollPeriod } from "@/lib/hooks/payroll/usePayroll";
-import { apiFetch } from "@/lib/api/client";
+import { useUpload } from "@/lib/hooks/upload/useUpload";
 import { SelectInput } from "../../../home/manage/_components/shared/SelectInput";
 import { Textarea } from "../../../home/manage/_components/shared/Textarea";
 import { PhotoPicker } from "../../../home/manage/_components/shared/PhotoPicker";
@@ -23,6 +23,7 @@ export default function AddClaimPage() {
     const { user } = useAuth();
     const t = useT();
     const { create } = usePayrollClaims();
+    const { upload } = useUpload();
     const { period: currentPeriod, isLoading: periodLoading } = useCurrentPayrollPeriod();
 
     const { types, isLoading: typesLoading } = useClaimableTypes(
@@ -62,15 +63,7 @@ export default function AddClaimPage() {
         try {
             let photoUrl: string | undefined;
             if (photoFile) {
-                const form = new FormData();
-                form.append("file", photoFile);
-                form.append("bucket", "reimbursements");
-                form.append("subPath", `${user.id}/${effectiveDate}`);
-                const { url: uploadUrl } = await apiFetch<{ url: string }>("/api/upload", {
-                    method: "POST",
-                    body: form,
-                });
-                photoUrl = uploadUrl;
+                photoUrl = await upload(photoFile, "reimbursements", `${user.id}/${effectiveDate}`);
             }
             await create({ claimTypeId: selectedTypeId, amount, date: effectiveDate, notes: notes.trim() || undefined, photoUrl });
             router.back();

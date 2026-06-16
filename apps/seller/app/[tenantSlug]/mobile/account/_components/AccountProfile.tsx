@@ -53,19 +53,16 @@ const SettingsRow = ({
 export default function AccountProfile() {
     const router = useRouter();
     const { url } = useTenantSlug();
-    const { user, avatarUrl } = useAuth();
+    const { user, avatarUrl, signOut } = useAuth();
     const t = useT();
 
     const handleLogout = useCallback(async () => {
         const shouldLogout = window.confirm(t("account.logoutConfirm"));
         if (shouldLogout) {
-            await fetch("/api/auth/signout", {
-                method: "POST",
-                credentials: "include",
-            });
+            await signOut();
             router.push("/login");
         }
-    }, [router]);
+    }, [router, signOut, t]);
 
     if (!user) return null;
 
