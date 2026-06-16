@@ -6,7 +6,6 @@ export * from "./common-schema";
 export * from "../analytics/schema";
 export * from "../customer-feedbacks/schema";
 export * from "../expenses/schema";
-export * from "../notifications/schema";
 export * from "../orders/schema";
 export * from "../orders/order-list-schema";
 export * from "../payments/schema";

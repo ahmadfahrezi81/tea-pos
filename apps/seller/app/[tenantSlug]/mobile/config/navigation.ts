@@ -179,29 +179,7 @@ export const mobileRoutes = {
         isChart: false,
         parent: "/mobile/account/details",
     },
-    "/mobile/notifications": {
-        title: "Notifications",
-        titleKey: "nav.notifications",
-        subPage: true,
-        inlineHeader: false,
-        isChart: false,
-        parent: "/mobile/home/pos",
-    },
-    "/mobile/notifications/*": {
-        title: "Mobile",
-        subPage: true,
-        inlineHeader: false,
-        isChart: false,
-        parent: "/mobile/notifications",
-    },
-    "/mobile/notifications/*/weather": {
-        title: "Weather Forecast",
-        titleKey: "nav.weatherForecast",
-        subPage: true,
-        inlineHeader: false,
-        isChart: false,
-        parent: "/mobile/notifications",
-    },
+
     "/mobile/analytics/daily/open": {
         title: "Open Store",
         titleKey: "nav.openStore",
@@ -342,11 +320,6 @@ export const resolveRoute = (path: string): RouteConfig | null => {
     );
     if (key) return mobileRoutes[key as keyof typeof mobileRoutes];
 
-    if (path.includes("/mobile/notifications/")) {
-        if (path.endsWith("/weather"))
-            return mobileRoutes["/mobile/notifications/*/weather"];
-        return mobileRoutes["/mobile/notifications/*"];
-    }
 
     if (path.includes("/mobile/analytics/daily/")) {
         if (path.endsWith("/events"))

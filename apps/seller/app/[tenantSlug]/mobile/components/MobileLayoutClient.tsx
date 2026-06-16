@@ -105,7 +105,6 @@ export default function MobileLayoutClient({
     useEffect(() => {
         router.prefetch(url("/mobile/home/pos"));
         router.prefetch(url("/mobile/home/manage"));
-        router.prefetch(url("/mobile/notifications"));
         router.prefetch(url("/mobile/account"));
         router.prefetch(url("/mobile/more/stores"));
         router.prefetch(url("/mobile/account/details"));
