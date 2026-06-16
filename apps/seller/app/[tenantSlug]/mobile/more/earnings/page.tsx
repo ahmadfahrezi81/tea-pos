@@ -10,6 +10,7 @@ import { getISOWeek, parseISO, format } from "date-fns";
 import { ChevronRight } from "lucide-react";
 import type { PayrollPeriodResponse, PayoutResponse } from "@tea-pos/features/payroll/schema";
 import { useT } from "@/lib/hooks/useT";
+import { getWeekInfo } from "@tea-pos/utils/week";
 import { SkeletonValue } from "@/components/shared/SkeletonValue";
 import { EarningsViewSwitcher, type EarningsView } from "./_components/EarningsViewSwitcher";
 import { PayConfigCard } from "./_components/PayConfigCard";
@@ -117,7 +118,17 @@ export default function EarningsPage() {
 
     return (
         <div className="space-y-3">
-            <EarningsViewSwitcher view={view} onChange={setView} />
+            <div className="flex items-start justify-between">
+                <div>
+                    <p className="text-xl font-bold text-gray-900 tracking-tight">
+                        {format(new Date(), "MMMM yyyy")}
+                    </p>
+                    <p className="text-base text-gray-600">
+                        {getWeekInfo().label} · {format(new Date(), "EEE d")}
+                    </p>
+                </div>
+                <EarningsViewSwitcher view={view} onChange={setView} />
+            </div>
 
             {view === "config" ? (
                 <PayConfigCard />

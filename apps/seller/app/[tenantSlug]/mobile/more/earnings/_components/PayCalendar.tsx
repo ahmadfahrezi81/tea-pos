@@ -83,7 +83,7 @@ export function PayCalendar({
             <div className="grid grid-cols-8 gap-1">
                 <span />
                 {WEEKDAY_LABELS.map((d) => (
-                    <span key={d} className="text-[10px] font-semibold text-gray-400 text-center">
+                    <span key={d} className="text-xs font-semibold text-gray-700 text-center">
                         {d}
                     </span>
                 ))}
@@ -92,7 +92,7 @@ export function PayCalendar({
             <div className="space-y-1">
                 {weeks.map((row) => (
                     <div key={row[0].toISOString()} className="grid grid-cols-8 gap-1 items-center">
-                        <span className="text-[10px] font-semibold text-gray-500 text-center">
+                        <span className="text-xs font-semibold text-gray-700 text-center">
                             W{getISOWeek(row[0])}
                         </span>
                         {row.map((day) => {

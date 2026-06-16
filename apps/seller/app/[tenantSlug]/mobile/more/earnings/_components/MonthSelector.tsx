@@ -16,14 +16,14 @@ export function MonthSelector({
                 onClick={() => onChange(subMonths(month, 1))}
                 className="p-1.5 rounded-full active:bg-gray-100 text-gray-500"
             >
-                <ChevronLeft size={16} />
+                <ChevronLeft size={24} />
             </button>
-            <p className="text-sm font-semibold text-gray-900">{format(month, "MMMM yyyy")}</p>
+            <p className="text-lg font-semibold text-gray-900">{format(month, "MMMM yyyy")}</p>
             <button
                 onClick={() => onChange(addMonths(month, 1))}
                 className="p-1.5 rounded-full active:bg-gray-100 text-gray-500"
             >
-                <ChevronRight size={16} />
+                <ChevronRight size={24} />
             </button>
         </div>
     );
