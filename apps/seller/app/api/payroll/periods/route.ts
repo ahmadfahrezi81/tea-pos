@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
         const query = ListPayrollPeriodsQuery.safeParse(Object.fromEntries(new URL(request.url).searchParams));
         if (!query.success) return badRequest("Invalid query parameters");
 
-        const periods = await listPayrollPeriods(supabase, { tenantId, status: query.data.status });
+        const periods = await listPayrollPeriods(supabase, { tenantId });
 
         const parsed = PayrollPeriodListResponse.safeParse({ periods });
         if (!parsed.success) return ok({ periods });

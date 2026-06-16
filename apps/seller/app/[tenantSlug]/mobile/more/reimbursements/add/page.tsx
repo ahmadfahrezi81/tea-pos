@@ -51,7 +51,7 @@ export default function AddClaimPage() {
         : getLocalToday();
 
     const typeOptions = types
-        .filter((type: any) => type.claimable)
+        .filter((type: any) => type.claimable && type.claimSource === "manual")
         .map((type: any) => ({ value: type.id, label: type.name }));
 
     const isValid = !!selectedTypeId && amount > 0 && (!isWeekly || claimableDates.includes(effectiveDate));

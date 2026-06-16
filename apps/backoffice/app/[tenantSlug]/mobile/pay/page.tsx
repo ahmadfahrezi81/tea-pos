@@ -3,7 +3,7 @@
 import { usePayrollPeriods, usePayouts } from "@/lib/hooks/payroll/usePayroll";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
-import { ChevronRight, Users, ReceiptText, Tag, Award, UserCog } from "lucide-react";
+import { ChevronRight, Users, Tag, Award, UserCog } from "lucide-react";
 import { getISOWeek, format, startOfISOWeek, endOfISOWeek } from "date-fns";
 
 function MenuRow({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
@@ -26,7 +26,7 @@ export default function PayOverviewPage() {
     const weekStart = format(startOfISOWeek(today), "yyyy-MM-dd");
     const weekEnd = format(endOfISOWeek(today), "yyyy-MM-dd");
     const currentPeriod = periods.find((p) => p.startDate <= weekStart && p.endDate >= weekEnd);
-    const pendingCount = payouts.filter((p) => ["pending", "approved"].includes(p.status)).length;
+    const pendingCount = payouts.filter((p) => p.status === "pending").length;
     const thisWeekPayouts = payouts.filter((p) => p.payrollPeriodId === currentPeriod?.id);
     const thisWeekTotal = thisWeekPayouts.reduce((s, p) => s + p.totalPay, 0);
     const currentWeekNum = getISOWeek(today);
@@ -64,7 +64,6 @@ export default function PayOverviewPage() {
                 <p className="text-xs font-medium text-gray-400 uppercase tracking-wide px-1">Operations</p>
                 <div className="bg-white rounded-xl px-4">
                     <MenuRow icon={<Users size={20} />} label="Staff Pay Periods" onClick={() => navigation.push(url("/mobile/pay/periods"))} />
-                    <MenuRow icon={<ReceiptText size={20} />} label="Claims" onClick={() => navigation.push(url("/mobile/pay/claims"))} />
                     <MenuRow icon={<UserCog size={20} />} label="Staff Payroll Info" onClick={() => navigation.push(url("/mobile/pay/staff"))} />
                 </div>
             </div>

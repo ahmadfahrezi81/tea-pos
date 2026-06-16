@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { toCamelKeys } from "@tea-pos/utils/schemas";
 import { startOfDay, endOfDay, parseISO, subHours, subDays } from "date-fns";
 import { createLogger } from "./activity-logs";
-import { getOrCreatePayrollPeriod } from "./payroll";
+import { getOrCreatePayrollPeriod, assertPayoutNotPaid } from "./payroll";
 
 // ─── Create claim ─────────────────────────────────────────────────────────────
 
@@ -32,9 +32,8 @@ export async function createPayrollClaim(
     // 1. Resolve period from claim.date
     const period = await getOrCreatePayrollPeriod(supabase, { tenantId, date });
 
-    // 2. Check period.status — reject if closed
-    const periodStatus = (period as { status: string }).status;
-    if (periodStatus === "approved" || periodStatus === "paid") {
+    // 2. Reject if the period is already closed
+    if ((period as { closed_at: string | null }).closed_at) {
         throw Object.assign(new Error("This period is closed for new claims"), { status: 422 });
     }
 
@@ -56,8 +55,7 @@ export async function createPayrollClaim(
         .select("id", { count: "exact", head: true })
         .eq("tenant_id", tenantId)
         .eq("user_id", userId)
-        .eq("claim_type_id", claimTypeId)
-        .is("removed_at", null);
+        .eq("claim_type_id", claimTypeId);
 
     if ((eligibleCount ?? 0) === 0) {
         throw Object.assign(new Error("You are not eligible to submit this claim type"), { status: 403 });
@@ -161,6 +159,104 @@ export async function createPayrollClaim(
     return toCamelKeys(data);
 }
 
+// ─── Auto claims (close-day triggered) ────────────────────────────────────────
+
+export interface CreateAutoClaimsForDailySummaryParams {
+    tenantId: string;
+    storeId: string;
+    dailySummaryId: string;
+    date: string;
+    triggeredByUserId: string;
+}
+
+export async function createAutoClaimsForDailySummary(
+    supabase: SupabaseClient,
+    params: CreateAutoClaimsForDailySummaryParams,
+) {
+    const { tenantId, storeId, dailySummaryId, date, triggeredByUserId } = params;
+
+    const { data: sessions, error: sessionsError } = await supabase
+        .from("store_sessions")
+        .select("user_id, started_at, ended_at")
+        .eq("daily_summary_id", dailySummaryId)
+        .eq("tenant_id", tenantId);
+
+    if (sessionsError) throw sessionsError;
+    if (!sessions || sessions.length === 0) return [];
+
+    type SessionRow = { user_id: string; started_at: string; ended_at: string | null };
+    const typedSessions = sessions as SessionRow[];
+    const userIds = [...new Set(typedSessions.map((s) => s.user_id))];
+
+    const period = await getOrCreatePayrollPeriod(supabase, { tenantId, date });
+    const created: unknown[] = [];
+
+    for (const userId of userIds) {
+        const userSessions = typedSessions.filter((s) => s.user_id === userId);
+        const totalHours = userSessions.reduce((sum, s) => {
+            const endedAt = s.ended_at ? new Date(s.ended_at) : new Date();
+            return sum + (endedAt.getTime() - new Date(s.started_at).getTime()) / 3600000;
+        }, 0);
+
+        const { data: eligibilityRows } = await supabase
+            .from("payroll_claim_eligibility")
+            .select("claim_type_id, payroll_claim_types!inner(id, frequency, amount, claim_source, auto_threshold_hours)")
+            .eq("tenant_id", tenantId)
+            .eq("user_id", userId)
+            .eq("payroll_claim_types.claim_source", "auto");
+
+        type AutoType = { id: string; frequency: string; amount: number; claim_source: string; auto_threshold_hours: number | null };
+        const autoTypes = (
+            (eligibilityRows ?? []) as unknown as Array<{ payroll_claim_types: AutoType }>
+        ).map((r) => r.payroll_claim_types);
+
+        for (const type of autoTypes) {
+            if (type.auto_threshold_hours === null) {
+                console.warn(`[payroll] Auto claim type ${type.id} has no auto_threshold_hours configured — skipping`);
+                continue;
+            }
+
+            const status = totalHours >= type.auto_threshold_hours ? "approved" : "rejected";
+
+            const { data, error } = await supabase
+                .from("payroll_claims")
+                .insert({
+                    tenant_id: tenantId,
+                    user_id: userId,
+                    store_id: storeId,
+                    claim_type_id: type.id,
+                    frequency: type.frequency,
+                    payroll_period_id: (period as { id: string }).id,
+                    amount: type.amount,
+                    date,
+                    status,
+                    daily_summary_id: dailySummaryId,
+                    hours_worked: totalHours,
+                })
+                .select()
+                .single();
+
+            if (error) {
+                // Unique violation on (daily_summary_id, user_id, claim_type_id) means this
+                // was already created by a previous attempt — treat as already-done, not an error.
+                if (error.code === "23505") continue;
+                throw error;
+            }
+
+            created.push(toCamelKeys(data));
+
+            const log = createLogger(supabase, { tenantId, userId: triggeredByUserId, storeId });
+            log("claim_submitted", {
+                refId: (data as { id: string }).id,
+                refTable: "payroll_claims",
+                metadata: { claim_type_id: type.id, amount: type.amount, date },
+            });
+        }
+    }
+
+    return created;
+}
+
 // ─── Update claim status ──────────────────────────────────────────────────────
 
 export async function updatePayrollClaimStatus(
@@ -170,8 +266,20 @@ export async function updatePayrollClaimStatus(
         tenantId,
         actorId,
         status,
-    }: { id: string; tenantId: string; actorId: string; status: "approved" | "rejected" },
+    }: { id: string; tenantId: string; actorId: string; status: "pending" | "approved" | "rejected" },
 ) {
+    const { data: claim, error: claimError } = await supabase
+        .from("payroll_claims")
+        .select("payroll_period_id, user_id")
+        .eq("id", id)
+        .eq("tenant_id", tenantId)
+        .single();
+
+    if (claimError || !claim) throw Object.assign(new Error(claimError?.message ?? "Claim not found"), { status: 404 });
+
+    const row = claim as { payroll_period_id: string; user_id: string };
+    await assertPayoutNotPaid(supabase, { tenantId, periodId: row.payroll_period_id, userId: row.user_id });
+
     const { data, error } = await supabase
         .from("payroll_claims")
         .update({ status })
@@ -189,36 +297,6 @@ export async function updatePayrollClaimStatus(
         metadata: { status },
     });
 
-    return toCamelKeys(data);
-}
-
-// ─── Mark claim paid ──────────────────────────────────────────────────────────
-
-export async function markPayrollClaimPaid(
-    supabase: SupabaseClient,
-    {
-        id,
-        tenantId,
-        actorId,
-        paymentProofUrl,
-    }: { id: string; tenantId: string; actorId: string; paymentProofUrl?: string },
-) {
-    const updates: Record<string, unknown> = {
-        status: "paid",
-        paid_at: new Date().toISOString(),
-        paid_by: actorId,
-    };
-    if (paymentProofUrl) updates.payment_proof_url = paymentProofUrl;
-
-    const { data, error } = await supabase
-        .from("payroll_claims")
-        .update(updates)
-        .eq("id", id)
-        .eq("tenant_id", tenantId)
-        .select()
-        .single();
-
-    if (error || !data) throw Object.assign(new Error(error?.message ?? "Claim not found"), { status: 404 });
     return toCamelKeys(data);
 }
 
@@ -339,8 +417,7 @@ export async function getClaimableTypes(
         .from("payroll_claim_eligibility")
         .select("claim_type_id")
         .eq("tenant_id", tenantId)
-        .eq("user_id", userId)
-        .is("removed_at", null);
+        .eq("user_id", userId);
 
     if (!eligibilityRows || eligibilityRows.length === 0) return [];
 
@@ -349,7 +426,7 @@ export async function getClaimableTypes(
     // Fetch the enabled types
     const { data: types } = await supabase
         .from("payroll_claim_types")
-        .select("id, name, frequency, amount")
+        .select("id, name, frequency, amount, claim_source")
         .eq("tenant_id", tenantId)
         .eq("is_enabled", true)
         .in("id", typeIds);
@@ -368,7 +445,9 @@ export async function getClaimableTypes(
     type ClaimRow = { claim_type_id: string; payroll_period_id: string; date: string };
     const claims = (existingClaims ?? []) as ClaimRow[];
 
-    return (types as Array<{ id: string; name: string; frequency: string; amount: number }>).map((type) => {
+    return (
+        types as Array<{ id: string; name: string; frequency: string; amount: number; claim_source: string }>
+    ).map((type) => {
         let claimable = true;
 
         if (type.frequency === "weekly") {
@@ -383,6 +462,13 @@ export async function getClaimableTypes(
             claimable = !claims.some((c) => c.claim_type_id === type.id);
         }
 
-        return { id: type.id, name: type.name, frequency: type.frequency, amount: type.amount ?? 0, claimable };
+        return {
+            id: type.id,
+            name: type.name,
+            frequency: type.frequency,
+            amount: type.amount ?? 0,
+            claimSource: type.claim_source,
+            claimable,
+        };
     });
 }

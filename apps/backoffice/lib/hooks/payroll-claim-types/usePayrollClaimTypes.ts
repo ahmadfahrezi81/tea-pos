@@ -63,7 +63,7 @@ export function useUserClaimEligibility(userId: string | undefined) {
     const { data, error, mutate, isLoading } = useSWR(
         userId ? `user-claim-eligibility-${userId}` : null,
         async () => {
-            const raw = await apiFetch<{ eligibility: Array<{ claimTypeId: string; removedAt: string | null }> }>(
+            const raw = await apiFetch<{ eligibility: Array<{ claimTypeId: string }> }>(
                 `/api/payroll/claim-types/eligibility?userId=${encodeURIComponent(userId!)}`,
             );
             return raw.eligibility;
@@ -73,7 +73,7 @@ export function useUserClaimEligibility(userId: string | undefined) {
 
     return {
         eligibility: data ?? [],
-        activeTypeIds: (data ?? []).filter((e) => !e.removedAt).map((e) => e.claimTypeId),
+        activeTypeIds: (data ?? []).map((e) => e.claimTypeId),
         isLoading,
         error,
         mutate,

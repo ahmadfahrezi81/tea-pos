@@ -23,8 +23,6 @@ function formatDateRange(startDate: string, endDate: string) {
 
 const STATUS_STYLE: Record<string, string> = {
     pending: "bg-gray-100 text-gray-500",
-    approved: "bg-blue-100 text-blue-700",
-    on_hold: "bg-amber-100 text-amber-700",
     paid: "bg-green-100 text-green-700",
 };
 
@@ -96,7 +94,7 @@ export default function EarningsPage() {
                             Week {weekNum} · {formatDateRange(period.startDate, period.endDate)}
                         </span>
                         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLE[status] ?? STATUS_STYLE.pending}`}>
-                            {status === "pending" ? t("earnings.statusWaiting") : status === "approved" ? t("earnings.statusReady") : status === "on_hold" ? t("earnings.statusReview") : status === "paid" ? t("earnings.statusPaid") : status}
+                            {status === "pending" ? t("earnings.statusWaiting") : status === "paid" ? t("earnings.statusPaid") : status}
                             {status === "paid" && payout?.paidAt ? ` · ${format(new Date(payout.paidAt), "d MMM")}` : ""}
                         </span>
                     </div>

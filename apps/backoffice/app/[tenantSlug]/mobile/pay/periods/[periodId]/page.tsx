@@ -10,15 +10,11 @@ import { getISOWeek, parseISO, format } from "date-fns";
 
 const STATUS_STYLE: Record<string, string> = {
     pending: "bg-gray-100 text-gray-500",
-    approved: "bg-blue-100 text-blue-700",
-    on_hold: "bg-amber-100 text-amber-700",
     paid: "bg-green-100 text-green-700",
 };
 
 const STATUS_LABEL: Record<string, string> = {
     pending: "Pending",
-    approved: "Approved",
-    on_hold: "On Hold",
     paid: "Paid ✓",
 };
 

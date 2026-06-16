@@ -19,7 +19,6 @@ export type Database = {
           claim_type_id: string
           created_at: string | null
           id: string
-          removed_at: string | null
           tenant_id: string
           user_id: string
         }
@@ -27,7 +26,6 @@ export type Database = {
           claim_type_id: string
           created_at?: string | null
           id?: string
-          removed_at?: string | null
           tenant_id: string
           user_id: string
         }
@@ -35,7 +33,6 @@ export type Database = {
           claim_type_id?: string
           created_at?: string | null
           id?: string
-          removed_at?: string | null
           tenant_id?: string
           user_id?: string
         }
@@ -66,6 +63,8 @@ export type Database = {
       payroll_claim_types: {
         Row: {
           amount: number
+          auto_threshold_hours: number | null
+          claim_source: string
           created_at: string | null
           frequency: string
           id: string
@@ -77,6 +76,8 @@ export type Database = {
         }
         Insert: {
           amount?: number
+          auto_threshold_hours?: number | null
+          claim_source?: string
           created_at?: string | null
           frequency: string
           id?: string
@@ -88,6 +89,8 @@ export type Database = {
         }
         Update: {
           amount?: number
+          auto_threshold_hours?: number | null
+          claim_source?: string
           created_at?: string | null
           frequency?: string
           id?: string
@@ -112,13 +115,12 @@ export type Database = {
           amount: number
           claim_type_id: string | null
           created_at: string
+          daily_summary_id: string | null
           date: string
           frequency: string | null
+          hours_worked: number | null
           id: string
           notes: string | null
-          paid_at: string | null
-          paid_by: string | null
-          payment_proof_url: string | null
           payroll_period_id: string
           photo_url: string | null
           status: string
@@ -131,13 +133,12 @@ export type Database = {
           amount: number
           claim_type_id?: string | null
           created_at?: string
+          daily_summary_id?: string | null
           date: string
           frequency?: string | null
+          hours_worked?: number | null
           id?: string
           notes?: string | null
-          paid_at?: string | null
-          paid_by?: string | null
-          payment_proof_url?: string | null
           payroll_period_id: string
           photo_url?: string | null
           status?: string
@@ -150,13 +151,12 @@ export type Database = {
           amount?: number
           claim_type_id?: string | null
           created_at?: string
+          daily_summary_id?: string | null
           date?: string
           frequency?: string | null
+          hours_worked?: number | null
           id?: string
           notes?: string | null
-          paid_at?: string | null
-          paid_by?: string | null
-          payment_proof_url?: string | null
           payroll_period_id?: string
           photo_url?: string | null
           status?: string
@@ -174,10 +174,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "payroll_claims_paid_by_fkey"
-            columns: ["paid_by"]
+            foreignKeyName: "payroll_claims_daily_summary_id_fkey"
+            columns: ["daily_summary_id"]
             isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "store_daily_summaries"
             referencedColumns: ["id"]
           },
           {
@@ -418,27 +418,27 @@ export type Database = {
       }
       payroll_periods: {
         Row: {
+          closed_at: string | null
           created_at: string | null
           end_date: string
           id: string
           start_date: string
-          status: string
           tenant_id: string
         }
         Insert: {
+          closed_at?: string | null
           created_at?: string | null
           end_date: string
           id?: string
           start_date: string
-          status?: string
           tenant_id: string
         }
         Update: {
+          closed_at?: string | null
           created_at?: string | null
           end_date?: string
           id?: string
           start_date?: string
-          status?: string
           tenant_id?: string
         }
         Relationships: [

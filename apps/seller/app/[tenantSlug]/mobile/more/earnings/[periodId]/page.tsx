@@ -39,15 +39,11 @@ function Row({
 
 const STATUS_COLORS: Record<string, string> = {
     pending: "text-gray-500",
-    approved: "text-blue-600",
-    on_hold: "text-amber-600",
     paid: "text-green-600",
 };
 
 const STATUS_PILL: Record<string, string> = {
     pending: "bg-gray-100 text-gray-500",
-    approved: "bg-blue-100 text-blue-700",
-    on_hold: "bg-amber-100 text-amber-700",
     paid: "bg-green-100 text-green-700",
 };
 
@@ -77,7 +73,16 @@ export default function PayslipPage({ params }: { params: Promise<{ periodId: st
         period: { id: string; startDate: string; endDate: string };
         payout: { status: string; paidAt: string | null; paymentProofUrl: string | null } | null;
         commissions: Array<{ date: string; totalCups: number; grossPay: number; ratePerCup: number; storeName?: string | null }>;
-        claims: Array<{ id: string; claimTypeName?: string | null; claimTypeId: string | null; amount: number; status: string }>;
+        claims: Array<{
+            id: string;
+            date: string;
+            claimTypeName?: string | null;
+            claimTypeId: string | null;
+            amount: number;
+            status: string;
+            hoursWorked?: number | null;
+            autoThresholdHours?: number | null;
+        }>;
         commissionsTotal: number;
         claimsTotal: number;
         totalPay: number;
@@ -111,10 +116,14 @@ export default function PayslipPage({ params }: { params: Promise<{ periodId: st
         {},
     );
 
+    const claimsByDate = claims.reduce<Record<string, typeof claims[0][]>>((acc, c) => {
+        if (!acc[c.date]) acc[c.date] = [];
+        acc[c.date].push(c);
+        return acc;
+    }, {});
+
     const totalCups = commissions.reduce((s, e) => s + e.totalCups, 0);
     const status = payout?.status ?? "pending";
-    const approvedClaims = claims.filter((c) => c.status === "approved" || c.status === "paid");
-    const pendingClaims = claims.filter((c) => c.status === "pending");
 
     const hasBankInfo = payrollInfo?.bankName || payrollInfo?.bankAccountNumber;
 
@@ -127,7 +136,7 @@ export default function PayslipPage({ params }: { params: Promise<{ periodId: st
                         Week {weekNum}, {weekYear}
                     </h3>
                     <span className={`shrink-0 px-2 py-0.5 rounded-full text-sm font-medium ${STATUS_PILL[status] ?? STATUS_PILL.pending}`}>
-                        {status === "pending" ? t("earnings.statusWaiting") : status === "approved" ? t("earnings.statusReady") : status === "on_hold" ? t("earnings.statusReview") : status === "paid" ? t("earnings.statusPaid") : status}
+                        {status === "pending" ? t("earnings.statusWaiting") : status === "paid" ? t("earnings.statusPaid") : status}
                     </span>
                 </div>
                 <div className="text-sm space-y-1.5">
@@ -172,21 +181,47 @@ export default function PayslipPage({ params }: { params: Promise<{ periodId: st
                     {days.map((day) => {
                         const dateStr = format(day, "yyyy-MM-dd");
                         const dayEntries = commissionsByDate[dateStr] ?? [];
-                        if (dayEntries.length === 0) {
+                        const dayClaims = claimsByDate[dateStr] ?? [];
+                        if (dayEntries.length === 0 && dayClaims.length === 0) {
                             return <Row key={dateStr} left={format(day, "EEE d MMM")} right="—" muted />;
                         }
                         const dayTotalCups = dayEntries.reduce((s, e) => s + e.totalCups, 0);
                         return (
                             <div key={dateStr} className="space-y-0.5">
-                                <Row left={format(day, "EEE d MMM")} right={`${dayTotalCups} ${t("earnings.cups")}`} />
+                                <Row
+                                    left={format(day, "EEE d MMM")}
+                                    right={dayEntries.length > 0 ? `${dayTotalCups} ${t("earnings.cups")}` : undefined}
+                                />
                                 {dayEntries.map((e, i) => (
                                     <Row
-                                        key={`${dateStr}-${i}`}
+                                        key={`commission-${dateStr}-${i}`}
                                         left={`  → ${e.storeName ?? "—"}`}
                                         right={`${e.totalCups} ${t("earnings.cups")}`}
                                         muted
                                     />
                                 ))}
+                                {dayClaims.map((c) => {
+                                    const label = `  → ${c.claimTypeName ?? c.claimTypeId ?? "—"}`;
+                                    if (c.status === "approved") {
+                                        return <Row key={c.id} left={label} right={`Rp ${c.amount.toLocaleString("id-ID")}`} muted />;
+                                    }
+                                    if (c.status === "pending") {
+                                        return <Row key={c.id} left={label} right={t("earnings.pendingReview")} muted />;
+                                    }
+                                    // rejected
+                                    const isAuto = c.hoursWorked != null;
+                                    return (
+                                        <div key={c.id}>
+                                            <Row left={label} right={t("earnings.statusRejected")} muted />
+                                            {isAuto && (
+                                                <p className="text-xs text-gray-400 pl-4">
+                                                    {t("earnings.autoRejectedNeeded")} {c.autoThresholdHours ?? 0}h ·{" "}
+                                                    {t("earnings.autoRejectedWorked")} {c.hoursWorked!.toFixed(1)}h
+                                                </p>
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         );
                     })}
@@ -201,30 +236,14 @@ export default function PayslipPage({ params }: { params: Promise<{ periodId: st
                     right={`Rp ${commissionsTotal.toLocaleString("id-ID")}`}
                     bold
                 />
-                <Divider />
-
-                {/* Claims */}
-                {(approvedClaims.length > 0 || pendingClaims.length > 0) && (
-                    <>
-                        <Row left={t("earnings.claimsRow").toUpperCase()} />
-                        {approvedClaims.map((c) => (
-                            <Row
-                                key={c.id}
-                                left={c.claimTypeName ?? c.claimTypeId ?? "—"}
-                                right={`Rp ${c.amount.toLocaleString("id-ID")}`}
-                            />
-                        ))}
-                        {pendingClaims.map((c) => (
-                            <Row
-                                key={c.id}
-                                left={c.claimTypeName ?? c.claimTypeId ?? "—"}
-                                right={t("earnings.pendingReview")}
-                                muted
-                            />
-                        ))}
-                        <Divider />
-                    </>
+                {claimsTotal > 0 && (
+                    <Row
+                        left={t("earnings.claimsRow")}
+                        right={`Rp ${claimsTotal.toLocaleString("id-ID")}`}
+                        bold
+                    />
                 )}
+                <Divider />
 
                 <Row left={t("earnings.totalRow").toUpperCase()} right={`Rp ${totalPay.toLocaleString("id-ID")}`} bold />
                 <Divider />
@@ -233,7 +252,7 @@ export default function PayslipPage({ params }: { params: Promise<{ periodId: st
             {/* Status */}
             <div className="bg-white rounded-2xl p-4 text-center space-y-2">
                 <p className={`text-sm font-bold tracking-wide ${STATUS_COLORS[status] ?? "text-gray-500"}`}>
-                    {status === "pending" ? t("earnings.statusWaitingLong") : status === "approved" ? t("earnings.statusReadyLong") : status === "on_hold" ? t("earnings.statusReviewLong") : status === "paid" ? t("earnings.statusPaidLong") : status.toUpperCase()}
+                    {status === "pending" ? t("earnings.statusWaitingLong") : status === "paid" ? t("earnings.statusPaidLong") : status.toUpperCase()}
                 </p>
                 {status === "paid" && payout?.paidAt && (
                     <p className="text-xs text-gray-500">

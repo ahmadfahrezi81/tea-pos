@@ -5,9 +5,8 @@ import { payrollApi } from "@/lib/api/payroll";
 import type { ListPayrollPeriodsQuery, PayrollPeriodListResponse, ListPayoutsQuery, PayoutListResponse } from "@tea-pos/features/payroll/schema";
 
 export function usePayrollPeriods(params?: Partial<ListPayrollPeriodsQuery>) {
-    const key = `payroll-periods-${params?.status ?? "all"}`;
     const { data, error, mutate, isLoading } = useSWR<PayrollPeriodListResponse>(
-        key,
+        "payroll-periods",
         () => payrollApi.getPeriods(params),
         { revalidateOnFocus: false, dedupingInterval: 5000 },
     );

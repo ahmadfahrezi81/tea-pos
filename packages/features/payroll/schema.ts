@@ -2,17 +2,15 @@ import { z } from "zod";
 import { UUIDSchema } from "../shared/common-schema";
 import { PayrollClaimResponse } from "../payroll-claims/schema";
 
-const PERIOD_STATUSES = ["pending", "approved", "on_hold", "paid"] as const;
-const PAYOUT_STATUSES = ["pending", "approved", "on_hold", "paid"] as const;
+const COMMISSION_CLAIM_STATUSES = ["pending", "approved", "rejected"] as const;
+const PAYOUT_STATUSES = ["pending", "paid"] as const;
 
 // ============================================================================
 // QUERY SCHEMAS
 // ============================================================================
 
 export const ListPayrollPeriodsQuery = z
-    .object({
-        status: z.enum(PERIOD_STATUSES).optional(),
-    })
+    .object({})
     .openapi({ title: "ListPayrollPeriodsQuery" });
 
 export const ListPayrollCommissionsQuery = z
@@ -40,21 +38,15 @@ export const ListPayoutsQuery = z
 // INPUT SCHEMAS
 // ============================================================================
 
-export const UpdatePayrollPeriodInput = z
-    .object({
-        status: z.enum(PERIOD_STATUSES),
-    })
-    .openapi({ title: "UpdatePayrollPeriodInput" });
-
 export const UpdatePayrollCommissionInput = z
     .object({
-        status: z.enum(["draft", "approved", "paid"]),
+        status: z.enum(COMMISSION_CLAIM_STATUSES),
     })
     .openapi({ title: "UpdatePayrollCommissionInput" });
 
 export const UpdatePayoutInput = z
     .object({
-        status: z.enum(["approved", "on_hold", "paid"]),
+        status: z.literal("paid"),
         paymentProofUrl: z.string().url().optional(),
     })
     .openapi({ title: "UpdatePayoutInput" });
@@ -69,7 +61,7 @@ export const PayrollPeriodResponse = z
         tenantId: UUIDSchema,
         startDate: z.string(),
         endDate: z.string(),
-        status: z.enum(PERIOD_STATUSES),
+        closedAt: z.string().nullable(),
         createdAt: z.string().nullable(),
     })
     .openapi({ title: "PayrollPeriodResponse" });
@@ -87,7 +79,7 @@ export const PayrollCommissionResponse = z
         totalCups: z.number(),
         ratePerCup: z.number(),
         grossPay: z.number(),
-        status: z.enum(["draft", "approved", "paid"]),
+        status: z.enum(COMMISSION_CLAIM_STATUSES),
         createdAt: z.string().nullable(),
     })
     .openapi({ title: "PayrollCommissionResponse" });
@@ -142,7 +134,6 @@ export type ListPayrollPeriodsQuery = z.infer<typeof ListPayrollPeriodsQuery>;
 export type ListPayrollCommissionsQuery = z.infer<typeof ListPayrollCommissionsQuery>;
 export type GetPayslipQuery = z.infer<typeof GetPayslipQuery>;
 export type ListPayoutsQuery = z.infer<typeof ListPayoutsQuery>;
-export type UpdatePayrollPeriodInput = z.infer<typeof UpdatePayrollPeriodInput>;
 export type UpdatePayrollCommissionInput = z.infer<typeof UpdatePayrollCommissionInput>;
 export type UpdatePayoutInput = z.infer<typeof UpdatePayoutInput>;
 export type PayrollPeriodResponse = z.infer<typeof PayrollPeriodResponse>;

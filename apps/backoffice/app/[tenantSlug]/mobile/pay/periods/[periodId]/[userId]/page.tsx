@@ -1,39 +1,16 @@
 "use client";
 
-import { use, useState, useRef } from "react";
-import { usePayslip, usePayouts } from "@/lib/hooks/payroll/usePayroll";
+import { use, useState, useRef, useEffect } from "react";
+import { usePayslip } from "@/lib/hooks/payroll/usePayroll";
 import { usePayrollUserInfo } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
 import { useTenantUsers } from "@/lib/hooks/users/useTenantUsers";
+import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
+import { navigation } from "@tea-pos/utils/navigation";
 import { payrollApi } from "@/lib/api/payroll";
 import { apiFetch } from "@/lib/api/client";
 import { parseISO, format, eachDayOfInterval, getISOWeek, getISOWeekYear } from "date-fns";
-import { Copy, Check, Camera, X } from "lucide-react";
+import { Copy, Check, Camera, X, ChevronRight } from "lucide-react";
 import Image from "next/image";
-
-const DIVIDER = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";
-function Divider() {
-    return <p className="text-gray-300 text-xs tracking-tighter font-mono">{DIVIDER}</p>;
-}
-function Row({
-    left,
-    right,
-    bold,
-    muted,
-}: {
-    left: string;
-    right?: string;
-    bold?: boolean;
-    muted?: boolean;
-}) {
-    return (
-        <div
-            className={`flex justify-between text-sm font-mono ${bold ? "font-bold text-gray-900" : muted ? "text-gray-400" : "text-gray-700"}`}
-        >
-            <span>{left}</span>
-            {right && <span>{right}</span>}
-        </div>
-    );
-}
 
 function CopyableValue({ value }: { value: string }) {
     const [copied, setCopied] = useState(false);
@@ -189,49 +166,39 @@ function PaySheet({
     );
 }
 
-export default function UserPayDetailPage({
+export default function UserPayWeekSummaryPage({
     params,
 }: {
     params: Promise<{ periodId: string; userId: string }>;
 }) {
     const { periodId, userId } = use(params);
+    const { url } = useTenantSlug();
     const { payslip, isLoading, mutate } = usePayslip(periodId, userId);
     const { users } = useTenantUsers();
     const { info: payrollUserInfo } = usePayrollUserInfo(userId);
-    const [actionLoading, setActionLoading] = useState(false);
     const [showPaySheet, setShowPaySheet] = useState(false);
-    const [showPendingWarning, setShowPendingWarning] = useState(false);
+    const [refreshing, setRefreshing] = useState(true);
 
     const targetUser = users.find((u) => u.id === userId);
 
-    const handleUpsertPayout = async () => {
-        if (pendingClaims.length > 0 && !showPendingWarning) {
-            setShowPendingWarning(true);
-            return;
-        }
-        setShowPendingWarning(false);
-        setActionLoading(true);
-        try {
-            await payrollApi.upsertPayout({ periodId, userId });
-            await mutate();
-        } finally {
-            setActionLoading(false);
-        }
-    };
+    // Recompute approved-only totals on every view — no manual "Load Payout" step.
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                await payrollApi.upsertPayout({ periodId, userId });
+                if (!cancelled) await mutate();
+            } finally {
+                if (!cancelled) setRefreshing(false);
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [periodId, userId]);
 
-    const handleAction = async (status: "approved" | "on_hold") => {
-        const ps = payslip as { payout?: { id: string } } | null;
-        if (!ps?.payout?.id) return;
-        setActionLoading(true);
-        try {
-            await payrollApi.updatePayout(ps.payout.id, { status });
-            await mutate();
-        } finally {
-            setActionLoading(false);
-        }
-    };
-
-    if (isLoading) {
+    if (isLoading || refreshing) {
         return (
             <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
@@ -252,55 +219,34 @@ export default function UserPayDetailPage({
             status: string;
             paidAt: string | null;
             paymentProofUrl: string | null;
+            commissionsTotal: number;
+            claimsTotal: number;
+            totalPay: number;
         } | null;
-        commissions: Array<{ date: string; totalCups: number; grossPay: number }>;
-        claims: Array<{
-            id: string;
-            claimTypeName?: string | null;
-            claimTypeId: string | null;
-            amount: number;
-            status: string;
-        }>;
-        commissionsTotal: number;
-        claimsTotal: number;
-        totalPay: number;
-        ratePerCup: number;
+        commissions: Array<{ id: string; date: string; totalCups: number; grossPay: number; status: string }>;
+        claims: Array<{ id: string; date: string; amount: number; status: string }>;
     };
 
-    const { period, payout, commissions, claims, commissionsTotal, claimsTotal, totalPay, ratePerCup } =
-        ps;
-    const status = payout?.status ?? null;
+    const { period, payout, commissions, claims } = ps;
     const weekNum = getISOWeek(parseISO(period.startDate));
     const weekYear = getISOWeekYear(parseISO(period.startDate));
-    const days = eachDayOfInterval({
-        start: parseISO(period.startDate),
-        end: parseISO(period.endDate),
-    });
-    const commissionsByDate = commissions.reduce<Record<string, typeof commissions[0][]>>(
-        (acc, e) => {
-            if (!acc[e.date]) acc[e.date] = [];
-            acc[e.date].push(e);
-            return acc;
-        },
-        {},
-    );
-    const totalCups = commissions.reduce((s, e) => s + e.totalCups, 0);
-    const approvedClaims = claims.filter((c) => c.status === "approved" || c.status === "paid");
-    const pendingClaims = claims.filter((c) => c.status === "pending");
+    const days = eachDayOfInterval({ start: parseISO(period.startDate), end: parseISO(period.endDate) });
+
+    const pendingCount =
+        commissions.filter((c) => c.status === "pending").length +
+        claims.filter((c) => c.status === "pending").length;
+
     const hasBankInfo = payrollUserInfo?.bankName || payrollUserInfo?.bankAccountNumber;
+    const status = payout?.status ?? "pending";
+    const totalPay = payout?.totalPay ?? 0;
 
     return (
         <div className="space-y-4 pb-32">
-            {/* Bank info from payroll_user_info */}
             <div className="bg-white rounded-xl p-4 space-y-2">
-                <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">
-                    Bank Account
-                </p>
+                <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Bank Account</p>
                 {hasBankInfo ? (
                     <>
-                        <p className="text-base font-semibold text-gray-900">
-                            {targetUser?.fullName}
-                        </p>
+                        <p className="text-base font-semibold text-gray-900">{targetUser?.fullName}</p>
                         {payrollUserInfo?.bankName && (
                             <p className="text-sm text-gray-600">{payrollUserInfo.bankName}</p>
                         )}
@@ -316,173 +262,79 @@ export default function UserPayDetailPage({
                 )}
             </div>
 
-            {/* Receipt */}
-            <div className="bg-white rounded-xl p-4 space-y-1 font-mono">
-                <div className="text-center space-y-0.5 mb-2">
-                    <Divider />
-                    <p className="text-base font-bold text-gray-900 tracking-widest pt-2">
-                        {targetUser?.fullName ?? "Staff"}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                        Week {weekNum}, {weekYear}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                        {format(parseISO(period.startDate), "MMM d")} –{" "}
-                        {format(parseISO(period.endDate), "MMM d")}
-                    </p>
-                    <div className="pb-2" />
-                    <Divider />
-                </div>
-
-                <div className="space-y-1 py-1">
-                    {days.map((day) => {
-                        const dateStr = format(day, "yyyy-MM-dd");
-                        const dayEntries = commissionsByDate[dateStr] ?? [];
-                        if (dayEntries.length === 0)
-                            return (
-                                <Row key={dateStr} left={format(day, "EEE d MMM")} right="—" muted />
-                            );
-                        return dayEntries.map((e, i) => (
-                            <Row
-                                key={`${dateStr}-${i}`}
-                                left={i === 0 ? format(day, "EEE d MMM") : ""}
-                                right={`${e.totalCups} cups`}
-                            />
-                        ));
-                    })}
-                </div>
-
-                <Divider />
-                <Row left={`${totalCups} cups × Rp ${ratePerCup.toLocaleString("id-ID")}`} />
-                <Row
-                    left="Commissions"
-                    right={`Rp ${commissionsTotal.toLocaleString("id-ID")}`}
-                    bold
-                />
-                <Divider />
-
-                {(approvedClaims.length > 0 || pendingClaims.length > 0) && (
-                    <>
-                        <Row left="CLAIMS" />
-                        {approvedClaims.map((c) => (
-                            <Row
-                                key={c.id}
-                                left={c.claimTypeName ?? c.claimTypeId ?? "—"}
-                                right={`Rp ${c.amount.toLocaleString("id-ID")}`}
-                            />
-                        ))}
-                        {pendingClaims.map((c) => (
-                            <Row
-                                key={c.id}
-                                left={c.claimTypeName ?? c.claimTypeId ?? "—"}
-                                right="Pending"
-                                muted
-                            />
-                        ))}
-                        <Divider />
-                    </>
-                )}
-
-                <Row left="TOTAL" right={`Rp ${totalPay.toLocaleString("id-ID")}`} bold />
-                <Divider />
-
-                {status === "paid" && payout?.paidAt && (
-                    <div className="pt-2 text-center space-y-1">
-                        <p className="text-sm font-bold text-green-600">
-                            PAID · {format(new Date(payout.paidAt), "d MMM yyyy")}
+            <div className="bg-white rounded-xl p-4 space-y-1">
+                <div className="flex items-center justify-between mb-2">
+                    <div>
+                        <p className="text-base font-bold text-gray-900">{targetUser?.fullName ?? "Staff"}</p>
+                        <p className="text-sm text-gray-500">
+                            Week {weekNum}, {weekYear} · {format(parseISO(period.startDate), "MMM d")}–
+                            {format(parseISO(period.endDate), "MMM d")}
                         </p>
-                        {payout.paymentProofUrl && (
-                            <Image
-                                src={payout.paymentProofUrl}
-                                alt="proof"
-                                width={300}
-                                height={200}
-                                className="rounded-xl w-full object-cover max-h-40 mt-2"
-                            />
-                        )}
+                    </div>
+                    <p className="text-xl font-bold text-gray-900">Rp {totalPay.toLocaleString("id-ID")}</p>
+                </div>
+                {pendingCount > 0 && (
+                    <div className="bg-amber-50 rounded-lg px-3 py-2 mt-1">
+                        <p className="text-sm text-amber-700 font-medium">
+                            {pendingCount} item{pendingCount !== 1 ? "s" : ""} still pending review
+                        </p>
+                    </div>
+                )}
+                {status === "paid" && payout?.paidAt && (
+                    <div className="bg-green-50 rounded-lg px-3 py-2 mt-1">
+                        <p className="text-sm text-green-700 font-medium">
+                            Paid · {format(new Date(payout.paidAt), "d MMM yyyy")}
+                        </p>
                     </div>
                 )}
             </div>
 
-            {/* Actions */}
-            {status === null && (
-                <div className="fixed bottom-0 left-0 right-0 p-4 pb-8 bg-white border-t border-gray-100 space-y-3">
-                    {showPendingWarning && (
-                        <div className="bg-amber-50 rounded-xl px-4 py-3 space-y-1">
-                            <p className="text-sm font-semibold text-amber-800">
-                                {pendingClaims.length} claim{pendingClaims.length !== 1 ? "s" : ""} still pending review
-                            </p>
-                            <p className="text-xs text-amber-700">
-                                Pending claims won't be included in this payout. Approve them first or load anyway.
-                            </p>
-                        </div>
-                    )}
-                    <div className={showPendingWarning ? "flex gap-3" : ""}>
-                        {showPendingWarning && (
-                            <button
-                                onClick={() => setShowPendingWarning(false)}
-                                className="flex-1 py-3.5 bg-gray-100 text-gray-700 font-bold rounded-xl active:opacity-80"
-                            >
-                                Go Back
-                            </button>
-                        )}
+            <div className="space-y-2">
+                {days.map((day) => {
+                    const dateStr = format(day, "yyyy-MM-dd");
+                    const dayCommissions = commissions.filter((c) => c.date === dateStr);
+                    const dayClaims = claims.filter((c) => c.date === dateStr);
+                    const subtotal =
+                        dayCommissions.filter((c) => c.status === "approved").reduce((s, c) => s + c.grossPay, 0) +
+                        dayClaims.filter((c) => c.status === "approved").reduce((s, c) => s + c.amount, 0);
+                    const dayPendingCount =
+                        dayCommissions.filter((c) => c.status === "pending").length +
+                        dayClaims.filter((c) => c.status === "pending").length;
+                    const hasItems = dayCommissions.length > 0 || dayClaims.length > 0;
+
+                    return (
                         <button
-                            onClick={handleUpsertPayout}
-                            disabled={actionLoading}
-                            className={`${showPendingWarning ? "flex-1" : "w-full"} py-3.5 bg-brand text-white font-bold rounded-xl active:opacity-80 disabled:opacity-40`}
+                            key={dateStr}
+                            onClick={() => navigation.push(url(`/mobile/pay/periods/${periodId}/${userId}/day/${dateStr}`))}
+                            disabled={!hasItems}
+                            className={`w-full bg-white rounded-xl p-4 flex items-center gap-3 text-left ${hasItems ? "active:bg-gray-50" : "opacity-50"}`}
                         >
-                            {actionLoading ? "Loading..." : showPendingWarning ? "Load Anyway" : "Load Payout"}
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-base font-semibold text-gray-900">{format(day, "EEE d MMM")}</span>
+                                    {dayPendingCount > 0 && (
+                                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                                            {dayPendingCount} pending
+                                        </span>
+                                    )}
+                                </div>
+                                <p className="text-sm text-gray-500">
+                                    {hasItems ? `Rp ${subtotal.toLocaleString("id-ID")}` : "No activity"}
+                                </p>
+                            </div>
+                            {hasItems && <ChevronRight size={18} className="text-gray-400 shrink-0" />}
                         </button>
-                    </div>
-                </div>
-            )}
+                    );
+                })}
+            </div>
 
-            {status === "pending" && (
-                <div className="fixed bottom-0 left-0 right-0 p-4 pb-8 bg-white border-t border-gray-100 flex gap-3">
-                    <button
-                        onClick={() => handleAction("on_hold")}
-                        disabled={actionLoading}
-                        className="flex-1 py-3.5 bg-amber-100 text-amber-700 font-bold rounded-xl active:opacity-80 disabled:opacity-40"
-                    >
-                        Put On Hold
-                    </button>
-                    <button
-                        onClick={() => handleAction("approved")}
-                        disabled={actionLoading}
-                        className="flex-1 py-3.5 bg-green-600 text-white font-bold rounded-xl active:opacity-80 disabled:opacity-40"
-                    >
-                        {actionLoading ? "..." : "Approve"}
-                    </button>
-                </div>
-            )}
-
-            {status === "approved" && (
-                <div className="fixed bottom-0 left-0 right-0 p-4 pb-8 bg-white border-t border-gray-100 flex gap-3">
-                    <button
-                        onClick={() => handleAction("on_hold")}
-                        disabled={actionLoading}
-                        className="flex-1 py-3.5 bg-amber-100 text-amber-700 font-bold rounded-xl active:opacity-80 disabled:opacity-40"
-                    >
-                        Mark On Hold
-                    </button>
-                    <button
-                        onClick={() => setShowPaySheet(true)}
-                        disabled={actionLoading}
-                        className="flex-1 py-3.5 bg-green-600 text-white font-bold rounded-xl active:opacity-80"
-                    >
-                        Pay
-                    </button>
-                </div>
-            )}
-
-            {status === "on_hold" && (
+            {status === "pending" && pendingCount === 0 && (
                 <div className="fixed bottom-0 left-0 right-0 p-4 pb-8 bg-white border-t border-gray-100">
                     <button
-                        onClick={() => handleAction("approved")}
-                        disabled={actionLoading}
-                        className="w-full py-3.5 bg-green-600 text-white font-bold rounded-xl active:opacity-80 disabled:opacity-40"
+                        onClick={() => setShowPaySheet(true)}
+                        className="w-full py-3.5 bg-green-600 text-white font-bold rounded-xl active:opacity-80"
                     >
-                        {actionLoading ? "..." : "Approve"}
+                        Pay
                     </button>
                 </div>
             )}

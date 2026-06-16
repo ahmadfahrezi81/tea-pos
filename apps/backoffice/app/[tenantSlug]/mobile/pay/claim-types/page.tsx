@@ -7,6 +7,7 @@ import { Pencil } from "lucide-react";
 import type { PayrollClaimTypeResponse } from "@tea-pos/features/payroll-claim-types/schema";
 
 const FREQUENCY_LABEL: Record<string, string> = {
+    daily: "Daily",
     weekly: "Weekly",
     monthly: "Monthly",
     one_time: "One-time",
@@ -19,7 +20,10 @@ function ClaimTypeRow({ type }: { type: PayrollClaimTypeResponse }) {
         <div className="flex items-center gap-3 py-4 border-b border-gray-100 last:border-none">
             <div className="flex-1 min-w-0">
                 <p className="text-base font-medium text-gray-900">{type.name}</p>
-                <p className="text-sm text-gray-400">{FREQUENCY_LABEL[type.frequency]}</p>
+                <p className="text-sm text-gray-400">
+                    {FREQUENCY_LABEL[type.frequency]}
+                    {type.claimSource === "auto" && " · Auto"}
+                </p>
             </div>
             <span className={`font-mono font-bold text-base uppercase ${type.isEnabled ? "text-green-500" : "text-gray-400"}`}>
                 {type.isEnabled ? "TRUE" : "FALSE"}

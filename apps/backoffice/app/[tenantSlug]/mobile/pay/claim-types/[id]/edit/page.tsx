@@ -153,6 +153,16 @@ export default function EditClaimTypePage({ params }: { params: Promise<{ id: st
                         <p className="text-base text-gray-500">Rp {(type.amount ?? 0).toLocaleString("id-ID")}</p>
                     </div>
                 </div>
+                <div className="space-y-1.5">
+                    <p className="text-sm font-medium text-gray-700">Decided by</p>
+                    <div className="px-3 py-2.5 border border-gray-100 rounded-2xl bg-gray-50">
+                        <p className="text-base text-gray-500">
+                            {type.claimSource === "auto"
+                                ? `Auto — needs ${type.autoThresholdHours ?? "?"}h worked`
+                                : "Staff submits"}
+                        </p>
+                    </div>
+                </div>
                 {error && <p className="text-sm text-red-500">{error}</p>}
             </div>
 

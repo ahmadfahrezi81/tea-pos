@@ -10,7 +10,6 @@ const STATUS_STYLE: Record<string, string> = {
     pending: "bg-gray-100 text-gray-600",
     approved: "bg-blue-100 text-blue-700",
     rejected: "bg-red-100 text-red-600",
-    paid: "bg-green-100 text-green-700",
 };
 
 export default function ReimbursementsPage() {
@@ -43,11 +42,20 @@ export default function ReimbursementsPage() {
                             >
                                 <div className="flex items-start justify-between gap-1">
                                     <p className="text-sm font-semibold text-gray-800 leading-tight">{type.name}</p>
-                                    {!type.claimable && <CheckCircle size={14} className="text-green-500 shrink-0 mt-0.5" />}
+                                    {type.claimSource === "manual" && !type.claimable && (
+                                        <CheckCircle size={14} className="text-green-500 shrink-0 mt-0.5" />
+                                    )}
                                 </div>
                                 <p className="text-base font-bold text-gray-900">Rp {(type.amount ?? 0).toLocaleString("id-ID")}</p>
-                                <p className={`text-xs font-medium ${type.claimable ? "text-brand" : "text-gray-400"}`}>
-                                    {(type.frequency === "weekly" ? t("claims.freqWeekly") : type.frequency === "monthly" ? t("claims.freqMonthly") : type.frequency === "one_time" ? t("claims.freqOneTime") : type.frequency)} · {type.claimable ? t("claims.available") : type.frequency === "one_time" ? t("claims.used") : t("claims.claimed")}
+                                <p className={`text-xs font-medium ${type.claimSource === "auto" ? "text-gray-400" : type.claimable ? "text-brand" : "text-gray-400"}`}>
+                                    {(type.frequency === "weekly" ? t("claims.freqWeekly") : type.frequency === "monthly" ? t("claims.freqMonthly") : type.frequency === "one_time" ? t("claims.freqOneTime") : type.frequency)} ·{" "}
+                                    {type.claimSource === "auto"
+                                        ? t("claims.auto")
+                                        : type.claimable
+                                          ? t("claims.available")
+                                          : type.frequency === "one_time"
+                                            ? t("claims.used")
+                                            : t("claims.claimed")}
                                 </p>
                             </div>
                         ))}
@@ -83,7 +91,7 @@ export default function ReimbursementsPage() {
                                         Rp {claim.amount.toLocaleString("id-ID")}
                                     </p>
                                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLE[claim.status] ?? STATUS_STYLE.pending}`}>
-                                        {claim.status === "pending" ? t("claims.statusPending") : claim.status === "approved" ? t("claims.statusApproved") : claim.status === "rejected" ? t("claims.statusRejected") : claim.status === "paid" ? t("claims.statusPaid") : claim.status}
+                                        {claim.status === "pending" ? t("claims.statusPending") : claim.status === "approved" ? t("claims.statusApproved") : claim.status === "rejected" ? t("claims.statusRejected") : claim.status}
                                     </span>
                                 </div>
                             </li>

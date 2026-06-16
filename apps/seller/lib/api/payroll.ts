@@ -5,7 +5,6 @@ import type {
     ListPayoutsQuery,
     GetPayslipQuery,
     UpdatePayrollCommissionInput,
-    UpdatePayrollPeriodInput,
     UpdatePayoutInput,
 } from "@tea-pos/features/payroll/schema";
 import {
@@ -28,16 +27,6 @@ export const payrollApi = {
     getPeriods: async (params?: Partial<ListPayrollPeriodsQuery>) => {
         const sp = buildParams((params ?? {}) as Record<string, unknown>);
         return PayrollPeriodListResponse.parse(await apiFetch<unknown>(`/api/payroll/periods?${sp}`));
-    },
-
-    updatePeriod: async (periodId: string, input: UpdatePayrollPeriodInput) => {
-        return PayrollPeriodResponse.parse(
-            await apiFetch<unknown>(`/api/payroll/periods/${encodeURIComponent(periodId)}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(input),
-            }),
-        );
     },
 
     getCommissions: async (params?: Partial<ListPayrollCommissionsQuery>) => {

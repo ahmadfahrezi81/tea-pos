@@ -24,14 +24,14 @@ export const ListPayrollClaimsQuery = z
 
 export const ListAllPayrollClaimsQuery = z
     .object({
-        status: z.enum(["pending", "approved", "rejected", "paid"]).optional(),
+        status: z.enum(["pending", "approved", "rejected"]).optional(),
         periodId: UUIDSchema.optional(),
     })
     .openapi({ title: "ListAllPayrollClaimsQuery" });
 
 export const UpdatePayrollClaimStatusInput = z
     .object({
-        status: z.enum(["approved", "rejected"]),
+        status: z.enum(["pending", "approved", "rejected"]),
     })
     .openapi({ title: "UpdatePayrollClaimStatusInput" });
 
@@ -64,10 +64,9 @@ export const PayrollClaimResponse = z
         date: z.string(),
         notes: z.string().nullable(),
         photoUrl: z.string().nullable(),
-        status: z.enum(["pending", "approved", "rejected", "paid"]),
-        paidAt: z.string().nullable(),
-        paidBy: z.string().nullable(),
-        paymentProofUrl: z.string().nullable(),
+        status: z.enum(["pending", "approved", "rejected"]),
+        hoursWorked: z.number().nullable().optional(),
+        autoThresholdHours: z.number().int().nullable().optional(),
         createdAt: z.string(),
     })
     .openapi({ title: "PayrollClaimResponse" });
@@ -80,8 +79,9 @@ export const ClaimableTypeResponse = z
     .object({
         id: z.string(),
         name: z.string(),
-        frequency: z.enum(["weekly", "monthly", "one_time"]),
+        frequency: z.enum(["daily", "weekly", "monthly", "one_time"]),
         amount: z.number().int().default(0),
+        claimSource: z.enum(["manual", "auto"]),
         claimable: z.boolean(),
     })
     .openapi({ title: "ClaimableTypeResponse" });

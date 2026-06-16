@@ -24,29 +24,17 @@ export function useCurrentPayrollPeriod() {
 }
 
 export function usePayrollPeriods(params?: Partial<ListPayrollPeriodsQuery>) {
-    const key = `payroll-periods-${params?.status ?? "all"}`;
-
     const { data, error, mutate, isLoading } = useSWR<PayrollPeriodListResponse>(
-        key,
+        "payroll-periods",
         () => payrollApi.getPeriods(params),
         { revalidateOnFocus: false, dedupingInterval: 60000 },
     );
-
-    const updatePeriodStatus = async (
-        periodId: string,
-        status: "pending" | "approved" | "on_hold" | "paid",
-    ) => {
-        const result = await payrollApi.updatePeriod(periodId, { status });
-        await mutate();
-        return result;
-    };
 
     return {
         periods: data?.periods ?? [],
         isLoading,
         error,
         mutate,
-        updatePeriodStatus,
     };
 }
 
@@ -64,7 +52,7 @@ export function usePayrollCommissions(params?: Partial<ListPayrollCommissionsQue
 
     const updateCommissionStatus = async (
         commissionId: string,
-        status: "draft" | "approved" | "paid",
+        status: "pending" | "approved" | "rejected",
     ) => {
         const result = await payrollApi.updateCommission(commissionId, { status });
         await mutate();
