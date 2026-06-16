@@ -31,7 +31,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
         });
 
         return () => {
-            unsubscribe.then(() => adapter.cleanup());
+            unsubscribe().then(() => adapter.cleanup());
         };
     }, []);
 

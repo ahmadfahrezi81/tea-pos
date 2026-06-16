@@ -182,7 +182,7 @@ export function useSession(storeId?: string) {
 
         // 3. Try to broadcast with timeout (5s)
         const broadcastResult = await withTimeout(
-            broadcast({ gate: "closed" as const, summaryId: result.summaryId }),
+            broadcast({ gate: "closed" as const, summaryId: result.dailySummaryId, closedAt: result.endedAt ?? new Date().toISOString() }),
             5000,
             "broadcast endSession"
         );

@@ -1,4 +1,4 @@
-import type { RealtimeChannel } from "@supabase/supabase-js";
+type RealtimeChannel = any;
 import type { RealtimeManager, RealtimeOptions, RealtimeHandler, Unsubscribe } from "./RealtimeManager";
 
 interface Subscription {
@@ -145,9 +145,9 @@ export class SupabaseRealtimeAdapter implements RealtimeManager {
         return this.connected;
     }
 
-    async onConnectionChange(handler: (connected: boolean) => void): Promise<Unsubscribe> {
+    onConnectionChange(handler: (connected: boolean) => void): Unsubscribe {
         this.connectionHandlers.add(handler);
-        handler(this.connected); // Emit current state
+        handler(this.connected);
 
         return async () => {
             this.connectionHandlers.delete(handler);

@@ -71,7 +71,7 @@ export default function WeatherNotificationPage() {
     const { data, isLoading } = useNotifications();
     const t = useT();
 
-    const notification = data?.notifications.find((n) => n.id === id);
+    const notification = data?.notifications.find((n: any) => n.id === id);
     const metadata = notification?.metadata as WeatherMetadata | null;
     const hourly = metadata?.hourly ?? [];
     const location = metadata?.location;
