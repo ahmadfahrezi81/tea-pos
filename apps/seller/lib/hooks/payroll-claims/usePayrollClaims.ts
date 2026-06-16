@@ -26,7 +26,7 @@ export function usePayrollClaims(options?: UsePayrollClaimsOptions) {
     const { data, error, mutate, isLoading } = useSWR<PayrollClaimListResponse>(
         key,
         () => (isAll ? payrollClaimsApi.listAll() : payrollClaimsApi.list()),
-        { revalidateOnFocus: false, dedupingInterval: 5000 },
+        { revalidateOnFocus: false, dedupingInterval: 60000 },
     );
 
     const create = async (input: CreatePayrollClaimInput) => {
@@ -48,7 +48,7 @@ export function useClaimableTypes(params: GetClaimableTypesQuery | null) {
     const { data, error, isLoading } = useSWR<ClaimableTypesResponse>(
         params ? `claimable-types-${params.periodId}` : null,
         () => payrollClaimsApi.getClaimableTypes(params!),
-        { revalidateOnFocus: false, dedupingInterval: 5000 },
+        { revalidateOnFocus: false, dedupingInterval: 60000 },
     );
 
     return {
@@ -62,7 +62,7 @@ export function useClaimableDates(params: GetClaimableDatesQuery | null) {
     const { data, error, isLoading } = useSWR<ClaimableDatesResponse>(
         params ? `claimable-dates-${params.periodId}` : null,
         () => payrollClaimsApi.getClaimableDates(params!),
-        { revalidateOnFocus: false, dedupingInterval: 5000 },
+        { revalidateOnFocus: false, dedupingInterval: 60000 },
     );
 
     return {

@@ -10,7 +10,7 @@ export function usePayouts(params?: Partial<ListPayoutsQuery>) {
     const { data, error, mutate, isLoading } = useSWR<PayoutListResponse>(
         key,
         () => payrollApi.getPayouts(params),
-        { revalidateOnFocus: false, dedupingInterval: 5000 },
+        { revalidateOnFocus: false, dedupingInterval: 60000 },
     );
 
     return { payouts: data?.payouts ?? [], isLoading, error, mutate };

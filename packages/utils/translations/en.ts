@@ -263,6 +263,11 @@ export const en = {
         statusPaidLong: "PAID",
         viewProof: "View transfer screenshot",
         addBankDetails: "Add your bank details in Payroll Info so admin can pay you.",
+        viewConfig: "Pay Config",
+        viewCalendar: "Calendar",
+        payConfig: "Pay Config",
+        noRateConfigured: "No rate configured yet.",
+        perCup: "per cup",
     },
     account: {
         personalDetails: "Personal Details",

@@ -38,6 +38,8 @@ export const PayrollUserInfoResponse = z
         tenantId: UUIDSchema,
         userId: UUIDSchema,
         commissionTypeId: UUIDSchema.nullable(),
+        commissionTypeName: z.string().nullable(),
+        ratePerCup: z.number().nullable(),
         bankName: z.string().nullable(),
         bankAccountNumber: z.string().nullable(),
         bankAccountHolder: z.string().nullable(),

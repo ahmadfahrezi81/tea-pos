@@ -29,7 +29,7 @@ export function usePayrollPeriods(params?: Partial<ListPayrollPeriodsQuery>) {
     const { data, error, mutate, isLoading } = useSWR<PayrollPeriodListResponse>(
         key,
         () => payrollApi.getPeriods(params),
-        { revalidateOnFocus: false, dedupingInterval: 5000 },
+        { revalidateOnFocus: false, dedupingInterval: 60000 },
     );
 
     const updatePeriodStatus = async (
@@ -59,7 +59,7 @@ export function usePayrollCommissions(params?: Partial<ListPayrollCommissionsQue
     const { data, error, mutate, isLoading } = useSWR<PayrollCommissionListResponse>(
         key,
         () => payrollApi.getCommissions(params),
-        { revalidateOnFocus: false, dedupingInterval: 5000 },
+        { revalidateOnFocus: false, dedupingInterval: 60000 },
     );
 
     const updateCommissionStatus = async (

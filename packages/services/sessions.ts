@@ -397,6 +397,37 @@ export async function listUserSessionDates(
     return Array.from(dates).sort();
 }
 
+export async function listUserSessionDatesByMonth(
+    supabase: SupabaseClient,
+    { tenantId, userId, month }: { tenantId: string; userId: string; month: string },
+): Promise<string[]> {
+    const tz = parseInt(process.env.TIMEZONE_OFFSET ?? "7", 10);
+
+    const from = new Date(`${month}-01T00:00:00.000Z`);
+    from.setUTCHours(0 - tz, 0, 0, 0);
+
+    const to = new Date(from);
+    to.setUTCMonth(to.getUTCMonth() + 1);
+
+    const { data, error } = await supabase
+        .from("store_sessions")
+        .select("started_at")
+        .eq("tenant_id", tenantId)
+        .eq("user_id", userId)
+        .gte("started_at", from.toISOString())
+        .lt("started_at", to.toISOString());
+
+    if (error) throw error;
+
+    const dates = new Set<string>();
+    for (const row of data ?? []) {
+        const local = new Date(new Date(row.started_at).getTime() + tz * 60 * 60 * 1000);
+        dates.add(local.toISOString().slice(0, 10));
+    }
+
+    return Array.from(dates).sort();
+}
+
 // ─── Sessions by summary (detail view) ───────────────────────────────────────
 
 export async function listSessionsBySummary(

@@ -20,12 +20,22 @@ export async function getPayrollUserInfo(
 ) {
     const { data } = await supabase
         .from("payroll_user_info")
-        .select("*")
+        .select("*, payroll_commission_types(name, rate_per_cup)")
         .eq("tenant_id", tenantId)
         .eq("user_id", userId)
         .maybeSingle();
 
-    return data ? (toCamelKeys(data) as Record<string, unknown>) : null;
+    if (!data) return null;
+
+    const { payroll_commission_types: commissionType, ...row } = data as Record<string, unknown> & {
+        payroll_commission_types: { name: string; rate_per_cup: number } | null;
+    };
+
+    return {
+        ...(toCamelKeys(row) as Record<string, unknown>),
+        commissionTypeName: commissionType?.name ?? null,
+        ratePerCup: commissionType?.rate_per_cup ?? null,
+    } as Record<string, unknown>;
 }
 
 export async function upsertPayrollUserInfo(

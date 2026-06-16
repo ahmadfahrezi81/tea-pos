@@ -12,7 +12,7 @@ export function usePayrollUserInfo() {
     const { data, error, mutate, isLoading } = useSWR<PayrollUserInfoResponse | null>(
         userId ? `payroll-user-info-${userId}` : null,
         () => payrollUserInfoApi.get(),
-        { revalidateOnFocus: false, dedupingInterval: 5000 },
+        { revalidateOnFocus: false, dedupingInterval: 60000 },
     );
 
     const update = async (input: UpdatePayrollUserInfoInput) => {

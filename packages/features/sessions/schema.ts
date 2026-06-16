@@ -114,6 +114,18 @@ export const ListSessionsByMonthQuery = z
     })
     .openapi({ title: "ListSessionsByMonthQuery" });
 
+export const GetUserSessionActivityQuery = z
+    .object({
+        month: z.string().regex(/^\d{4}-\d{2}$/, "Invalid month format (YYYY-MM)"),
+    })
+    .openapi({ title: "GetUserSessionActivityQuery" });
+
+export const UserSessionActivityResponse = z
+    .object({
+        dates: z.array(z.string()),
+    })
+    .openapi({ title: "UserSessionActivityResponse" });
+
 export const SessionsByMonthResponse = z
     .object({
         sessionsBySummaryId: z.record(z.string(), z.array(SessionUserResponse)),
@@ -165,3 +177,5 @@ export type GetSessionsBySummaryQuery = z.infer<typeof GetSessionsBySummaryQuery
 export type SessionDetailItem = z.infer<typeof SessionDetailItem>;
 export type SessionsBySummaryResponse = z.infer<typeof SessionsBySummaryResponse>;
 export type SessionsByMonthResponse = z.infer<typeof SessionsByMonthResponse>;
+export type GetUserSessionActivityQuery = z.infer<typeof GetUserSessionActivityQuery>;
+export type UserSessionActivityResponse = z.infer<typeof UserSessionActivityResponse>;

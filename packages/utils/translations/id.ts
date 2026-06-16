@@ -266,6 +266,11 @@ export const id: DeepPartial<typeof en> = {
         statusPaidLong: "DIBAYAR",
         viewProof: "Lihat bukti transfer",
         addBankDetails: "Tambahkan info rekening di Payroll Info agar admin bisa membayar Anda.",
+        viewConfig: "Konfigurasi Gaji",
+        viewCalendar: "Kalender",
+        payConfig: "Konfigurasi Gaji",
+        noRateConfigured: "Belum ada tarif yang diatur.",
+        perCup: "per gelas",
     },
     account: {
         personalDetails: "Data Pribadi",

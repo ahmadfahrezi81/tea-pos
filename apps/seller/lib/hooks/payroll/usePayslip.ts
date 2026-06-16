@@ -9,7 +9,7 @@ export function usePayslip(periodId: string | undefined, userId?: string) {
     const { data, error, mutate, isLoading } = useSWR(
         key,
         () => payrollApi.getPayslip({ periodId: periodId!, ...(userId ? { userId } : {}) }),
-        { revalidateOnFocus: false, dedupingInterval: 5000 },
+        { revalidateOnFocus: false, dedupingInterval: 60000 },
     );
 
     return { payslip: data ?? null, isLoading, error, mutate };
