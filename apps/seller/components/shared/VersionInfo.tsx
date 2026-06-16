@@ -13,5 +13,9 @@ export default function VersionInfo() {
             .catch(() => setBackend("error"));
     }, []);
 
-    return <span className="font-mono text-base opacity-90">v{frontend}</span>;
+    return (
+        <span className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 font-mono text-xs text-gray-700">
+            Version: v{frontend}
+        </span>
+    );
 }

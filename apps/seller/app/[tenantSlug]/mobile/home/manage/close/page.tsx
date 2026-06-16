@@ -18,7 +18,6 @@ import { DailyStepHeader } from "../_components/daily/DailyStepHeader";
 import { SinglePhotoStep } from "../_components/daily/SinglePhotoStep";
 import { PHOTO_SLOTS } from "@tea-pos/features/shared/photo-slots";
 import { ReviewStep } from "../_components/daily/ReviewStep";
-import { SimpleCashStep } from "../_components/daily/SimpleCashStep";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
 import { Loader2 } from "lucide-react";
@@ -33,8 +32,7 @@ import { useT } from "@/lib/hooks/useT";
 // ============================================================================
 
 const PHOTO_STEP_COUNT = 5;
-const STEP_CASH = 5;
-const STEP_REVIEW = 6;
+const STEP_REVIEW = 5;
 
 const QUANTITY_REQUIRED_SLOTS: PhotoType[] = ["closing:cups", "closing:tea"];
 
@@ -57,7 +55,6 @@ export default function ManageCloseDayPage() {
         { label: t("manage.closeSteps.bags") },
         { label: t("manage.closeSteps.cups") },
         { label: t("manage.closeSteps.waste") },
-        { label: t("manage.closeSteps.cash") },
         { label: t("manage.closeSteps.review") },
     ], [t]);
 
@@ -136,13 +133,27 @@ export default function ManageCloseDayPage() {
         Record<string, { value: number; unit: string } | null>
     >({});
     const [actualCash, setActualCash] = useState(0);
-    const [cashConfirmed, setCashConfirmed] = useState(false);
+    const [cashEdited, setCashEdited] = useState(false);
     const [confirmed, setConfirmed] = useState(false);
 
     useEffect(() => {
         if (!summary) return;
-        if (summary.actualCash) setActualCash(summary.actualCash);
+        if (summary.actualCash) {
+            setActualCash(summary.actualCash);
+            setCashEdited(true);
+        }
     }, [summary?.id]);
+
+    // Track expectedCash until the user types a value of their own
+    useEffect(() => {
+        if (!summary || cashEdited) return;
+        setActualCash(summary.expectedCash);
+    }, [summary?.expectedCash, cashEdited]);
+
+    const handleActualCashChange = useCallback((val: number) => {
+        setActualCash(val);
+        setCashEdited(true);
+    }, []);
 
     const getSlotPhoto = useCallback(
         (type: PhotoType) => photos.find((p) => p.type === type),
@@ -188,7 +199,6 @@ export default function ManageCloseDayPage() {
 
     const handleBack = useCallback(() => {
         if (currentStep === STEP_REVIEW) setConfirmed(false);
-        if (currentStep === STEP_CASH) setCashConfirmed(false);
         goToStep(currentStep - 1);
     }, [currentStep, goToStep]);
 
@@ -196,7 +206,7 @@ export default function ManageCloseDayPage() {
         setError(null);
 
         // Refresh summary before moving to review step to ensure expectedCash is fresh
-        if (currentStep === STEP_CASH && summaryId) {
+        if (currentStep === PHOTO_STEP_COUNT - 1 && summaryId) {
             await mutate();
         }
 
@@ -247,11 +257,6 @@ export default function ManageCloseDayPage() {
                 }
                 setIsUploading(false);
             }
-        }
-
-        if (currentStep === STEP_CASH && summaryId) {
-            // Don't save actualCash here—only commit it when day is fully closed.
-            // This prevents stale cash counts if user abandons flow and keeps editing.
         }
 
         goToStep(currentStep + 1);
@@ -326,7 +331,6 @@ export default function ManageCloseDayPage() {
         isBusy ||
         (currentStep < PHOTO_STEP_COUNT && !currentStepHasPhoto && !skipPhotos) ||
         (currentStepNeedsQuantity && !currentStepHasQuantity && !skipPhotos) ||
-        (currentStep === STEP_CASH && !cashConfirmed) ||
         (currentStep === STEP_REVIEW && !confirmed);
 
     useLayoutEffect(() => {
@@ -421,15 +425,6 @@ export default function ManageCloseDayPage() {
                         );
                     })()}
 
-                {currentStep === STEP_CASH && (
-                    <SimpleCashStep
-                        expectedCash={summary.expectedCash}
-                        initialValue={actualCash || summary.expectedCash}
-                        confirmed={cashConfirmed}
-                        onActualCashChange={setActualCash}
-                        onConfirmedChange={setCashConfirmed}
-                    />
-                )}
                 {currentStep === STEP_REVIEW && (
                     <ReviewStep
                         summary={summary}
@@ -439,6 +434,8 @@ export default function ManageCloseDayPage() {
                         storeName={storeName}
                         confirmed={confirmed}
                         onConfirmChange={setConfirmed}
+                        actualCash={actualCash}
+                        onActualCashChange={handleActualCashChange}
                     />
                 )}
             </div>

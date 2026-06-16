@@ -15,6 +15,8 @@ interface ReviewStepProps {
     storeName: string;
     confirmed: boolean;
     onConfirmChange: (confirmed: boolean) => void;
+    actualCash: number;
+    onActualCashChange: (amount: number) => void;
 }
 
 export function ReviewStep({
@@ -25,6 +27,8 @@ export function ReviewStep({
     storeName,
     confirmed,
     onConfirmChange,
+    actualCash,
+    onActualCashChange,
 }: ReviewStepProps) {
     const { breakdown } = useSummaryBreakdown(summary.id);
 
@@ -48,6 +52,8 @@ export function ReviewStep({
             showConfirmation={true}
             confirmed={confirmed}
             onConfirmChange={onConfirmChange}
+            actualCash={actualCash}
+            onActualCashChange={onActualCashChange}
         />
     );
 }

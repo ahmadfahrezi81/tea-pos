@@ -135,7 +135,6 @@ export const en = {
             bags: "Bags",
             cups: "Cups",
             waste: "Waste",
-            cash: "Cash",
             review: "Review",
         },
         photoLabels: {
@@ -154,15 +153,9 @@ export const en = {
             opening: "Take a photo of the opening setup.",
         },
         cashStep: {
-            title: "Count the Cash",
-            description: "Enter the actual cash amount you counted.",
             actualCash: "Actual Cash",
             expected: "Expected:",
             variance: "Variance",
-            matchesPerfectly: "Cash matches perfectly",
-            overBy: "Over by",
-            shortBy: "Short by",
-            confirmCash: "I confirm the cash amount is correct.",
         },
         confirmSummary: "I confirm all the information above is correct.",
     },

@@ -161,6 +161,7 @@ export const mobileRoutes = {
         inlineHeader: true,
         isChart: false,
         parent: "lastRootTab",
+        scrollPaddingBottom: "pb-8",
     },
     "/mobile/account/details": {
         title: "Personal Details",

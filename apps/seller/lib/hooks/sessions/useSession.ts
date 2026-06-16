@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import useSWR from "swr";
 import { sessionsApi } from "@/lib/api/sessions";
 import { useRealtime } from "@/lib/context/RealtimeContext";
@@ -10,10 +10,9 @@ import type { OpenStoreInput, TransferSessionInput, GateStateResponse } from "@t
 export function useSession(storeId?: string) {
     const key = storeId ? `session-gate-${storeId}` : null;
     const { realtime, isConnected } = useRealtime();
-    const [realtimeData, setRealtimeData] = useState<GateStateResponse | null>(null);
 
     // Fallback polling: only poll when realtime is down
-    const { data: polledData, error, mutate, isLoading } = useSWR<GateStateResponse>(
+    const { data, error, mutate, isLoading } = useSWR<GateStateResponse>(
         key,
         () => sessionsApi.getGateState({ storeId: storeId! }),
         {
@@ -35,7 +34,6 @@ export function useSession(storeId?: string) {
                 unsubscribe = await realtime.subscribe(
                     { channel: `store:${storeId}`, event: "session:changed" },
                     (update: GateStateResponse) => {
-                        setRealtimeData(update);
                         mutate(update, false);
                     }
                 );
@@ -48,9 +46,6 @@ export function useSession(storeId?: string) {
             unsubscribe?.();
         };
     }, [realtime, storeId, mutate]);
-
-    // Prefer realtime data, fall back to polled data
-    const data = realtimeData ?? polledData;
 
     const broadcast = async (update: GateStateResponse) => {
         if (!realtime || !storeId) return;
