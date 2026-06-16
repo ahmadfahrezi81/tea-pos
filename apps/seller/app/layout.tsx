@@ -58,7 +58,7 @@ export default async function RootLayout({
         <html lang="en" suppressHydrationWarning>
             <body>
                 <SWRConfig
-                    value={{ dedupingInterval: 5000, revalidateOnFocus: false }}
+                    value={{ dedupingInterval: 5000, revalidateOnFocus: false, errorRetryCount: 3 }}
                 >
                     <FeaturesProvider>
                         <AuthProvider initialUser={initialUser}>

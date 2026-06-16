@@ -14,6 +14,7 @@ import {
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
 import { useSessionActivityByMonth } from "@/lib/hooks/sessions/useSessionActivityByMonth";
+import { SkeletonValue } from "@/components/shared/SkeletonValue";
 import type { PayrollCommissionResponse, PayrollPeriodResponse } from "@tea-pos/features/payroll/schema";
 
 const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -72,7 +73,7 @@ export function PayCalendar({
     if (isLoading || sessionLoading) {
         return (
             <div className="bg-white rounded-2xl px-3 py-3">
-                <div className="h-44 bg-gray-100 rounded-lg animate-pulse" />
+                <SkeletonValue loading className="h-44 w-full">{null}</SkeletonValue>
             </div>
         );
     }

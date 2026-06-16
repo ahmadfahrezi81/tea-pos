@@ -85,7 +85,7 @@ export const PayrollCommissionResponse = z
         commissionTypeId: UUIDSchema.nullable(),
         date: z.string(),
         totalCups: z.number(),
-        ratePerUnit: z.number(),
+        ratePerCup: z.number(),
         grossPay: z.number(),
         status: z.enum(["draft", "approved", "paid"]),
         createdAt: z.string().nullable(),
@@ -118,7 +118,7 @@ export const PayslipResponse = z
         commissionsTotal: z.number(),
         claimsTotal: z.number(),
         totalPay: z.number(),
-        ratePerUnit: z.number(),
+        ratePerCup: z.number(),
     })
     .openapi({ title: "PayslipResponse" });
 

@@ -10,6 +10,7 @@ import { getISOWeek, parseISO, format } from "date-fns";
 import { ChevronRight } from "lucide-react";
 import type { PayrollPeriodResponse, PayoutResponse } from "@tea-pos/features/payroll/schema";
 import { useT } from "@/lib/hooks/useT";
+import { SkeletonValue } from "@/components/shared/SkeletonValue";
 import { EarningsViewSwitcher, type EarningsView } from "./_components/EarningsViewSwitcher";
 import { PayConfigCard } from "./_components/PayConfigCard";
 import { PayCalendar } from "./_components/PayCalendar";
@@ -128,7 +129,9 @@ export default function EarningsPage() {
 
                     {isLoading ? (
                         <div className="space-y-2">
-                            {[1, 2, 3].map((i) => <div key={i} className="bg-white rounded-xl p-4 h-16 animate-pulse" />)}
+                            {[1, 2, 3].map((i) => (
+                                <SkeletonValue key={i} loading className="h-16 w-full rounded-xl">{null}</SkeletonValue>
+                            ))}
                         </div>
                     ) : periodsInMonth.length === 0 ? (
                         <p className="text-center text-gray-400 py-10 text-base">{t("earnings.noPeriods")}</p>
