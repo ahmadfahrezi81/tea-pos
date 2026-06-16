@@ -25,7 +25,7 @@ export default function MobileProfileStores() {
                 ) : stores.length === 0 ? (
                     <p className="px-4 py-5 text-sm text-gray-400">{t("more.noStores")}</p>
                 ) : (
-                    stores.map((store) => (
+                    stores.map((store: any) => (
                         <div key={store.id} className="flex items-center gap-3 px-4 py-4">
                             <div className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
                                 <Store size={16} strokeWidth={2} className="text-gray-500" />

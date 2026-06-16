@@ -68,7 +68,7 @@ export default function ReimbursementsPage() {
                     </div>
                 ) : (
                     <ul className="divide-y divide-gray-100">
-                        {claims.map((claim) => (
+                        {claims.map((claim: any) => (
                             <li key={claim.id} className="flex items-center justify-between px-4 py-3">
                                 <div>
                                     <p className="text-base font-medium text-gray-800">
