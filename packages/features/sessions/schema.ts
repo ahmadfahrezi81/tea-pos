@@ -104,6 +104,7 @@ export const SessionUserResponse = z
         userId: UUIDSchema,
         userName: z.string().nullable(),
         userAvatarUrl: z.string().nullable(),
+        totalCups: z.number().nullable(),
     })
     .openapi({ title: "SessionUserResponse" });
 

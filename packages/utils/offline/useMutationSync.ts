@@ -57,14 +57,19 @@ export function useMutationSync(handlers: MutationSyncHandler[]) {
                         mutationQueue.remove(mutation.id);
                         console.log(`[MutationSync] Synced: ${mutation.type}`);
                     } catch (err) {
-                        const canRetry = mutationQueue.incrementRetry(mutation.id);
-                        if (!canRetry) {
-                            console.error(
-                                `[MutationSync] Max retries reached for ${mutation.type}:`,
-                                err
-                            );
+                        const status = (err as { status?: number })?.status;
+                        const isTerminal = status === 404 || status === 409 || status === 403;
+                        if (isTerminal) {
+                            mutationQueue.remove(mutation.id);
+                            console.warn(`[MutationSync] Terminal error for ${mutation.type} (${status}), dropping:`, err);
                         } else {
-                            console.warn(`[MutationSync] Failed to sync ${mutation.type}, will retry:`, err);
+                            const canRetry = mutationQueue.incrementRetry(mutation.id);
+                            if (!canRetry) {
+                                mutationQueue.remove(mutation.id);
+                                console.error(`[MutationSync] Max retries reached for ${mutation.type}, dropping:`, err);
+                            } else {
+                                console.warn(`[MutationSync] Failed to sync ${mutation.type}, will retry:`, err);
+                            }
                         }
                     }
                 }

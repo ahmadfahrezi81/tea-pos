@@ -53,6 +53,7 @@ export default function MobileAnalytics() {
     const [selectedMonth, setSelectedMonth] = useState<string>(
         getCurrentLocalMonth(),
     );
+    const [warningDismissed, setWarningDismissed] = useState(false);
     const [activeSummary, setActiveSummary] = useState<{
         id: string;
         date: string;
@@ -93,6 +94,40 @@ export default function MobileAnalytics() {
 
     return (
         <div className="space-y-4">
+            {/* Unclosed Days Warning */}
+            {unclosedSummaries.length > 1 && !warningDismissed && (
+                <div className="bg-red-100 p-3.5 rounded-xl">
+                    <div className="flex items-start justify-between mb-2">
+                        <button
+                            className="flex items-center gap-2 text-left active:opacity-60"
+                            onClick={() => {
+                                const firstUnclosed = unclosedSummaries.find(
+                                    (s) => s.id !== unclosedSummaries[unclosedSummaries.length - 1]?.id,
+                                ) ?? unclosedSummaries[0];
+                                document
+                                    .getElementById(`summary-${firstUnclosed?.id}`)
+                                    ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                            }}
+                        >
+                            <AlertTriangle size={20} className="text-red-600" />
+                            <h3 className="font-semibold text-red-800">
+                                {unclosedSummaries.length - 1}{" "}
+                                {t("analytics.unclosedWarning")}
+                            </h3>
+                        </button>
+                        <button
+                            onClick={() => setWarningDismissed(true)}
+                            className="p-1 -mt-1 -mr-2 rounded-full text-red-600 active:opacity-60"
+                        >
+                            <X size={22} />
+                        </button>
+                    </div>
+                    <p className="text-sm text-red-800">
+                        {t("analytics.unclosedSub")}
+                    </p>
+                </div>
+            )}
+
             {/* Monthly Summary */}
             {(summariesLoading || summariesData?.monthlyTotals) && (
                 <div className="bg-white p-4 rounded-2xl">
@@ -148,22 +183,6 @@ export default function MobileAnalytics() {
                             </p>
                         </div>
                     </div>
-                </div>
-            )}
-
-            {/* Unclosed Days Warning */}
-            {unclosedSummaries.length > 1 && (
-                <div className="bg-red-100 p-3.5 rounded-xl">
-                    <div className="flex items-center gap-2 mb-2">
-                        <AlertTriangle size={20} className="text-red-600" />
-                        <h3 className="font-semibold text-red-800">
-                            {unclosedSummaries.length - 1}{" "}
-                            {t("analytics.unclosedWarning")}
-                        </h3>
-                    </div>
-                    <p className="text-sm text-red-800">
-                        {t("analytics.unclosedSub")}
-                    </p>
                 </div>
             )}
 
@@ -246,6 +265,7 @@ export default function MobileAnalytics() {
                             return (
                                 <div
                                     key={summary.id}
+                                    id={`summary-${summary.id}`}
                                     className="bg-white rounded-2xl overflow-hidden"
                                 >
                                     <div className="p-3 bg-white space-y-3">
@@ -380,7 +400,7 @@ export default function MobileAnalytics() {
                                                     ).map((s: any) => (
                                                         <div
                                                             key={s.userId}
-                                                            className="flex items-center gap-2 bg-slate-100 rounded-xl p-1.5 pr-3.5 w-full"
+                                                            className="flex items-center gap-2 bg-slate-100 rounded-xl p-1.5 w-full"
                                                         >
                                                             {s.userAvatarUrl ? (
                                                                 <Image
@@ -405,10 +425,15 @@ export default function MobileAnalytics() {
                                                                     />
                                                                 </div>
                                                             )}
-                                                            <p className="text-base font-bold text-gray-900 truncate">
+                                                            <p className="text-base font-bold text-gray-900 truncate flex-1">
                                                                 {s.userName ??
                                                                     "Unknown"}
                                                             </p>
+                                                            {s.totalCups != null && (
+                                                                <span className="text-sm font-bold text-orange-700 bg-orange-100 px-2 py-0.5 rounded-lg shrink-0">
+                                                                    {s.totalCups} {t("analytics.cups")}
+                                                                </span>
+                                                            )}
                                                         </div>
                                                     ))}
                                                 </div>

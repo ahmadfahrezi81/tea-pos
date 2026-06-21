@@ -293,17 +293,31 @@ export async function endSessionsForSummary(
 export async function fetchSessionUsersForSummaries(
     supabase: SupabaseClient,
     { tenantId, summaryIds }: { tenantId: string; summaryIds: string[] },
-): Promise<Record<string, Array<{ userId: string; userName: string | null; userAvatarUrl: string | null }>>> {
+): Promise<Record<string, Array<{ userId: string; userName: string | null; userAvatarUrl: string | null; totalCups: number | null }>>> {
     if (summaryIds.length === 0) return {};
 
-    const { data: sessions, error } = await supabase
-        .from("store_sessions")
-        .select("user_id, daily_summary_id")
-        .in("daily_summary_id", summaryIds)
-        .eq("tenant_id", tenantId);
+    const [{ data: sessions, error }, { data: commissionRows }] = await Promise.all([
+        supabase
+            .from("store_sessions")
+            .select("user_id, daily_summary_id")
+            .in("daily_summary_id", summaryIds)
+            .eq("tenant_id", tenantId),
+        supabase
+            .from("payroll_commissions")
+            .select("user_id, daily_summary_id, total_cups")
+            .in("daily_summary_id", summaryIds)
+            .eq("tenant_id", tenantId),
+    ]);
 
     if (error) throw error;
     if (!sessions || sessions.length === 0) return {};
+
+    // cups per (summaryId, userId)
+    const cupsMap = new Map<string, number>();
+    for (const row of (commissionRows ?? []) as Array<{ user_id: string; daily_summary_id: string; total_cups: number }>) {
+        const key = `${row.daily_summary_id}:${row.user_id}`;
+        cupsMap.set(key, (cupsMap.get(key) ?? 0) + row.total_cups);
+    }
 
     const uniqueUserIds = [...new Set(sessions.map((s) => s.user_id))];
 
@@ -322,15 +336,17 @@ export async function fetchSessionUsersForSummaries(
         }),
     );
 
-    const result: Record<string, Array<{ userId: string; userName: string | null; userAvatarUrl: string | null }>> = {};
+    const result: Record<string, Array<{ userId: string; userName: string | null; userAvatarUrl: string | null; totalCups: number | null }>> = {};
     for (const session of sessions as Array<{ user_id: string; daily_summary_id: string }>) {
         const { daily_summary_id, user_id } = session;
         if (!result[daily_summary_id]) result[daily_summary_id] = [];
         if (!result[daily_summary_id].some((u) => u.userId === user_id)) {
+            const cups = cupsMap.get(`${daily_summary_id}:${user_id}`);
             result[daily_summary_id].push({
                 userId: user_id,
                 userName: nameMap.get(user_id) ?? null,
                 userAvatarUrl: avatarMap.get(user_id) ?? null,
+                totalCups: cups ?? null,
             });
         }
     }

@@ -45,6 +45,7 @@ export type SessionUser = {
     userId: string;
     userName: string | null;
     userAvatarUrl: string | null;
+    totalCups: number | null;
 };
 
 function formatTimestamp(utc: string): string {
@@ -368,7 +369,7 @@ export function SummaryDetailsCard({
                 {sessions.map((s) => (
                     <div
                         key={s.userId}
-                        className="flex items-center gap-2 bg-slate-100 rounded-xl p-1.5 pr-3.5 w-full"
+                        className="flex items-center gap-2 bg-slate-100 rounded-xl p-1.5 w-full"
                     >
                         {s.userAvatarUrl ? (
                             <Image
@@ -383,9 +384,14 @@ export function SummaryDetailsCard({
                                 <UserCircle size={18} className="text-brand" />
                             </div>
                         )}
-                        <p className="text-base font-bold text-gray-900 truncate">
+                        <p className="text-base font-bold text-gray-900 truncate flex-1">
                             {s.userName ?? t("common.unknown")}
                         </p>
+                        {s.totalCups !== null && (
+                            <span className="text-sm font-bold text-orange-700 bg-orange-100 px-2 py-0.5 rounded-lg shrink-0">
+                                {s.totalCups} {t("analytics.cups")}
+                            </span>
+                        )}
                     </div>
                 ))}
             </div>
