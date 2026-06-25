@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useT } from "@/lib/hooks/useT";
 import { usePayrollClaims, useClaimableTypes, useClaimableDates } from "@/lib/hooks/payroll-claims/usePayrollClaims";
-import { useCurrentPayrollPeriod } from "@/lib/hooks/payroll/usePayroll";
+import { usePayrollUserInfo } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
+import { getPayWindowBounds } from "@tea-pos/utils/week";
 import { useUpload } from "@/lib/hooks/upload/useUpload";
 import { SelectInput } from "../../../home/manage/_components/shared/SelectInput";
 import { Textarea } from "../../../home/manage/_components/shared/Textarea";
@@ -24,14 +25,14 @@ export default function AddClaimPage() {
     const t = useT();
     const { create } = usePayrollClaims();
     const { upload } = useUpload();
-    const { period: currentPeriod, isLoading: periodLoading } = useCurrentPayrollPeriod();
+    const { info, isLoading: infoLoading } = usePayrollUserInfo();
 
-    const { types, isLoading: typesLoading } = useClaimableTypes(
-        currentPeriod ? { periodId: currentPeriod.id } : null,
-    );
-    const { dates: claimableDates, isLoading: datesLoading } = useClaimableDates(
-        currentPeriod ? { periodId: currentPeriod.id } : null,
-    );
+    const window = info
+        ? getPayWindowBounds(getLocalToday(), info.payFrequency ?? "bi_weekly")
+        : null;
+
+    const { types, isLoading: typesLoading } = useClaimableTypes(window);
+    const { dates: claimableDates, isLoading: datesLoading } = useClaimableDates(window);
 
     const [selectedTypeId, setSelectedTypeId] = useState("");
     const [date, setDate] = useState("");
@@ -45,7 +46,6 @@ export default function AddClaimPage() {
     const isWeekly = selectedType?.frequency === "weekly";
     const amount = selectedType?.amount ?? 0;
 
-    // Weekly uses the selected session date; everything else just uses today
     const effectiveDate = isWeekly
         ? (claimableDates.includes(date) ? date : (claimableDates[claimableDates.length - 1] ?? getLocalToday()))
         : getLocalToday();
@@ -65,7 +65,7 @@ export default function AddClaimPage() {
             if (photoFile) {
                 photoUrl = await upload(photoFile, "reimbursements", `${user.id}/${effectiveDate}`);
             }
-            await create({ claimTypeId: selectedTypeId, amount, date: effectiveDate, notes: notes.trim() || undefined, photoUrl });
+            await create({ claimConfigId: selectedTypeId, amount, date: effectiveDate, notes: notes.trim() || undefined, photoUrl });
             router.back();
         } catch (err) {
             setError(err instanceof Error ? err.message : t("claims.failedToSubmit"));
@@ -79,7 +79,7 @@ export default function AddClaimPage() {
             <div className="bg-white rounded-xl p-4 space-y-4">
                 <div className="space-y-1.5">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("claims.typeLabel")}</p>
-                    {periodLoading || typesLoading ? (
+                    {infoLoading || typesLoading ? (
                         <div className="h-12 bg-gray-100 rounded-xl animate-pulse" />
                     ) : types.length === 0 ? (
                         <p className="text-sm text-gray-400 py-2">{t("claims.noClaimEntitlements")}</p>

@@ -5,7 +5,7 @@ import { payrollApi } from "@/lib/api/payroll";
 import type { ListPayoutsQuery, PayoutListResponse } from "@tea-pos/features/payroll/schema";
 
 export function usePayouts(params?: Partial<ListPayoutsQuery>) {
-    const key = `payouts-${params?.periodId ?? "all"}-${params?.userId ?? "all"}`;
+    const key = `payouts-${params?.startDate ?? ""}-${params?.endDate ?? ""}-${params?.userId ?? "all"}`;
 
     const { data, error, mutate, isLoading } = useSWR<PayoutListResponse>(
         key,

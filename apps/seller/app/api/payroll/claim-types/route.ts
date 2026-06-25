@@ -22,7 +22,8 @@ export async function GET(request: NextRequest) {
         const types = await getClaimableTypes(supabase, {
             tenantId,
             userId: user.id,
-            periodId: query.data.periodId,
+            startDate: query.data.startDate,
+            endDate: query.data.endDate,
         });
 
         const parsed = ClaimableTypesResponse.safeParse({ types });

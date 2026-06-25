@@ -77,8 +77,8 @@ export default function StaffPayrollInfoListPage() {
                                 <p className="text-sm text-gray-400">
                                     {user.role}
                                     {(() => {
-                                        const slug = infoByUserId[user.id]?.commissionTypeId
-                                            ? typeById[infoByUserId[user.id].commissionTypeId!]?.slug
+                                        const slug = infoByUserId[user.id]?.commissionConfigId
+                                            ? typeById[infoByUserId[user.id].commissionConfigId!]?.slug
                                             : null;
                                         return slug ? <span className="ml-1.5 font-mono text-xs text-brand/70">· {slug}</span> : null;
                                     })()}

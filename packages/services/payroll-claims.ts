@@ -1,15 +1,17 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { toCamelKeys } from "@tea-pos/utils/schemas";
+import { getPayWindowBounds } from "@tea-pos/utils/week";
 import { startOfDay, endOfDay, parseISO, subHours, subDays } from "date-fns";
 import { createLogger } from "./activity-logs";
-import { getOrCreatePayrollPeriod, assertPayoutNotPaid } from "./payroll";
+import { assertPayoutNotPaid, upsertPayout } from "./payroll";
+import { getPayrollUserInfo } from "./payroll-user-info";
 
 // ─── Create claim ─────────────────────────────────────────────────────────────
 
 export interface CreatePayrollClaimParams {
     tenantId: string;
     userId: string;
-    claimTypeId: string;
+    claimConfigId: string;
     amount: number;
     date: string;
     storeId?: string;
@@ -21,61 +23,67 @@ export async function createPayrollClaim(
     supabase: SupabaseClient,
     params: CreatePayrollClaimParams,
 ) {
-    const { tenantId, userId, claimTypeId, amount, date, storeId, notes, photoUrl } = params;
+    const { tenantId, userId, claimConfigId, amount, date, storeId, notes, photoUrl } = params;
 
-    // Max-lookback guard (14 days covers current + previous ISO week)
     const earliest = subDays(new Date(), 14).toISOString().slice(0, 10);
     if (date < earliest) {
         throw Object.assign(new Error("Claim date is too far in the past"), { status: 422 });
     }
 
-    // 1. Resolve period from claim.date
-    const period = await getOrCreatePayrollPeriod(supabase, { tenantId, date });
+    // Reject if a paid payout already covers this date
+    const { data: coveringPayout } = await supabase
+        .from("payroll_payouts")
+        .select("status")
+        .eq("tenant_id", tenantId)
+        .eq("user_id", userId)
+        .lte("start_date", date)
+        .gte("end_date", date)
+        .maybeSingle();
 
-    // 2. Reject if the period is already closed
-    if ((period as { closed_at: string | null }).closed_at) {
-        throw Object.assign(new Error("This period is closed for new claims"), { status: 422 });
+    if ((coveringPayout as { status: string } | null)?.status === "paid") {
+        throw Object.assign(new Error("This pay period is already paid"), { status: 422 });
     }
 
-    // 3. Resolve claim type and check eligibility
-    const { data: claimType, error: typeError } = await supabase
-        .from("payroll_claim_types")
+    const { data: claimConfig, error: typeError } = await supabase
+        .from("payroll_claim_configs")
         .select("id, frequency")
-        .eq("id", claimTypeId)
+        .eq("id", claimConfigId)
         .eq("tenant_id", tenantId)
         .eq("is_enabled", true)
         .single();
 
-    if (typeError || !claimType) {
+    if (typeError || !claimConfig) {
         throw Object.assign(new Error("Invalid or disabled claim type"), { status: 422 });
     }
 
     const { count: eligibleCount } = await supabase
-        .from("payroll_claim_eligibility")
+        .from("payroll_user_claim_assignments")
         .select("id", { count: "exact", head: true })
         .eq("tenant_id", tenantId)
         .eq("user_id", userId)
-        .eq("claim_type_id", claimTypeId);
+        .eq("claim_config_id", claimConfigId);
 
     if ((eligibleCount ?? 0) === 0) {
         throw Object.assign(new Error("You are not eligible to submit this claim type"), { status: 403 });
     }
 
-    // 4. Frequency duplicate check
-    const frequency = (claimType as { frequency: string }).frequency;
+    const frequency = (claimConfig as { frequency: string }).frequency;
 
+    // Frequency duplicate checks — all use date ranges, no period FK needed
     if (frequency === "weekly") {
+        const { startDate: wStart, endDate: wEnd } = getPayWindowBounds(date, "weekly");
         const { count } = await supabase
             .from("payroll_claims")
             .select("id", { count: "exact", head: true })
             .eq("tenant_id", tenantId)
             .eq("user_id", userId)
-            .eq("claim_type_id", claimTypeId)
-            .eq("payroll_period_id", (period as { id: string }).id)
+            .eq("claim_config_id", claimConfigId)
+            .gte("date", wStart)
+            .lte("date", wEnd)
             .neq("status", "rejected");
 
         if ((count ?? 0) > 0) {
-            throw Object.assign(new Error("You have already submitted this claim type for this period"), { status: 422 });
+            throw Object.assign(new Error("You have already submitted this claim type for this week"), { status: 422 });
         }
     } else if (frequency === "monthly") {
         const monthStart = date.slice(0, 7) + "-01";
@@ -88,7 +96,7 @@ export async function createPayrollClaim(
             .select("id", { count: "exact", head: true })
             .eq("tenant_id", tenantId)
             .eq("user_id", userId)
-            .eq("claim_type_id", claimTypeId)
+            .eq("claim_config_id", claimConfigId)
             .gte("date", monthStart)
             .lt("date", monthEnd)
             .neq("status", "rejected");
@@ -102,7 +110,7 @@ export async function createPayrollClaim(
             .select("id", { count: "exact", head: true })
             .eq("tenant_id", tenantId)
             .eq("user_id", userId)
-            .eq("claim_type_id", claimTypeId)
+            .eq("claim_config_id", claimConfigId)
             .neq("status", "rejected");
 
         if ((count ?? 0) > 0) {
@@ -110,7 +118,7 @@ export async function createPayrollClaim(
         }
     }
 
-    // 5. Weekly: verify user had a session on the claim date (UTC+7 aware)
+    // Weekly claims require a session on the claim date (UTC+7 aware)
     if (frequency === "weekly") {
         const tzOffset = parseInt(process.env.TIMEZONE_OFFSET ?? "7");
         const dayStart = subHours(startOfDay(parseISO(date)), tzOffset).toISOString();
@@ -129,16 +137,14 @@ export async function createPayrollClaim(
         }
     }
 
-    // 6. Insert claim with period and type already resolved
     const { data, error } = await supabase
         .from("payroll_claims")
         .insert({
             tenant_id: tenantId,
             user_id: userId,
             store_id: storeId ?? null,
-            claim_type_id: claimTypeId,
+            claim_config_id: claimConfigId,
             frequency,
-            payroll_period_id: (period as { id: string }).id,
             amount,
             date,
             notes: notes ?? null,
@@ -153,8 +159,18 @@ export async function createPayrollClaim(
     log("claim_submitted", {
         refId: (data as { id: string }).id,
         refTable: "payroll_claims",
-        metadata: { claim_type_id: claimTypeId, amount, date },
+        metadata: { claim_config_id: claimConfigId, amount, date },
     });
+
+    // Refresh the payout for the user's pay window (backfill stamps payout_id on the new claim)
+    const info = await getPayrollUserInfo(supabase, { tenantId, userId });
+    if (info) {
+        const payFrequency = (info.payFrequency as string | null) ?? "bi_weekly";
+        const { startDate, endDate } = getPayWindowBounds(date, payFrequency);
+        await upsertPayout(supabase, { tenantId, userId, startDate, endDate }).catch((err) =>
+            console.warn("[payroll] upsertPayout failed after claim create:", err),
+        );
+    }
 
     return toCamelKeys(data);
 }
@@ -187,8 +203,6 @@ export async function createAutoClaimsForDailySummary(
     type SessionRow = { user_id: string; started_at: string; ended_at: string | null };
     const typedSessions = sessions as SessionRow[];
     const userIds = [...new Set(typedSessions.map((s) => s.user_id))];
-
-    const period = await getOrCreatePayrollPeriod(supabase, { tenantId, date });
     const created: unknown[] = [];
 
     for (const userId of userIds) {
@@ -199,16 +213,16 @@ export async function createAutoClaimsForDailySummary(
         }, 0);
 
         const { data: eligibilityRows } = await supabase
-            .from("payroll_claim_eligibility")
-            .select("claim_type_id, payroll_claim_types!inner(id, frequency, amount, claim_source, auto_threshold_hours)")
+            .from("payroll_user_claim_assignments")
+            .select("claim_config_id, payroll_claim_configs!inner(id, frequency, amount, claim_source, auto_threshold_hours)")
             .eq("tenant_id", tenantId)
             .eq("user_id", userId)
-            .eq("payroll_claim_types.claim_source", "auto");
+            .eq("payroll_claim_configs.claim_source", "auto");
 
         type AutoType = { id: string; frequency: string; amount: number; claim_source: string; auto_threshold_hours: number | null };
         const autoTypes = (
-            (eligibilityRows ?? []) as unknown as Array<{ payroll_claim_types: AutoType }>
-        ).map((r) => r.payroll_claim_types);
+            (eligibilityRows ?? []) as unknown as Array<{ payroll_claim_configs: AutoType }>
+        ).map((r) => r.payroll_claim_configs);
 
         for (const type of autoTypes) {
             if (type.auto_threshold_hours === null) {
@@ -224,9 +238,8 @@ export async function createAutoClaimsForDailySummary(
                     tenant_id: tenantId,
                     user_id: userId,
                     store_id: storeId,
-                    claim_type_id: type.id,
+                    claim_config_id: type.id,
                     frequency: type.frequency,
-                    payroll_period_id: (period as { id: string }).id,
                     amount: type.amount,
                     date,
                     status,
@@ -237,8 +250,6 @@ export async function createAutoClaimsForDailySummary(
                 .single();
 
             if (error) {
-                // Unique violation on (daily_summary_id, user_id, claim_type_id) means this
-                // was already created by a previous attempt — treat as already-done, not an error.
                 if (error.code === "23505") continue;
                 throw error;
             }
@@ -249,8 +260,18 @@ export async function createAutoClaimsForDailySummary(
             log("claim_submitted", {
                 refId: (data as { id: string }).id,
                 refTable: "payroll_claims",
-                metadata: { claim_type_id: type.id, amount: type.amount, date },
+                metadata: { claim_config_id: type.id, amount: type.amount, date },
             });
+        }
+
+        // Refresh the payout after auto claims (backfill stamps payout_id on new claims)
+        const info = await getPayrollUserInfo(supabase, { tenantId, userId });
+        if (info) {
+            const payFrequency = (info.payFrequency as string | null) ?? "bi_weekly";
+            const { startDate, endDate } = getPayWindowBounds(date, payFrequency);
+            await upsertPayout(supabase, { tenantId, userId, startDate, endDate }).catch((err) =>
+                console.warn("[payroll] upsertPayout failed after auto claims:", err),
+            );
         }
     }
 
@@ -270,15 +291,15 @@ export async function updatePayrollClaimStatus(
 ) {
     const { data: claim, error: claimError } = await supabase
         .from("payroll_claims")
-        .select("payroll_period_id, user_id")
+        .select("date, user_id")
         .eq("id", id)
         .eq("tenant_id", tenantId)
         .single();
 
     if (claimError || !claim) throw Object.assign(new Error(claimError?.message ?? "Claim not found"), { status: 404 });
 
-    const row = claim as { payroll_period_id: string; user_id: string };
-    await assertPayoutNotPaid(supabase, { tenantId, periodId: row.payroll_period_id, userId: row.user_id });
+    const row = claim as { date: string; user_id: string };
+    await assertPayoutNotPaid(supabase, { tenantId, userId: row.user_id, date: row.date });
 
     const { data, error } = await supabase
         .from("payroll_claims")
@@ -291,11 +312,7 @@ export async function updatePayrollClaimStatus(
     if (error || !data) throw Object.assign(new Error(error?.message ?? "Claim not found"), { status: 404 });
 
     const log = createLogger(supabase, { tenantId, userId: actorId });
-    log("claim_status_updated", {
-        refId: id,
-        refTable: "payroll_claims",
-        metadata: { status },
-    });
+    log("claim_status_updated", { refId: id, refTable: "payroll_claims", metadata: { status } });
 
     return toCamelKeys(data);
 }
@@ -304,24 +321,30 @@ export async function updatePayrollClaimStatus(
 
 export async function listAllPayrollClaims(
     supabase: SupabaseClient,
-    { tenantId, status, periodId }: { tenantId: string; status?: string; periodId?: string },
+    {
+        tenantId,
+        status,
+        startDate,
+        endDate,
+    }: { tenantId: string; status?: string; startDate?: string; endDate?: string },
 ) {
     let query = supabase
         .from("payroll_claims")
-        .select("*, payroll_claim_types!left(name)")
+        .select("*, payroll_claim_configs!left(name)")
         .eq("tenant_id", tenantId)
         .order("created_at", { ascending: false });
 
     if (status) query = query.eq("status", status);
-    if (periodId) query = query.eq("payroll_period_id", periodId);
+    if (startDate) query = query.gte("date", startDate);
+    if (endDate) query = query.lte("date", endDate);
 
     const { data, error } = await query;
     if (error) throw error;
 
     const flat = (data ?? []).map((c) => {
         const row = c as Record<string, unknown>;
-        const claimType = row.payroll_claim_types as { name: string } | null;
-        return { ...row, claim_type_name: claimType?.name ?? null, payroll_claim_types: undefined };
+        const claimConfig = row.payroll_claim_configs as { name: string } | null;
+        return { ...row, claim_type_name: claimConfig?.name ?? null, payroll_claim_configs: undefined };
     });
 
     return toCamelKeys(flat);
@@ -335,7 +358,7 @@ export async function listMyPayrollClaims(
 ) {
     let query = supabase
         .from("payroll_claims")
-        .select("*, payroll_claim_types!left(name)")
+        .select("*, payroll_claim_configs!left(name)")
         .eq("tenant_id", tenantId)
         .eq("user_id", userId)
         .order("created_at", { ascending: false });
@@ -347,40 +370,30 @@ export async function listMyPayrollClaims(
 
     const flat = (data ?? []).map((c) => {
         const row = c as Record<string, unknown>;
-        const claimType = row.payroll_claim_types as { name: string } | null;
-        return { ...row, claim_type_name: claimType?.name ?? null, payroll_claim_types: undefined };
+        const claimConfig = row.payroll_claim_configs as { name: string } | null;
+        return { ...row, claim_type_name: claimConfig?.name ?? null, payroll_claim_configs: undefined };
     });
 
     return toCamelKeys(flat);
 }
 
-// ─── Get claimable dates (dates with sessions in a period) ───────────────────
+// ─── Get claimable dates (dates with sessions in a window) ───────────────────
 
 export async function getClaimableDates(
     supabase: SupabaseClient,
-    { tenantId, userId, periodId }: { tenantId: string; userId: string; periodId: string },
+    { tenantId, userId, startDate, endDate }: { tenantId: string; userId: string; startDate: string; endDate: string },
 ) {
-    const { data: period, error: periodError } = await supabase
-        .from("payroll_periods")
-        .select("start_date, end_date")
-        .eq("id", periodId)
-        .eq("tenant_id", tenantId)
-        .single();
-
-    if (periodError || !period) throw Object.assign(new Error("Period not found"), { status: 404 });
-
     const tzOffset = parseInt(process.env.TIMEZONE_OFFSET ?? "7");
-    const p = period as { start_date: string; end_date: string };
-    const periodStart = subHours(startOfDay(parseISO(p.start_date)), tzOffset).toISOString();
-    const periodEnd = subHours(endOfDay(parseISO(p.end_date)), tzOffset).toISOString();
+    const windowStart = subHours(startOfDay(parseISO(startDate)), tzOffset).toISOString();
+    const windowEnd = subHours(endOfDay(parseISO(endDate)), tzOffset).toISOString();
 
     const { data: sessions } = await supabase
         .from("store_sessions")
         .select("started_at")
         .eq("tenant_id", tenantId)
         .eq("user_id", userId)
-        .gte("started_at", periodStart)
-        .lte("started_at", periodEnd);
+        .gte("started_at", windowStart)
+        .lte("started_at", windowEnd);
 
     const dates = new Set<string>();
     for (const session of (sessions ?? []) as Array<{ started_at: string }>) {
@@ -395,79 +408,66 @@ export async function getClaimableDates(
 
 export async function getClaimableTypes(
     supabase: SupabaseClient,
-    { tenantId, userId, periodId }: { tenantId: string; userId: string; periodId: string },
+    { tenantId, userId, startDate, endDate }: { tenantId: string; userId: string; startDate: string; endDate: string },
 ) {
-    const { data: period, error: periodError } = await supabase
-        .from("payroll_periods")
-        .select("start_date, end_date")
-        .eq("id", periodId)
-        .eq("tenant_id", tenantId)
-        .single();
-
-    if (periodError || !period) throw Object.assign(new Error("Period not found"), { status: 404 });
-
-    const p = period as { start_date: string; end_date: string };
-    const monthStart = p.start_date.slice(0, 7) + "-01";
+    const monthStart = startDate.slice(0, 7) + "-01";
     const nextMonth = new Date(monthStart);
     nextMonth.setMonth(nextMonth.getMonth() + 1);
     const monthEnd = nextMonth.toISOString().slice(0, 10);
 
-    // Get eligible claim type IDs for this user
     const { data: eligibilityRows } = await supabase
-        .from("payroll_claim_eligibility")
-        .select("claim_type_id")
+        .from("payroll_user_claim_assignments")
+        .select("claim_config_id")
         .eq("tenant_id", tenantId)
         .eq("user_id", userId);
 
     if (!eligibilityRows || eligibilityRows.length === 0) return [];
 
-    const typeIds = (eligibilityRows as Array<{ claim_type_id: string }>).map((e) => e.claim_type_id);
+    const configIds = (eligibilityRows as Array<{ claim_config_id: string }>).map((e) => e.claim_config_id);
 
-    // Fetch the enabled types
-    const { data: types } = await supabase
-        .from("payroll_claim_types")
+    const { data: configs } = await supabase
+        .from("payroll_claim_configs")
         .select("id, name, frequency, amount, claim_source")
         .eq("tenant_id", tenantId)
         .eq("is_enabled", true)
-        .in("id", typeIds);
+        .in("id", configIds);
 
-    if (!types || types.length === 0) return [];
+    if (!configs || configs.length === 0) return [];
 
-    // Fetch all non-rejected existing claims for these types
     const { data: existingClaims } = await supabase
         .from("payroll_claims")
-        .select("claim_type_id, payroll_period_id, date")
+        .select("claim_config_id, date")
         .eq("tenant_id", tenantId)
         .eq("user_id", userId)
-        .in("claim_type_id", typeIds)
+        .in("claim_config_id", configIds)
         .neq("status", "rejected");
 
-    type ClaimRow = { claim_type_id: string; payroll_period_id: string; date: string };
+    type ClaimRow = { claim_config_id: string; date: string };
     const claims = (existingClaims ?? []) as ClaimRow[];
 
     return (
-        types as Array<{ id: string; name: string; frequency: string; amount: number; claim_source: string }>
-    ).map((type) => {
+        configs as Array<{ id: string; name: string; frequency: string; amount: number; claim_source: string }>
+    ).map((config) => {
         let claimable = true;
 
-        if (type.frequency === "weekly") {
+        if (config.frequency === "weekly") {
             claimable = !claims.some(
-                (c) => c.claim_type_id === type.id && c.payroll_period_id === periodId,
+                (c) => c.claim_config_id === config.id && c.date >= startDate && c.date <= endDate,
             );
-        } else if (type.frequency === "monthly") {
+        } else if (config.frequency === "monthly") {
             claimable = !claims.some(
-                (c) => c.claim_type_id === type.id && c.date >= monthStart && c.date < monthEnd,
+                (c) => c.claim_config_id === config.id && c.date >= monthStart && c.date < monthEnd,
             );
-        } else if (type.frequency === "one_time") {
-            claimable = !claims.some((c) => c.claim_type_id === type.id);
+        } else if (config.frequency === "one_time") {
+            claimable = !claims.some((c) => c.claim_config_id === config.id);
         }
 
         return {
-            id: type.id,
-            name: type.name,
-            frequency: type.frequency,
-            amount: type.amount ?? 0,
-            claimSource: type.claim_source,
+            id: config.id,
+            name: config.name,
+            frequency: config.frequency,
+            amount: config.amount ?? 0,
+            claimSource: config.claim_source,
             claimable,
         };
     });

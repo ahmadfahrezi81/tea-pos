@@ -273,6 +273,7 @@ export const id: DeepPartial<typeof en> = {
         periodLabel: "Periode",
         forLabel: "Untuk",
         payslipId: "ID Slip Gaji",
+        selectYear: "Pilih Tahun",
     },
     account: {
         personalDetails: "Data Pribadi",

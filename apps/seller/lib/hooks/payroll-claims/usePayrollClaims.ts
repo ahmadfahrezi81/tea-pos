@@ -46,7 +46,7 @@ export function usePayrollClaims(options?: UsePayrollClaimsOptions) {
 
 export function useClaimableTypes(params: GetClaimableTypesQuery | null) {
     const { data, error, isLoading } = useSWR<ClaimableTypesResponse>(
-        params ? `claimable-types-${params.periodId}` : null,
+        params ? `claimable-types-${params.startDate}-${params.endDate}` : null,
         () => payrollClaimsApi.getClaimableTypes(params!),
         { revalidateOnFocus: false, dedupingInterval: 60000 },
     );
@@ -60,7 +60,7 @@ export function useClaimableTypes(params: GetClaimableTypesQuery | null) {
 
 export function useClaimableDates(params: GetClaimableDatesQuery | null) {
     const { data, error, isLoading } = useSWR<ClaimableDatesResponse>(
-        params ? `claimable-dates-${params.periodId}` : null,
+        params ? `claimable-dates-${params.startDate}-${params.endDate}` : null,
         () => payrollClaimsApi.getClaimableDates(params!),
         { revalidateOnFocus: false, dedupingInterval: 60000 },
     );

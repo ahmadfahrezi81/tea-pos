@@ -7,7 +7,7 @@ import { UUIDSchema } from "../shared/common-schema";
 
 export const CreatePayrollClaimInput = z
     .object({
-        claimTypeId: UUIDSchema,
+        claimConfigId: UUIDSchema,
         amount: z.number().int().positive(),
         date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
         storeId: UUIDSchema.optional(),
@@ -25,7 +25,8 @@ export const ListPayrollClaimsQuery = z
 export const ListAllPayrollClaimsQuery = z
     .object({
         status: z.enum(["pending", "approved", "rejected"]).optional(),
-        periodId: UUIDSchema.optional(),
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
     })
     .openapi({ title: "ListAllPayrollClaimsQuery" });
 
@@ -37,13 +38,15 @@ export const UpdatePayrollClaimStatusInput = z
 
 export const GetClaimableTypesQuery = z
     .object({
-        periodId: UUIDSchema,
+        startDate: z.string(),
+        endDate: z.string(),
     })
     .openapi({ title: "GetClaimableTypesQuery" });
 
 export const GetClaimableDatesQuery = z
     .object({
-        periodId: UUIDSchema,
+        startDate: z.string(),
+        endDate: z.string(),
     })
     .openapi({ title: "GetClaimableDatesQuery" });
 
@@ -56,8 +59,7 @@ export const PayrollClaimResponse = z
         id: z.string(),
         userId: z.string(),
         storeId: z.string().nullable(),
-        payrollPeriodId: z.string(),
-        claimTypeId: z.string().nullable(),
+        claimConfigId: z.string().nullable(),
         claimTypeName: z.string().nullable().optional(),
         frequency: z.string().nullable(),
         amount: z.number(),

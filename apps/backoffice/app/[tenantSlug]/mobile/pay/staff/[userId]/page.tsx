@@ -24,15 +24,15 @@ export default function StaffPayrollInfoPage({ params }: { params: Promise<{ use
 
     useEffect(() => {
         if (info) {
-            setSelectedTypeId(info.commissionTypeId ?? null);
+            setSelectedTypeId(info.commissionConfigId ?? null);
         }
-    }, [info?.commissionTypeId]);
+    }, [info?.commissionConfigId]);
 
     const handleSave = async () => {
         setSaving(true);
         setError(null);
         try {
-            await update({ commissionTypeId: selectedTypeId ?? undefined });
+            await update({ commissionConfigId: selectedTypeId ?? undefined });
             router.back();
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to save");

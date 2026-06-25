@@ -15,7 +15,8 @@ export const UpdatePayrollUserInfoInput = z
 
 export const AdminUpdatePayrollUserInfoInput = z
     .object({
-        commissionTypeId: UUIDSchema.nullable().optional(),
+        commissionConfigId: UUIDSchema.nullable().optional(),
+        payFrequency: z.enum(["daily", "weekly", "bi_weekly", "monthly"]).optional(),
         bankName: z.string().max(100).nullable().optional(),
         bankAccountNumber: z.string().max(50).nullable().optional(),
         bankAccountHolder: z.string().max(100).nullable().optional(),
@@ -37,9 +38,10 @@ export const PayrollUserInfoResponse = z
         id: UUIDSchema,
         tenantId: UUIDSchema,
         userId: UUIDSchema,
-        commissionTypeId: UUIDSchema.nullable(),
-        commissionTypeName: z.string().nullable(),
+        commissionConfigId: UUIDSchema.nullable(),
+        commissionConfigName: z.string().nullable(),
         ratePerCup: z.number().nullable(),
+        payFrequency: z.string().nullable(),
         bankName: z.string().nullable(),
         bankAccountNumber: z.string().nullable(),
         bankAccountHolder: z.string().nullable(),

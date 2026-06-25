@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
         const payslip = await getPayslip(supabase, {
             tenantId,
             userId: targetUserId,
-            periodId: query.data.periodId,
+            payoutId: query.data.payoutId,
         });
         return ok(payslip);
     } catch (error) {

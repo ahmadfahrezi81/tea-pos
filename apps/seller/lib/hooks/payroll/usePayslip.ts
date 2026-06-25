@@ -3,12 +3,12 @@
 import useSWR from "swr";
 import { payrollApi } from "@/lib/api/payroll";
 
-export function usePayslip(periodId: string | undefined, userId?: string) {
-    const key = periodId ? `payslip-${periodId}-${userId ?? "self"}` : null;
+export function usePayslip(payoutId: string | undefined, userId?: string) {
+    const key = payoutId ? `payslip-${payoutId}-${userId ?? "self"}` : null;
 
     const { data, error, mutate, isLoading } = useSWR(
         key,
-        () => payrollApi.getPayslip({ periodId: periodId!, ...(userId ? { userId } : {}) }),
+        () => payrollApi.getPayslip({ payoutId: payoutId!, ...(userId ? { userId } : {}) }),
         { revalidateOnFocus: false, dedupingInterval: 60000 },
     );
 

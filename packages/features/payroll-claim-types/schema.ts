@@ -33,7 +33,7 @@ export const UpdatePayrollClaimTypeInput = z
 export const SetClaimEligibilityInput = z
     .object({
         userId: UUIDSchema,
-        claimTypeIds: z.array(UUIDSchema),
+        claimConfigIds: z.array(UUIDSchema),
     })
     .openapi({ title: "SetClaimEligibilityInput" });
 

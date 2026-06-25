@@ -30,8 +30,8 @@ export function PayConfigCard() {
                         Rp {info.ratePerCup.toLocaleString("id-ID")}{" "}
                         <span className="text-sm font-medium text-gray-400">{t("earnings.perCup")}</span>
                     </p>
-                    {info.commissionTypeName && (
-                        <p className="text-sm text-gray-500">{info.commissionTypeName}</p>
+                    {info.commissionConfigName && (
+                        <p className="text-sm text-gray-500">{info.commissionConfigName}</p>
                     )}
                 </>
             )}

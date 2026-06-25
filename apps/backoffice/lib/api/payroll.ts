@@ -1,6 +1,5 @@
 import { apiFetch, buildParams } from "./client";
 import type {
-    ListPayrollPeriodsQuery,
     ListPayrollCommissionsQuery,
     ListPayoutsQuery,
     GetPayslipQuery,
@@ -8,18 +7,12 @@ import type {
     UpdatePayrollCommissionInput,
 } from "@tea-pos/features/payroll/schema";
 import {
-    PayrollPeriodListResponse,
     PayrollCommissionListResponse,
     PayrollCommissionResponse,
     PayoutListResponse,
 } from "@tea-pos/features/payroll/schema";
 
 export const payrollApi = {
-    getPeriods: async (params?: Partial<ListPayrollPeriodsQuery>) => {
-        const sp = buildParams((params ?? {}) as Record<string, unknown>);
-        return PayrollPeriodListResponse.parse(await apiFetch<unknown>(`/api/payroll/periods?${sp}`));
-    },
-
     getCommissions: async (params?: Partial<ListPayrollCommissionsQuery>) => {
         const sp = buildParams((params ?? {}) as Record<string, unknown>);
         return PayrollCommissionListResponse.parse(
@@ -47,7 +40,7 @@ export const payrollApi = {
         return apiFetch<unknown>(`/api/payroll/payslip?${sp}`);
     },
 
-    upsertPayout: async (input: { periodId: string; userId: string }) => {
+    upsertPayout: async (input: { startDate: string; endDate: string; userId: string }) => {
         return apiFetch<unknown>("/api/payroll/payouts", {
             method: "POST",
             headers: { "Content-Type": "application/json" },

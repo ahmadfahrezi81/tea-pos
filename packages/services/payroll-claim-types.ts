@@ -6,7 +6,7 @@ export async function listPayrollClaimTypes(
     { tenantId }: { tenantId: string },
 ) {
     const { data, error } = await supabase
-        .from("payroll_claim_types")
+        .from("payroll_claim_configs")
         .select("*")
         .eq("tenant_id", tenantId)
         .order("name");
@@ -36,7 +36,7 @@ export async function createPayrollClaimType(
     },
 ) {
     const { data, error } = await supabase
-        .from("payroll_claim_types")
+        .from("payroll_claim_configs")
         .insert({
             tenant_id: tenantId,
             name,
@@ -81,7 +81,7 @@ export async function updatePayrollClaimType(
     if (autoThresholdHours !== undefined) updates.auto_threshold_hours = autoThresholdHours;
 
     const { data, error } = await supabase
-        .from("payroll_claim_types")
+        .from("payroll_claim_configs")
         .update(updates)
         .eq("id", id)
         .eq("tenant_id", tenantId)
@@ -97,8 +97,8 @@ export async function listUserClaimEligibility(
     { tenantId, userId }: { tenantId: string; userId: string },
 ) {
     const { data, error } = await supabase
-        .from("payroll_claim_eligibility")
-        .select("*, payroll_claim_types(id, name, slug, frequency, is_enabled)")
+        .from("payroll_user_claim_assignments")
+        .select("*, payroll_claim_configs(id, name, slug, frequency, is_enabled)")
         .eq("tenant_id", tenantId)
         .eq("user_id", userId);
 
@@ -108,33 +108,33 @@ export async function listUserClaimEligibility(
 
 export async function setUserClaimEligibility(
     supabase: SupabaseClient,
-    { tenantId, userId, claimTypeIds }: { tenantId: string; userId: string; claimTypeIds: string[] },
+    { tenantId, userId, claimConfigIds }: { tenantId: string; userId: string; claimConfigIds: string[] },
 ) {
     const { data: allRows } = await supabase
-        .from("payroll_claim_eligibility")
-        .select("id, claim_type_id")
+        .from("payroll_user_claim_assignments")
+        .select("id, claim_config_id")
         .eq("tenant_id", tenantId)
         .eq("user_id", userId);
 
-    type Row = { id: string; claim_type_id: string };
+    type Row = { id: string; claim_config_id: string };
     const all = (allRows ?? []) as Row[];
 
     // Revoke = delete. Re-add = plain insert. No reactivate path — eligibility
     // rows carry no history worth preserving (unlike claims, which snapshot
     // their own data at submission time).
-    const toRevoke = all.filter((r) => !claimTypeIds.includes(r.claim_type_id));
+    const toRevoke = all.filter((r) => !claimConfigIds.includes(r.claim_config_id));
     if (toRevoke.length > 0) {
         await supabase
-            .from("payroll_claim_eligibility")
+            .from("payroll_user_claim_assignments")
             .delete()
             .in("id", toRevoke.map((r) => r.id));
     }
 
-    const existingTypeIds = all.map((r) => r.claim_type_id);
-    const toAdd = claimTypeIds.filter((id) => !existingTypeIds.includes(id));
+    const existingConfigIds = all.map((r) => r.claim_config_id);
+    const toAdd = claimConfigIds.filter((id) => !existingConfigIds.includes(id));
     if (toAdd.length > 0) {
         await supabase
-            .from("payroll_claim_eligibility")
-            .insert(toAdd.map((claim_type_id) => ({ tenant_id: tenantId, user_id: userId, claim_type_id })));
+            .from("payroll_user_claim_assignments")
+            .insert(toAdd.map((claim_config_id) => ({ tenant_id: tenantId, user_id: userId, claim_config_id })));
     }
 }

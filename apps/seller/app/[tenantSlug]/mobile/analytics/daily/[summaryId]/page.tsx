@@ -28,7 +28,7 @@ export default async function SummaryDetailPage({
     let breakdown: Record<string, { quantity: number; revenue: number }>;
     let photos: PhotoShape[];
     let expenses: ExpenseShape[];
-    let sessionsMap: Record<string, Array<{ userId: string; userName: string | null; userAvatarUrl: string | null }>>;
+    let sessionsMap: Record<string, Array<{ userId: string; userName: string | null; userAvatarUrl: string | null; totalCups: number | null }>>;
 
     try {
         const [rawSummary, rawBreakdown, rawPhotos, rawExpenses, rawSessions] = await Promise.all([

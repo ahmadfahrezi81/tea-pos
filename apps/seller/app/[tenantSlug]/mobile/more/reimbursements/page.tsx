@@ -1,10 +1,16 @@
 "use client";
 
 import { usePayrollClaims, useClaimableTypes } from "@/lib/hooks/payroll-claims/usePayrollClaims";
-import { useCurrentPayrollPeriod } from "@/lib/hooks/payroll/usePayroll";
+import { usePayrollUserInfo } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
+import { getPayWindowBounds } from "@tea-pos/utils/week";
 import { ReceiptText, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 import { useT } from "@/lib/hooks/useT";
+
+function getLocalToday() {
+    const offset = parseInt(process.env.NEXT_PUBLIC_TIMEZONE_OFFSET ?? "7");
+    return new Date(Date.now() + offset * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
 
 const STATUS_STYLE: Record<string, string> = {
     pending: "bg-gray-100 text-gray-600",
@@ -14,18 +20,21 @@ const STATUS_STYLE: Record<string, string> = {
 
 export default function ReimbursementsPage() {
     const { claims, isLoading: claimsLoading } = usePayrollClaims();
-    const { period: currentPeriod, isLoading: periodLoading } = useCurrentPayrollPeriod();
-    const { types, isLoading: typesLoading } = useClaimableTypes(
-        currentPeriod ? { periodId: currentPeriod.id } : null,
-    );
+    const { info, isLoading: infoLoading } = usePayrollUserInfo();
     const t = useT();
+
+    const window = info
+        ? getPayWindowBounds(getLocalToday(), info.payFrequency ?? "bi_weekly")
+        : null;
+
+    const { types, isLoading: typesLoading } = useClaimableTypes(window);
 
     return (
         <div className="space-y-3">
             {/* Entitlements */}
             <div className="bg-white rounded-2xl p-4 space-y-3">
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{t("claims.entitlements")}</p>
-                {periodLoading || typesLoading ? (
+                {infoLoading || typesLoading ? (
                     <div className="flex gap-3">
                         {[1, 2].map((i) => (
                             <div key={i} className="w-36 h-20 bg-gray-100 rounded-xl animate-pulse shrink-0" />
@@ -80,7 +89,7 @@ export default function ReimbursementsPage() {
                             <li key={claim.id} className="flex items-center justify-between px-4 py-3">
                                 <div>
                                     <p className="text-base font-medium text-gray-800">
-                                        {claim.claimTypeName ?? claim.claimTypeId ?? "—"}
+                                        {claim.claimTypeName ?? claim.claimConfigId ?? "—"}
                                     </p>
                                     <p className="text-sm text-gray-400">
                                         {format(new Date(claim.date), "d MMM yyyy")}

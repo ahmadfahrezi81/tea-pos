@@ -1,48 +1,49 @@
 "use client";
 
-import { usePayrollPeriods, usePayouts } from "@/lib/hooks/payroll/usePayroll";
+import { usePayouts } from "@/lib/hooks/payroll/usePayroll";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
 import { getISOWeek, parseISO, format } from "date-fns";
 import { ChevronRight } from "lucide-react";
-import type { PayrollPeriodResponse } from "@tea-pos/features/payroll/schema";
 
 export default function StaffPayPeriodsPage() {
     const { url } = useTenantSlug();
-    const { periods, isLoading: periodsLoading } = usePayrollPeriods();
-    const { payouts, isLoading: payoutsLoading } = usePayouts();
-    const isLoading = periodsLoading || payoutsLoading;
+    const { payouts, isLoading } = usePayouts();
 
-    const payoutsByPeriod = payouts.reduce<Record<string, typeof payouts>>((acc, p) => {
-        if (!acc[p.payrollPeriodId]) acc[p.payrollPeriodId] = [];
-        acc[p.payrollPeriodId].push(p);
-        return acc;
-    }, {});
+    // Group payouts by unique startDate (each startDate represents a pay window)
+    const windowMap = new Map<string, typeof payouts>();
+    for (const payout of payouts) {
+        const existing = windowMap.get(payout.startDate) ?? [];
+        windowMap.set(payout.startDate, [...existing, payout]);
+    }
+    const windows = [...windowMap.entries()].sort((a, b) => b[0].localeCompare(a[0]));
 
     return (
         <div className="space-y-2">
             {isLoading ? (
                 [1, 2, 3].map((i) => <div key={i} className="bg-white rounded-xl p-4 h-20 animate-pulse" />)
-            ) : periods.length === 0 ? (
+            ) : windows.length === 0 ? (
                 <p className="text-center text-gray-400 py-10">No pay periods yet.</p>
             ) : (
-                (periods as PayrollPeriodResponse[]).map((period) => {
-                    const periodPayouts = payoutsByPeriod[period.id] ?? [];
-                    const staffCount = periodPayouts.length;
-                    const totalPay = periodPayouts.reduce((s, p) => s + p.totalPay, 0);
-                    const weekNum = getISOWeek(parseISO(period.startDate));
-                    const pendingCount = periodPayouts.filter(p => p.status === "pending").length;
+                windows.map(([startDate, windowPayouts]) => {
+                    const endDate = windowPayouts[0].endDate;
+                    const staffCount = windowPayouts.length;
+                    const totalPay = windowPayouts.reduce((s, p) => s + p.totalPay, 0);
+                    const weekStart = getISOWeek(parseISO(startDate));
+                    const weekEnd = getISOWeek(parseISO(endDate));
+                    const pendingCount = windowPayouts.filter((p) => p.status === "pending").length;
+                    const sameWeek = weekStart === weekEnd;
 
                     return (
                         <button
-                            key={period.id}
-                            onClick={() => navigation.push(url(`/mobile/pay/periods/${period.id}`))}
+                            key={startDate}
+                            onClick={() => navigation.push(url(`/mobile/pay/periods/${startDate}`))}
                             className="w-full bg-white rounded-xl p-4 flex items-center gap-3 text-left active:bg-gray-50"
                         >
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
                                     <span className="text-base font-semibold text-gray-900">
-                                        Week {weekNum} · {format(parseISO(period.startDate), "MMM d")}–{format(parseISO(period.endDate), "MMM d")}
+                                        {sameWeek ? `W${weekStart}` : `W${weekStart}–W${weekEnd}`} · {format(parseISO(startDate), "MMM d")}–{format(parseISO(endDate), "MMM d")}
                                     </span>
                                 </div>
                                 <p className="text-sm text-gray-500">

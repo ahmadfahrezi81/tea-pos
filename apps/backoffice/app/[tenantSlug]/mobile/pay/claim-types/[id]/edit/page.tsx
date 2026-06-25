@@ -84,11 +84,11 @@ export default function EditClaimTypePage({ params }: { params: Promise<{ id: st
         try {
             await update(id, { name: name.trim(), isEnabled });
             await Promise.all(
-                Object.entries(pendingEligibility).map(([userId, claimTypeIds]) =>
+                Object.entries(pendingEligibility).map(([userId, claimConfigIds]) =>
                     apiFetch("/api/payroll/claim-types/eligibility", {
                         method: "PUT",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ userId, claimTypeIds }),
+                        body: JSON.stringify({ userId, claimConfigIds }),
                     })
                 )
             );

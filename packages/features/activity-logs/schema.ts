@@ -114,14 +114,14 @@ export type ActivityLogMetadataMap = {
     session_transferred:        { previous_session_id: string; daily_summary_id: string };
     session_ended:              Record<string, never>;
     commission_config_updated:  { user_id: string; rate_per_cup: number; effective_date: string };
-    payroll_entry_updated:      { user_id?: string; total_cups?: number; rate_per_cup?: number; gross_pay?: number; status?: string };
-    payroll_commission_updated: { user_id?: string; total_cups?: number; rate_per_cup?: number; gross_pay?: number; status?: string };
+    payroll_entry_updated:      { user_id?: string; total_cups?: number; rate_per_cup?: number; total_commission?: number; status?: string };
+    payroll_commission_updated: { user_id?: string; total_cups?: number; rate_per_cup?: number; total_commission?: number; status?: string };
     payroll_period_updated:     { status: string };
     supply_request_created:     { type: string };
     incident_report_created:    { type: string };
     reimbursement_submitted:    { type: string; amount: number; date: string };
     reimbursement_status_updated: { status: string };
-    claim_submitted:            { claim_type_id: string; amount: number; date: string };
+    claim_submitted:            { claim_config_id: string; amount: number; date: string };
     claim_status_updated:       { status: string };
     payroll_payout_updated:     { status: string };
 };

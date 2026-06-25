@@ -1,6 +1,6 @@
 "use client";
 
-import { usePayrollPeriods, usePayouts } from "@/lib/hooks/payroll/usePayroll";
+import { usePayouts } from "@/lib/hooks/payroll/usePayroll";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
 import { ChevronRight, Users, Tag, Award, UserCog } from "lucide-react";
@@ -18,16 +18,12 @@ function MenuRow({ icon, label, onClick }: { icon: React.ReactNode; label: strin
 
 export default function PayOverviewPage() {
     const { url } = useTenantSlug();
-    const { periods, isLoading: periodsLoading } = usePayrollPeriods();
-    const { payouts, isLoading: payoutsLoading } = usePayouts();
-    const isLoading = periodsLoading || payoutsLoading;
-
+    const { payouts, isLoading } = usePayouts();
     const today = new Date();
     const weekStart = format(startOfISOWeek(today), "yyyy-MM-dd");
     const weekEnd = format(endOfISOWeek(today), "yyyy-MM-dd");
-    const currentPeriod = periods.find((p) => p.startDate <= weekStart && p.endDate >= weekEnd);
     const pendingCount = payouts.filter((p) => p.status === "pending").length;
-    const thisWeekPayouts = payouts.filter((p) => p.payrollPeriodId === currentPeriod?.id);
+    const thisWeekPayouts = payouts.filter((p) => p.startDate <= weekEnd && p.endDate >= weekStart);
     const thisWeekTotal = thisWeekPayouts.reduce((s, p) => s + p.totalPay, 0);
     const currentWeekNum = getISOWeek(today);
 
@@ -71,7 +67,7 @@ export default function PayOverviewPage() {
             <div className="space-y-1">
                 <p className="text-xs font-medium text-gray-400 uppercase tracking-wide px-1">Config</p>
                 <div className="bg-white rounded-xl px-4">
-<MenuRow icon={<Award size={20} />} label="Commission Types" onClick={() => navigation.push(url("/mobile/pay/commission-types"))} />
+                    <MenuRow icon={<Award size={20} />} label="Commission Types" onClick={() => navigation.push(url("/mobile/pay/commission-types"))} />
                     <MenuRow icon={<Tag size={20} />} label="Claim Types" onClick={() => navigation.push(url("/mobile/pay/claim-types"))} />
                 </div>
             </div>

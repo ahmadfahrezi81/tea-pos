@@ -15,7 +15,7 @@ import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
 import { useSessionActivityByMonth } from "@/lib/hooks/sessions/useSessionActivityByMonth";
 import { SkeletonValue } from "@/components/shared/SkeletonValue";
-import type { PayrollCommissionResponse, PayrollPeriodResponse } from "@tea-pos/features/payroll/schema";
+import type { PayrollCommissionResponse, PayoutResponse } from "@tea-pos/features/payroll/schema";
 
 const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -26,12 +26,12 @@ function toDateKey(date: Date) {
 export function PayCalendar({
     month,
     commissions,
-    periods,
+    payouts,
     isLoading,
 }: {
     month: Date;
     commissions: PayrollCommissionResponse[];
-    periods: PayrollPeriodResponse[];
+    payouts: PayoutResponse[];
     isLoading: boolean;
 }) {
     const { url } = useTenantSlug();
@@ -62,13 +62,13 @@ export function PayCalendar({
         return set;
     }, [commissions]);
 
-    const findPeriodIdForDate = (dateKey: string) =>
-        periods.find((p) => p.startDate <= dateKey && dateKey <= p.endDate)?.id ?? null;
+    const findPayoutIdForDate = (dateKey: string) =>
+        payouts.find((p) => p.startDate <= dateKey && dateKey <= p.endDate)?.id ?? null;
 
     const handleDayClick = (dateKey: string) => {
         if (!commissionDates.has(dateKey)) return;
-        const periodId = findPeriodIdForDate(dateKey);
-        if (periodId) navigation.push(url(`/mobile/more/earnings/${periodId}`));
+        const payoutId = findPayoutIdForDate(dateKey);
+        if (payoutId) navigation.push(url(`/mobile/more/earnings/${payoutId}`));
     };
 
     if (isLoading || sessionLoading) {

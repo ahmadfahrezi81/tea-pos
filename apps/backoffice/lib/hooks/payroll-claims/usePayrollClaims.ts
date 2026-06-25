@@ -13,7 +13,7 @@ import {
 } from "@tea-pos/features/payroll-claims/schema";
 
 export function usePayrollClaims(params?: Partial<ListAllPayrollClaimsQuery>) {
-    const key = `payroll-claims-${params?.status ?? "all"}-${params?.periodId ?? "all"}`;
+    const key = `payroll-claims-${params?.status ?? "all"}-${params?.startDate ?? "all"}-${params?.endDate ?? "all"}`;
 
     const { data, error, mutate, isLoading } = useSWR<PayrollClaimListResponse>(
         key,

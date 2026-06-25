@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useState } from "react";
-import { usePayslip } from "@/lib/hooks/payroll/usePayroll";
+import { usePayouts, usePayslip } from "@/lib/hooks/payroll/usePayroll";
 import { payrollApi } from "@/lib/api/payroll";
 import { apiFetch } from "@/lib/api/client";
 import { format, parseISO } from "date-fns";
@@ -14,7 +14,7 @@ type Commission = {
     storeName?: string | null;
     dailySummaryId: string;
     totalCups: number;
-    grossPay: number;
+    totalCommission: number;
     status: "pending" | "approved" | "rejected";
 };
 
@@ -22,7 +22,7 @@ type Claim = {
     id: string;
     date: string;
     claimTypeName?: string | null;
-    claimTypeId: string | null;
+    claimConfigId: string | null;
     amount: number;
     status: "pending" | "approved" | "rejected";
 };
@@ -164,8 +164,10 @@ export default function DayDecisionPage({
 }: {
     params: Promise<{ periodId: string; userId: string; date: string }>;
 }) {
-    const { periodId, userId, date } = use(params);
-    const { payslip, isLoading, mutate } = usePayslip(periodId, userId);
+    const { periodId: startDate, userId, date } = use(params);
+    const { payouts } = usePayouts({ startDate, userId });
+    const payoutId = payouts[0]?.id;
+    const { payslip, isLoading, mutate } = usePayslip(payoutId, userId);
     const [busyId, setBusyId] = useState<string | null>(null);
 
     if (isLoading) {
@@ -224,7 +226,7 @@ export default function DayDecisionPage({
                             <div className="flex items-center justify-between gap-3">
                                 <div className="min-w-0">
                                     <p className="text-sm font-medium text-gray-800 truncate">{c.storeName ?? "—"}</p>
-                                    <p className="text-xs text-gray-400">{c.totalCups} cups · Rp {c.grossPay.toLocaleString("id-ID")}</p>
+                                    <p className="text-xs text-gray-400">{c.totalCups} cups · Rp {c.totalCommission.toLocaleString("id-ID")}</p>
                                 </div>
                                 <DecisionButtons
                                     status={c.status}
@@ -245,7 +247,7 @@ export default function DayDecisionPage({
                     {dayClaims.map((c) => (
                         <div key={c.id} className="flex items-center justify-between gap-3 border-b border-gray-50 last:border-none pb-3 last:pb-0">
                             <div className="min-w-0">
-                                <p className="text-sm font-medium text-gray-800 truncate">{c.claimTypeName ?? c.claimTypeId ?? "—"}</p>
+                                <p className="text-sm font-medium text-gray-800 truncate">{c.claimTypeName ?? c.claimConfigId ?? "—"}</p>
                                 <p className="text-xs text-gray-400">Rp {c.amount.toLocaleString("id-ID")}</p>
                             </div>
                             <DecisionButtons

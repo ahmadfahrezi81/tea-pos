@@ -43,3 +43,53 @@ export function getWeekInfo(date?: Date | string): WeekInfo {
         label: `Week ${weekNum}`,
     };
 }
+
+// Pure date-string arithmetic (no TZ concerns — input is already a local date string).
+function addDaysToStr(dateStr: string, n: number): string {
+    const d = new Date(dateStr + "T12:00:00Z");
+    d.setUTCDate(d.getUTCDate() + n);
+    return d.toISOString().slice(0, 10);
+}
+
+function isoMondayStr(dateStr: string): string {
+    const d = new Date(dateStr + "T12:00:00Z");
+    const dow = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() - dow + 1);
+    return d.toISOString().slice(0, 10);
+}
+
+function isoWeekNumStr(dateStr: string): number {
+    const d = new Date(dateStr + "T12:00:00Z");
+    const thu = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+    thu.setUTCDate(thu.getUTCDate() + 4 - (thu.getUTCDay() || 7));
+    const yearStart = new Date(Date.UTC(thu.getUTCFullYear(), 0, 1));
+    return Math.ceil(((thu.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7);
+}
+
+export function getPayWindowBounds(
+    dateStr: string,
+    frequency: string,
+): { startDate: string; endDate: string } {
+    switch (frequency) {
+        case "daily":
+            return { startDate: dateStr, endDate: dateStr };
+        case "weekly": {
+            const mon = isoMondayStr(dateStr);
+            return { startDate: mon, endDate: addDaysToStr(mon, 6) };
+        }
+        case "bi_weekly": {
+            const mon = isoMondayStr(dateStr);
+            const wn = isoWeekNumStr(dateStr);
+            const start = wn % 2 === 0 ? mon : addDaysToStr(mon, -7);
+            return { startDate: start, endDate: addDaysToStr(start, 13) };
+        }
+        case "monthly": {
+            const month = dateStr.slice(0, 7);
+            const lastDay = new Date(dateStr + "T12:00:00Z");
+            lastDay.setUTCMonth(lastDay.getUTCMonth() + 1, 0);
+            return { startDate: month + "-01", endDate: lastDay.toISOString().slice(0, 10) };
+        }
+        default:
+            return getPayWindowBounds(dateStr, "bi_weekly");
+    }
+}

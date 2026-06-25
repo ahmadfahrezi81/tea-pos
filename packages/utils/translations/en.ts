@@ -270,6 +270,7 @@ export const en = {
         periodLabel: "Period",
         forLabel: "For",
         payslipId: "Payslip ID",
+        selectYear: "Select Year",
     },
     account: {
         personalDetails: "Personal Details",

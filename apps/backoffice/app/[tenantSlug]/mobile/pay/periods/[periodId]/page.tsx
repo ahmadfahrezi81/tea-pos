@@ -1,7 +1,7 @@
 "use client";
 
 import { use } from "react";
-import { usePayrollPeriods, usePayouts } from "@/lib/hooks/payroll/usePayroll";
+import { usePayouts } from "@/lib/hooks/payroll/usePayroll";
 import { useTenantUsers } from "@/lib/hooks/users/useTenantUsers";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
@@ -19,14 +19,13 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 export default function PeriodStaffPage({ params }: { params: Promise<{ periodId: string }> }) {
-    const { periodId } = use(params);
+    const { periodId: startDate } = use(params);
     const { url } = useTenantSlug();
-    const { periods, isLoading: periodsLoading } = usePayrollPeriods();
-    const { payouts, isLoading: payoutsLoading } = usePayouts({ periodId });
+    const { payouts, isLoading: payoutsLoading } = usePayouts({ startDate });
     const { users, isLoading: usersLoading } = useTenantUsers();
 
-    const isLoading = periodsLoading || payoutsLoading || usersLoading;
-    const period = periods.find((p) => p.id === periodId);
+    const isLoading = payoutsLoading || usersLoading;
+    const endDate = payouts[0]?.endDate ?? startDate;
     const payoutByUser = payouts.reduce<Record<string, typeof payouts[0]>>((acc, p) => { acc[p.userId] = p; return acc; }, {});
     const staffWithPayouts = users.filter((u) => payoutByUser[u.id]);
     const staffWithoutPayouts = users.filter((u) => !payoutByUser[u.id] && u.role !== "ADMIN");
@@ -37,13 +36,11 @@ export default function PeriodStaffPage({ params }: { params: Promise<{ periodId
 
     return (
         <div className="space-y-3">
-            {period && (
-                <div className="bg-white rounded-xl p-4">
-                    <p className="text-sm font-medium text-gray-500">
-                        Week {getISOWeek(parseISO(period.startDate))} · {format(parseISO(period.startDate), "MMM d")}–{format(parseISO(period.endDate), "MMM d, yyyy")}
-                    </p>
-                </div>
-            )}
+            <div className="bg-white rounded-xl p-4">
+                <p className="text-sm font-medium text-gray-500">
+                    W{getISOWeek(parseISO(startDate))}–W{getISOWeek(parseISO(endDate))} · {format(parseISO(startDate), "MMM d")}–{format(parseISO(endDate), "MMM d, yyyy")}
+                </p>
+            </div>
 
             {staffWithPayouts.length === 0 && staffWithoutPayouts.length === 0 ? (
                 <p className="text-center text-gray-400 py-10">No staff found.</p>
@@ -54,7 +51,7 @@ export default function PeriodStaffPage({ params }: { params: Promise<{ periodId
                         return (
                             <button
                                 key={user.id}
-                                onClick={() => navigation.push(url(`/mobile/pay/periods/${periodId}/${user.id}`))}
+                                onClick={() => navigation.push(url(`/mobile/pay/periods/${startDate}/${user.id}`))}
                                 className="w-full bg-white rounded-xl p-4 flex items-center gap-3 text-left active:bg-gray-50"
                             >
                                 <div className="flex-1 min-w-0">
@@ -73,7 +70,7 @@ export default function PeriodStaffPage({ params }: { params: Promise<{ periodId
                     {staffWithoutPayouts.map((user) => (
                         <button
                             key={user.id}
-                            onClick={() => navigation.push(url(`/mobile/pay/periods/${periodId}/${user.id}`))}
+                            onClick={() => navigation.push(url(`/mobile/pay/periods/${startDate}/${user.id}`))}
                             className="w-full bg-white rounded-xl p-4 flex items-center gap-3 text-left active:bg-gray-50"
                         >
                             <div className="flex-1 min-w-0">

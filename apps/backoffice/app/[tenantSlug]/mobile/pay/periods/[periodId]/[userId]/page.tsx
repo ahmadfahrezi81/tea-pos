@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useState, useRef, useEffect } from "react";
-import { usePayslip } from "@/lib/hooks/payroll/usePayroll";
+import { usePayouts, usePayslip } from "@/lib/hooks/payroll/usePayroll";
 import { usePayrollUserInfo } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
 import { useTenantUsers } from "@/lib/hooks/users/useTenantUsers";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
@@ -171,9 +171,11 @@ export default function UserPayWeekSummaryPage({
 }: {
     params: Promise<{ periodId: string; userId: string }>;
 }) {
-    const { periodId, userId } = use(params);
+    const { periodId: startDate, userId } = use(params);
     const { url } = useTenantSlug();
-    const { payslip, isLoading, mutate } = usePayslip(periodId, userId);
+    const { payouts, isLoading: payoutsLoading } = usePayouts({ startDate, userId });
+    const payout = payouts[0];
+    const { payslip, isLoading: payslipLoading, mutate } = usePayslip(payout?.id, userId);
     const { users } = useTenantUsers();
     const { info: payrollUserInfo } = usePayrollUserInfo(userId);
     const [showPaySheet, setShowPaySheet] = useState(false);
@@ -181,24 +183,26 @@ export default function UserPayWeekSummaryPage({
 
     const targetUser = users.find((u) => u.id === userId);
 
-    // Recompute approved-only totals on every view — no manual "Load Payout" step.
     useEffect(() => {
+        if (!payout) return;
         let cancelled = false;
         (async () => {
             try {
-                await payrollApi.upsertPayout({ periodId, userId });
+                await payrollApi.upsertPayout({ startDate: payout.startDate, endDate: payout.endDate, userId });
                 if (!cancelled) await mutate();
             } finally {
                 if (!cancelled) setRefreshing(false);
             }
         })();
-        return () => {
-            cancelled = true;
-        };
+        return () => { cancelled = true; };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [periodId, userId]);
+    }, [payout?.id, userId]);
 
-    if (isLoading || refreshing) {
+    useEffect(() => {
+        if (!payoutsLoading && !payout) setRefreshing(false);
+    }, [payoutsLoading, payout]);
+
+    if (payoutsLoading || payslipLoading || refreshing) {
         return (
             <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
@@ -208,37 +212,38 @@ export default function UserPayWeekSummaryPage({
         );
     }
 
-    if (!payslip || !("period" in (payslip as object))) {
-        return <p className="text-center text-gray-400 py-10">Period not found.</p>;
+    if (!payslip || !("payout" in (payslip as object))) {
+        return <p className="text-center text-gray-400 py-10">No payout found for this period.</p>;
     }
 
     const ps = payslip as {
-        period: { startDate: string; endDate: string };
         payout: {
             id: string;
+            startDate: string;
+            endDate: string;
             status: string;
             paidAt: string | null;
             paymentProofUrl: string | null;
             commissionsTotal: number;
             claimsTotal: number;
             totalPay: number;
-        } | null;
-        commissions: Array<{ id: string; date: string; totalCups: number; grossPay: number; status: string }>;
+        };
+        commissions: Array<{ id: string; date: string; totalCups: number; totalCommission: number; status: string }>;
         claims: Array<{ id: string; date: string; amount: number; status: string }>;
     };
 
-    const { period, payout, commissions, claims } = ps;
-    const weekNum = getISOWeek(parseISO(period.startDate));
-    const weekYear = getISOWeekYear(parseISO(period.startDate));
-    const days = eachDayOfInterval({ start: parseISO(period.startDate), end: parseISO(period.endDate) });
+    const { payout: payoutData, commissions, claims } = ps;
+    const weekNum = getISOWeek(parseISO(payoutData.startDate));
+    const weekYear = getISOWeekYear(parseISO(payoutData.startDate));
+    const days = eachDayOfInterval({ start: parseISO(payoutData.startDate), end: parseISO(payoutData.endDate) });
 
     const pendingCount =
         commissions.filter((c) => c.status === "pending").length +
         claims.filter((c) => c.status === "pending").length;
 
     const hasBankInfo = payrollUserInfo?.bankName || payrollUserInfo?.bankAccountNumber;
-    const status = payout?.status ?? "pending";
-    const totalPay = payout?.totalPay ?? 0;
+    const status = payoutData.status;
+    const totalPay = payoutData.totalPay;
 
     return (
         <div className="space-y-4 pb-32">
@@ -267,8 +272,8 @@ export default function UserPayWeekSummaryPage({
                     <div>
                         <p className="text-base font-bold text-gray-900">{targetUser?.fullName ?? "Staff"}</p>
                         <p className="text-sm text-gray-500">
-                            Week {weekNum}, {weekYear} · {format(parseISO(period.startDate), "MMM d")}–
-                            {format(parseISO(period.endDate), "MMM d")}
+                            Week {weekNum}, {weekYear} · {format(parseISO(payoutData.startDate), "MMM d")}–
+                            {format(parseISO(payoutData.endDate), "MMM d")}
                         </p>
                     </div>
                     <p className="text-xl font-bold text-gray-900">Rp {totalPay.toLocaleString("id-ID")}</p>
@@ -280,10 +285,10 @@ export default function UserPayWeekSummaryPage({
                         </p>
                     </div>
                 )}
-                {status === "paid" && payout?.paidAt && (
+                {status === "paid" && payoutData.paidAt && (
                     <div className="bg-green-50 rounded-lg px-3 py-2 mt-1">
                         <p className="text-sm text-green-700 font-medium">
-                            Paid · {format(new Date(payout.paidAt), "d MMM yyyy")}
+                            Paid · {format(new Date(payoutData.paidAt), "d MMM yyyy")}
                         </p>
                     </div>
                 )}
@@ -295,7 +300,7 @@ export default function UserPayWeekSummaryPage({
                     const dayCommissions = commissions.filter((c) => c.date === dateStr);
                     const dayClaims = claims.filter((c) => c.date === dateStr);
                     const subtotal =
-                        dayCommissions.filter((c) => c.status === "approved").reduce((s, c) => s + c.grossPay, 0) +
+                        dayCommissions.filter((c) => c.status === "approved").reduce((s, c) => s + c.totalCommission, 0) +
                         dayClaims.filter((c) => c.status === "approved").reduce((s, c) => s + c.amount, 0);
                     const dayPendingCount =
                         dayCommissions.filter((c) => c.status === "pending").length +
@@ -305,7 +310,7 @@ export default function UserPayWeekSummaryPage({
                     return (
                         <button
                             key={dateStr}
-                            onClick={() => navigation.push(url(`/mobile/pay/periods/${periodId}/${userId}/day/${dateStr}`))}
+                            onClick={() => navigation.push(url(`/mobile/pay/periods/${startDate}/${userId}/day/${dateStr}`))}
                             disabled={!hasItems}
                             className={`w-full bg-white rounded-xl p-4 flex items-center gap-3 text-left ${hasItems ? "active:bg-gray-50" : "opacity-50"}`}
                         >
@@ -339,9 +344,9 @@ export default function UserPayWeekSummaryPage({
                 </div>
             )}
 
-            {showPaySheet && payout && (
+            {showPaySheet && payoutData && (
                 <PaySheet
-                    payoutId={payout.id}
+                    payoutId={payoutData.id}
                     totalPay={totalPay}
                     bankName={payrollUserInfo?.bankName ?? null}
                     bankAccountNumber={payrollUserInfo?.bankAccountNumber ?? null}

@@ -2,19 +2,10 @@
 
 import useSWR from "swr";
 import { payrollApi } from "@/lib/api/payroll";
-import type { ListPayrollPeriodsQuery, PayrollPeriodListResponse, ListPayoutsQuery, PayoutListResponse } from "@tea-pos/features/payroll/schema";
-
-export function usePayrollPeriods(params?: Partial<ListPayrollPeriodsQuery>) {
-    const { data, error, mutate, isLoading } = useSWR<PayrollPeriodListResponse>(
-        "payroll-periods",
-        () => payrollApi.getPeriods(params),
-        { revalidateOnFocus: false, dedupingInterval: 5000 },
-    );
-    return { periods: data?.periods ?? [], isLoading, error, mutate };
-}
+import type { ListPayoutsQuery, PayoutListResponse } from "@tea-pos/features/payroll/schema";
 
 export function usePayouts(params?: Partial<ListPayoutsQuery>) {
-    const key = `payouts-${params?.periodId ?? "all"}-${params?.userId ?? "all"}`;
+    const key = `payouts-${params?.startDate ?? ""}-${params?.endDate ?? ""}-${params?.userId ?? "all"}`;
     const { data, error, mutate, isLoading } = useSWR<PayoutListResponse>(
         key,
         () => payrollApi.getPayouts(params),
@@ -23,11 +14,11 @@ export function usePayouts(params?: Partial<ListPayoutsQuery>) {
     return { payouts: data?.payouts ?? [], isLoading, error, mutate };
 }
 
-export function usePayslip(periodId: string | undefined, userId?: string) {
-    const key = periodId ? `payslip-${periodId}-${userId ?? "none"}` : null;
+export function usePayslip(payoutId: string | undefined, userId?: string) {
+    const key = payoutId ? `payslip-${payoutId}-${userId ?? "none"}` : null;
     const { data, error, mutate, isLoading } = useSWR(
         key,
-        () => payrollApi.getPayslip({ periodId: periodId!, ...(userId ? { userId } : {}) }),
+        () => payrollApi.getPayslip({ payoutId: payoutId!, ...(userId ? { userId } : {}) }),
         { revalidateOnFocus: false, dedupingInterval: 5000 },
     );
     return { payslip: data ?? null, isLoading, error, mutate };
