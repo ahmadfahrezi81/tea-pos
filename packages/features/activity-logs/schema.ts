@@ -115,7 +115,7 @@ export type ActivityLogMetadataMap = {
     session_ended:              Record<string, never>;
     commission_config_updated:  { user_id: string; rate_per_cup: number; effective_date: string };
     payroll_entry_updated:      { user_id?: string; total_cups?: number; rate_per_cup?: number; total_commission?: number; status?: string };
-    payroll_commission_updated: { user_id?: string; total_cups?: number; rate_per_cup?: number; total_commission?: number; status?: string };
+    payroll_commission_updated: { user_id?: string; total_cups?: number; total_orders?: number; rate_per_cup?: number; total_commission?: number; status?: string };
     payroll_period_updated:     { status: string };
     supply_request_created:     { type: string };
     incident_report_created:    { type: string };

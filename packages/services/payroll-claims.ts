@@ -153,7 +153,13 @@ export async function createPayrollClaim(
         .select()
         .single();
 
-    if (error || !data) throw new Error(error?.message ?? "Failed to create claim");
+    if (error) {
+        if (error.code === "23505") {
+            throw Object.assign(new Error("You have already submitted this claim today"), { status: 422 });
+        }
+        throw new Error(error.message);
+    }
+    if (!data) throw new Error("Failed to create claim");
 
     const log = createLogger(supabase, { tenantId, userId, storeId });
     log("claim_submitted", {
@@ -299,7 +305,7 @@ export async function updatePayrollClaimStatus(
     if (claimError || !claim) throw Object.assign(new Error(claimError?.message ?? "Claim not found"), { status: 404 });
 
     const row = claim as { date: string; user_id: string };
-    await assertPayoutNotPaid(supabase, { tenantId, userId: row.user_id, date: row.date });
+    const payoutRow = await assertPayoutNotPaid(supabase, { tenantId, userId: row.user_id, date: row.date });
 
     const { data, error } = await supabase
         .from("payroll_claims")
@@ -313,6 +319,15 @@ export async function updatePayrollClaimStatus(
 
     const log = createLogger(supabase, { tenantId, userId: actorId });
     log("claim_status_updated", { refId: id, refTable: "payroll_claims", metadata: { status } });
+
+    if (payoutRow) {
+        upsertPayout(supabase, {
+            tenantId,
+            userId: row.user_id,
+            startDate: payoutRow.startDate,
+            endDate: payoutRow.endDate,
+        }).catch((err) => console.warn("[payroll] upsertPayout failed after claim status update:", err));
+    }
 
     return toCamelKeys(data);
 }
@@ -460,6 +475,10 @@ export async function getClaimableTypes(
             );
         } else if (config.frequency === "one_time") {
             claimable = !claims.some((c) => c.claim_config_id === config.id);
+        } else if (config.frequency === "daily") {
+            const tzOffset = parseInt(process.env.TIMEZONE_OFFSET ?? "7");
+            const today = new Date(Date.now() + tzOffset * 3_600_000).toISOString().slice(0, 10);
+            claimable = !claims.some((c) => c.claim_config_id === config.id && c.date === today);
         }
 
         return {

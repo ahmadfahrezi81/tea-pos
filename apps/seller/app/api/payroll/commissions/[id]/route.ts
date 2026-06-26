@@ -3,7 +3,7 @@ import { getCurrentTenantId } from "@tea-pos/utils/server-config/tenant";
 import { NextRequest } from "next/server";
 import { UpdatePayrollCommissionInput, PayrollCommissionResponse } from "@tea-pos/features/payroll/schema";
 import { updatePayrollCommission } from "@tea-pos/services/payroll";
-import { ok, badRequest, unauthorized, handleError } from "@/lib/api/response";
+import { ok, badRequest, unauthorized, forbidden, handleError } from "@/lib/api/response";
 import { getRequestUser } from "@/lib/auth/get-request-user";
 
 export async function PATCH(
@@ -13,6 +13,7 @@ export async function PATCH(
     try {
         const user = await getRequestUser();
         if (!user) return unauthorized();
+        if (user.role !== "ADMIN") return forbidden();
 
         const supabase = getServiceClient();
         const tenantId = await getCurrentTenantId();

@@ -46,6 +46,7 @@ export async function createPayrollCommissions(
     for (const userId of userIds) {
         const userSessions = typedSessions.filter((s) => s.user_id === userId);
         let totalCups = 0;
+        let totalOrders = 0;
 
         for (const session of userSessions) {
             const endedAt = session.ended_at ?? new Date().toISOString();
@@ -58,14 +59,14 @@ export async function createPayrollCommissions(
                 .gte("created_at", session.started_at)
                 .lt("created_at", endedAt);
 
-            const sessionCups = (
-                (orders ?? []) as Array<{ store_order_items?: Array<{ quantity: number }> }>
-            ).reduce(
+            const sessionOrders = (orders ?? []) as Array<{ store_order_items?: Array<{ quantity: number }> }>;
+            const sessionCups = sessionOrders.reduce(
                 (sum, order) =>
                     sum + (order.store_order_items?.reduce((s, item) => s + item.quantity, 0) ?? 0),
                 0,
             );
             totalCups += sessionCups;
+            totalOrders += sessionOrders.length;
         }
 
         const info = await getPayrollUserInfo(supabase, { tenantId, userId });
@@ -87,6 +88,7 @@ export async function createPayrollCommissions(
                 daily_summary_id: dailySummaryId,
                 date,
                 total_cups: totalCups,
+                total_orders: totalOrders,
                 rate_per_cup: ratePerCup,
                 commission_config_id: commissionConfigId,
                 total_commission: totalCommission,
@@ -101,7 +103,7 @@ export async function createPayrollCommissions(
         log("payroll_commission_updated", {
             refId: (commission as { id: string }).id,
             refTable: "payroll_commissions",
-            metadata: { user_id: userId, total_cups: totalCups, rate_per_cup: ratePerCup, total_commission: totalCommission },
+            metadata: { user_id: userId, total_cups: totalCups, total_orders: totalOrders, rate_per_cup: ratePerCup, total_commission: totalCommission },
         });
 
         // Auto-upsert payout and stamp payout_id on the commission
@@ -200,12 +202,12 @@ export async function upsertPayout(
 
     const { data: commissions } = await supabase
         .from("payroll_commissions")
-        .select("total_commission, total_cups")
+        .select("total_commission, total_cups, total_orders")
         .eq("tenant_id", tenantId)
         .eq("user_id", userId)
         .gte("date", startDate)
         .lte("date", endDate)
-        .eq("status", "approved");
+        .neq("status", "rejected");
 
     const commissionsTotal = (commissions ?? []).reduce(
         (s, e) => s + ((e as { total_commission: number }).total_commission ?? 0),
@@ -213,6 +215,10 @@ export async function upsertPayout(
     );
     const totalCups = (commissions ?? []).reduce(
         (s, e) => s + ((e as { total_cups: number }).total_cups ?? 0),
+        0,
+    );
+    const totalOrders = (commissions ?? []).reduce(
+        (s, e) => s + ((e as { total_orders: number }).total_orders ?? 0),
         0,
     );
 
@@ -223,7 +229,7 @@ export async function upsertPayout(
         .eq("user_id", userId)
         .gte("date", startDate)
         .lte("date", endDate)
-        .eq("status", "approved");
+        .neq("status", "rejected");
 
     const claimsTotal = (claims ?? []).reduce(
         (s, c) => s + ((c as { amount: number }).amount ?? 0),
@@ -244,6 +250,7 @@ export async function upsertPayout(
                 claims_total: claimsTotal,
                 total_pay: totalPay,
                 total_cups: totalCups,
+                total_orders: totalOrders,
             },
             { onConflict: "tenant_id,user_id,start_date" },
         )
@@ -313,35 +320,25 @@ export async function updatePayoutStatus(
 ) {
     const { data: payout, error: payoutError } = await supabase
         .from("payroll_payouts")
-        .select("start_date, end_date, user_id")
+        .select("id")
         .eq("id", id)
         .eq("tenant_id", tenantId)
         .single();
 
     if (payoutError || !payout) throw Object.assign(new Error(payoutError?.message ?? "Payout not found"), { status: 404 });
 
-    const { start_date: startDate, end_date: endDate, user_id: userId } = payout as {
-        start_date: string;
-        end_date: string;
-        user_id: string;
-    };
-
     const [{ count: pendingCommissions }, { count: pendingClaims }] = await Promise.all([
         supabase
             .from("payroll_commissions")
             .select("id", { count: "exact", head: true })
             .eq("tenant_id", tenantId)
-            .eq("user_id", userId)
-            .gte("date", startDate)
-            .lte("date", endDate)
+            .eq("payout_id", id)
             .eq("status", "pending"),
         supabase
             .from("payroll_claims")
             .select("id", { count: "exact", head: true })
             .eq("tenant_id", tenantId)
-            .eq("user_id", userId)
-            .gte("date", startDate)
-            .lte("date", endDate)
+            .eq("payout_id", id)
             .eq("status", "pending"),
     ]);
 
@@ -391,7 +388,6 @@ export async function getPayslip(
     }
 
     const payout = toCamelKeys(payoutRow) as { startDate: string; endDate: string; [key: string]: unknown };
-    const { startDate, endDate } = payout;
 
     const [commissionsResult, claimsResult] = await Promise.all([
         supabase
@@ -399,16 +395,14 @@ export async function getPayslip(
             .select("*, stores(name)")
             .eq("tenant_id", tenantId)
             .eq("user_id", userId)
-            .gte("date", startDate)
-            .lte("date", endDate)
+            .eq("payout_id", payoutId)
             .order("date"),
         supabase
             .from("payroll_claims")
             .select("*, payroll_claim_configs!left(name, auto_threshold_hours)")
             .eq("tenant_id", tenantId)
             .eq("user_id", userId)
-            .gte("date", startDate)
-            .lte("date", endDate)
+            .eq("payout_id", payoutId)
             .order("date"),
     ]);
 
@@ -431,14 +425,17 @@ export async function getPayslip(
     });
     const claims = toCamelKeys(claimsFlat) as Record<string, unknown>[];
 
-    const commissionsTotal = commissions.reduce((s, e) => s + ((e.totalCommission as number) ?? 0), 0);
+    const commissionsTotal = commissions
+        .filter((e) => e.status !== "rejected")
+        .reduce((s, e) => s + ((e.totalCommission as number) ?? 0), 0);
     const claimsTotal = claims
-        .filter((c) => c.status === "approved")
+        .filter((c) => c.status !== "rejected")
         .reduce((s, c) => s + ((c.amount as number) ?? 0), 0);
     const totalPay = commissionsTotal + claimsTotal;
     const ratePerCup = commissions[0] ? ((commissions[0].ratePerCup as number) ?? 0) : 0;
+    const totalOrders = commissions.reduce((s, e) => s + ((e.totalOrders as number) ?? 0), 0);
 
-    return { payout, commissions, claims, commissionsTotal, claimsTotal, totalPay, ratePerCup };
+    return { payout, commissions, claims, commissionsTotal, claimsTotal, totalPay, ratePerCup, totalOrders };
 }
 
 // ─── Update payroll commission ────────────────────────────────────────────────
@@ -464,7 +461,7 @@ export async function updatePayrollCommission(
     }
 
     const row = commission as { date: string; user_id: string; store_id: string };
-    await assertPayoutNotPaid(supabase, { tenantId, userId: row.user_id, date: row.date });
+    const payoutRow = await assertPayoutNotPaid(supabase, { tenantId, userId: row.user_id, date: row.date });
 
     const { data, error } = await supabase
         .from("payroll_commissions")
@@ -479,6 +476,15 @@ export async function updatePayrollCommission(
     const log = createLogger(supabase, { tenantId, userId, storeId: row.store_id });
     log("payroll_commission_updated", { refId: id, refTable: "payroll_commissions", metadata: { status } });
 
+    if (payoutRow) {
+        upsertPayout(supabase, {
+            tenantId,
+            userId: row.user_id,
+            startDate: payoutRow.startDate,
+            endDate: payoutRow.endDate,
+        }).catch((err) => console.warn("[payroll] upsertPayout failed after commission status update:", err));
+    }
+
     return toCamelKeys(data);
 }
 
@@ -487,10 +493,10 @@ export async function updatePayrollCommission(
 export async function assertPayoutNotPaid(
     supabase: SupabaseClient,
     { tenantId, userId, date }: { tenantId: string; userId: string; date: string },
-) {
+): Promise<{ id: string; status: string; startDate: string; endDate: string } | null> {
     const { data: payout } = await supabase
         .from("payroll_payouts")
-        .select("status")
+        .select("id, status, start_date, end_date")
         .eq("tenant_id", tenantId)
         .eq("user_id", userId)
         .lte("start_date", date)
@@ -500,4 +506,8 @@ export async function assertPayoutNotPaid(
     if ((payout as { status: string } | null)?.status === "paid") {
         throw Object.assign(new Error("Cannot change a decision after the payout has been paid"), { status: 422 });
     }
+
+    if (!payout) return null;
+    const row = payout as { id: string; status: string; start_date: string; end_date: string };
+    return { id: row.id, status: row.status, startDate: row.start_date, endDate: row.end_date };
 }

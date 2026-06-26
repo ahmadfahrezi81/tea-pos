@@ -216,6 +216,7 @@ export type Database = {
           tenant_id: string
           total_commission: number
           total_cups: number
+          total_orders: number
           user_id: string
         }
         Insert: {
@@ -231,6 +232,7 @@ export type Database = {
           tenant_id: string
           total_commission: number
           total_cups?: number
+          total_orders?: number
           user_id: string
         }
         Update: {
@@ -246,6 +248,7 @@ export type Database = {
           tenant_id?: string
           total_commission?: number
           total_cups?: number
+          total_orders?: number
           user_id?: string
         }
         Relationships: [
@@ -307,6 +310,7 @@ export type Database = {
           status: string
           tenant_id: string
           total_cups: number
+          total_orders: number
           total_pay: number
           user_id: string
         }
@@ -323,6 +327,7 @@ export type Database = {
           status?: string
           tenant_id: string
           total_cups?: number
+          total_orders?: number
           total_pay?: number
           user_id: string
         }
@@ -339,6 +344,7 @@ export type Database = {
           status?: string
           tenant_id?: string
           total_cups?: number
+          total_orders?: number
           total_pay?: number
           user_id?: string
         }

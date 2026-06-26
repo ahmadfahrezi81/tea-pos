@@ -38,7 +38,7 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
 
     const ps = payslip as {
         payout: { id: string; startDate: string; endDate: string; status: string; paidAt: string | null; paymentProofUrl: string | null };
-        commissions: Array<{ date: string; totalCups: number; totalCommission: number; ratePerCup: number; storeName?: string | null }>;
+        commissions: Array<{ id: string; date: string; totalCups: number; totalCommission: number; ratePerCup: number; storeName?: string | null; status: string }>;
         claims: Array<{
             id: string;
             date: string;
@@ -178,12 +178,17 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
 
                                 {dayCommissions.length > 0 && (
                                     <div className="grid grid-cols-2 gap-2 rounded-2xl p-2 bg-slate-100 text-gray-800">
-                                        {dayCommissions.map((c, i) => (
-                                            <div key={i}>
+                                        {dayCommissions.map((c) => (
+                                            <div key={c.id}>
                                                 <p className="text-xs">{c.storeName ?? "—"}</p>
-                                                <p className="text-lg font-extrabold text-green-600">
+                                                <p className={`text-lg font-extrabold ${c.status === "rejected" ? "text-red-400 line-through" : "text-green-600"}`}>
                                                     {formatRupiah(c.totalCommission)}
                                                 </p>
+                                                {c.status !== "approved" && (
+                                                    <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${c.status === "rejected" ? "bg-red-100 text-red-600" : "bg-gray-200 text-gray-500"}`}>
+                                                        {c.status === "rejected" ? t("earnings.statusRejected") : t("earnings.pendingReview")}
+                                                    </span>
+                                                )}
                                             </div>
                                         ))}
                                         {dayCommissions.length > 1 && (
@@ -201,16 +206,25 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
                                 {dayClaims.length > 0 && (
                                     <div className="bg-blue-50 rounded-xl p-2 space-y-1">
                                         {dayClaims.map((c) => (
-                                            <div key={c.id} className="flex justify-between items-center text-sm">
-                                                <span className="text-blue-800 font-medium">
-                                                    {c.claimTypeName ?? c.claimConfigId ?? "—"}
-                                                </span>
-                                                <span className={`font-bold ${c.status === "approved" ? "text-blue-700" : c.status === "rejected" ? "text-red-500" : "text-gray-400"}`}>
+                                            <div key={c.id} className="flex justify-between items-center gap-2 text-sm">
+                                                <div className="min-w-0">
+                                                    <p className="text-blue-800 font-medium truncate">
+                                                        {c.claimTypeName ?? c.claimConfigId ?? "—"}
+                                                    </p>
+                                                    {c.status === "approved" && (
+                                                        <p className="text-blue-700 font-bold">{formatRupiah(c.amount)}</p>
+                                                    )}
+                                                </div>
+                                                <span className={`shrink-0 text-xs font-medium px-2 py-0.5 rounded-full ${
+                                                    c.status === "approved" ? "bg-green-100 text-green-700"
+                                                    : c.status === "rejected" ? "bg-red-100 text-red-600"
+                                                    : "bg-gray-200 text-gray-500"
+                                                }`}>
                                                     {c.status === "approved"
-                                                        ? formatRupiah(c.amount)
+                                                        ? t("claims.statusApproved")
                                                         : c.status === "rejected"
-                                                        ? t("earnings.statusRejected")
-                                                        : t("earnings.pendingReview")}
+                                                        ? t("claims.statusRejected")
+                                                        : t("claims.statusPending")}
                                                 </span>
                                             </div>
                                         ))}
