@@ -100,6 +100,8 @@ export const PayslipResponse = z
         claimsTotal: z.number(),
         totalPay: z.number(),
         ratePerCup: z.number(),
+        totalOrders: z.number(),
+        paidByName: z.string().nullable(),
     })
     .openapi({ title: "PayslipResponse" });
 

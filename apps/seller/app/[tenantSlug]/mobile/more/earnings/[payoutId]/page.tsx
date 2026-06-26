@@ -2,6 +2,8 @@
 
 import { use, useState } from "react";
 import { usePayslip } from "@/lib/hooks/payroll/usePayslip";
+import { useExpectedPayoutDate } from "@/lib/hooks/payroll/useExpectedPayoutDate";
+import CopyableField from "@/components/shared/CopyableField";
 import { usePayrollUserInfo } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
 import { parseISO, format, eachDayOfInterval, getISOWeek } from "date-fns";
 import Image from "next/image";
@@ -11,7 +13,7 @@ import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 const STATUS_PILL: Record<string, string> = {
-    pending: "bg-gray-100 text-gray-500",
+    pending: "bg-yellow-100 text-yellow-700",
     paid: "bg-green-100 text-green-700",
 };
 
@@ -51,16 +53,19 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
         claimsTotal: number;
         totalPay: number;
         ratePerCup: number;
+        totalOrders: number;
+        paidByName: string | null;
     };
 
-    const { payout, commissions, claims, commissionsTotal, claimsTotal, totalPay, ratePerCup } = ps;
+    const { payout, commissions, claims, commissionsTotal, claimsTotal, totalPay, ratePerCup, totalOrders, paidByName } = ps;
 
     const status = payout.status;
-    const hasBankInfo = payrollInfo?.bankName || payrollInfo?.bankAccountNumber;
 
     const weekStart = getISOWeek(parseISO(payout.startDate));
     const weekEnd = getISOWeek(parseISO(payout.endDate));
+    const sameWeek = weekStart === weekEnd;
     const totalCups = commissions.reduce((s, c) => s + c.totalCups, 0);
+    const expectedPayoutDate = useExpectedPayoutDate(payout.endDate);
 
     const periodDays = eachDayOfInterval({
         start: parseISO(payout.startDate),
@@ -93,33 +98,76 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
             <div className="bg-white p-4 rounded-2xl">
                 <div className="flex items-center justify-between mb-3">
                     <h3 className="font-semibold text-gray-800">
-                        W{weekStart} · W{weekEnd}
+                        {sameWeek ? `Week ${weekStart}` : `Week ${weekStart} · Week ${weekEnd}`}
                     </h3>
                     <span className={`px-2 py-0.5 rounded-full text-sm font-medium ${STATUS_PILL[status] ?? STATUS_PILL.pending}`}>
-                        {status === "pending" ? t("earnings.statusWaiting") : status === "paid" ? t("earnings.statusPaid") : status}
+                        {status === "pending" ? "Ongoing" : status === "paid" ? t("earnings.statusPaid") : status}
                     </span>
                 </div>
                 <div className="grid grid-cols-4 gap-2">
-                    <div className="text-center">
+                    <div className={`text-center ${totalOrders === 0 ? "col-span-2" : ""}`}>
                         <p className="text-xl font-bold text-orange-600">{totalCups}</p>
                         <p className="text-sm text-gray-600">{t("analytics.cups")}</p>
                     </div>
-                    <div className="text-center">
-                        <p className="text-xl font-bold text-blue-600">
-                            Rp {ratePerCup.toLocaleString("id-ID")}
-                        </p>
-                        <p className="text-sm text-gray-600">{t("earnings.perCup")}</p>
-                    </div>
+                    {totalOrders > 0 && (
+                        <div className="text-center">
+                            <p className="text-xl font-bold text-gray-700">{totalOrders}</p>
+                            <p className="text-sm text-gray-600">{t("analytics.orders").toLowerCase()}</p>
+                        </div>
+                    )}
                     <div className="text-center col-span-2 border-l-2 border-gray-300">
                         <p className="text-sm text-gray-600">{t("earnings.totalRow")}</p>
                         <p className="text-xl font-bold text-green-600">{formatRupiah(totalPay)}</p>
-                        {claimsTotal > 0 && (
-                            <p className="text-xs text-gray-400">
-                                {formatRupiah(commissionsTotal)} + {formatRupiah(claimsTotal)}
-                            </p>
-                        )}
                     </div>
                 </div>
+            </div>
+
+            {/* Payout info */}
+            <div className="bg-white p-4 rounded-2xl space-y-2 text-sm">
+                {[
+                    { label: "Payroll From", value: format(parseISO(payout.startDate), "EEE, d MMM yyyy") },
+                    { label: "Payroll To", value: format(parseISO(payout.endDate), "EEE, d MMM yyyy") },
+                    { label: "Per Cup", value: ratePerCup > 0 ? formatRupiah(ratePerCup) : "—" },
+                    { label: "Expected payout", value: expectedPayoutDate ? format(parseISO(expectedPayoutDate), "EEE, d MMM yyyy") : "—" },
+                    { label: "Paid on", value: payout.paidAt ? format(new Date(payout.paidAt), "d MMM yyyy") : "—" },
+                    { label: "Paid by", value: paidByName ?? "—" },
+                ].map(({ label, value }) => (
+                    <div key={label} className="flex justify-between items-center">
+                        <span className="text-gray-500">{label}</span>
+                        <span className="font-medium text-gray-800">{value}</span>
+                    </div>
+                ))}
+                <div className="flex justify-between items-center pt-1.5 border-t border-gray-100">
+                    <span className="text-gray-500">{t("earnings.payslipId")}</span>
+                    <div className="flex items-center gap-1">
+                        <span className="font-mono text-xs text-gray-400">{payout.id.slice(0, 8)}…</span>
+                        <CopyableField label={t("earnings.payslipId")} value={payout.id} />
+                    </div>
+                </div>
+                {payout.paymentProofUrl && (
+                    <>
+                        <button
+                            onClick={() => setShowProof(true)}
+                            className="w-full mt-1 py-2 rounded-xl bg-slate-100 text-sm font-medium text-gray-700 active:opacity-70"
+                        >
+                            {t("earnings.viewProof")}
+                        </button>
+                        {showProof && (
+                            <div
+                                className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+                                onClick={() => setShowProof(false)}
+                            >
+                                <Image
+                                    src={payout.paymentProofUrl}
+                                    alt="Transfer proof"
+                                    width={400}
+                                    height={400}
+                                    className="rounded-xl max-h-[80vh] w-auto object-contain"
+                                />
+                            </div>
+                        )}
+                    </>
+                )}
             </div>
 
             {/* Calendar */}
@@ -158,131 +206,88 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
                 {allDates.map((dateStr) => {
                     const dayCommissions = commissionsByDate[dateStr] ?? [];
                     const dayClaims = claimsByDate[dateStr] ?? [];
-                    const dayTotalCups = dayCommissions.reduce((s, c) => s + c.totalCups, 0);
-                    const dayGrossPay = dayCommissions.reduce((s, c) => s + c.totalCommission, 0);
+                    const allApproved = [...dayCommissions, ...dayClaims].every(c => c.status === "approved");
+                    const dayApprovedCommissions = dayCommissions.filter(c => c.status === "approved").reduce((s, c) => s + c.totalCommission, 0);
+                    const dayApprovedClaims = dayClaims.filter(c => c.status === "approved").reduce((s, c) => s + c.amount, 0);
+                    const dayApprovedTotal = dayApprovedCommissions + dayApprovedClaims;
                     const day = parseISO(dateStr);
 
                     return (
-                        <div key={dateStr} className="bg-white rounded-2xl overflow-hidden">
-                            <div className="p-3 space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <h4 className="text-xl font-bold text-gray-800">
-                                        {format(day, "EEE, MMM d")}
-                                    </h4>
-                                    {dayTotalCups > 0 && (
-                                        <span className="text-sm font-bold text-orange-700 bg-orange-100 px-2 py-0.5 rounded-lg">
-                                            {dayTotalCups} {t("analytics.cups")}
-                                        </span>
-                                    )}
-                                </div>
+                        <div key={dateStr} className="bg-white rounded-2xl p-3 space-y-3">
+                            <div className="flex items-center justify-between">
+                                <h4 className="text-base font-bold text-gray-800">
+                                    {format(day, "EEE, MMM d")}
+                                </h4>
+                                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${allApproved ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-500"}`}>
+                                    {allApproved ? t("claims.statusApproved") : t("earnings.pendingReview")}
+                                </span>
+                            </div>
 
-                                {dayCommissions.length > 0 && (
-                                    <div className="grid grid-cols-2 gap-2 rounded-2xl p-2 bg-slate-100 text-gray-800">
+                            {dayCommissions.length > 0 && (() => {
+                                return (
+                                <div className="space-y-1.5">
+                                    <p className="text-sm font-semibold text-gray-900">Commission</p>
+                                    <div className="bg-slate-100 rounded-xl px-3 py-2 space-y-2">
                                         {dayCommissions.map((c) => (
-                                            <div key={c.id}>
-                                                <p className="text-xs">{c.storeName ?? "—"}</p>
-                                                <p className={`text-lg font-extrabold ${c.status === "rejected" ? "text-red-400 line-through" : "text-green-600"}`}>
-                                                    {formatRupiah(c.totalCommission)}
-                                                </p>
-                                                {c.status !== "approved" && (
-                                                    <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${c.status === "rejected" ? "bg-red-100 text-red-600" : "bg-gray-200 text-gray-500"}`}>
-                                                        {c.status === "rejected" ? t("earnings.statusRejected") : t("earnings.pendingReview")}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        ))}
-                                        {dayCommissions.length > 1 && (
-                                            <>
-                                                <hr className="col-span-2 border-gray-300" />
-                                                <div className="col-span-2 flex justify-between font-extrabold">
-                                                    <span>{t("manage.total")}</span>
-                                                    <span className="text-green-600">{formatRupiah(dayGrossPay)}</span>
-                                                </div>
-                                            </>
-                                        )}
-                                    </div>
-                                )}
-
-                                {dayClaims.length > 0 && (
-                                    <div className="bg-blue-50 rounded-xl p-2 space-y-1">
-                                        {dayClaims.map((c) => (
-                                            <div key={c.id} className="flex justify-between items-center gap-2 text-sm">
+                                            <div key={c.id} className="flex items-center justify-between gap-2">
                                                 <div className="min-w-0">
-                                                    <p className="text-blue-800 font-medium truncate">
-                                                        {c.claimTypeName ?? c.claimConfigId ?? "—"}
+                                                    <p className="text-sm text-gray-700 font-medium">{c.storeName ?? "—"}</p>
+                                                    <p className="text-sm font-semibold text-orange-600">
+                                                        {c.totalCups} <span className="font-semibold">{t("analytics.cups").toLowerCase()}</span>
+                                                        <span className="font-normal text-gray-600 ml-1">× {formatRupiah(c.ratePerCup)}</span>
                                                     </p>
-                                                    {c.status === "approved" && (
-                                                        <p className="text-blue-700 font-bold">{formatRupiah(c.amount)}</p>
-                                                    )}
                                                 </div>
-                                                <span className={`shrink-0 text-xs font-medium px-2 py-0.5 rounded-full ${
-                                                    c.status === "approved" ? "bg-green-100 text-green-700"
-                                                    : c.status === "rejected" ? "bg-red-100 text-red-600"
-                                                    : "bg-gray-200 text-gray-500"
-                                                }`}>
-                                                    {c.status === "approved"
-                                                        ? t("claims.statusApproved")
-                                                        : c.status === "rejected"
-                                                        ? t("claims.statusRejected")
-                                                        : t("claims.statusPending")}
-                                                </span>
+                                                <div className="text-right shrink-0">
+                                                    {c.status === "rejected" && (
+                                                        <p className="text-xs font-medium text-red-500">{t("earnings.statusRejected")}</p>
+                                                    )}
+                                                    <p className={`font-semibold ${c.status === "rejected" ? "text-sm text-red-400 line-through" : c.status === "pending" ? "text-xs text-gray-800" : "text-sm text-gray-800"}`}>
+                                                        {c.status === "pending" ? t("earnings.pendingReview") : formatRupiah(c.totalCommission)}
+                                                    </p>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
-                                )}
+                                </div>
+                                );
+                            })()}
+
+                            {dayClaims.length > 0 && (() => {
+                                return (
+                                <div className="space-y-1.5">
+                                    <p className="text-sm font-semibold text-gray-900">Claims</p>
+                                    <div className="bg-slate-100 rounded-xl px-3 py-2 space-y-2">
+                                        {dayClaims.map((c) => (
+                                            <div key={c.id} className="flex items-center justify-between gap-2 text-sm">
+                                                <p className="text-gray-800 font-medium min-w-0 truncate">
+                                                    {c.claimTypeName ?? c.claimConfigId ?? "—"}
+                                                </p>
+                                                <div className="flex items-center gap-1.5 shrink-0">
+                                                    {c.status === "rejected" && (
+                                                        <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-red-100 text-red-600">
+                                                            {t("claims.statusRejected")}
+                                                        </span>
+                                                    )}
+                                                    <span className={`font-semibold ${c.status === "rejected" ? "text-red-400 line-through" : c.status === "pending" ? "text-gray-400" : "text-gray-800"}`}>
+                                                        {c.status === "pending" ? "—" : formatRupiah(c.amount)}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                );
+                            })()}
+
+                            <div className="flex items-center justify-between border-t border-gray-100 pt-3 px-1">
+                                <span className="text-base font-semibold text-gray-700">{t("manage.total")}</span>
+                                <span className="text-base font-bold text-green-600">{formatRupiah(dayApprovedTotal)}</span>
                             </div>
                         </div>
                     );
                 })}
             </div>
 
-            {/* Payment status */}
-            <div className="bg-white rounded-2xl p-4 text-center space-y-2">
-                <p className={`text-sm font-bold tracking-wide ${status === "paid" ? "text-green-600" : "text-gray-500"}`}>
-                    {status === "pending" ? t("earnings.statusWaitingLong") : status === "paid" ? t("earnings.statusPaidLong") : status.toUpperCase()}
-                </p>
-                {status === "paid" && payout.paidAt && (
-                    <p className="text-xs text-gray-500">
-                        {format(new Date(payout.paidAt), "d MMM yyyy")}
-                    </p>
-                )}
-                {status === "paid" && (
-                    <>
-                        {hasBankInfo && (
-                            <p className="text-xs text-gray-500">
-                                {payrollInfo?.bankName} · {payrollInfo?.bankAccountNumber}
-                            </p>
-                        )}
-                        {payout.paymentProofUrl && (
-                            <>
-                                <button
-                                    onClick={() => setShowProof(true)}
-                                    className="text-xs text-brand active:opacity-70 underline"
-                                >
-                                    {t("earnings.viewProof")}
-                                </button>
-                                {showProof && (
-                                    <div
-                                        className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
-                                        onClick={() => setShowProof(false)}
-                                    >
-                                        <Image
-                                            src={payout.paymentProofUrl}
-                                            alt="Transfer proof"
-                                            width={400}
-                                            height={400}
-                                            className="rounded-xl max-h-[80vh] w-auto object-contain"
-                                        />
-                                    </div>
-                                )}
-                            </>
-                        )}
-                    </>
-                )}
-                {!hasBankInfo && status !== "paid" && (
-                    <p className="text-xs text-amber-600">{t("earnings.addBankDetails")}</p>
-                )}
-            </div>
         </div>
     );
 }

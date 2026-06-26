@@ -66,6 +66,10 @@ function isoWeekNumStr(dateStr: string): number {
     return Math.ceil(((thu.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7);
 }
 
+export function getExpectedPayoutDate(endDate: string): string {
+    return addDaysToStr(endDate, 1);
+}
+
 export function getPayWindowBounds(
     dateStr: string,
     frequency: string,

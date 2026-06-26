@@ -377,7 +377,7 @@ export async function getPayslip(
 ) {
     const { data: payoutRow, error: payoutError } = await supabase
         .from("payroll_payouts")
-        .select("*")
+        .select("*, paid_by_user:users!payroll_payouts_paid_by_fkey(full_name)")
         .eq("id", payoutId)
         .eq("tenant_id", tenantId)
         .eq("user_id", userId)
@@ -387,7 +387,9 @@ export async function getPayslip(
         throw Object.assign(new Error("Payout not found"), { status: 404 });
     }
 
-    const payout = toCamelKeys(payoutRow) as { startDate: string; endDate: string; [key: string]: unknown };
+    const payoutData = payoutRow as Record<string, unknown>;
+    const paidByName = (payoutData.paid_by_user as { full_name: string } | null)?.full_name ?? null;
+    const payout = toCamelKeys({ ...payoutData, paid_by_user: undefined }) as { startDate: string; endDate: string; [key: string]: unknown };
 
     const [commissionsResult, claimsResult] = await Promise.all([
         supabase
@@ -435,7 +437,7 @@ export async function getPayslip(
     const ratePerCup = commissions[0] ? ((commissions[0].ratePerCup as number) ?? 0) : 0;
     const totalOrders = commissions.reduce((s, e) => s + ((e.totalOrders as number) ?? 0), 0);
 
-    return { payout, commissions, claims, commissionsTotal, claimsTotal, totalPay, ratePerCup, totalOrders };
+    return { payout, commissions, claims, commissionsTotal, claimsTotal, totalPay, ratePerCup, totalOrders, paidByName };
 }
 
 // ─── Update payroll commission ────────────────────────────────────────────────
