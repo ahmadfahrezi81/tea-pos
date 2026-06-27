@@ -6,7 +6,6 @@ import { useExpectedPayoutDate } from "@/lib/hooks/payroll/useExpectedPayoutDate
 import CopyableField from "@/components/shared/CopyableField";
 import { usePayrollUserInfo } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
 import { parseISO, format, eachDayOfInterval, getISOWeek } from "date-fns";
-import Image from "next/image";
 import { useT } from "@/lib/hooks/useT";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 
@@ -155,13 +154,8 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
                                 className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
                                 onClick={() => setShowProof(false)}
                             >
-                                <Image
-                                    src={payout.paymentProofUrl}
-                                    alt="Transfer proof"
-                                    width={400}
-                                    height={400}
-                                    className="rounded-xl max-h-[80vh] w-auto object-contain"
-                                />
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={payout.paymentProofUrl} alt="Transfer proof" className="rounded-xl max-h-[80vh] w-auto object-contain" />
                             </div>
                         )}
                     </>
@@ -235,13 +229,15 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
                                                         <span className="font-normal text-gray-600 ml-1">× {formatRupiah(c.ratePerCup)}</span>
                                                     </p>
                                                 </div>
-                                                <div className="text-right shrink-0">
+                                                <div className="flex items-center gap-1.5 shrink-0">
                                                     {c.status === "rejected" && (
-                                                        <p className="text-xs font-medium text-red-500">{t("earnings.statusRejected")}</p>
+                                                        <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-red-100 text-red-600">
+                                                            {t("claims.statusRejected")}
+                                                        </span>
                                                     )}
-                                                    <p className={`font-medium ${c.status === "rejected" ? "text-base text-red-400 line-through" : c.status === "pending" ? "text-xs text-gray-800" : "text-base text-gray-800"}`}>
+                                                    <span className={`font-medium ${c.status === "rejected" ? "text-base text-red-400 line-through" : c.status === "pending" ? "text-xs text-gray-800" : "text-base text-gray-800"}`}>
                                                         {c.status === "pending" ? t("earnings.pendingReview") : formatRupiah(c.totalCommission)}
-                                                    </p>
+                                                    </span>
                                                 </div>
                                             </div>
                                         ))}

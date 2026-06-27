@@ -516,6 +516,17 @@ export async function getPayslip(
         .filter((e) => e.status === "approved")
         .reduce((s, e) => s + ((e.totalOrders as number) ?? 0), 0);
 
+    const storedProofUrl = payout.paymentProofUrl as string | null | undefined;
+    if (storedProofUrl) {
+        const storagePath = storedProofUrl.split("/payroll-proofs/")[1];
+        if (storagePath) {
+            const { data: signedData } = await supabase.storage
+                .from("payroll-proofs")
+                .createSignedUrl(storagePath, 60 * 60);
+            if (signedData?.signedUrl) payout.paymentProofUrl = signedData.signedUrl;
+        }
+    }
+
     return { payout, commissions, claims, commissionsTotal, claimsTotal, totalPay, ratePerCup, totalOrders, paidByName };
 }
 

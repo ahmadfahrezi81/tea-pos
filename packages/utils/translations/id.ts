@@ -249,7 +249,7 @@ export const id: DeepPartial<typeof en> = {
         noPeriods: "Belum ada periode gaji.",
         tapToView: "Ketuk untuk lihat detail",
         statusWaiting: "Pending",
-        statusPaid: "Dibayar ✓",
+        statusPaid: "Dibayar",
         commissionsLabel: "komisi",
         claimsLabel: "klaim",
         periodNotFound: "Periode tidak ditemukan.",

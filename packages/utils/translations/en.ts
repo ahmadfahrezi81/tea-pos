@@ -246,7 +246,7 @@ export const en = {
         noPeriods: "No pay periods yet.",
         tapToView: "Tap to view details",
         statusWaiting: "Pending",
-        statusPaid: "Paid ✓",
+        statusPaid: "Paid",
         commissionsLabel: "commissions",
         claimsLabel: "claims",
         periodNotFound: "Period not found.",

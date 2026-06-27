@@ -10,7 +10,6 @@ import { apiFetch } from "@/lib/api/client";
 import { parseISO, format, eachDayOfInterval, getISOWeek } from "date-fns";
 import { getExpectedPayoutDate } from "@tea-pos/utils/week";
 import { Check, X, Info, Copy, AlertTriangle } from "lucide-react";
-import Image from "next/image";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 
 const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -228,7 +227,8 @@ export default function UserPayslipPage({
                         </button>
                         {showProof && (
                             <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setShowProof(false)}>
-                                <Image src={payout.paymentProofUrl} alt="Transfer proof" width={400} height={400} className="rounded-xl max-h-[80vh] w-auto object-contain" />
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={payout.paymentProofUrl} alt="Transfer proof" className="rounded-xl max-h-[80vh] w-auto object-contain" />
                             </div>
                         )}
                     </>

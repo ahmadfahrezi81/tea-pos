@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
             .from(bucket as AllowedBucket)
             .upload(storagePath, await file.arrayBuffer(), { contentType: file.type, upsert: false });
 
-        if (uploadError) throw new Error("Failed to upload file");
+        if (uploadError) throw new Error(`Storage upload failed: ${uploadError.message}`);
 
         const { data: urlData } = supabase.storage.from(bucket as AllowedBucket).getPublicUrl(storagePath);
         return ok({ url: urlData.publicUrl }, 201);
