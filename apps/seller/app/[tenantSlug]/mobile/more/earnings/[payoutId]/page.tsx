@@ -204,7 +204,7 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
                 {allDates.map((dateStr) => {
                     const dayCommissions = commissionsByDate[dateStr] ?? [];
                     const dayClaims = claimsByDate[dateStr] ?? [];
-                    const allApproved = [...dayCommissions, ...dayClaims].every(c => c.status === "approved");
+                    const allReviewed = [...dayCommissions, ...dayClaims].every(c => c.status !== "pending");
                     const dayApprovedCommissions = dayCommissions.filter(c => c.status === "approved").reduce((s, c) => s + c.totalCommission, 0);
                     const dayApprovedClaims = dayClaims.filter(c => c.status === "approved").reduce((s, c) => s + c.amount, 0);
                     const dayApprovedTotal = dayApprovedCommissions + dayApprovedClaims;
@@ -216,8 +216,8 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
                                 <h4 className="text-xl font-bold text-gray-800">
                                     {format(day, "EEE, MMM d")}
                                 </h4>
-                                <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${allApproved ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-500"}`}>
-                                    {allApproved ? t("claims.statusApproved") : t("earnings.pendingReview")}
+                                <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${allReviewed ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
+                                    {allReviewed ? "Done" : "Pending"}
                                 </span>
                             </div>
 
