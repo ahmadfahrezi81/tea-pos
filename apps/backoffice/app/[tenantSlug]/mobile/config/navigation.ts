@@ -29,8 +29,8 @@ export const mobileRoutes = {
         inlineHeader: false,
         parent: null,
     },
-    "/mobile/pay/periods": {
-        title: "Staff Pay Periods",
+    "/mobile/pay/payouts": {
+        title: "Staff Payouts",
         subPage: true,
         inlineHeader: false,
         parent: "/mobile/pay",
@@ -136,23 +136,25 @@ export const resolveRoute = (path: string): RouteConfig | null => {
         };
     }
 
-    if (path.includes("/mobile/pay/periods/")) {
-        const suffix = path.split("/mobile/pay/periods/")[1] ?? "";
+    if (path.includes("/mobile/pay/payouts/")) {
+        const suffix = path.split("/mobile/pay/payouts/")[1] ?? "";
         const segments = suffix.split("/").filter(Boolean);
-        if (segments.length >= 2) {
-            return {
-                title: "Pay Details",
-                subPage: true,
-                inlineHeader: false,
-                parent: "/mobile/pay/periods",
-            };
+        const userId = segments[0];
+        const payoutId = segments[1];
+
+        if (segments.length === 1) {
+            return { title: "Pay History", subPage: true, inlineHeader: false, parent: "/mobile/pay/payouts" };
         }
-        return {
-            title: "Period Staff",
-            subPage: true,
-            inlineHeader: false,
-            parent: "/mobile/pay/periods",
-        };
+        if (segments.length === 2) {
+            return { title: "Payslip Details", subPage: true, inlineHeader: false, parent: `/mobile/pay/payouts/${userId}` };
+        }
+        if (segments.length === 3 && segments[2] === "pay") {
+            return { title: "Confirm Payment", subPage: true, inlineHeader: false, parent: `/mobile/pay/payouts/${userId}/${payoutId}` };
+        }
+        if (segments.length === 5) {
+            return { title: "Summary Details", subPage: true, inlineHeader: false, parent: `/mobile/pay/payouts/${userId}/${payoutId}` };
+        }
+        return { title: "Pay", subPage: true, inlineHeader: false, parent: "/mobile/pay/payouts" };
     }
 
     return null;

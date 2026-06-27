@@ -59,7 +59,7 @@ export default function PayOverviewPage() {
             <div className="space-y-1">
                 <p className="text-xs font-medium text-gray-400 uppercase tracking-wide px-1">Operations</p>
                 <div className="bg-white rounded-xl px-4">
-                    <MenuRow icon={<Users size={20} />} label="Staff Pay Periods" onClick={() => navigation.push(url("/mobile/pay/periods"))} />
+                    <MenuRow icon={<Users size={20} />} label="Staff Payouts" onClick={() => navigation.push(url("/mobile/pay/payouts"))} />
                     <MenuRow icon={<UserCog size={20} />} label="Staff Payroll Info" onClick={() => navigation.push(url("/mobile/pay/staff"))} />
                 </div>
             </div>
