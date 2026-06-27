@@ -88,7 +88,7 @@ export default function EarningsPage() {
                         <p className="text-xl font-bold text-orange-900">{payout.totalOrders}</p>
                     </div>
                     <div className="bg-blue-100 p-2 rounded-lg">
-                        <p className="text-xs font-semibold text-gray-700">{t("earnings.cups")}</p>
+                        <p className="text-xs font-semibold text-gray-700">Cups</p>
                         <p className="text-xl font-bold text-blue-900">{payout.totalCups}</p>
                     </div>
                     <div className="bg-green-100 p-2 rounded-lg col-span-2">

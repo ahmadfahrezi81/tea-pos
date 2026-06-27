@@ -57,12 +57,13 @@ export async function PUT(request: NextRequest) {
         const query = GetPayrollUserInfoQuery.safeParse(searchParams);
         if (!query.success || !query.data.userId) return badRequest("userId is required");
 
-        const info = await upsertPayrollUserInfo(supabase, {
+        await upsertPayrollUserInfo(supabase, {
             tenantId,
             userId: query.data.userId,
             ...body.data,
         });
 
+        const info = await getPayrollUserInfo(supabase, { tenantId, userId: query.data.userId });
         const parsed = PayrollUserInfoResponse.safeParse(info);
         return ok(parsed.success ? parsed.data : info);
     } catch (error) {

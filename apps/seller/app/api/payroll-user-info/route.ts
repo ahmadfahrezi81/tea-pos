@@ -39,12 +39,13 @@ export async function PUT(request: NextRequest) {
         const body = UpdatePayrollUserInfoInput.safeParse(await request.json());
         if (!body.success) return badRequest("Validation failed");
 
-        const info = await upsertPayrollUserInfo(supabase, {
+        await upsertPayrollUserInfo(supabase, {
             tenantId,
             userId: user.id,
             ...body.data,
         });
 
+        const info = await getPayrollUserInfo(supabase, { tenantId, userId: user.id });
         const parsed = PayrollUserInfoResponse.safeParse(info);
         return ok(parsed.success ? parsed.data : info);
     } catch (error) {
