@@ -64,7 +64,7 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
     const weekStart = getISOWeek(parseISO(payout.startDate));
     const weekEnd = getISOWeek(parseISO(payout.endDate));
     const sameWeek = weekStart === weekEnd;
-    const totalCups = commissions.reduce((s, c) => s + c.totalCups, 0);
+    const totalCups = commissions.filter((c) => c.status === "approved").reduce((s, c) => s + c.totalCups, 0);
     const expectedPayoutDate = useExpectedPayoutDate(payout.endDate);
 
     const periodDays = eachDayOfInterval({
@@ -266,8 +266,8 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
                                                             {t("claims.statusRejected")}
                                                         </span>
                                                     )}
-                                                    <span className={`text-base font-medium ${c.status === "rejected" ? "text-red-400 line-through" : c.status === "pending" ? "text-gray-400" : "text-gray-800"}`}>
-                                                        {c.status === "pending" ? "—" : formatRupiah(c.amount)}
+                                                    <span className={`font-medium ${c.status === "rejected" ? "text-base text-red-400 line-through" : c.status === "pending" ? "text-xs text-gray-800" : "text-base text-gray-800"}`}>
+                                                        {c.status === "pending" ? t("earnings.pendingReview") : formatRupiah(c.amount)}
                                                     </span>
                                                 </div>
                                             </div>

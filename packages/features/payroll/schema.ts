@@ -82,6 +82,8 @@ export const PayoutResponse = z
         totalCups: z.number(),
         totalOrders: z.number(),
         totalClaims: z.number().optional().default(0),
+        approvedCount: z.number().optional().default(0),
+        pendingCount: z.number().optional().default(0),
         commissionsTotal: z.number(),
         claimsTotal: z.number(),
         totalPay: z.number(),

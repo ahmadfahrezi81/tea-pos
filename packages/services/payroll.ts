@@ -180,7 +180,12 @@ export async function listPayouts(
 
     const payoutIds = payouts.map((p) => (p as { id: string }).id);
 
-    const [{ data: commissions }, { data: claims }] = await Promise.all([
+    const [
+        { data: commissions },
+        { data: claims },
+        { data: pendingCommissions },
+        { data: pendingClaims },
+    ] = await Promise.all([
         supabase
             .from("payroll_commissions")
             .select("payout_id, total_commission, total_cups, total_orders")
@@ -191,14 +196,25 @@ export async function listPayouts(
             .select("payout_id, amount")
             .in("payout_id", payoutIds)
             .eq("status", "approved"),
+        supabase
+            .from("payroll_commissions")
+            .select("payout_id")
+            .in("payout_id", payoutIds)
+            .eq("status", "pending"),
+        supabase
+            .from("payroll_claims")
+            .select("payout_id")
+            .in("payout_id", payoutIds)
+            .eq("status", "pending"),
     ]);
 
-    const commissionsByPayout = (commissions ?? []).reduce<Record<string, { commissionsTotal: number; totalCups: number; totalOrders: number }>>((acc, c) => {
+    const commissionsByPayout = (commissions ?? []).reduce<Record<string, { commissionsTotal: number; totalCups: number; totalOrders: number; approvedCount: number }>>((acc, c) => {
         const id = (c as { payout_id: string }).payout_id;
-        if (!acc[id]) acc[id] = { commissionsTotal: 0, totalCups: 0, totalOrders: 0 };
+        if (!acc[id]) acc[id] = { commissionsTotal: 0, totalCups: 0, totalOrders: 0, approvedCount: 0 };
         acc[id].commissionsTotal += (c as { total_commission: number }).total_commission ?? 0;
         acc[id].totalCups += (c as { total_cups: number }).total_cups ?? 0;
         acc[id].totalOrders += (c as { total_orders: number }).total_orders ?? 0;
+        acc[id].approvedCount += 1;
         return acc;
     }, {});
 
@@ -210,9 +226,15 @@ export async function listPayouts(
         return acc;
     }, {});
 
+    const pendingCountByPayout: Record<string, number> = {};
+    for (const c of [...(pendingCommissions ?? []), ...(pendingClaims ?? [])]) {
+        const id = (c as { payout_id: string }).payout_id;
+        pendingCountByPayout[id] = (pendingCountByPayout[id] ?? 0) + 1;
+    }
+
     const merged = payouts.map((p) => {
         const id = (p as { id: string }).id;
-        const comm = commissionsByPayout[id] ?? { commissionsTotal: 0, totalCups: 0, totalOrders: 0 };
+        const comm = commissionsByPayout[id] ?? { commissionsTotal: 0, totalCups: 0, totalOrders: 0, approvedCount: 0 };
         const claimsEntry = claimsByPayout[id] ?? { total: 0, count: 0 };
         return {
             ...p,
@@ -222,6 +244,8 @@ export async function listPayouts(
             total_cups: comm.totalCups,
             total_orders: comm.totalOrders,
             total_claims: claimsEntry.count,
+            approved_count: comm.approvedCount + claimsEntry.count,
+            pending_count: pendingCountByPayout[id] ?? 0,
         };
     });
 
@@ -479,14 +503,16 @@ export async function getPayslip(
     const claims = toCamelKeys(claimsFlat) as Record<string, unknown>[];
 
     const commissionsTotal = commissions
-        .filter((e) => e.status !== "rejected")
+        .filter((e) => e.status === "approved")
         .reduce((s, e) => s + ((e.totalCommission as number) ?? 0), 0);
     const claimsTotal = claims
-        .filter((c) => c.status !== "rejected")
+        .filter((c) => c.status === "approved")
         .reduce((s, c) => s + ((c.amount as number) ?? 0), 0);
     const totalPay = commissionsTotal + claimsTotal;
     const ratePerCup = commissions[0] ? ((commissions[0].ratePerCup as number) ?? 0) : 0;
-    const totalOrders = commissions.reduce((s, e) => s + ((e.totalOrders as number) ?? 0), 0);
+    const totalOrders = commissions
+        .filter((e) => e.status === "approved")
+        .reduce((s, e) => s + ((e.totalOrders as number) ?? 0), 0);
 
     return { payout, commissions, claims, commissionsTotal, claimsTotal, totalPay, ratePerCup, totalOrders, paidByName };
 }

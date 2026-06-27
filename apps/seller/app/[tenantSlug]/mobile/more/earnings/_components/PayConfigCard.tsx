@@ -28,9 +28,17 @@ export function PayConfigCard() {
     const { endDate } = getPayWindowBounds(today, frequency);
     const expectedPayout = getExpectedPayoutDate(endDate);
 
+    const FREQUENCY_LABELS: Record<string, string> = {
+        daily: "Daily",
+        weekly: "Weekly",
+        bi_weekly: "Bi-Weekly",
+        monthly: "Monthly",
+    };
+
     const rows = [
+        { label: "Pay Frequency", value: FREQUENCY_LABELS[frequency] ?? frequency },
         { label: "Per Cup", value: info?.ratePerCup ? formatRupiah(info.ratePerCup) : "—" },
-        { label: "Expected Payout", value: format(parseISO(expectedPayout), "EEE, d MMM yyyy") },
+        { label: "Next Expected Payout", value: format(parseISO(expectedPayout), "EEE, d MMM yyyy") },
     ];
 
     const slug = info?.commissionConfigSlug ?? null;

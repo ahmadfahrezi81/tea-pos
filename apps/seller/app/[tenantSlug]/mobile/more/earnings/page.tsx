@@ -60,41 +60,52 @@ export default function EarningsPage() {
             <button
                 key={payout.id}
                 onClick={() => navigation.push(url(`/mobile/more/earnings/${payout.id}`))}
-                className="w-full bg-white rounded-xl p-3 flex items-center gap-3 text-left active:bg-gray-50"
+                className="w-full bg-white rounded-2xl p-4 text-left active:bg-gray-50 space-y-3"
             >
-                <div className="flex-1 min-w-0 space-y-1.5">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <span className="text-base font-semibold text-gray-900">
-                                {sameWeek ? `Week ${weekStart}` : `Week ${weekStart} · Week ${weekEnd}`}
-                            </span>
-                            <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${STATUS_STYLE[status] ?? STATUS_STYLE.pending}`}>
-                                {status === "pending" ? "Ongoing" : status === "paid" ? t("earnings.statusPaid") : status}
-                                {status === "paid" && payout.paidAt ? ` · ${format(new Date(payout.paidAt), "d MMM")}` : ""}
-                            </span>
-                        </div>
-                        <ArrowUpRight size={18} className="text-gray-400 shrink-0" />
+                {/* Header */}
+                <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                        <p className="text-lg font-bold text-gray-900">
+                            {sameWeek ? `Week ${weekStart}` : `Week ${weekStart} · Week ${weekEnd}`}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                            {format(parseISO(payout.startDate), "EEE, d MMM")} – {format(parseISO(payout.endDate), "EEE, d MMM")}
+                        </p>
                     </div>
-                    <p className="text-sm text-gray-600">
-                        {format(parseISO(payout.startDate), "EEE, d MMM")} – {format(parseISO(payout.endDate), "EEE, d MMM")}
-                    </p>
-                    <div className="grid grid-cols-5 gap-1 bg-slate-100 rounded-xl px-3 py-2">
-                        <div className="text-center">
-                            <p className="text-sm font-bold text-orange-600">{payout.totalOrders}</p>
-                            <p className="text-xs text-gray-500">{t("analytics.orders")}</p>
-                        </div>
-                        <div className="text-center">
-                            <p className="text-sm font-bold text-blue-600">{payout.totalCups}</p>
-                            <p className="text-xs text-gray-500">{t("earnings.cups")}</p>
-                        </div>
-                        <div className="text-center">
-                            <p className="text-sm font-bold text-gray-700">{payout.totalClaims ?? 0}</p>
-                            <p className="text-xs text-gray-500">Claims</p>
-                        </div>
-                        <div className="text-center col-span-2 border-l border-gray-300">
-                            <p className="text-xs text-gray-500">{t("earnings.totalRow")}</p>
-                            <p className="text-sm font-bold text-green-600">{`Rp ${payout.totalPay.toLocaleString("id-ID")}`}</p>
-                        </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                        <span className={`text-sm font-medium px-2.5 py-0.5 rounded-full ${STATUS_STYLE[status] ?? STATUS_STYLE.pending}`}>
+                            {status === "pending" ? "Ongoing" : status === "paid" ? t("earnings.statusPaid") : status}
+                            {status === "paid" && payout.paidAt ? ` · ${format(new Date(payout.paidAt), "d MMM")}` : ""}
+                        </span>
+                        <ArrowUpRight size={18} className="text-gray-400" />
+                    </div>
+                </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-4 gap-2">
+                    <div className="bg-slate-50 rounded-2xl px-3 py-3 text-center">
+                        <p className="text-xl font-bold text-orange-600">{payout.totalOrders}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{t("analytics.orders")}</p>
+                    </div>
+                    <div className="bg-slate-50 rounded-2xl px-3 py-3 text-center">
+                        <p className="text-xl font-bold text-blue-600">{payout.totalCups}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{t("earnings.cups")}</p>
+                    </div>
+                    <div className="bg-slate-50 rounded-2xl px-3 py-3 text-center col-span-2">
+                        <p className="text-xl font-bold text-green-600">{`Rp ${payout.totalPay.toLocaleString("id-ID")}`}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{t("earnings.totalRow")}</p>
+                    </div>
+                    <div className="bg-slate-50 rounded-2xl px-3 py-3 text-center">
+                        <p className="text-xl font-bold text-gray-700">{payout.totalClaims ?? 0}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">Claims</p>
+                    </div>
+                    <div className="bg-green-50 rounded-2xl px-3 py-3 text-center">
+                        <p className="text-xl font-bold text-green-700">{payout.approvedCount ?? 0}</p>
+                        <p className="text-xs text-green-600 mt-0.5">Approved</p>
+                    </div>
+                    <div className="bg-yellow-50 rounded-2xl px-3 py-3 text-center col-span-2">
+                        <p className="text-xl font-bold text-yellow-700">{payout.pendingCount ?? 0}</p>
+                        <p className="text-xs text-yellow-600 mt-0.5">Pending Review</p>
                     </div>
                 </div>
             </button>
