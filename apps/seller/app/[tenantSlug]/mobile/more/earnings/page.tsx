@@ -83,29 +83,31 @@ export default function EarningsPage() {
 
                 {/* Stats */}
                 <div className="grid grid-cols-4 gap-2">
-                    <div className="bg-slate-50 rounded-2xl px-3 py-3 text-center">
-                        <p className="text-xl font-bold text-orange-600">{payout.totalOrders}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">{t("analytics.orders")}</p>
+                    <div className="bg-orange-100 p-2 rounded-lg">
+                        <p className="text-xs font-semibold text-gray-700">{t("analytics.orders")}</p>
+                        <p className="text-xl font-bold text-orange-900">{payout.totalOrders}</p>
                     </div>
-                    <div className="bg-slate-50 rounded-2xl px-3 py-3 text-center">
-                        <p className="text-xl font-bold text-blue-600">{payout.totalCups}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">{t("earnings.cups")}</p>
+                    <div className="bg-blue-100 p-2 rounded-lg">
+                        <p className="text-xs font-semibold text-gray-700">{t("earnings.cups")}</p>
+                        <p className="text-xl font-bold text-blue-900">{payout.totalCups}</p>
                     </div>
-                    <div className="bg-slate-50 rounded-2xl px-3 py-3 text-center col-span-2">
-                        <p className="text-xl font-bold text-green-600">{`Rp ${payout.totalPay.toLocaleString("id-ID")}`}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">{t("earnings.totalRow")}</p>
+                    <div className="bg-green-100 p-2 rounded-lg col-span-2">
+                        <p className="text-xs font-semibold text-gray-700">{t("earnings.totalRow")}</p>
+                        <p className="text-xl font-bold text-green-900">{`Rp ${payout.totalPay.toLocaleString("id-ID")}`}</p>
                     </div>
-                    <div className="bg-slate-50 rounded-2xl px-3 py-3 text-center">
-                        <p className="text-xl font-bold text-gray-700">{payout.totalClaims ?? 0}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">Claims</p>
-                    </div>
-                    <div className="bg-green-50 rounded-2xl px-3 py-3 text-center">
-                        <p className="text-xl font-bold text-green-700">{payout.approvedCount ?? 0}</p>
-                        <p className="text-xs text-green-600 mt-0.5">Approved</p>
-                    </div>
-                    <div className="bg-yellow-50 rounded-2xl px-3 py-3 text-center col-span-2">
-                        <p className="text-xl font-bold text-yellow-700">{payout.pendingCount ?? 0}</p>
-                        <p className="text-xs text-yellow-600 mt-0.5">Pending Review</p>
+                    <div className="col-span-4 grid grid-cols-3 gap-2">
+                        <div className="bg-slate-100 p-2 rounded-lg">
+                            <p className="text-xs font-semibold text-gray-700">Claims</p>
+                            <p className="text-xl font-bold text-gray-800">{payout.totalClaims ?? 0}</p>
+                        </div>
+                        <div className="bg-yellow-100 p-2 rounded-lg">
+                            <p className="text-xs font-semibold text-gray-700">Pending</p>
+                            <p className="text-xl font-bold text-yellow-900">{payout.pendingCount ?? 0}</p>
+                        </div>
+                        <div className="bg-green-100 p-2 rounded-lg">
+                            <p className="text-xs font-semibold text-gray-700">Approved</p>
+                            <p className="text-xl font-bold text-green-900">{payout.approvedCount ?? 0}</p>
+                        </div>
                     </div>
                 </div>
             </button>

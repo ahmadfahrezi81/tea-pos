@@ -1,20 +1,23 @@
 "use client";
 
-import { usePayrollClaims, useClaimableTypes } from "@/lib/hooks/payroll-claims/usePayrollClaims";
+import { useState } from "react";
+import {
+    usePayrollClaims,
+    useClaimableTypes,
+} from "@/lib/hooks/payroll-claims/usePayrollClaims";
 import { usePayrollUserInfo } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
 import { getPayWindowBounds } from "@tea-pos/utils/week";
-import { ReceiptText, CheckCircle } from "lucide-react";
+import { getCurrentLocalMonth, getTodayLocalStr } from "@tea-pos/utils/time";
+import { ReceiptText, CalendarDays } from "lucide-react";
 import { format } from "date-fns";
 import { useT } from "@/lib/hooks/useT";
+import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 
-function getLocalToday() {
-    const offset = parseInt(process.env.NEXT_PUBLIC_TIMEZONE_OFFSET ?? "7");
-    return new Date(Date.now() + offset * 60 * 60 * 1000).toISOString().slice(0, 10);
-}
+const SHOW_ALL_ENTITLEMENTS = false; // dev flag: true = show all types, false = claimable only
 
 const STATUS_STYLE: Record<string, string> = {
-    pending: "bg-gray-100 text-gray-600",
-    approved: "bg-blue-100 text-blue-700",
+    pending: "bg-yellow-100 text-yellow-700",
+    approved: "bg-green-100 text-green-700",
     rejected: "bg-red-100 text-red-600",
 };
 
@@ -23,53 +26,75 @@ export default function ReimbursementsPage() {
     const { info, isLoading: infoLoading } = usePayrollUserInfo();
     const t = useT();
 
+    const [selectedMonth, setSelectedMonth] = useState(getCurrentLocalMonth());
+
+    const today = getTodayLocalStr();
     const window = info
-        ? getPayWindowBounds(getLocalToday(), info.payFrequency ?? "bi_weekly")
+        ? getPayWindowBounds(today, info.payFrequency ?? "bi_weekly")
         : null;
 
     const { types, isLoading: typesLoading } = useClaimableTypes(window);
+
+    const filteredClaims = claims.filter((c: any) =>
+        c.date?.startsWith(selectedMonth),
+    );
 
     return (
         <div className="space-y-3">
             {/* Entitlements */}
             <div className="bg-white rounded-2xl p-4 space-y-3">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{t("claims.entitlements")}</p>
+                <p className="text-sm font-semibold text-gray-800">
+                    {t("claims.entitlements")}
+                </p>
                 {infoLoading || typesLoading ? (
-                    <div className="flex gap-3">
+                    <div className="space-y-2">
                         {[1, 2].map((i) => (
-                            <div key={i} className="w-36 h-20 bg-gray-100 rounded-xl animate-pulse shrink-0" />
+                            <div
+                                key={i}
+                                className="h-12 bg-gray-100 rounded-xl animate-pulse"
+                            />
                         ))}
                     </div>
-                ) : types.length === 0 ? (
-                    <p className="text-sm text-gray-400">{t("claims.noEntitlements")}</p>
-                ) : (
-                    <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1">
-                        {types.map((type: any) => (
-                            <div
-                                key={type.id}
-                                className={`shrink-0 w-40 rounded-xl p-3 border space-y-1.5 ${type.claimable ? "border-brand/20 bg-brand/5" : "border-gray-100 bg-gray-50"}`}
-                            >
-                                <div className="flex items-start justify-between gap-1">
-                                    <p className="text-sm font-semibold text-gray-800 leading-tight">{type.name}</p>
-                                    {type.claimSource === "manual" && !type.claimable && (
-                                        <CheckCircle size={14} className="text-green-500 shrink-0 mt-0.5" />
-                                    )}
+                ) : (() => {
+                    const displayTypes = SHOW_ALL_ENTITLEMENTS ? types : types.filter((type: any) => type.claimable);
+                    if (displayTypes.length === 0) return (
+                        <div className="py-1 space-y-0.5">
+                            <p className="text-sm font-medium text-gray-700">All claims used for this period</p>
+                            <p className="text-xs text-gray-500">You've already submitted all available claims.</p>
+                        </div>
+                    );
+                    return (
+                    <div className="divide-y divide-gray-100">
+                        {displayTypes.map((type: any) => (
+                            <div key={type.id} className="flex items-center justify-between py-2.5">
+                                <div>
+                                    <p className="text-sm font-medium text-gray-800">{type.name}</p>
+                                    <p className="text-xs text-gray-600 font-medium">
+                                        {type.frequency === "daily" ? "Daily" : type.frequency === "weekly" ? t("claims.freqWeekly") : type.frequency === "monthly" ? t("claims.freqMonthly") : type.frequency === "one_time" ? t("claims.freqOneTime") : type.frequency}
+                                        {" · "}
+                                        {type.claimSource === "auto" ? t("claims.auto") : "Manual"}
+                                    </p>
                                 </div>
-                                <p className="text-base font-bold text-gray-900">Rp {(type.amount ?? 0).toLocaleString("id-ID")}</p>
-                                <p className={`text-xs font-medium ${type.claimSource === "auto" ? "text-gray-400" : type.claimable ? "text-brand" : "text-gray-400"}`}>
-                                    {(type.frequency === "weekly" ? t("claims.freqWeekly") : type.frequency === "monthly" ? t("claims.freqMonthly") : type.frequency === "one_time" ? t("claims.freqOneTime") : type.frequency)} ·{" "}
-                                    {type.claimSource === "auto"
-                                        ? t("claims.auto")
-                                        : type.claimable
-                                          ? t("claims.available")
-                                          : type.frequency === "one_time"
-                                            ? t("claims.used")
-                                            : t("claims.claimed")}
-                                </p>
+                                <p className="text-base font-bold text-gray-900">{formatRupiah(type.amount ?? 0)}</p>
                             </div>
                         ))}
                     </div>
-                )}
+                    );
+                })()}
+            </div>
+
+            {/* Month selector */}
+            <div className="bg-white p-4 rounded-2xl">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <CalendarDays size={16} className="inline mr-1" />
+                    {t("analytics.selectMonth")}
+                </label>
+                <input
+                    type="month"
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand/90 focus:outline-none"
+                />
             </div>
 
             {/* Claims history */}
@@ -78,29 +103,47 @@ export default function ReimbursementsPage() {
                     <div className="flex items-center justify-center py-12">
                         <div className="w-7 h-7 border-3 border-brand border-t-transparent rounded-full animate-spin" />
                     </div>
-                ) : claims.length === 0 ? (
+                ) : filteredClaims.length === 0 ? (
                     <div className="flex flex-col items-center justify-center text-center py-12">
                         <ReceiptText size={40} className="text-gray-300 mb-3" />
-                        <p className="text-gray-500 text-sm">{t("claims.noClaims")}</p>
+                        <p className="text-gray-500 text-sm">
+                            {t("claims.noClaims")}
+                        </p>
                     </div>
                 ) : (
                     <ul className="divide-y divide-gray-100">
-                        {claims.map((claim: any) => (
-                            <li key={claim.id} className="flex items-center justify-between px-4 py-3">
+                        {filteredClaims.map((claim: any) => (
+                            <li
+                                key={claim.id}
+                                className="flex items-center justify-between px-4 py-3"
+                            >
                                 <div>
                                     <p className="text-base font-medium text-gray-800">
-                                        {claim.claimTypeName ?? claim.claimConfigId ?? "—"}
+                                        {claim.claimTypeName ??
+                                            claim.claimConfigId ??
+                                            "—"}
                                     </p>
                                     <p className="text-sm text-gray-400">
-                                        {format(new Date(claim.date), "d MMM yyyy")}
+                                        {format(
+                                            new Date(claim.date),
+                                            "d MMM yyyy",
+                                        )}
                                     </p>
                                 </div>
                                 <div className="text-right flex flex-col items-end gap-1">
                                     <p className="text-base font-semibold text-gray-900">
-                                        Rp {claim.amount.toLocaleString("id-ID")}
+                                        {formatRupiah(claim.amount)}
                                     </p>
-                                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLE[claim.status] ?? STATUS_STYLE.pending}`}>
-                                        {claim.status === "pending" ? t("claims.statusPending") : claim.status === "approved" ? t("claims.statusApproved") : claim.status === "rejected" ? t("claims.statusRejected") : claim.status}
+                                    <span
+                                        className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLE[claim.status] ?? STATUS_STYLE.pending}`}
+                                    >
+                                        {claim.status === "pending"
+                                            ? t("claims.statusPending")
+                                            : claim.status === "approved"
+                                              ? t("claims.statusApproved")
+                                              : claim.status === "rejected"
+                                                ? t("claims.statusRejected")
+                                                : claim.status}
                                     </span>
                                 </div>
                             </li>
