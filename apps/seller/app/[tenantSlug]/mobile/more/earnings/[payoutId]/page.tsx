@@ -105,16 +105,14 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
                     </span>
                 </div>
                 <div className="grid grid-cols-4 gap-2">
-                    <div className={`text-center ${totalOrders === 0 ? "col-span-2" : ""}`}>
-                        <p className="text-xl font-bold text-orange-600">{totalCups}</p>
+                    <div className="text-center">
+                        <p className="text-xl font-bold text-orange-600">{totalOrders}</p>
+                        <p className="text-sm text-gray-600">{t("analytics.orders")}</p>
+                    </div>
+                    <div className="text-center">
+                        <p className="text-xl font-bold text-blue-600">{totalCups}</p>
                         <p className="text-sm text-gray-600">{t("analytics.cups")}</p>
                     </div>
-                    {totalOrders > 0 && (
-                        <div className="text-center">
-                            <p className="text-xl font-bold text-gray-700">{totalOrders}</p>
-                            <p className="text-sm text-gray-600">{t("analytics.orders").toLowerCase()}</p>
-                        </div>
-                    )}
                     <div className="text-center col-span-2 border-l-2 border-gray-300">
                         <p className="text-sm text-gray-600">{t("earnings.totalRow")}</p>
                         <p className="text-xl font-bold text-green-600">{formatRupiah(totalPay)}</p>
@@ -215,10 +213,10 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
                     return (
                         <div key={dateStr} className="bg-white rounded-2xl p-3 space-y-3">
                             <div className="flex items-center justify-between">
-                                <h4 className="text-base font-bold text-gray-800">
+                                <h4 className="text-xl font-bold text-gray-800">
                                     {format(day, "EEE, MMM d")}
                                 </h4>
-                                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${allApproved ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-500"}`}>
+                                <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${allApproved ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-500"}`}>
                                     {allApproved ? t("claims.statusApproved") : t("earnings.pendingReview")}
                                 </span>
                             </div>
@@ -232,7 +230,7 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
                                             <div key={c.id} className="flex items-center justify-between gap-2">
                                                 <div className="min-w-0">
                                                     <p className="text-sm text-gray-700 font-medium">{c.storeName ?? "—"}</p>
-                                                    <p className="text-sm font-semibold text-orange-600">
+                                                    <p className="text-sm font-semibold text-blue-600">
                                                         {c.totalCups} <span className="font-semibold">{t("analytics.cups").toLowerCase()}</span>
                                                         <span className="font-normal text-gray-600 ml-1">× {formatRupiah(c.ratePerCup)}</span>
                                                     </p>
@@ -241,7 +239,7 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
                                                     {c.status === "rejected" && (
                                                         <p className="text-xs font-medium text-red-500">{t("earnings.statusRejected")}</p>
                                                     )}
-                                                    <p className={`font-semibold ${c.status === "rejected" ? "text-sm text-red-400 line-through" : c.status === "pending" ? "text-xs text-gray-800" : "text-sm text-gray-800"}`}>
+                                                    <p className={`font-medium ${c.status === "rejected" ? "text-base text-red-400 line-through" : c.status === "pending" ? "text-xs text-gray-800" : "text-base text-gray-800"}`}>
                                                         {c.status === "pending" ? t("earnings.pendingReview") : formatRupiah(c.totalCommission)}
                                                     </p>
                                                 </div>
@@ -268,7 +266,7 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
                                                             {t("claims.statusRejected")}
                                                         </span>
                                                     )}
-                                                    <span className={`font-semibold ${c.status === "rejected" ? "text-red-400 line-through" : c.status === "pending" ? "text-gray-400" : "text-gray-800"}`}>
+                                                    <span className={`text-base font-medium ${c.status === "rejected" ? "text-red-400 line-through" : c.status === "pending" ? "text-gray-400" : "text-gray-800"}`}>
                                                         {c.status === "pending" ? "—" : formatRupiah(c.amount)}
                                                     </span>
                                                 </div>

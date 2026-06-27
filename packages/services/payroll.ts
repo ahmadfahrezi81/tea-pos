@@ -174,7 +174,58 @@ export async function listPayouts(
 
     const { data, error } = await query;
     if (error) throw error;
-    return toCamelKeys(data ?? []);
+
+    const payouts = data ?? [];
+    if (payouts.length === 0) return [];
+
+    const payoutIds = payouts.map((p) => (p as { id: string }).id);
+
+    const [{ data: commissions }, { data: claims }] = await Promise.all([
+        supabase
+            .from("payroll_commissions")
+            .select("payout_id, total_commission, total_cups, total_orders")
+            .in("payout_id", payoutIds)
+            .eq("status", "approved"),
+        supabase
+            .from("payroll_claims")
+            .select("payout_id, amount")
+            .in("payout_id", payoutIds)
+            .eq("status", "approved"),
+    ]);
+
+    const commissionsByPayout = (commissions ?? []).reduce<Record<string, { commissionsTotal: number; totalCups: number; totalOrders: number }>>((acc, c) => {
+        const id = (c as { payout_id: string }).payout_id;
+        if (!acc[id]) acc[id] = { commissionsTotal: 0, totalCups: 0, totalOrders: 0 };
+        acc[id].commissionsTotal += (c as { total_commission: number }).total_commission ?? 0;
+        acc[id].totalCups += (c as { total_cups: number }).total_cups ?? 0;
+        acc[id].totalOrders += (c as { total_orders: number }).total_orders ?? 0;
+        return acc;
+    }, {});
+
+    const claimsByPayout = (claims ?? []).reduce<Record<string, { total: number; count: number }>>((acc, c) => {
+        const id = (c as { payout_id: string }).payout_id;
+        if (!acc[id]) acc[id] = { total: 0, count: 0 };
+        acc[id].total += (c as { amount: number }).amount ?? 0;
+        acc[id].count += 1;
+        return acc;
+    }, {});
+
+    const merged = payouts.map((p) => {
+        const id = (p as { id: string }).id;
+        const comm = commissionsByPayout[id] ?? { commissionsTotal: 0, totalCups: 0, totalOrders: 0 };
+        const claimsEntry = claimsByPayout[id] ?? { total: 0, count: 0 };
+        return {
+            ...p,
+            commissions_total: comm.commissionsTotal,
+            claims_total: claimsEntry.total,
+            total_pay: comm.commissionsTotal + claimsEntry.total,
+            total_cups: comm.totalCups,
+            total_orders: comm.totalOrders,
+            total_claims: claimsEntry.count,
+        };
+    });
+
+    return toCamelKeys(merged);
 }
 
 // ─── Upsert payout ────────────────────────────────────────────────────────────
@@ -207,7 +258,7 @@ export async function upsertPayout(
         .eq("user_id", userId)
         .gte("date", startDate)
         .lte("date", endDate)
-        .neq("status", "rejected");
+        .eq("status", "approved");
 
     const commissionsTotal = (commissions ?? []).reduce(
         (s, e) => s + ((e as { total_commission: number }).total_commission ?? 0),
@@ -229,7 +280,7 @@ export async function upsertPayout(
         .eq("user_id", userId)
         .gte("date", startDate)
         .lte("date", endDate)
-        .neq("status", "rejected");
+        .eq("status", "approved");
 
     const claimsTotal = (claims ?? []).reduce(
         (s, c) => s + ((c as { amount: number }).amount ?? 0),

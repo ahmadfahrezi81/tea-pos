@@ -20,7 +20,7 @@ export async function getPayrollUserInfo(
 ) {
     const { data } = await supabase
         .from("payroll_user_info")
-        .select("*, payroll_commission_configs(name, rate_per_cup)")
+        .select("*, payroll_commission_configs(name, slug, rate_per_cup)")
         .eq("tenant_id", tenantId)
         .eq("user_id", userId)
         .maybeSingle();
@@ -28,12 +28,13 @@ export async function getPayrollUserInfo(
     if (!data) return null;
 
     const { payroll_commission_configs: commissionConfig, ...row } = data as Record<string, unknown> & {
-        payroll_commission_configs: { name: string; rate_per_cup: number } | null;
+        payroll_commission_configs: { name: string; slug: string; rate_per_cup: number } | null;
     };
 
     return {
         ...(toCamelKeys(row) as Record<string, unknown>),
         commissionConfigName: commissionConfig?.name ?? null,
+        commissionConfigSlug: commissionConfig?.slug ?? null,
         ratePerCup: commissionConfig?.rate_per_cup ?? null,
     } as Record<string, unknown>;
 }

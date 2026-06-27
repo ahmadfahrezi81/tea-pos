@@ -6,7 +6,7 @@ import { usePayouts } from "@/lib/hooks/payroll/usePayouts";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
 import { parseISO, format, getISOWeek } from "date-fns";
-import { ChevronRight, CalendarDays } from "lucide-react";
+import { ArrowUpRight, CalendarDays } from "lucide-react";
 import type { PayoutResponse } from "@tea-pos/features/payroll/schema";
 import { useT } from "@/lib/hooks/useT";
 import { SkeletonValue } from "@/components/shared/SkeletonValue";
@@ -14,7 +14,7 @@ import { PayConfigCard } from "./_components/PayConfigCard";
 import { toIndonesiaMonthYear } from "@tea-pos/utils/server-config/timezone";
 
 const STATUS_STYLE: Record<string, string> = {
-    pending: "bg-gray-100 text-gray-500",
+    pending: "bg-yellow-100 text-yellow-700",
     paid: "bg-green-100 text-green-700",
 };
 
@@ -60,25 +60,43 @@ export default function EarningsPage() {
             <button
                 key={payout.id}
                 onClick={() => navigation.push(url(`/mobile/more/earnings/${payout.id}`))}
-                className="w-full bg-white rounded-xl p-4 flex items-center gap-3 text-left active:bg-gray-50"
+                className="w-full bg-white rounded-xl p-3 flex items-center gap-3 text-left active:bg-gray-50"
             >
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                        <span className="text-base font-semibold text-gray-900">
-                            {sameWeek ? `W${weekStart}` : `W${weekStart} · W${weekEnd}`}
-                        </span>
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLE[status] ?? STATUS_STYLE.pending}`}>
-                            {status === "pending" ? t("earnings.statusWaiting") : status === "paid" ? t("earnings.statusPaid") : status}
-                            {status === "paid" && payout.paidAt ? ` · ${format(new Date(payout.paidAt), "d MMM")}` : ""}
-                        </span>
+                <div className="flex-1 min-w-0 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <span className="text-base font-semibold text-gray-900">
+                                {sameWeek ? `Week ${weekStart}` : `Week ${weekStart} · Week ${weekEnd}`}
+                            </span>
+                            <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${STATUS_STYLE[status] ?? STATUS_STYLE.pending}`}>
+                                {status === "pending" ? "Ongoing" : status === "paid" ? t("earnings.statusPaid") : status}
+                                {status === "paid" && payout.paidAt ? ` · ${format(new Date(payout.paidAt), "d MMM")}` : ""}
+                            </span>
+                        </div>
+                        <ArrowUpRight size={18} className="text-gray-400 shrink-0" />
                     </div>
-                    <p className="text-sm text-gray-500">
-                        {format(parseISO(payout.startDate), "MMM d")}–{format(parseISO(payout.endDate), "MMM d")}
-                        {payout.totalCups > 0 && ` · ${payout.totalCups} ${t("earnings.cups")}`}
-                        {` · Rp ${payout.totalPay.toLocaleString("id-ID")}`}
+                    <p className="text-sm text-gray-600">
+                        {format(parseISO(payout.startDate), "EEE, d MMM")} – {format(parseISO(payout.endDate), "EEE, d MMM")}
                     </p>
+                    <div className="grid grid-cols-5 gap-1 bg-slate-100 rounded-xl px-3 py-2">
+                        <div className="text-center">
+                            <p className="text-sm font-bold text-orange-600">{payout.totalOrders}</p>
+                            <p className="text-xs text-gray-500">{t("analytics.orders")}</p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-sm font-bold text-blue-600">{payout.totalCups}</p>
+                            <p className="text-xs text-gray-500">{t("earnings.cups")}</p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-sm font-bold text-gray-700">{payout.totalClaims ?? 0}</p>
+                            <p className="text-xs text-gray-500">Claims</p>
+                        </div>
+                        <div className="text-center col-span-2 border-l border-gray-300">
+                            <p className="text-xs text-gray-500">{t("earnings.totalRow")}</p>
+                            <p className="text-sm font-bold text-green-600">{`Rp ${payout.totalPay.toLocaleString("id-ID")}`}</p>
+                        </div>
+                    </div>
                 </div>
-                <ChevronRight size={18} className="text-gray-400 shrink-0" />
             </button>
         );
     }
@@ -116,18 +134,12 @@ export default function EarningsPage() {
                 <div className="space-y-4">
                     {monthKeys.map((monthKey) => {
                         const monthPayouts = groupedByMonth[monthKey];
-                        const monthTotal = monthPayouts.reduce((sum, p) => sum + p.totalPay, 0);
                         return (
                             <div key={monthKey} className="space-y-2">
-                                <div className="flex items-center justify-between px-1">
-                                    <p className="text-sm font-semibold text-gray-500">
+                                <div className="px-1">
+                                    <p className="text-lg font-semibold text-gray-800">
                                         {toIndonesiaMonthYear(monthKey)}
                                     </p>
-                                    {monthTotal > 0 && (
-                                        <p className="text-sm font-semibold text-gray-500">
-                                            Rp {monthTotal.toLocaleString("id-ID")}
-                                        </p>
-                                    )}
                                 </div>
                                 {monthPayouts.map(renderPayoutRow)}
                             </div>

@@ -81,6 +81,7 @@ export const PayoutResponse = z
         status: z.enum(PAYOUT_STATUSES),
         totalCups: z.number(),
         totalOrders: z.number(),
+        totalClaims: z.number().optional().default(0),
         commissionsTotal: z.number(),
         claimsTotal: z.number(),
         totalPay: z.number(),
