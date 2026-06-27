@@ -20,7 +20,6 @@ const STATUS_PILL: Record<string, string> = {
     paid: "bg-green-100 text-green-700",
 };
 
-
 type Commission = {
     id: string; date: string; dailySummaryId: string; storeName?: string | null;
     totalCups: number; ratePerCup: number; totalCommission: number;
@@ -38,9 +37,15 @@ type ConfirmTarget = {
     label: string; amount: number;
 };
 
-
-export default function UserPayslipPage({ params }: { params: Promise<{ userId: string; payoutId: string }> }) {
-    const { userId, payoutId } = use(params);
+export default function UserPayslipPage({
+    params,
+    searchParams,
+}: {
+    params: Promise<{ payoutId: string }>;
+    searchParams: Promise<{ userId?: string }>;
+}) {
+    const { payoutId } = use(params);
+    const { userId } = use(searchParams);
     const { url } = useTenantSlug();
     const { payslip, isLoading: payslipLoading, mutate } = usePayslip(payoutId, userId);
     const { users } = useTenantUsers();
@@ -57,6 +62,7 @@ export default function UserPayslipPage({ params }: { params: Promise<{ userId: 
         if (upsertedRef.current) return;
         upsertedRef.current = true;
         const ps = payslip as { payout: { startDate: string; endDate: string } };
+        if (!userId) return;
         payrollApi.upsertPayout({ startDate: ps.payout.startDate, endDate: ps.payout.endDate, userId })
             .then(() => mutate())
             .catch(() => {});
@@ -131,6 +137,8 @@ export default function UserPayslipPage({ params }: { params: Promise<{ userId: 
         const cl = claimsByDate[dateStr] ?? [];
         return [...dc, ...cl].some((c) => c.status === "pending");
     });
+
+    const userParam = userId ? `?userId=${userId}` : "";
 
     return (
         <div className="space-y-3 pb-32">
@@ -264,7 +272,6 @@ export default function UserPayslipPage({ params }: { params: Promise<{ userId: 
 
                     return (
                         <div key={dateStr} id={`day-${dateStr}`} className="bg-white rounded-xl overflow-hidden">
-                            {/* Day header */}
                             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                                 <div className="flex items-center gap-2">
                                     <p className="text-base font-bold text-gray-900">{format(day, "EEE, d MMM")}</p>
@@ -275,13 +282,12 @@ export default function UserPayslipPage({ params }: { params: Promise<{ userId: 
                                 <p className="text-base font-bold text-gray-900">{formatRupiah(dayApprovedTotal)}</p>
                             </div>
 
-                            {/* Commission rows */}
                             {dayCommissions.map((c) => (
                                 <div key={c.id} className="flex items-center gap-3 px-4 py-3 border-b border-gray-50 last:border-none">
                                     <div className="flex-1 min-w-0">
                                         {c.dailySummaryId ? (
                                             <button
-                                                onClick={() => navigation.push(url(`/mobile/pay/payouts/${userId}/${payoutId}/day/${dateStr}/summary?summaryId=${c.dailySummaryId}`))}
+                                                onClick={() => navigation.push(url(`/mobile/pay/payouts/${payoutId}/day/${dateStr}/summary?summaryId=${c.dailySummaryId}&userId=${userId ?? ""}`))}
                                                 className="flex items-center gap-1 active:opacity-60"
                                             >
                                                 <span className="text-sm font-medium text-gray-800 truncate">{c.storeName ?? "—"}</span>
@@ -313,7 +319,6 @@ export default function UserPayslipPage({ params }: { params: Promise<{ userId: 
                                 </div>
                             ))}
 
-                            {/* Claim rows */}
                             {dayClaims.map((c) => (
                                 <div key={c.id} className="flex items-center gap-3 px-4 py-3 border-b border-gray-50 last:border-none">
                                     <div className="flex-1 min-w-0">
@@ -347,7 +352,7 @@ export default function UserPayslipPage({ params }: { params: Promise<{ userId: 
             {status === "pending" && pendingCount === 0 && (
                 <div className="fixed bottom-0 left-0 right-0 p-4 pb-8 bg-white border-t border-gray-100">
                     <button
-                        onClick={() => navigation.push(url(`/mobile/pay/payouts/${userId}/${payoutId}/pay`))}
+                        onClick={() => navigation.push(url(`/mobile/pay/payouts/${payoutId}/pay${userParam}`))}
                         className="w-full py-3.5 bg-green-600 text-white font-bold rounded-xl active:opacity-80"
                     >
                         Pay

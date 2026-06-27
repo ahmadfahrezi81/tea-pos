@@ -95,18 +95,14 @@ export default function EarningsPage() {
                         <p className="text-xs font-semibold text-gray-700">{t("earnings.totalRow")}</p>
                         <p className="text-xl font-bold text-green-900">{`Rp ${payout.totalPay.toLocaleString("id-ID")}`}</p>
                     </div>
-                    <div className="col-span-4 grid grid-cols-3 gap-2">
-                        <div className="bg-slate-100 p-2 rounded-lg">
-                            <p className="text-xs font-semibold text-gray-700">Claims</p>
-                            <p className="text-xl font-bold text-gray-800">{payout.totalClaims ?? 0}</p>
-                        </div>
+                    <div className="col-span-4 grid grid-cols-2 gap-2">
                         <div className="bg-yellow-100 p-2 rounded-lg">
                             <p className="text-xs font-semibold text-gray-700">Pending</p>
                             <p className="text-xl font-bold text-yellow-900">{payout.pendingCount ?? 0}</p>
                         </div>
-                        <div className="bg-green-100 p-2 rounded-lg">
+                        <div className="bg-purple-100 p-2 rounded-lg">
                             <p className="text-xs font-semibold text-gray-700">Approved</p>
-                            <p className="text-xl font-bold text-green-900">{payout.approvedCount ?? 0}</p>
+                            <p className="text-xl font-bold text-purple-900">{payout.approvedCount ?? 0}</p>
                         </div>
                     </div>
                 </div>

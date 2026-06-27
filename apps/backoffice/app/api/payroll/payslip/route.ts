@@ -17,8 +17,7 @@ export async function GET(request: NextRequest) {
         const query = GetPayslipQuery.safeParse(Object.fromEntries(new URL(request.url).searchParams));
         if (!query.success) return badRequest("Invalid query parameters");
 
-        const targetUserId = query.data.userId ?? user.id;
-        const payslip = await getPayslip(supabase, { tenantId, userId: targetUserId, payoutId: query.data.payoutId });
+        const payslip = await getPayslip(supabase, { tenantId, userId: query.data.userId, payoutId: query.data.payoutId });
         return ok(payslip);
     } catch (error) { return handleError("GET /api/payroll/payslip", error); }
 }

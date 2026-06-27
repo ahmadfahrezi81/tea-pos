@@ -448,21 +448,23 @@ export async function updatePayoutStatus(
 
 export async function getPayslip(
     supabase: SupabaseClient,
-    { tenantId, userId, payoutId }: { tenantId: string; userId: string; payoutId: string },
+    { tenantId, userId, payoutId }: { tenantId: string; userId?: string; payoutId: string },
 ) {
-    const { data: payoutRow, error: payoutError } = await supabase
+    let query = supabase
         .from("payroll_payouts")
         .select("*, paid_by_user:users!payroll_payouts_paid_by_fkey(full_name)")
         .eq("id", payoutId)
-        .eq("tenant_id", tenantId)
-        .eq("user_id", userId)
-        .single();
+        .eq("tenant_id", tenantId);
+    if (userId) query = query.eq("user_id", userId);
+
+    const { data: payoutRow, error: payoutError } = await (query as typeof query & { single: () => Promise<{ data: unknown; error: unknown }> }).single();
 
     if (payoutError || !payoutRow) {
         throw Object.assign(new Error("Payout not found"), { status: 404 });
     }
 
     const payoutData = payoutRow as Record<string, unknown>;
+    const resolvedUserId = userId ?? (payoutData.user_id as string);
     const paidByName = (payoutData.paid_by_user as { full_name: string } | null)?.full_name ?? null;
     const payout = toCamelKeys({ ...payoutData, paid_by_user: undefined }) as { startDate: string; endDate: string; [key: string]: unknown };
 
@@ -471,14 +473,14 @@ export async function getPayslip(
             .from("payroll_commissions")
             .select("*, stores(name)")
             .eq("tenant_id", tenantId)
-            .eq("user_id", userId)
+            .eq("user_id", resolvedUserId)
             .eq("payout_id", payoutId)
             .order("date"),
         supabase
             .from("payroll_claims")
             .select("*, payroll_claim_configs!left(name, auto_threshold_hours)")
             .eq("tenant_id", tenantId)
-            .eq("user_id", userId)
+            .eq("user_id", resolvedUserId)
             .eq("payout_id", payoutId)
             .order("date"),
     ]);

@@ -14,17 +14,17 @@ function formatTimestamp(utc: string) {
 export default async function DaySummaryPage({
     params, searchParams,
 }: {
-    params: Promise<{ userId: string; payoutId: string; date: string }>;
-    searchParams: Promise<{ summaryId?: string }>;
+    params: Promise<{ payoutId: string; date: string }>;
+    searchParams: Promise<{ summaryId?: string; userId?: string }>;
 }) {
-    const { userId, payoutId, date } = await params;
-    const { summaryId: summaryIdParam } = await searchParams;
+    const { payoutId, date } = await params;
+    const { summaryId: summaryIdParam, userId } = await searchParams;
     const supabase = getServiceClient();
     const tenantId = await getCurrentTenantId();
 
     let dailySummaryId: string | null = summaryIdParam ?? null;
 
-    if (!dailySummaryId) {
+    if (!dailySummaryId && userId) {
         try {
             const payslip = await getPayslip(supabase, { tenantId, userId, payoutId });
             const ps = payslip as unknown as { commissions: Array<{ date: string; dailySummaryId: string }> };

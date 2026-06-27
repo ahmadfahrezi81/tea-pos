@@ -24,11 +24,18 @@ function CopyableValue({ value, prefix, className }: { value: string; prefix?: s
     );
 }
 
-export default function PayConfirmPage({ params }: { params: Promise<{ userId: string; payoutId: string }> }) {
-    const { userId, payoutId } = use(params);
+export default function PayConfirmPage({
+    params,
+    searchParams,
+}: {
+    params: Promise<{ payoutId: string }>;
+    searchParams: Promise<{ userId?: string }>;
+}) {
+    const { payoutId } = use(params);
+    const { userId } = use(searchParams);
     const { url } = useTenantSlug();
     const { payslip, isLoading: payslipLoading } = usePayslip(payoutId, userId);
-    const { info: payrollUserInfo, isLoading: infoLoading } = usePayrollUserInfo(userId);
+    const { info: payrollUserInfo, isLoading: infoLoading } = usePayrollUserInfo(userId ?? "");
     const { users } = useTenantUsers();
     const [proofFile, setProofFile] = useState<File | null>(null);
     const [proofPreview, setProofPreview] = useState<string | null>(null);
@@ -36,6 +43,7 @@ export default function PayConfirmPage({ params }: { params: Promise<{ userId: s
     const [error, setError] = useState<string | null>(null);
 
     const targetUser = users.find((u) => u.id === userId);
+    const userParam = userId ? `?userId=${userId}` : "";
 
     const handleConfirm = async () => {
         if (!proofFile) { setError("Please attach a transfer screenshot."); return; }
@@ -47,7 +55,7 @@ export default function PayConfirmPage({ params }: { params: Promise<{ userId: s
             form.append("bucket", "payroll-proofs");
             const { url: proofUrl } = await apiFetch<{ url: string }>("/api/upload", { method: "POST", body: form });
             await payrollApi.updatePayout(payoutId, { status: "paid", paymentProofUrl: proofUrl });
-            navigation.push(url(`/mobile/pay/payouts/${userId}/${payoutId}`));
+            navigation.push(url(`/mobile/pay/payouts/${payoutId}${userParam}`));
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to confirm payment");
             setSubmitting(false);
@@ -113,7 +121,6 @@ export default function PayConfirmPage({ params }: { params: Promise<{ userId: s
                 </div>
             )}
 
-            {/* Confirm button */}
             <div className="fixed bottom-0 left-0 right-0 p-4 pb-8 bg-white border-t border-gray-100">
                 <button
                     onClick={handleConfirm}

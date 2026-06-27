@@ -139,20 +139,16 @@ export const resolveRoute = (path: string): RouteConfig | null => {
     if (path.includes("/mobile/pay/payouts/")) {
         const suffix = path.split("/mobile/pay/payouts/")[1] ?? "";
         const segments = suffix.split("/").filter(Boolean);
-        const userId = segments[0];
-        const payoutId = segments[1];
+        const payoutId = segments[0];
 
         if (segments.length === 1) {
-            return { title: "Pay History", subPage: true, inlineHeader: false, parent: "/mobile/pay/payouts" };
+            return { title: "Payslip Details", subPage: true, inlineHeader: false, parent: "/mobile/pay/payouts" };
         }
-        if (segments.length === 2) {
-            return { title: "Payslip Details", subPage: true, inlineHeader: false, parent: `/mobile/pay/payouts/${userId}` };
+        if (segments.length === 2 && segments[1] === "pay") {
+            return { title: "Confirm Payment", subPage: true, inlineHeader: false, parent: `/mobile/pay/payouts/${payoutId}` };
         }
-        if (segments.length === 3 && segments[2] === "pay") {
-            return { title: "Confirm Payment", subPage: true, inlineHeader: false, parent: `/mobile/pay/payouts/${userId}/${payoutId}` };
-        }
-        if (segments.length === 5) {
-            return { title: "Summary Details", subPage: true, inlineHeader: false, parent: `/mobile/pay/payouts/${userId}/${payoutId}` };
+        if (segments.length === 4) {
+            return { title: "Summary Details", subPage: true, inlineHeader: false, parent: `/mobile/pay/payouts/${payoutId}` };
         }
         return { title: "Pay", subPage: true, inlineHeader: false, parent: "/mobile/pay/payouts" };
     }
