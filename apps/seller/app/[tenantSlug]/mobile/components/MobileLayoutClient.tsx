@@ -22,6 +22,7 @@ import { MobileOverlayContext } from "./MobileOverlayContext";
 import { MobileFooterSlotContext } from "./MobileFooterSlotContext";
 import { resolveRoute, rootTabSuffixes, tabGroups } from "../config/navigation";
 import { useFlags } from "@/lib/context/FlagsContext";
+import { useT } from "@/lib/hooks/useT";
 
 interface MobileLayoutClientProps {
     children: ReactNode;
@@ -46,6 +47,7 @@ export default function MobileLayoutClient({
 
     const { user, avatarUrl, mutate: refreshProfile } = useAuth();
     const { flags: { isMaintenanceEnabled } } = useFlags();
+    const t = useT();
     const { data: storesData } = useStores();
     const { selectedStore, setIsPickerOpen, isPickerOpen } = useStore();
     const isIPhonePWA = useIsIPhonePWA();
@@ -137,8 +139,8 @@ export default function MobileLayoutClient({
     const currentTitle = currentRoute?.title ?? "Mobile";
     const currentIsSubPage = currentRoute?.subPage ?? false;
     const isInlineHeader = currentRoute?.inlineHeader ?? false;
-    const hasHeaderAction = currentRoute?.headerAction === "add";
-    const footerCtaLabel = currentRoute?.footerCta;
+    const hasHeaderAction = !!currentRoute?.headerAction;
+    const footerCtaLabel = currentRoute?.footerCtaKey ? t(currentRoute.footerCtaKey) : currentRoute?.footerCta;
     const parentSuffix = currentRoute?.parent;
     const parentPath = !parentSuffix
         ? url("/mobile")
@@ -155,7 +157,9 @@ export default function MobileLayoutClient({
             ? "pt-27"
             : "pt-19";
 
-    const scrollPaddingBottom = (hasHeaderAction || !!footerCtaLabel) ? "pb-32" : "pb-28";
+    const scrollPaddingBottom = currentRoute?.scrollPaddingBottom ?? (
+        (hasHeaderAction || !!footerCtaLabel) ? "pb-32" : "pb-28"
+    );
 
     return (
         <MobileFooterSlotContext.Provider value={{ setFooterSlot }}>
