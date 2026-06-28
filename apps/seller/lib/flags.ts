@@ -6,6 +6,7 @@ export const FLAGS = {
         QRIS: "feature-qris",
         REPORT: "feature-report",
         REQUEST: "feature-request",
+        REIMBURSEMENT: "feature-reimbursement",
         PAY: "feature-pay",
         CLAIMS: "feature-claims",
         FAST_ORDER: "feature-fast-order",

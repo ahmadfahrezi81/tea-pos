@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
             isQrisEnabled: evaluation.isEnabled(FLAGS.FEATURE.QRIS),
             isReportEnabled: evaluation.isEnabled(FLAGS.FEATURE.REPORT),
             isRequestEnabled: evaluation.isEnabled(FLAGS.FEATURE.REQUEST),
+            isReimbursementEnabled: evaluation.isEnabled(FLAGS.FEATURE.REIMBURSEMENT),
             isPayEnabled: evaluation.isEnabled(FLAGS.FEATURE.PAY),
             isClaimsEnabled: evaluation.isEnabled(FLAGS.FEATURE.CLAIMS),
             isFastOrderEnabled: evaluation.isEnabled(FLAGS.FEATURE.FAST_ORDER),

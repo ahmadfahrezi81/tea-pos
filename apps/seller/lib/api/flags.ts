@@ -5,6 +5,7 @@ export const FlagsResponse = z.object({
     isQrisEnabled: z.boolean(),
     isReportEnabled: z.boolean(),
     isRequestEnabled: z.boolean(),
+    isReimbursementEnabled: z.boolean(),
     isPayEnabled: z.boolean(),
     isClaimsEnabled: z.boolean(),
     isFastOrderEnabled: z.boolean(),

@@ -15,15 +15,12 @@ import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { useStore } from "@/lib/context/StoreContext";
 import { StorePickerDrawer } from "./StorePickerDrawer";
 import { navigation } from "@tea-pos/utils/navigation";
-import { getWeekInfo } from "@tea-pos/utils/week";
 import { useIsIPhonePWA } from "@/lib/usePWA";
 import { MobileHeader } from "./MobileHeader";
 import { MobileFooterNav } from "./MobileFooterNav";
 import { MobileOverlayContext } from "./MobileOverlayContext";
 import { MobileFooterSlotContext } from "./MobileFooterSlotContext";
-import { MobileScrollContext } from "./MobileScrollContext";
 import { resolveRoute, rootTabSuffixes, tabGroups } from "../config/navigation";
-import { useT } from "@/lib/hooks/useT";
 import { useFlags } from "@/lib/context/FlagsContext";
 
 interface MobileLayoutClientProps {
@@ -49,7 +46,6 @@ export default function MobileLayoutClient({
 
     const { user, avatarUrl, mutate: refreshProfile } = useAuth();
     const { flags: { isMaintenanceEnabled } } = useFlags();
-    const t = useT();
     const { data: storesData } = useStores();
     const { selectedStore, setIsPickerOpen, isPickerOpen } = useStore();
     const isIPhonePWA = useIsIPhonePWA();
@@ -64,25 +60,12 @@ export default function MobileLayoutClient({
 
     const handleNavClick = useCallback(
         (path: string) => {
-            if (path === pathname) {
-                scrollContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-                return;
-            }
-            const currentRoute = resolveRoute(pathname);
-            if (currentRoute?.preserveScroll) {
-                const cleanPath = path.split("?")[0];
-                const isTabSwitch = rootTabPaths.includes(cleanPath);
-                if (isTabSwitch) {
-                    sessionStorage.removeItem(`scroll:${pathname}`);
-                } else if (scrollContainerRef.current) {
-                    sessionStorage.setItem(`scroll:${pathname}`, String(scrollContainerRef.current.scrollTop));
-                }
-            }
+            if (path === pathname) return;
             setOptimisticPath(path.split("?")[0]);
             setIsTransitioning(true);
             router.push(path);
         },
-        [pathname, router, rootTabPaths],
+        [pathname, router],
     );
 
     useEffect(() => {
@@ -107,6 +90,7 @@ export default function MobileLayoutClient({
     useEffect(() => {
         router.prefetch(url("/mobile/home/pos"));
         router.prefetch(url("/mobile/home/manage"));
+        router.prefetch(url("/mobile/notifications"));
         router.prefetch(url("/mobile/account"));
         router.prefetch(url("/mobile/more/stores"));
         router.prefetch(url("/mobile/account/details"));
@@ -135,15 +119,14 @@ export default function MobileLayoutClient({
                     tab.variant && currentPath.includes(tab.variant.pathContains)
                         ? tab.variant
                         : null;
-                const label = v?.labelKey ? t(v.labelKey) : v?.label ?? (tab.labelKey ? t(tab.labelKey) : tab.label);
                 return {
                     path: url(tab.pathSuffix),
-                    label,
+                    label: v?.label ?? tab.label,
                     icon: v?.icon ?? tab.icon,
                     matchPaths: tab.matchSuffixes.map(url),
                 };
             }),
-        [currentPath, url, t],
+        [currentPath, url],
     );
 
     useEffect(() => {
@@ -151,11 +134,11 @@ export default function MobileLayoutClient({
     }, [tabs]);
 
     const currentRoute = resolveRoute(currentPath);
-    const currentTitle = currentRoute?.titleKey ? t(currentRoute.titleKey) : currentRoute?.title ?? "Mobile";
+    const currentTitle = currentRoute?.title ?? "Mobile";
     const currentIsSubPage = currentRoute?.subPage ?? false;
     const isInlineHeader = currentRoute?.inlineHeader ?? false;
-    const hasHeaderAction = !!currentRoute?.headerAction;
-    const footerCtaLabel = currentRoute?.footerCtaKey ? t(currentRoute.footerCtaKey) : currentRoute?.footerCta;
+    const hasHeaderAction = currentRoute?.headerAction === "add";
+    const footerCtaLabel = currentRoute?.footerCta;
     const parentSuffix = currentRoute?.parent;
     const parentPath = !parentSuffix
         ? url("/mobile")
@@ -172,16 +155,9 @@ export default function MobileLayoutClient({
             ? "pt-27"
             : "pt-19";
 
-    const scrollPaddingBottom = currentRoute?.scrollPaddingBottom ?? (
-        !!footerCtaLabel
-            ? "pb-32"
-            : isIPhonePWA
-              ? "pb-30"
-              : "pb-24"
-    );
+    const scrollPaddingBottom = (hasHeaderAction || !!footerCtaLabel) ? "pb-32" : "pb-28";
 
     return (
-        <MobileScrollContext.Provider value={{ scrollRef: scrollContainerRef }}>
         <MobileFooterSlotContext.Provider value={{ setFooterSlot }}>
         <MobileOverlayContext.Provider value={{ setOverlay }}>
             {/* Shell — always rendered so header/footer are on screen from first paint */}
@@ -223,7 +199,8 @@ export default function MobileLayoutClient({
                     )}
                     {overlay && (
                         <div
-                            className={`absolute inset-0 z-10 flex items-center justify-center`}
+                            className={`absolute inset-x-0 top-0 z-10 ${scrollPaddingTop} pb-5 px-3`}
+                            style={{ bottom: 'var(--mobile-footer-h)' }}
                         >
                             {overlay}
                         </div>
@@ -260,7 +237,7 @@ export default function MobileLayoutClient({
             {!shellReady && (
                 <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center">
                     <div className="text-center" role="status" aria-live="polite">
-                        <div className="mb-4">
+                        <div className="mb-8">
                             <Image
                                 src="/icons/icon-192x192.png"
                                 alt="Logo"
@@ -270,7 +247,6 @@ export default function MobileLayoutClient({
                                 className="rounded-xl shadow-2xl mx-auto"
                             />
                         </div>
-                        <p className="font-mono text-lg font-semibold text-gray-700 mb-2">{getWeekInfo().label}</p>
                         <div className="w-64 h-4 loading-track">
                             <div className="loading-bar">
                                 <div className="absolute top-0 left-0 right-0 h-1/2 rounded-full bg-gradient-to-b from-white/20 to-transparent" />
@@ -278,7 +254,7 @@ export default function MobileLayoutClient({
                         </div>
                         <div className="mt-4 text-xs text-gray-600 text-center">
                             <span className="font-mono text-xs opacity-90">
-                                {t("common.loading")}
+                                Loading ...
                             </span>
                         </div>
                     </div>
@@ -324,23 +300,24 @@ export default function MobileLayoutClient({
                             />
                         </div>
                         <h2 className="text-lg font-semibold text-gray-800 mb-2">
-                            {t("common.authRequired")}
+                            Authentication Required
                         </h2>
                         <p className="text-gray-600 mb-6 text-sm">
-                            {t("common.authRequiredSub")}
+                            Unable to load your profile. Please check your
+                            connection and try again.
                         </p>
                         <div className="flex gap-3 justify-center">
                             <button
                                 onClick={() => window.location.reload()}
                                 className="px-4 py-2 bg-brand text-white rounded-lg text-sm font-medium"
                             >
-                                {t("common.refresh")}
+                                Refresh Page
                             </button>
                             <button
                                 onClick={() => refreshProfile()}
                                 className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium"
                             >
-                                {t("common.retry")}
+                                Retry
                             </button>
                         </div>
                     </div>
@@ -348,6 +325,5 @@ export default function MobileLayoutClient({
             )}
         </MobileOverlayContext.Provider>
         </MobileFooterSlotContext.Provider>
-        </MobileScrollContext.Provider>
     );
 }
