@@ -7,9 +7,13 @@ export const FLAGS = {
         REPORT: "feature-report",
         REQUEST: "feature-request",
         REIMBURSEMENT: "feature-reimbursement",
+        PAY: "feature-pay",
+        CLAIMS: "feature-claims",
+        FAST_ORDER: "feature-fast-order",
     },
     OPS: {
         SKIP_MANAGE_PHOTOS: "ops-skip-manage-photos",
+        MAINTENANCE: "ops-maintenance",
     },
 } as const;
 
