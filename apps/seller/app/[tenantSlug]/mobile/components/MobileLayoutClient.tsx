@@ -21,6 +21,7 @@ import { MobileFooterNav } from "./MobileFooterNav";
 import { MobileOverlayContext } from "./MobileOverlayContext";
 import { MobileFooterSlotContext } from "./MobileFooterSlotContext";
 import { resolveRoute, rootTabSuffixes, tabGroups } from "../config/navigation";
+import { useFlags } from "@/lib/context/FlagsContext";
 
 interface MobileLayoutClientProps {
     children: ReactNode;
@@ -44,6 +45,7 @@ export default function MobileLayoutClient({
     const lastRootTabRef = useRef<string>(url("/mobile/more"));
 
     const { user, avatarUrl, mutate: refreshProfile } = useAuth();
+    const { flags: { isMaintenanceEnabled } } = useFlags();
     const { data: storesData } = useStores();
     const { selectedStore, setIsPickerOpen, isPickerOpen } = useStore();
     const isIPhonePWA = useIsIPhonePWA();
@@ -255,6 +257,30 @@ export default function MobileLayoutClient({
                                 Loading ...
                             </span>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Maintenance overlay — shown when ops-maintenance flag is on */}
+            {isMaintenanceEnabled && (
+                <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center p-4">
+                    <div className="text-center">
+                        <div className="mb-6">
+                            <Image
+                                src="/icons/icon-192x192.png"
+                                alt="Logo"
+                                width={70}
+                                height={70}
+                                priority
+                                className="rounded-xl shadow-2xl mx-auto"
+                            />
+                        </div>
+                        <h2 className="text-lg font-semibold text-gray-800 mb-2">
+                            Under Maintenance
+                        </h2>
+                        <p className="text-gray-500 text-sm max-w-xs">
+                            We&apos;re making some updates to improve your experience. We&apos;ll be back shortly.
+                        </p>
                     </div>
                 </div>
             )}
