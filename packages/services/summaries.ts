@@ -76,58 +76,48 @@ function aggregateOrders(orders: OrderRow[]) {
 
 // ─── Order users by summary (replaces session-based approach) ────────────────
 
-async function fetchOrderUsersForSummaries(
+export async function getSummaryUsers(
     supabase: SupabaseClient,
-    { tenantId, summaryIds }: { tenantId: string; summaryIds: string[] },
-): Promise<Record<string, Array<{ userId: string; userName: string | null; userAvatarUrl: string | null; totalCups: number | null }>>> {
-    if (summaryIds.length === 0) return {};
-
+    { tenantId, summaryId }: { tenantId: string; summaryId: string },
+): Promise<Array<{ userId: string; userName: string | null; userAvatarUrl: string | null; totalCups: number }>> {
     const { data: orderRows } = await supabase
         .from("store_orders")
-        .select("daily_summary_id, user_id, store_order_items(quantity)")
-        .in("daily_summary_id", summaryIds)
+        .select("user_id, store_order_items(quantity)")
+        .eq("daily_summary_id", summaryId)
         .eq("tenant_id", tenantId);
 
-    if (!orderRows || orderRows.length === 0) return {};
+    if (!orderRows || orderRows.length === 0) return [];
 
-    type OrderRow = { daily_summary_id: string; user_id: string; store_order_items?: Array<{ quantity: number }> };
+    type OrderRow = { user_id: string; store_order_items?: Array<{ quantity: number }> };
     const cupsMap = new Map<string, number>();
-    const userIdsBySummary = new Map<string, Set<string>>();
 
     for (const order of orderRows as OrderRow[]) {
-        const key = `${order.daily_summary_id}:${order.user_id}`;
         const cups = order.store_order_items?.reduce((sum, i) => sum + i.quantity, 0) ?? 0;
-        cupsMap.set(key, (cupsMap.get(key) ?? 0) + cups);
-        if (!userIdsBySummary.has(order.daily_summary_id)) userIdsBySummary.set(order.daily_summary_id, new Set());
-        userIdsBySummary.get(order.daily_summary_id)!.add(order.user_id);
+        cupsMap.set(order.user_id, (cupsMap.get(order.user_id) ?? 0) + cups);
     }
 
-    const uniqueUserIds = [...new Set((orderRows as OrderRow[]).map((o) => o.user_id))];
+    const uniqueUserIds = [...cupsMap.keys()];
 
-    const { data: userRows } = await supabase
-        .from("users")
-        .select("id, full_name")
-        .in("id", uniqueUserIds);
-    const nameMap = new Map((userRows ?? []).map((u: { id: string; full_name: string | null }) => [u.id, u.full_name ?? null]));
+    const [userRows, avatarEntries] = await Promise.all([
+        supabase.from("users").select("id, full_name").in("id", uniqueUserIds)
+            .then(({ data }) => data ?? []),
+        Promise.all(
+            uniqueUserIds.map(async (userId) => {
+                const { data } = await supabase.auth.admin.getUserById(userId);
+                return [userId, (data?.user?.user_metadata?.avatar_url as string | undefined) ?? null] as const;
+            }),
+        ),
+    ]);
 
-    const avatarMap = new Map<string, string | null>();
-    await Promise.all(
-        uniqueUserIds.map(async (userId) => {
-            const { data: authUser } = await supabase.auth.admin.getUserById(userId);
-            avatarMap.set(userId, (authUser?.user?.user_metadata?.avatar_url as string | undefined) ?? null);
-        }),
-    );
+    const nameMap = new Map((userRows as Array<{ id: string; full_name: string | null }>).map((u) => [u.id, u.full_name ?? null]));
+    const avatarMap = new Map(avatarEntries);
 
-    const result: Record<string, Array<{ userId: string; userName: string | null; userAvatarUrl: string | null; totalCups: number | null }>> = {};
-    for (const [summaryId, userIds] of userIdsBySummary.entries()) {
-        result[summaryId] = [...userIds].map((userId) => ({
-            userId,
-            userName: nameMap.get(userId) ?? null,
-            userAvatarUrl: avatarMap.get(userId) ?? null,
-            totalCups: cupsMap.get(`${summaryId}:${userId}`) ?? 0,
-        }));
-    }
-    return result;
+    return uniqueUserIds.map((userId) => ({
+        userId,
+        userName: nameMap.get(userId) ?? null,
+        userAvatarUrl: avatarMap.get(userId) ?? null,
+        totalCups: cupsMap.get(userId) ?? 0,
+    }));
 }
 
 // ─── List summaries ───────────────────────────────────────────────────────────
@@ -164,9 +154,6 @@ export async function listSummaries(supabase: SupabaseClient, params: ListSummar
 
     const summaryList = (summaries ?? []) as SummaryRow[];
     const summaryIds = summaryList.map((s) => s.id);
-    const sessionsBySummaryId = summaryIds.length > 0
-        ? await fetchOrderUsersForSummaries(supabase, { tenantId, summaryIds })
-        : {};
     const expensesBySummaryId: Record<string, Array<{ daily_summary_id: string; amount: number; [key: string]: unknown }>> = {};
     const expensesByDate: Record<string, unknown[]> = {};
     const photoCountBySummaryId: Record<string, number> = {};
@@ -207,7 +194,7 @@ export async function listSummaries(supabase: SupabaseClient, params: ListSummar
     const finalSummaries = summaryList.map((s) => ({
         ...s,
         expenses: expensesBySummaryId[s.id] ?? [],
-        sessions: sessionsBySummaryId[s.id] ?? [],
+        sessions: [],
         photo_count: photoCountBySummaryId[s.id] ?? 0,
     }));
     const monthlyTotals = summaryList.reduce(

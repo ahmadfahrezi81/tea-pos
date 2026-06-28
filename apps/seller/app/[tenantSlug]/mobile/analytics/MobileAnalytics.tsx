@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { Drawer } from "vaul";
 import { useSummaries } from "@/lib/hooks/summaries/useDailySummaries";
+import { useSummaryUsers } from "@/lib/hooks/summaries/useSummaryUsers";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 import { toIndonesiaMonthYear } from "@tea-pos/utils/server-config/timezone";
 import { getCurrentLocalMonth } from "@tea-pos/utils/time";
@@ -42,6 +43,68 @@ const MiniDailySalesChart = dynamic(
         ),
     },
 );
+
+function SummaryUsersRow({ summaryId }: { summaryId: string }) {
+    const ref = useRef<HTMLDivElement>(null);
+    const [shouldFetch, setShouldFetch] = useState(false);
+    const t = useT();
+
+    useEffect(() => {
+        const el = ref.current;
+        if (!el || shouldFetch) return;
+        const obs = new IntersectionObserver(
+            ([entry]) => { if (entry.isIntersecting) setShouldFetch(true); },
+            { rootMargin: "200px" },
+        );
+        obs.observe(el);
+        return () => obs.disconnect();
+    }, [shouldFetch]);
+
+    const { data, isLoading } = useSummaryUsers(shouldFetch ? summaryId : null);
+    const users = data?.users ?? [];
+
+    return (
+        <div ref={ref}>
+            {shouldFetch && isLoading ? (
+                <div className="flex flex-col gap-1.5 animate-pulse">
+                    {[0, 1].map((i) => (
+                        <div key={i} className="flex items-center gap-2 bg-slate-100 rounded-xl p-1.5 w-full">
+                            <div className="w-7 h-7 rounded-lg bg-gray-200 shrink-0" />
+                            <div className="h-4 bg-gray-200 rounded flex-1" />
+                            <div className="h-5 w-16 bg-gray-200 rounded-lg shrink-0" />
+                        </div>
+                    ))}
+                </div>
+            ) : users.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                    {users.map((s) => (
+                        <div key={s.userId} className="flex items-center gap-2 bg-slate-100 rounded-xl p-1.5 w-full">
+                            {s.userAvatarUrl ? (
+                                <Image
+                                    src={s.userAvatarUrl}
+                                    alt={s.userName ?? ""}
+                                    width={28}
+                                    height={28}
+                                    className="rounded-lg object-cover shrink-0"
+                                />
+                            ) : (
+                                <div className="w-7 h-7 rounded-lg bg-brand/10 flex items-center justify-center shrink-0">
+                                    <UserCircle size={18} className="text-brand" />
+                                </div>
+                            )}
+                            <p className="text-base font-bold text-gray-900 truncate flex-1">
+                                {s.userName ?? t("common.unknown")}
+                            </p>
+                            <span className="text-sm font-bold text-orange-700 bg-orange-100 px-2 py-0.5 rounded-lg shrink-0">
+                                {s.totalCups} {t("analytics.cups")}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            ) : null}
+        </div>
+    );
+}
 
 export default function MobileAnalytics() {
     const { selectedStoreId } = useStore();
@@ -391,54 +454,7 @@ export default function MobileAnalytics() {
                                             </div>
                                         </div>
 
-                                        {(summary.sessions ?? []).length >
-                                            0 && (
-                                            <div>
-                                                <div className="flex flex-wrap gap-1.5">
-                                                    {(
-                                                        summary.sessions ?? []
-                                                    ).map((s: any) => (
-                                                        <div
-                                                            key={s.userId}
-                                                            className="flex items-center gap-2 bg-slate-100 rounded-xl p-1.5 w-full"
-                                                        >
-                                                            {s.userAvatarUrl ? (
-                                                                <Image
-                                                                    src={
-                                                                        s.userAvatarUrl
-                                                                    }
-                                                                    alt={
-                                                                        s.userName ??
-                                                                        ""
-                                                                    }
-                                                                    width={28}
-                                                                    height={28}
-                                                                    className="rounded-lg object-cover shrink-0"
-                                                                />
-                                                            ) : (
-                                                                <div className="w-7 h-7 rounded-lg bg-brand/10 flex items-center justify-center shrink-0">
-                                                                    <UserCircle
-                                                                        size={
-                                                                            18
-                                                                        }
-                                                                        className="text-brand"
-                                                                    />
-                                                                </div>
-                                                            )}
-                                                            <p className="text-base font-bold text-gray-900 truncate flex-1">
-                                                                {s.userName ??
-                                                                    t("common.unknown")}
-                                                            </p>
-                                                            {s.totalCups != null && (
-                                                                <span className="text-sm font-bold text-orange-700 bg-orange-100 px-2 py-0.5 rounded-lg shrink-0">
-                                                                    {s.totalCups} {t("analytics.cups")}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
+                                        <SummaryUsersRow summaryId={summary.id} />
 
                                         {dailyExpenses.length > 0 && (
                                             <div>
