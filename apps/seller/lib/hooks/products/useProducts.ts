@@ -8,6 +8,6 @@ export const useProducts = (all?: boolean) => {
     return useSWR<Product[]>(
         key,
         () => productsApi.list(all ? { all: true } : {}).then((r) => r.products),
-        { revalidateOnFocus: true, dedupingInterval: 5000 },
+        { revalidateOnFocus: false, dedupingInterval: 300_000 },
     );
 };

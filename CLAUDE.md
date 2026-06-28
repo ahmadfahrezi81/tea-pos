@@ -210,14 +210,18 @@ Any API route that calls a mutating service must call `getRequestUser()` and pas
 - `store_expenses` — Cost tracking per daily summary
 - `store_requests` — Supply requests submitted by staff
 - `store_reports` — Incident reports submitted by staff
-- `tenant_commission_configs` — Flat rate per cup per role (`USER`, `DRIVER`, `SUPPLIER`). One config per `(tenant_id, role, effective_date)`. Most recent row where `effective_date <= today` is the active rate. Currently only `USER` rate is used in payroll calculations.
 - `payroll_periods` — Weekly pay cycles (Monday–Sunday) per tenant
-- `payroll_entries` — One row per user per daily summary on close. `rate_per_cup` snapshotted at creation so historical entries are immutable to future rate changes
-- `payroll_reimbursements` — Staff expense claims (mobile data, lunch, gasoline). Submitted by staff, approved by admin. `status`: `pending → approved → rejected → paid`. `payroll_period_id` nullable — set when batching into a payroll run for payout.
+- `payroll_commission_types` — Tenant-defined commission categories (e.g. "Seller Standard"). Admin-managed.
+- `payroll_claim_types` — Tenant-defined claim categories (e.g. "Lunch Allowance") with `frequency`: `weekly`/`monthly`/`one_time`. Admin-managed.
+- `payroll_claim_eligibility` — Per-user per-type eligibility. Soft-deleted with `removed_at`. `setUserClaimEligibility` handles full replacement per user.
+- `payroll_user_info` — Per-user payroll settings: `rate_per_cup`, `commission_type_id`, bank details. Replaces `tenant_commission_configs`.
+- `payroll_commissions` — (was `payroll_entries`) One row per user per daily summary on close. `rate_per_unit` snapshotted at creation. Auto-created by `createPayrollCommissions()` on close-day.
+- `payroll_claims` — (was `payroll_reimbursements`) Staff submits, admin reviews. `status`: `pending → approved/rejected → paid`. `payroll_period_id` assigned at submit time from claim date. Weekly claims require a session on the claim date (UTC+7).
+- `payroll_payouts` — One per user per period. `commissions_total` + `claims_total` = `total_pay`. Created/updated by `upsertPayout()`.
 - `tenant_customer_feedbacks` — Geotagged feedback
 - `notification_events` + `notification_reads` — Notifications
 - `weather_hourly` — Cached weather forecasts
-- `tenant_activity_logs` — Audit trail of user actions. Known types: `order_created`, `store_open`, `daily_summary_closed`, `balance_updated`, `photo_uploaded`, `photo_deleted`, `photo_quantity_updated`, `expense_created`, `expense_updated`, `expense_deleted`, `customer_feedback_submitted`, `session_transferred`, `session_ended`, `commission_config_updated`, `payroll_entry_updated`, `payroll_period_updated`, `reimbursement_submitted`
+- `tenant_activity_logs` — Audit trail of user actions. Known types: `order_created`, `store_open`, `daily_summary_closed`, `balance_updated`, `photo_uploaded`, `photo_deleted`, `photo_quantity_updated`, `expense_created`, `expense_updated`, `expense_deleted`, `customer_feedback_submitted`, `session_transferred`, `session_ended`, `commission_config_updated`, `payroll_commission_updated`, `payroll_period_updated`, `claim_submitted`, `claim_status_updated`
 
 ---
 

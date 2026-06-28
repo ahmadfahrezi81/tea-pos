@@ -29,20 +29,27 @@ export interface UpdateExpenseParams {
 
 // ─── Internal helper ──────────────────────────────────────────────────────────
 
-async function recalcSummary(supabase: SupabaseClient, dailySummaryId: string, tenantId: string) {
-    const [{ data: expenses }, { data: summary }] = await Promise.all([
-        supabase.from("store_expenses").select("amount").eq("daily_summary_id", dailySummaryId).eq("tenant_id", tenantId),
-        supabase.from("store_daily_summaries").select("opening_balance, total_sales").eq("id", dailySummaryId).eq("tenant_id", tenantId).single(),
-    ]);
+async function adjustSummaryExpenses(
+    supabase: SupabaseClient,
+    dailySummaryId: string,
+    tenantId: string,
+    delta: number,
+) {
+    const { data: summary } = await supabase
+        .from("store_daily_summaries")
+        .select("id, total_expenses, expected_cash")
+        .eq("id", dailySummaryId)
+        .eq("tenant_id", tenantId)
+        .single();
 
     if (!summary) return;
 
-    const totalExpenses = (expenses ?? []).reduce((sum, e) => sum + e.amount, 0);
-    const expectedCash = summary.opening_balance + summary.total_sales - totalExpenses;
-
     await supabase
         .from("store_daily_summaries")
-        .update({ expected_cash: expectedCash, total_expenses: totalExpenses })
+        .update({
+            total_expenses: summary.total_expenses + delta,
+            expected_cash: summary.expected_cash - delta,
+        })
         .eq("id", dailySummaryId)
         .eq("tenant_id", tenantId);
 }
@@ -71,7 +78,7 @@ export async function createExpense(supabase: SupabaseClient, params: CreateExpe
 
     const { data: summary, error: summaryError } = await supabase
         .from("store_daily_summaries")
-        .select("id, tenant_id")
+        .select("id, tenant_id, total_expenses, expected_cash")
         .eq("id", dailySummaryId)
         .eq("tenant_id", tenantId)
         .single();
@@ -95,7 +102,14 @@ export async function createExpense(supabase: SupabaseClient, params: CreateExpe
 
     if (expenseError || !expenseData) throw new Error(expenseError?.message ?? "Expense insert failed");
 
-    await recalcSummary(supabase, dailySummaryId, tenantId);
+    await supabase
+        .from("store_daily_summaries")
+        .update({
+            total_expenses: summary.total_expenses + amount,
+            expected_cash: summary.expected_cash - amount,
+        })
+        .eq("id", dailySummaryId)
+        .eq("tenant_id", tenantId);
 
     const log = createLogger(supabase, { tenantId, userId, storeId });
     log("expense_created", {
@@ -115,6 +129,15 @@ export async function updateExpense(supabase: SupabaseClient, params: UpdateExpe
     if (amount !== undefined) updates.amount = amount;
     if (Object.keys(updates).length === 0) throw new Error("No fields to update");
 
+    const { data: oldExpense, error: fetchError } = await supabase
+        .from("store_expenses")
+        .select("amount, daily_summary_id")
+        .eq("id", id)
+        .eq("tenant_id", tenantId)
+        .single();
+
+    if (fetchError || !oldExpense) throw new Error("Expense not found");
+
     const { data: expenseData, error } = await supabase
         .from("store_expenses")
         .update(updates)
@@ -123,9 +146,12 @@ export async function updateExpense(supabase: SupabaseClient, params: UpdateExpe
         .select()
         .single();
 
-    if (error || !expenseData) throw new Error(error?.message ?? "Expense not found");
+    if (error || !expenseData) throw new Error(error?.message ?? "Expense update failed");
 
-    await recalcSummary(supabase, expenseData.daily_summary_id, tenantId);
+    if (amount !== undefined) {
+        const delta = amount - (oldExpense.amount as number);
+        await adjustSummaryExpenses(supabase, oldExpense.daily_summary_id as string, tenantId, delta);
+    }
 
     const raw = expenseData as { id: string; store_id: string; amount: number; type: string };
     createLogger(supabase, { tenantId, userId, storeId: raw.store_id })("expense_updated", {
@@ -155,7 +181,7 @@ export async function deleteExpense(supabase: SupabaseClient, { tenantId, userId
 
     if (deleteError) throw new Error(deleteError.message);
 
-    await recalcSummary(supabase, expense.daily_summary_id, tenantId);
+    await adjustSummaryExpenses(supabase, expense.daily_summary_id as string, tenantId, -(expense.amount as number));
 
     const raw = expense as { id: string; store_id: string; amount: number; type: string };
     createLogger(supabase, { tenantId, userId, storeId: raw.store_id })("expense_deleted", {

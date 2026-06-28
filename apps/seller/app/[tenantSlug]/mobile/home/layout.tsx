@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { AtAGlance } from "./_components/AtAGlance";
 import { StoreGate } from "./_components/StoreGate";
@@ -9,7 +9,6 @@ import { useStore } from "@/lib/context/StoreContext";
 import { useSession } from "@/lib/hooks/sessions/useSession";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useStoreActivityLogs } from "@/lib/hooks/activity-logs/useStoreActivityLogs";
-import { useMobileOverlay } from "../components/MobileOverlayContext";
 
 export default function HomeLayout({
     children,
@@ -22,7 +21,7 @@ export default function HomeLayout({
     const isHomeRoot = isPos || isManage;
 
     const { selectedStoreId, selectedStore } = useStore();
-    const { gate, session, transferSession, isLoading: gateLoading } = useSession(selectedStoreId);
+    const { gate, session, summaryId, transferSession, isLoading: gateLoading } = useSession(selectedStoreId);
     const { user } = useAuth();
 
     const todayStr = useMemo(() => {
@@ -30,25 +29,18 @@ export default function HomeLayout({
         return new Date(Date.now() + tz * 3600 * 1000).toISOString().slice(0, 10);
     }, []);
 
-    const { events } = useStoreActivityLogs(selectedStoreId || undefined, todayStr);
-
     const isPosInUse = isHomeRoot && gate === "open" && session?.userId !== user?.id;
     const showGate =
         isHomeRoot &&
         (gate === "no_summary" || gate === "no_session" || gate === "closed" || isPosInUse);
 
-    const { setOverlay } = useMobileOverlay();
+    if (isHomeRoot && gateLoading) return null;
 
-    const gateContent = useMemo(() => {
-        if (!showGate) return null;
+    if (showGate) {
         return (
             <div className="flex flex-col h-full gap-4">
-                <AtAGlance
-                    openTime={selectedStore?.openTime}
-                    closeTime={selectedStore?.closeTime}
-                    events={events}
-                />
-                <div className="flex-1">
+                <AtAGlance summaryId={summaryId ?? undefined} />
+                <div className="flex-1 min-h-0">
                     <StoreGate
                         gate={gate}
                         isPosInUse={isPosInUse}
@@ -59,24 +51,12 @@ export default function HomeLayout({
                 </div>
             </div>
         );
-    }, [showGate, isPosInUse, gate, transferSession, selectedStore, events]);
-
-    useLayoutEffect(() => {
-        setOverlay(gateContent);
-        return () => setOverlay(null);
-    }, [gateContent, setOverlay]);
-
-    if (isHomeRoot && gateLoading) return null;
-    if (showGate) return null;
+    }
 
     return (
         <div className="min-h-full flex flex-col gap-4">
             {isHomeRoot && (
-                <AtAGlance
-                    openTime={selectedStore?.openTime}
-                    closeTime={selectedStore?.closeTime}
-                    events={events}
-                />
+                <AtAGlance summaryId={summaryId ?? undefined} />
             )}
             <div
                 key={pathname}

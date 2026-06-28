@@ -12,11 +12,12 @@ import {
     SlottedPhoto,
     SavedSlottedPhoto,
 } from "@tea-pos/features/summaries/photos-schema";
+import type { DailySummaryResponse } from "@tea-pos/features/summaries/schema";
+import type { SummaryPhotoResponse } from "@tea-pos/features/summaries/photos-schema";
 import { DailyStepHeader } from "../_components/daily/DailyStepHeader";
 import { SinglePhotoStep } from "../_components/daily/SinglePhotoStep";
 import { PHOTO_SLOTS } from "@tea-pos/features/shared/photo-slots";
 import { ReviewStep } from "../_components/daily/ReviewStep";
-import { SimpleCashStep } from "../_components/daily/SimpleCashStep";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
 import { Loader2 } from "lucide-react";
@@ -24,24 +25,14 @@ import { useToast } from "@/lib/context/ToastContext";
 import { useFlags } from "@/lib/context/FlagsContext";
 import { getTodayLocalStr, getCurrentLocalMonth } from "@tea-pos/utils/time";
 import { useMobileFooterSlot } from "../../../components/MobileFooterSlotContext";
+import { useT } from "@/lib/hooks/useT";
 
 // ============================================================================
 // CONSTANTS
 // ============================================================================
 
-const STEPS = [
-    { label: "Ice" },
-    { label: "Syrup" },
-    { label: "Bags" },
-    { label: "Cups" },
-    { label: "Waste" },
-    { label: "Cash" },
-    { label: "Review" },
-];
-
 const PHOTO_STEP_COUNT = 5;
-const STEP_CASH = 5;
-const STEP_REVIEW = 6;
+const STEP_REVIEW = 5;
 
 const QUANTITY_REQUIRED_SLOTS: PhotoType[] = ["closing:cups", "closing:tea"];
 
@@ -56,6 +47,34 @@ export default function ManageCloseDayPage() {
     const { mutate: mutateSession } = useSession(selectedStoreId);
     const { showToast } = useToast();
     const { flags: { isSkipManagePhotosEnabled: skipManagePhotos } } = useFlags();
+    const t = useT();
+
+    const STEPS = useMemo(() => [
+        { label: t("manage.closeSteps.ice") },
+        { label: t("manage.closeSteps.syrup") },
+        { label: t("manage.closeSteps.bags") },
+        { label: t("manage.closeSteps.cups") },
+        { label: t("manage.closeSteps.waste") },
+        { label: t("manage.closeSteps.review") },
+    ], [t]);
+
+    const photoSlots = useMemo(() =>
+        PHOTO_SLOTS.map((slot) => ({
+            ...slot,
+            label: slot.type === "closing:ice"
+                ? t("manage.photoLabels.iceBin")
+                : slot.type === "closing:syrup"
+                  ? t("manage.photoLabels.syrup")
+                  : slot.type === "closing:bags"
+                    ? t("manage.photoLabels.bags")
+                    : slot.type === "closing:cups"
+                      ? t("manage.photoLabels.cups")
+                      : slot.type === "closing:tea"
+                        ? t("manage.photoLabels.teaWaste")
+                        : slot.label,
+        })),
+        [t],
+    );
 
     const paramSummaryId = searchParams.get("summaryId");
     const paramMonth = searchParams.get("month");
@@ -76,8 +95,8 @@ export default function ManageCloseDayPage() {
     const summary = useMemo(
         () =>
             paramSummaryId
-                ? summariesData?.summaries.find((s) => s.id === paramSummaryId)
-                : summariesData?.summaries.find((s) => s.date === todayStr && !s.closedAt),
+                ? summariesData?.summaries.find((s: DailySummaryResponse) => s.id === paramSummaryId)
+                : summariesData?.summaries.find((s: DailySummaryResponse) => s.date === todayStr && !s.closedAt),
         [summariesData?.summaries, paramSummaryId, todayStr],
     );
     const summaryId = summary?.id ?? null;
@@ -90,8 +109,8 @@ export default function ManageCloseDayPage() {
     const savedPhotos: SavedSlottedPhoto[] = useMemo(
         () =>
             fetchedPhotos
-                .filter((p) => p.type.startsWith("closing:"))
-                .map((p) => ({
+                .filter((p: SummaryPhotoResponse) => p.type.startsWith("closing:") || p.type === "opening")
+                .map((p: SummaryPhotoResponse) => ({
                     id: p.id,
                     type: p.type as PhotoType,
                     url: p.url,
@@ -114,13 +133,27 @@ export default function ManageCloseDayPage() {
         Record<string, { value: number; unit: string } | null>
     >({});
     const [actualCash, setActualCash] = useState(0);
-    const [cashConfirmed, setCashConfirmed] = useState(false);
+    const [cashEdited, setCashEdited] = useState(false);
     const [confirmed, setConfirmed] = useState(false);
 
     useEffect(() => {
         if (!summary) return;
-        if (summary.actualCash) setActualCash(summary.actualCash);
+        if (summary.actualCash) {
+            setActualCash(summary.actualCash);
+            setCashEdited(true);
+        }
     }, [summary?.id]);
+
+    // Track expectedCash until the user types a value of their own
+    useEffect(() => {
+        if (!summary || cashEdited) return;
+        setActualCash(summary.expectedCash);
+    }, [summary?.expectedCash, cashEdited]);
+
+    const handleActualCashChange = useCallback((val: number) => {
+        setActualCash(val);
+        setCashEdited(true);
+    }, []);
 
     const getSlotPhoto = useCallback(
         (type: PhotoType) => photos.find((p) => p.type === type),
@@ -166,15 +199,19 @@ export default function ManageCloseDayPage() {
 
     const handleBack = useCallback(() => {
         if (currentStep === STEP_REVIEW) setConfirmed(false);
-        if (currentStep === STEP_CASH) setCashConfirmed(false);
         goToStep(currentStep - 1);
     }, [currentStep, goToStep]);
 
     const handleNext = useCallback(async () => {
         setError(null);
 
+        // Refresh summary before moving to review step to ensure expectedCash is fresh
+        if (currentStep === PHOTO_STEP_COUNT - 1 && summaryId) {
+            await mutate();
+        }
+
         if (currentStep < PHOTO_STEP_COUNT && summaryId && selectedStoreId) {
-            const slot = PHOTO_SLOTS[currentStep];
+            const slot = photoSlots[currentStep];
             const localPhoto = getSlotPhoto(slot.type);
             const existingSaved = getSavedSlotPhoto(slot.type);
             const currentQuantity = quantities[slot.type] ?? existingSaved?.quantity ?? null;
@@ -222,19 +259,6 @@ export default function ManageCloseDayPage() {
             }
         }
 
-        if (currentStep === STEP_CASH && summaryId) {
-            setIsUploading(true);
-            try {
-                await updateSummary(summaryId, { actualCash, closingCashBreakdown: null });
-                await mutatePhotos();
-            } catch (err) {
-                setError(err instanceof Error ? err.message : "Failed to save cash");
-                setIsUploading(false);
-                return;
-            }
-            setIsUploading(false);
-        }
-
         goToStep(currentStep + 1);
     }, [
         currentStep,
@@ -251,6 +275,7 @@ export default function ManageCloseDayPage() {
         goToStep,
         getSlotPhoto,
         getSavedSlotPhoto,
+        photoSlots,
     ]);
 
     const handleConfirm = useCallback(async () => {
@@ -258,6 +283,8 @@ export default function ManageCloseDayPage() {
         setIsSubmitting(true);
         setError(null);
         try {
+            // Refresh summary one more time before final submission to ensure expectedCash is accurate
+            await mutate();
             await updateSummary(summaryId, {
                 actualCash,
                 closedAt: new Date().toISOString(),
@@ -272,7 +299,7 @@ export default function ManageCloseDayPage() {
         } finally {
             setIsSubmitting(false);
         }
-    }, [summaryId, summary, actualCash, updateSummary, url, STEP_KEY, paramSummaryId]);
+    }, [summaryId, summary, actualCash, updateSummary, url, STEP_KEY, paramSummaryId, mutate, showToast]);
 
     const handleSavedPhotoDelete = useCallback(
         async (id: string) => {
@@ -289,7 +316,7 @@ export default function ManageCloseDayPage() {
     const isLastStep = currentStep === STEPS.length - 1;
     const isBusy = isUploading || isSubmitting;
 
-    const currentSlot = currentStep < PHOTO_STEP_COUNT ? PHOTO_SLOTS[currentStep] : null;
+    const currentSlot = currentStep < PHOTO_STEP_COUNT ? photoSlots[currentStep] : null;
     const currentStepHasPhoto = currentSlot
         ? !!getSlotPhoto(currentSlot.type) || !!getSavedSlotPhoto(currentSlot.type)
         : true;
@@ -304,7 +331,6 @@ export default function ManageCloseDayPage() {
         isBusy ||
         (currentStep < PHOTO_STEP_COUNT && !currentStepHasPhoto && !skipPhotos) ||
         (currentStepNeedsQuantity && !currentStepHasQuantity && !skipPhotos) ||
-        (currentStep === STEP_CASH && !cashConfirmed) ||
         (currentStep === STEP_REVIEW && !confirmed);
 
     useLayoutEffect(() => {
@@ -319,7 +345,7 @@ export default function ManageCloseDayPage() {
                         disabled={isBusy}
                         className="flex items-center justify-center px-5 py-4 rounded-xl bg-gray-100 text-gray-900 font-semibold text-base active:scale-[0.98] transition-transform disabled:opacity-50"
                     >
-                        Previous
+                        {t("manage.previous")}
                     </button>
                 )}
                 {isLastStep ? (
@@ -328,7 +354,7 @@ export default function ManageCloseDayPage() {
                         disabled={isBusy || !confirmed}
                         className="flex-1 flex items-center justify-center gap-2 py-4 rounded-xl bg-red-500 text-white font-semibold text-base active:scale-[0.98] transition-transform disabled:opacity-50"
                     >
-                        {isSubmitting ? <><Loader2 size={18} className="animate-spin" />Closing...</> : "Close Day"}
+                        {isSubmitting ? <><Loader2 size={18} className="animate-spin" />{t("manage.closing")}</> : t("manage.closeDay")}
                     </button>
                 ) : (
                     <button
@@ -336,7 +362,7 @@ export default function ManageCloseDayPage() {
                         disabled={nextDisabled}
                         className="flex-1 flex items-center justify-center gap-2 py-4 rounded-xl bg-brand text-white font-semibold text-base active:scale-[0.98] transition-transform disabled:opacity-50"
                     >
-                        {isUploading ? <><Loader2 size={18} className="animate-spin" />Uploading...</> : "Next"}
+                        {isUploading ? <><Loader2 size={18} className="animate-spin" />{t("manage.uploading")}</> : t("manage.next")}
                     </button>
                 )}
             </div>
@@ -355,7 +381,7 @@ export default function ManageCloseDayPage() {
     if (!summaryId || !summary) {
         return (
             <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
-                <p className="text-gray-500 text-sm">No open summary found.</p>
+                <p className="text-gray-500 text-sm">{t("manage.noOpenSummary")}</p>
                 <button
                     onClick={() =>
                         navigation.push(
@@ -364,14 +390,14 @@ export default function ManageCloseDayPage() {
                     }
                     className="mt-4 text-brand text-sm font-medium"
                 >
-                    Go back
+                    {t("manage.goBack")}
                 </button>
             </div>
         );
     }
 
     return (
-        <div className="flex flex-col bg-gray-50">
+        <div className="flex flex-col">
             <DailyStepHeader
                 steps={STEPS}
                 currentStep={currentStep}
@@ -380,7 +406,7 @@ export default function ManageCloseDayPage() {
             <div className="flex-1 overflow-y-auto pt-2">
                 {currentStep < PHOTO_STEP_COUNT &&
                     (() => {
-                        const slot = PHOTO_SLOTS[currentStep];
+                        const slot = photoSlots[currentStep];
                         return (
                             <SinglePhotoStep
                                 key={slot.type}
@@ -399,14 +425,6 @@ export default function ManageCloseDayPage() {
                         );
                     })()}
 
-                {currentStep === STEP_CASH && (
-                    <SimpleCashStep
-                        expectedCash={summary.expectedCash}
-                        initialValue={actualCash || summary.expectedCash}
-                        onActualCashChange={setActualCash}
-                        onConfirmedChange={setCashConfirmed}
-                    />
-                )}
                 {currentStep === STEP_REVIEW && (
                     <ReviewStep
                         summary={summary}
@@ -414,7 +432,10 @@ export default function ManageCloseDayPage() {
                         savedPhotos={savedPhotos}
                         notes=""
                         storeName={storeName}
+                        confirmed={confirmed}
                         onConfirmChange={setConfirmed}
+                        actualCash={actualCash}
+                        onActualCashChange={handleActualCashChange}
                     />
                 )}
             </div>

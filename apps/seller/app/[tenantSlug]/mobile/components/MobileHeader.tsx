@@ -1,5 +1,5 @@
 "use client";
-import { ArrowLeft, X, ChevronsUpDown, UserCircle, Plus } from "lucide-react";
+import { ArrowLeft, X, ChevronsUpDown, UserCircle, Plus, Pencil } from "lucide-react";
 import Image from "next/image";
 import { resolveRoute } from "../config/navigation";
 import { navigation } from "@tea-pos/utils/navigation";
@@ -39,7 +39,7 @@ export function MobileHeader({
                 <div className="flex items-center gap-2 flex-1">
                     {isSubPage ? (
                         isInlineHeader ? (
-                            headerAction === "add" ? (
+                            headerAction === "add" || headerAction === "edit" ? (
                                 <div className="flex flex-col gap-1.5 w-full">
                                     <button
                                         onClick={onBack}
@@ -52,11 +52,14 @@ export function MobileHeader({
                                             {currentTitle}
                                         </p>
                                         <button
-                                            onClick={() => navigation.push(`${currentPath}/add`)}
+                                            onClick={() => navigation.push(`${currentPath}/${headerAction === "edit" ? "edit" : "add"}`)}
                                             className="w-11 h-11 rounded-xl bg-brand flex items-center justify-center text-white active:scale-95"
-                                            aria-label="Add"
+                                            aria-label={headerAction === "edit" ? "Edit" : "Add"}
                                         >
-                                            <Plus size={30} strokeWidth={2.5} />
+                                            {headerAction === "edit"
+                                                ? <Pencil size={22} strokeWidth={2.5} />
+                                                : <Plus size={30} strokeWidth={2.5} />
+                                            }
                                         </button>
                                     </div>
                                 </div>

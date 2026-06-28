@@ -4,7 +4,8 @@
   "private": true,
   "exports": {
     "./*": "./*.ts",
-    "./server-config/*": "./server-config/*.ts"
+    "./server-config/*": "./server-config/*.ts",
+    "./translations": "./translations/index.ts"
   },
   "dependencies": {
     "@iconify/react": "^6.0.2",

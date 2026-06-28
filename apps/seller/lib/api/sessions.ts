@@ -1,9 +1,9 @@
 import { apiFetch, buildParams } from "./client";
 import type {
     OpenStoreInput, TransferSessionInput, GetActiveSessionQuery,
-    GetGateStateQuery, ResumeSessionInput,
+    GetGateStateQuery, ResumeSessionInput, ListSessionsByMonthQuery,
 } from "@tea-pos/features/sessions/schema";
-import { OpenStoreResponse, StoreSessionResponse, GateStateResponse, ResumeSessionResponse } from "@tea-pos/features/sessions/schema";
+import { OpenStoreResponse, StoreSessionResponse, GateStateResponse, ResumeSessionResponse, SessionsByMonthResponse, SessionsBySummaryResponse, UserSessionActivityResponse } from "@tea-pos/features/sessions/schema";
 
 export const sessionsApi = {
     getActive: async (params: GetActiveSessionQuery) => {
@@ -54,6 +54,28 @@ export const sessionsApi = {
             await apiFetch<unknown>(`/api/sessions/${encodeURIComponent(sessionId)}`, {
                 method: "PATCH",
             }),
+        );
+    },
+
+    listByMonth: async (params: ListSessionsByMonthQuery) => {
+        const sp = buildParams(params as Record<string, unknown>);
+        return SessionsByMonthResponse.parse(await apiFetch<unknown>(`/api/sessions?${sp}`));
+    },
+
+    getBySummary: async (summaryId: string) => {
+        return SessionsBySummaryResponse.parse(
+            await apiFetch<unknown>(`/api/sessions/summary/${encodeURIComponent(summaryId)}`),
+        );
+    },
+
+    getActivity: async (weeks?: number): Promise<{ dates: string[] }> => {
+        const sp = weeks ? `?weeks=${weeks}` : "";
+        return apiFetch<{ dates: string[] }>(`/api/sessions/activity${sp}`);
+    },
+
+    getActivityByMonth: async (month: string) => {
+        return UserSessionActivityResponse.parse(
+            await apiFetch<unknown>(`/api/sessions/activity-by-month?month=${encodeURIComponent(month)}`),
         );
     },
 };

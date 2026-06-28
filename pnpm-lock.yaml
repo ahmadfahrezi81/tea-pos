@@ -155,6 +155,94 @@ importers:
         specifier: ^5
         version: 5.9.3
 
+  apps/backoffice:
+    dependencies:
+      '@ducanh2912/next-pwa':
+        specifier: ^10.2.9
+        version: 10.2.9(next@16.2.4(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(webpack@5.106.1)
+      '@hookform/resolvers':
+        specifier: ^5.2.2
+        version: 5.2.2(react-hook-form@7.71.2(react@19.2.5))
+      '@supabase/ssr':
+        specifier: ^0.9.0
+        version: 0.9.0(@supabase/supabase-js@2.99.2)
+      '@supabase/supabase-js':
+        specifier: ^2.99.2
+        version: 2.99.2
+      '@tea-pos/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@tea-pos/features':
+        specifier: workspace:*
+        version: link:../../packages/features
+      '@tea-pos/services':
+        specifier: workspace:*
+        version: link:../../packages/services
+      '@tea-pos/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      '@tea-pos/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
+      browser-image-compression:
+        specifier: ^2.0.2
+        version: 2.0.2
+      date-fns:
+        specifier: ^4.1.0
+        version: 4.1.0
+      lucide-react:
+        specifier: ^0.539.0
+        version: 0.539.0(react@19.2.5)
+      next:
+        specifier: 16.2.4
+        version: 16.2.4(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      posthog-node:
+        specifier: ^5.35.6
+        version: 5.35.6
+      react:
+        specifier: 19.2.5
+        version: 19.2.5
+      react-dom:
+        specifier: 19.2.5
+        version: 19.2.5(react@19.2.5)
+      sonner:
+        specifier: ^2.0.7
+        version: 2.0.7(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      swr:
+        specifier: ^2.3.5
+        version: 2.4.1(react@19.2.5)
+      zod:
+        specifier: ^4.1.12
+        version: 4.3.6
+    devDependencies:
+      '@tailwindcss/postcss':
+        specifier: ^4
+        version: 4.2.1
+      '@types/node':
+        specifier: ^20
+        version: 20.19.37
+      '@types/react':
+        specifier: 19.2.14
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: 19.2.3
+        version: 19.2.3(@types/react@19.2.14)
+      eslint:
+        specifier: ^9
+        version: 9.39.4(jiti@2.6.1)
+      eslint-config-next:
+        specifier: 16.2.4
+        version: 16.2.4(@typescript-eslint/parser@8.59.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
+      tailwindcss:
+        specifier: ^4
+        version: 4.2.1
+      tw-animate-css:
+        specifier: ^1.4.0
+        version: 1.4.0
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+
   apps/seller:
     dependencies:
       '@ducanh2912/next-pwa':
@@ -311,6 +399,9 @@ importers:
       '@tea-pos/utils':
         specifier: workspace:*
         version: link:../utils
+      date-fns:
+        specifier: ^4.1.0
+        version: 4.1.0
     devDependencies:
       '@types/node':
         specifier: ^20
@@ -8423,7 +8514,7 @@ snapshots:
       tinyglobby: 0.2.15
       unrs-resolver: 1.11.1
     optionalDependencies:
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.59.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4(jiti@2.6.1))
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.57.0(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4(jiti@2.6.1))
     transitivePeerDependencies:
       - supports-color
 

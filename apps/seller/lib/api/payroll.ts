@@ -1,21 +1,28 @@
 import { apiFetch, buildParams } from "./client";
-import type { ListPayrollPeriodsQuery, ListPayrollEntriesQuery, UpdatePayrollEntryInput, UpdatePayrollPeriodInput } from "@tea-pos/features/payroll/schema";
+import type {
+    ListPayrollCommissionsQuery,
+    ListPayoutsQuery,
+    GetPayslipQuery,
+    UpdatePayrollCommissionInput,
+    UpdatePayoutInput,
+} from "@tea-pos/features/payroll/schema";
 import {
-    PayrollPeriodListResponse,
-    PayrollEntryListResponse,
-    PayrollPeriodResponse,
-    PayrollEntryResponse,
+    PayrollCommissionListResponse,
+    PayrollCommissionResponse,
+    PayoutListResponse,
 } from "@tea-pos/features/payroll/schema";
 
 export const payrollApi = {
-    getPeriods: async (params?: Partial<ListPayrollPeriodsQuery>) => {
+    getCommissions: async (params?: Partial<ListPayrollCommissionsQuery>) => {
         const sp = buildParams((params ?? {}) as Record<string, unknown>);
-        return PayrollPeriodListResponse.parse(await apiFetch<unknown>(`/api/payroll/periods?${sp}`));
+        return PayrollCommissionListResponse.parse(
+            await apiFetch<unknown>(`/api/payroll/commissions?${sp}`),
+        );
     },
 
-    updatePeriod: async (periodId: string, input: UpdatePayrollPeriodInput) => {
-        return PayrollPeriodResponse.parse(
-            await apiFetch<unknown>(`/api/payroll/periods/${encodeURIComponent(periodId)}`, {
+    updateCommission: async (commissionId: string, input: UpdatePayrollCommissionInput) => {
+        return PayrollCommissionResponse.parse(
+            await apiFetch<unknown>(`/api/payroll/commissions/${encodeURIComponent(commissionId)}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(input),
@@ -23,18 +30,29 @@ export const payrollApi = {
         );
     },
 
-    getEntries: async (params?: Partial<ListPayrollEntriesQuery>) => {
+    getPayouts: async (params?: Partial<ListPayoutsQuery>) => {
         const sp = buildParams((params ?? {}) as Record<string, unknown>);
-        return PayrollEntryListResponse.parse(await apiFetch<unknown>(`/api/payroll/entries?${sp}`));
+        return PayoutListResponse.parse(await apiFetch<unknown>(`/api/payroll/payouts?${sp}`));
     },
 
-    updateEntry: async (entryId: string, input: UpdatePayrollEntryInput) => {
-        return PayrollEntryResponse.parse(
-            await apiFetch<unknown>(`/api/payroll/entries/${encodeURIComponent(entryId)}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(input),
-            }),
-        );
+    getPayslip: async (params: GetPayslipQuery) => {
+        const sp = buildParams(params as Record<string, unknown>);
+        return apiFetch<unknown>(`/api/payroll/payslip?${sp}`);
+    },
+
+    upsertPayout: async (input: { startDate: string; endDate: string; userId: string }) => {
+        return apiFetch<unknown>("/api/payroll/payouts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(input),
+        });
+    },
+
+    updatePayout: async (payoutId: string, input: UpdatePayoutInput) => {
+        return apiFetch<unknown>(`/api/payroll/payouts/${encodeURIComponent(payoutId)}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(input),
+        });
     },
 };

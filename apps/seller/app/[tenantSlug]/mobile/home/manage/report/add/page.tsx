@@ -6,7 +6,7 @@ import { useStore } from "@/lib/context/StoreContext";
 import { getTodayLocalStr } from "@tea-pos/utils/time";
 import { useSession } from "@/lib/hooks/sessions/useSession";
 import { useIncidentReports } from "@/lib/hooks/reports/useIncidentReports";
-import { apiFetch } from "@/lib/api/client";
+import { useUpload } from "@/lib/hooks/upload/useUpload";
 import {
     INCIDENT_CATEGORIES,
     INCIDENT_CATEGORY_LABELS,
@@ -15,6 +15,7 @@ import { SelectInput } from "../../_components/shared/SelectInput";
 import { Textarea } from "../../_components/shared/Textarea";
 import { PhotoPicker } from "../../_components/shared/PhotoPicker";
 import { FormFooter } from "@/components/shared/FormFooter";
+import { useT } from "@/lib/hooks/useT";
 
 const TYPE_OPTIONS = INCIDENT_CATEGORIES.map((c) => ({
     value: c,
@@ -26,6 +27,8 @@ export default function AddReportPage() {
     const { selectedStoreId } = useStore();
     const { summaryId } = useSession(selectedStoreId);
     const { create } = useIncidentReports(selectedStoreId);
+    const { upload } = useUpload();
+    const t = useT();
 
     const todayStr = useMemo(() => getTodayLocalStr(), []);
 
@@ -47,15 +50,7 @@ export default function AddReportPage() {
         try {
             let photoUrl: string | undefined;
             if (photoFile) {
-                const form = new FormData();
-                form.append("file", photoFile);
-                form.append("bucket", "store-reports");
-                form.append("subPath", `${selectedStoreId}/${todayStr}`);
-                const { url: uploadUrl } = await apiFetch<{ url: string }>(
-                    "/api/upload",
-                    { method: "POST", body: form },
-                );
-                photoUrl = uploadUrl;
+                photoUrl = await upload(photoFile, "store-reports", `${selectedStoreId}/${todayStr}`);
             }
             await create({
                 type: resolvedType,
@@ -76,7 +71,7 @@ export default function AddReportPage() {
             <div className="bg-white rounded-xl p-4 space-y-4">
                 <div className="space-y-1.5">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                        Type
+                        {t("manage.type")}
                     </p>
                     <SelectInput
                         options={TYPE_OPTIONS}
@@ -92,7 +87,7 @@ export default function AddReportPage() {
 
                 <div className="space-y-1.5">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                        Notes
+                        {t("manage.notes")}
                     </p>
                     <Textarea
                         value={notes}
@@ -105,7 +100,7 @@ export default function AddReportPage() {
 
                 <div className="space-y-1.5">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                        Photo
+                        {t("manage.photo")}
                     </p>
                     <PhotoPicker
                         previewUrl={photoPreview}
@@ -119,8 +114,8 @@ export default function AddReportPage() {
             </div>
 
             <FormFooter
-                label="Submit Store Report"
-                loadingLabel="Submitting..."
+                label={t("manage.submitReport")}
+                loadingLabel={t("common.loading")}
                 onSubmit={handleSubmit}
                 disabled={!isValid}
                 isLoading={isSubmitting}

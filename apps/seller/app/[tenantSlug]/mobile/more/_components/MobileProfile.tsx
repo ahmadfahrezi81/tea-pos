@@ -70,7 +70,7 @@ const SettingsRow = ({
 export default function MobileProfile() {
     const router = useRouter();
     const { url } = useTenantSlug();
-    const { user } = useAuth();
+    const { user, signOut } = useAuth();
     const { selectedStore, assignedStores, stores, setIsPickerOpen } =
         useStore();
     const { fastOrderMode, toggleFastOrderMode } = useFastOrderMode();
@@ -83,13 +83,10 @@ export default function MobileProfile() {
             "Are you sure you want to log out?",
         );
         if (shouldLogout) {
-            await fetch("/api/auth/signout", {
-                method: "POST",
-                credentials: "include",
-            });
+            await signOut();
             router.push("/login");
         }
-    }, [router]);
+    }, [router, signOut]);
 
     const handleAdminDashboard = useCallback(() => {
         window.open(url("/admin"), "_blank", "noopener,noreferrer");

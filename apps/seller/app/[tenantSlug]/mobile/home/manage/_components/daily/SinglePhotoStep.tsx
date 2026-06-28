@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
 import { SummaryPhotoThumbnail } from "./SummaryPhotoThumbnail";
 import { PhotoPicker } from "../shared/PhotoPicker";
+import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
 import { PhotoType } from "@tea-pos/features/summaries/photos-schema";
 import {
     SlottedPhoto,
     SavedSlottedPhoto,
 } from "@tea-pos/features/summaries/photos-schema";
+import { useT } from "@/lib/hooks/useT";
 
 const QUANTITY_CONFIG: Partial<
     Record<PhotoType, { unit: string; placeholder: string }>
@@ -39,26 +40,17 @@ export function SinglePhotoStep({
     onSavedPhotoDelete,
     onQuantityChange,
 }: SinglePhotoStepProps) {
+    const t = useT();
     const quantityConfig = QUANTITY_CONFIG[type] ?? null;
-    const initialQuantity = quantity?.value ?? 0;
-    const [localQuantityValue, setLocalQuantityValue] = useState<string>(
-        initialQuantity === 0 ? "" : String(initialQuantity),
-    );
 
-    const handleQuantityBlur = () => {
-        if (!quantityConfig) return;
-        const val = parseFloat(localQuantityValue);
-        onQuantityChange(
-            isNaN(val) || val < 0
-                ? null
-                : { value: val, unit: quantityConfig.unit },
-        );
-    };
-
-    const handleQuantityKeyDown = (
-        e: React.KeyboardEvent<HTMLInputElement>,
-    ) => {
-        if (e.key === "Enter") e.currentTarget.blur();
+    const getDescription = (): string => {
+        if (type === "closing:ice") return t("manage.photoDescriptions.ice");
+        if (type === "closing:syrup") return t("manage.photoDescriptions.syrup");
+        if (type === "closing:bags") return t("manage.photoDescriptions.bags");
+        if (type === "closing:cups") return t("manage.photoDescriptions.cups");
+        if (type === "closing:tea") return t("manage.photoDescriptions.tea");
+        if (type === "opening") return t("manage.photoDescriptions.opening");
+        return "Take a photo and input the amount if needed.";
     };
 
     return (
@@ -66,7 +58,7 @@ export function SinglePhotoStep({
             <div>
                 <h2 className="text-2xl font-bold text-gray-900">{label}</h2>
                 <p className="text-sm text-gray-600 mt-0.5">
-                    Take a photo and input the amount if needed.
+                    {getDescription()}
                 </p>
             </div>
 
@@ -76,24 +68,16 @@ export function SinglePhotoStep({
                         <p className="text-xs font-semibold text-gray-900 uppercase tracking-wide px-1">
                             Quantity <span className="text-red-500">*</span>
                         </p>
-                        <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl overflow-hidden">
-                            <input
-                                type="number"
-                                inputMode="decimal"
-                                min={0}
-                                value={localQuantityValue}
-                                onChange={(e) =>
-                                    setLocalQuantityValue(e.target.value)
-                                }
-                                onBlur={handleQuantityBlur}
-                                onKeyDown={handleQuantityKeyDown}
-                                placeholder={quantityConfig.placeholder}
-                                className="flex-1 p-3 text-base text-gray-800 placeholder-gray-400 border-none outline-none bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            />
-                            <div className="px-4 py-3 bg-white border-l border-gray-200 text-sm font-semibold text-gray-500">
-                                {quantityConfig.unit}
-                            </div>
-                        </div>
+                        <NumberInput
+                            value={quantity?.value ?? 0}
+                            unit={quantityConfig.unit}
+                            placeholder={quantityConfig.placeholder}
+                            onChange={(val) =>
+                                onQuantityChange(
+                                    val === 0 ? null : { value: val, unit: quantityConfig.unit },
+                                )
+                            }
+                        />
                     </div>
                 )}
 

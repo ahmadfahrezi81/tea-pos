@@ -1,53 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { toCamelKeys } from "@tea-pos/utils/schemas";
-import { getCommissionRate } from "./commission-configs";
+import { getPayWindowBounds } from "@tea-pos/utils/week";
+import { getPayrollUserInfo } from "./payroll-user-info";
 import { createLogger } from "./activity-logs";
 
-// ─── Get or create payroll period ─────────────────────────────────────────────
-// Finds an open period covering `date`, or creates a new Monday–Sunday week.
+// ─── Create payroll commissions ───────────────────────────────────────────────
 
-export async function getOrCreatePayrollPeriod(
-    supabase: SupabaseClient,
-    { tenantId, date }: { tenantId: string; date: string },
-) {
-    const { data: existing } = await supabase
-        .from("payroll_periods")
-        .select("*")
-        .eq("tenant_id", tenantId)
-        .eq("status", "open")
-        .lte("start_date", date)
-        .gte("end_date", date)
-        .maybeSingle();
-
-    if (existing) return existing as { id: string; [key: string]: unknown };
-
-    const d = new Date(date);
-    const dayOfWeek = d.getDay();
-    const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-
-    const monday = new Date(d);
-    monday.setDate(d.getDate() + daysToMonday);
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-
-    const startDate = monday.toISOString().split("T")[0];
-    const endDate = sunday.toISOString().split("T")[0];
-
-    const { data, error } = await supabase
-        .from("payroll_periods")
-        .insert({ tenant_id: tenantId, start_date: startDate, end_date: endDate })
-        .select()
-        .single();
-
-    if (error || !data) throw new Error(error?.message ?? "Failed to create payroll period");
-    return data as { id: string; [key: string]: unknown };
-}
-
-// ─── Create payroll entries ───────────────────────────────────────────────────
-// Called when a daily_summary is closed.
-// One entry per user who held a session that day. Cups counted only within their session windows.
-
-export interface CreatePayrollEntriesParams {
+export interface CreatePayrollCommissionsParams {
     tenantId: string;
     storeId: string;
     dailySummaryId: string;
@@ -55,14 +14,14 @@ export interface CreatePayrollEntriesParams {
     triggeredByUserId: string;
 }
 
-export async function createPayrollEntries(
+export async function createPayrollCommissions(
     supabase: SupabaseClient,
-    params: CreatePayrollEntriesParams,
+    params: CreatePayrollCommissionsParams,
 ) {
     const { tenantId, storeId, dailySummaryId, date, triggeredByUserId } = params;
 
     const { count: existingCount } = await supabase
-        .from("payroll_entries")
+        .from("payroll_commissions")
         .select("id", { count: "exact", head: true })
         .eq("daily_summary_id", dailySummaryId)
         .eq("tenant_id", tenantId);
@@ -80,19 +39,17 @@ export async function createPayrollEntries(
 
     type SessionRow = { id: string; user_id: string; started_at: string; ended_at: string | null };
     const typedSessions = sessions as SessionRow[];
-
     const userIds = [...new Set(typedSessions.map((s) => s.user_id))];
-    const period = await getOrCreatePayrollPeriod(supabase, { tenantId, date });
 
     const created: unknown[] = [];
 
     for (const userId of userIds) {
         const userSessions = typedSessions.filter((s) => s.user_id === userId);
         let totalCups = 0;
+        let totalOrders = 0;
 
         for (const session of userSessions) {
             const endedAt = session.ended_at ?? new Date().toISOString();
-
             const { data: orders } = await supabase
                 .from("store_orders")
                 .select("id, store_order_items(quantity)")
@@ -102,145 +59,547 @@ export async function createPayrollEntries(
                 .gte("created_at", session.started_at)
                 .lt("created_at", endedAt);
 
-            const sessionCups = ((orders ?? []) as Array<{ store_order_items?: Array<{ quantity: number }> }>).reduce(
+            const sessionOrders = (orders ?? []) as Array<{ store_order_items?: Array<{ quantity: number }> }>;
+            const sessionCups = sessionOrders.reduce(
                 (sum, order) =>
                     sum + (order.store_order_items?.reduce((s, item) => s + item.quantity, 0) ?? 0),
                 0,
             );
             totalCups += sessionCups;
+            totalOrders += sessionOrders.length;
         }
 
-        const { rate } = await getCommissionRate(supabase, { tenantId, role: "USER" });
-        const grossPay = totalCups * rate;
+        const info = await getPayrollUserInfo(supabase, { tenantId, userId });
+        if (!info) {
+            console.warn(`[payroll] No payroll_user_info for user ${userId} in tenant ${tenantId} — skipping`);
+            continue;
+        }
 
-        const { data: entry, error: entryError } = await supabase
-            .from("payroll_entries")
+        const commissionConfigId = (info.commissionConfigId as string | null) ?? null;
+        const ratePerCup = (info.ratePerCup as number | null) ?? 0;
+        const totalCommission = totalCups * ratePerCup;
+
+        const { data: commission, error: commissionError } = await supabase
+            .from("payroll_commissions")
             .insert({
                 tenant_id: tenantId,
                 store_id: storeId,
                 user_id: userId,
-                payroll_period_id: period.id,
                 daily_summary_id: dailySummaryId,
                 date,
                 total_cups: totalCups,
-                rate_per_cup: rate,
-                gross_pay: grossPay,
+                total_orders: totalOrders,
+                rate_per_cup: ratePerCup,
+                commission_config_id: commissionConfigId,
+                total_commission: totalCommission,
             })
             .select()
             .single();
 
-        if (entryError) throw entryError;
-        created.push(toCamelKeys(entry));
+        if (commissionError) throw commissionError;
+        created.push(toCamelKeys(commission));
 
         const log = createLogger(supabase, { tenantId, userId: triggeredByUserId, storeId });
-        log("payroll_entry_updated", {
-            refId: (entry as { id: string }).id,
-            refTable: "payroll_entries",
-            metadata: { user_id: userId, total_cups: totalCups, rate_per_cup: rate, gross_pay: grossPay },
+        log("payroll_commission_updated", {
+            refId: (commission as { id: string }).id,
+            refTable: "payroll_commissions",
+            metadata: { user_id: userId, total_cups: totalCups, total_orders: totalOrders, rate_per_cup: ratePerCup, total_commission: totalCommission },
         });
+
+        // Auto-upsert payout and stamp payout_id on the commission
+        const frequency = (info.payFrequency as string | null) ?? "bi_weekly";
+        const { startDate, endDate } = getPayWindowBounds(date, frequency);
+        const payout = await upsertPayout(supabase, { tenantId, userId, startDate, endDate }).catch((err) => {
+            console.warn("[payroll] upsertPayout failed after commission create:", err);
+            return null;
+        });
+        if (payout) {
+            await supabase
+                .from("payroll_commissions")
+                .update({ payout_id: (payout as { id: string }).id })
+                .eq("id", (commission as { id: string }).id)
+                .then(null, () => {});
+        }
     }
 
     return created;
 }
 
-// ─── List payroll entries ─────────────────────────────────────────────────────
+// ─── List payroll commissions ─────────────────────────────────────────────────
 
-export interface ListPayrollEntriesParams {
-    tenantId: string;
-    periodId?: string;
-    userId?: string;
-}
-
-export async function listPayrollEntries(
+export async function listPayrollCommissions(
     supabase: SupabaseClient,
-    params: ListPayrollEntriesParams,
+    {
+        tenantId,
+        userId,
+        startDate,
+        endDate,
+    }: { tenantId: string; userId?: string; startDate?: string; endDate?: string },
 ) {
-    const { tenantId, periodId, userId } = params;
-
     let query = supabase
-        .from("payroll_entries")
+        .from("payroll_commissions")
         .select("*")
         .eq("tenant_id", tenantId)
         .order("date", { ascending: false });
 
-    if (periodId) query = query.eq("payroll_period_id", periodId);
     if (userId) query = query.eq("user_id", userId);
+    if (startDate) query = query.gte("date", startDate);
+    if (endDate) query = query.lte("date", endDate);
 
     const { data, error } = await query;
     if (error) throw error;
-
     return toCamelKeys(data ?? []);
 }
 
-// ─── List payroll periods ─────────────────────────────────────────────────────
+// ─── List payouts ─────────────────────────────────────────────────────────────
 
-export async function listPayrollPeriods(
+export async function listPayouts(
     supabase: SupabaseClient,
-    { tenantId, status }: { tenantId: string; status?: string },
+    {
+        tenantId,
+        userId,
+        startDate,
+        endDate,
+    }: { tenantId: string; userId?: string; startDate?: string; endDate?: string },
 ) {
     let query = supabase
-        .from("payroll_periods")
+        .from("payroll_payouts")
         .select("*")
         .eq("tenant_id", tenantId)
         .order("start_date", { ascending: false });
 
-    if (status) query = query.eq("status", status);
+    if (userId) query = query.eq("user_id", userId);
+    if (startDate) query = query.gte("start_date", startDate);
+    if (endDate) query = query.lte("end_date", endDate);
 
     const { data, error } = await query;
     if (error) throw error;
 
-    return toCamelKeys(data ?? []);
+    const payouts = data ?? [];
+    if (payouts.length === 0) return [];
+
+    const payoutIds = payouts.map((p) => (p as { id: string }).id);
+
+    const [
+        { data: commissions },
+        { data: claims },
+        { data: pendingCommissions },
+        { data: pendingClaims },
+    ] = await Promise.all([
+        supabase
+            .from("payroll_commissions")
+            .select("payout_id, total_commission, total_cups, total_orders")
+            .in("payout_id", payoutIds)
+            .eq("status", "approved"),
+        supabase
+            .from("payroll_claims")
+            .select("payout_id, amount")
+            .in("payout_id", payoutIds)
+            .eq("status", "approved"),
+        supabase
+            .from("payroll_commissions")
+            .select("payout_id")
+            .in("payout_id", payoutIds)
+            .eq("status", "pending"),
+        supabase
+            .from("payroll_claims")
+            .select("payout_id")
+            .in("payout_id", payoutIds)
+            .eq("status", "pending"),
+    ]);
+
+    const commissionsByPayout = (commissions ?? []).reduce<Record<string, { commissionsTotal: number; totalCups: number; totalOrders: number; approvedCount: number }>>((acc, c) => {
+        const id = (c as { payout_id: string }).payout_id;
+        if (!acc[id]) acc[id] = { commissionsTotal: 0, totalCups: 0, totalOrders: 0, approvedCount: 0 };
+        acc[id].commissionsTotal += (c as { total_commission: number }).total_commission ?? 0;
+        acc[id].totalCups += (c as { total_cups: number }).total_cups ?? 0;
+        acc[id].totalOrders += (c as { total_orders: number }).total_orders ?? 0;
+        acc[id].approvedCount += 1;
+        return acc;
+    }, {});
+
+    const claimsByPayout = (claims ?? []).reduce<Record<string, { total: number; count: number }>>((acc, c) => {
+        const id = (c as { payout_id: string }).payout_id;
+        if (!acc[id]) acc[id] = { total: 0, count: 0 };
+        acc[id].total += (c as { amount: number }).amount ?? 0;
+        acc[id].count += 1;
+        return acc;
+    }, {});
+
+    const pendingCountByPayout: Record<string, number> = {};
+    for (const c of [...(pendingCommissions ?? []), ...(pendingClaims ?? [])]) {
+        const id = (c as { payout_id: string }).payout_id;
+        pendingCountByPayout[id] = (pendingCountByPayout[id] ?? 0) + 1;
+    }
+
+    const merged = payouts.map((p) => {
+        const id = (p as { id: string }).id;
+        const comm = commissionsByPayout[id] ?? { commissionsTotal: 0, totalCups: 0, totalOrders: 0, approvedCount: 0 };
+        const claimsEntry = claimsByPayout[id] ?? { total: 0, count: 0 };
+        return {
+            ...p,
+            commissions_total: comm.commissionsTotal,
+            claims_total: claimsEntry.total,
+            total_pay: comm.commissionsTotal + claimsEntry.total,
+            total_cups: comm.totalCups,
+            total_orders: comm.totalOrders,
+            total_claims: claimsEntry.count,
+            approved_count: comm.approvedCount + claimsEntry.count,
+            pending_count: pendingCountByPayout[id] ?? 0,
+        };
+    });
+
+    return toCamelKeys(merged);
 }
 
-// ─── Update payroll entry ─────────────────────────────────────────────────────
+// ─── Upsert payout ────────────────────────────────────────────────────────────
 
-export async function updatePayrollEntry(
+export async function upsertPayout(
     supabase: SupabaseClient,
-    { tenantId, userId, id, status }: { tenantId: string; userId: string; id: string; status: string },
+    {
+        tenantId,
+        userId,
+        startDate,
+        endDate,
+    }: { tenantId: string; userId: string; startDate: string; endDate: string },
+) {
+    const { data: existing } = await supabase
+        .from("payroll_payouts")
+        .select("*")
+        .eq("tenant_id", tenantId)
+        .eq("user_id", userId)
+        .eq("start_date", startDate)
+        .maybeSingle();
+
+    if (existing && (existing as { status: string }).status === "paid") {
+        return toCamelKeys(existing);
+    }
+
+    const { data: commissions } = await supabase
+        .from("payroll_commissions")
+        .select("total_commission, total_cups, total_orders")
+        .eq("tenant_id", tenantId)
+        .eq("user_id", userId)
+        .gte("date", startDate)
+        .lte("date", endDate)
+        .eq("status", "approved");
+
+    const commissionsTotal = (commissions ?? []).reduce(
+        (s, e) => s + ((e as { total_commission: number }).total_commission ?? 0),
+        0,
+    );
+    const totalCups = (commissions ?? []).reduce(
+        (s, e) => s + ((e as { total_cups: number }).total_cups ?? 0),
+        0,
+    );
+    const totalOrders = (commissions ?? []).reduce(
+        (s, e) => s + ((e as { total_orders: number }).total_orders ?? 0),
+        0,
+    );
+
+    const { data: claims } = await supabase
+        .from("payroll_claims")
+        .select("amount")
+        .eq("tenant_id", tenantId)
+        .eq("user_id", userId)
+        .gte("date", startDate)
+        .lte("date", endDate)
+        .eq("status", "approved");
+
+    const claimsTotal = (claims ?? []).reduce(
+        (s, c) => s + ((c as { amount: number }).amount ?? 0),
+        0,
+    );
+
+    const totalPay = commissionsTotal + claimsTotal;
+
+    const { data, error } = await supabase
+        .from("payroll_payouts")
+        .upsert(
+            {
+                tenant_id: tenantId,
+                user_id: userId,
+                start_date: startDate,
+                end_date: endDate,
+                commissions_total: commissionsTotal,
+                claims_total: claimsTotal,
+                total_pay: totalPay,
+                total_cups: totalCups,
+                total_orders: totalOrders,
+            },
+            { onConflict: "tenant_id,user_id,start_date" },
+        )
+        .select()
+        .single();
+
+    if (error || !data) throw new Error(error?.message ?? "Failed to upsert payout");
+
+    // Stamp payout_id on any unassigned commissions/claims within this window
+    const payoutId = (data as { id: string }).id;
+    await Promise.all([
+        supabase
+            .from("payroll_commissions")
+            .update({ payout_id: payoutId })
+            .eq("tenant_id", tenantId)
+            .eq("user_id", userId)
+            .gte("date", startDate)
+            .lte("date", endDate)
+            .is("payout_id", null),
+        supabase
+            .from("payroll_claims")
+            .update({ payout_id: payoutId })
+            .eq("tenant_id", tenantId)
+            .eq("user_id", userId)
+            .gte("date", startDate)
+            .lte("date", endDate)
+            .is("payout_id", null),
+    ]).catch((err) => console.warn("[payroll] payout_id backfill failed:", err));
+
+    return toCamelKeys(data);
+}
+
+// ─── Get single payout ───────────────────────────────────────────────────────
+
+export async function getPayout(
+    supabase: SupabaseClient,
+    { id, tenantId }: { id: string; tenantId: string },
 ) {
     const { data, error } = await supabase
-        .from("payroll_entries")
+        .from("payroll_payouts")
+        .select("*")
+        .eq("id", id)
+        .eq("tenant_id", tenantId)
+        .single();
+
+    if (error || !data) return null;
+    return toCamelKeys(data) as { userId: string; startDate: string; endDate: string; [key: string]: unknown };
+}
+
+// ─── Update payout status ─────────────────────────────────────────────────────
+
+export async function updatePayoutStatus(
+    supabase: SupabaseClient,
+    {
+        id,
+        tenantId,
+        actorId,
+        status,
+        paymentProofUrl,
+    }: {
+        id: string;
+        tenantId: string;
+        actorId: string;
+        status: "paid";
+        paymentProofUrl?: string;
+    },
+) {
+    const { data: payout, error: payoutError } = await supabase
+        .from("payroll_payouts")
+        .select("id")
+        .eq("id", id)
+        .eq("tenant_id", tenantId)
+        .single();
+
+    if (payoutError || !payout) throw Object.assign(new Error(payoutError?.message ?? "Payout not found"), { status: 404 });
+
+    const [{ count: pendingCommissions }, { count: pendingClaims }] = await Promise.all([
+        supabase
+            .from("payroll_commissions")
+            .select("id", { count: "exact", head: true })
+            .eq("tenant_id", tenantId)
+            .eq("payout_id", id)
+            .eq("status", "pending"),
+        supabase
+            .from("payroll_claims")
+            .select("id", { count: "exact", head: true })
+            .eq("tenant_id", tenantId)
+            .eq("payout_id", id)
+            .eq("status", "pending"),
+    ]);
+
+    if ((pendingCommissions ?? 0) > 0 || (pendingClaims ?? 0) > 0) {
+        throw Object.assign(new Error("Cannot mark paid while items are still pending review"), { status: 422 });
+    }
+
+    const updates: Record<string, unknown> = {
+        status: "paid",
+        paid_at: new Date().toISOString(),
+        paid_by: actorId,
+    };
+    if (paymentProofUrl) updates.payment_proof_url = paymentProofUrl;
+
+    const { data, error } = await supabase
+        .from("payroll_payouts")
+        .update(updates)
+        .eq("id", id)
+        .eq("tenant_id", tenantId)
+        .select()
+        .single();
+
+    if (error || !data) throw Object.assign(new Error(error?.message ?? "Payout not found"), { status: 404 });
+
+    const log = createLogger(supabase, { tenantId, userId: actorId });
+    log("payroll_payout_updated", { refId: id, refTable: "payroll_payouts", metadata: { status } });
+
+    return toCamelKeys(data);
+}
+
+// ─── Get payslip ──────────────────────────────────────────────────────────────
+
+export async function getPayslip(
+    supabase: SupabaseClient,
+    { tenantId, userId, payoutId }: { tenantId: string; userId?: string; payoutId: string },
+) {
+    let query = supabase
+        .from("payroll_payouts")
+        .select("*, paid_by_user:users!payroll_payouts_paid_by_fkey(full_name)")
+        .eq("id", payoutId)
+        .eq("tenant_id", tenantId);
+    if (userId) query = query.eq("user_id", userId);
+
+    const { data: payoutRow, error: payoutError } = await (query as typeof query & { single: () => Promise<{ data: unknown; error: unknown }> }).single();
+
+    if (payoutError || !payoutRow) {
+        throw Object.assign(new Error("Payout not found"), { status: 404 });
+    }
+
+    const payoutData = payoutRow as Record<string, unknown>;
+    const resolvedUserId = userId ?? (payoutData.user_id as string);
+    const paidByName = (payoutData.paid_by_user as { full_name: string } | null)?.full_name ?? null;
+    const payout = toCamelKeys({ ...payoutData, paid_by_user: undefined }) as { startDate: string; endDate: string; [key: string]: unknown };
+
+    const [commissionsResult, claimsResult] = await Promise.all([
+        supabase
+            .from("payroll_commissions")
+            .select("*, stores(name)")
+            .eq("tenant_id", tenantId)
+            .eq("user_id", resolvedUserId)
+            .eq("payout_id", payoutId)
+            .order("date"),
+        supabase
+            .from("payroll_claims")
+            .select("*, payroll_claim_configs!left(name, auto_threshold_hours)")
+            .eq("tenant_id", tenantId)
+            .eq("user_id", resolvedUserId)
+            .eq("payout_id", payoutId)
+            .order("date"),
+    ]);
+
+    const commissionsFlat = (commissionsResult.data ?? []).map((c) => {
+        const row = c as Record<string, unknown>;
+        const store = row.stores as { name: string } | null;
+        return { ...row, store_name: store?.name ?? null, stores: undefined };
+    });
+    const commissions = toCamelKeys(commissionsFlat) as Record<string, unknown>[];
+
+    const claimsFlat = (claimsResult.data ?? []).map((c) => {
+        const row = c as Record<string, unknown>;
+        const claimType = row.payroll_claim_configs as { name: string; auto_threshold_hours: number | null } | null;
+        return {
+            ...row,
+            claim_type_name: claimType?.name ?? null,
+            auto_threshold_hours: claimType?.auto_threshold_hours ?? null,
+            payroll_claim_configs: undefined,
+        };
+    });
+    const claims = toCamelKeys(claimsFlat) as Record<string, unknown>[];
+
+    const commissionsTotal = commissions
+        .filter((e) => e.status === "approved")
+        .reduce((s, e) => s + ((e.totalCommission as number) ?? 0), 0);
+    const claimsTotal = claims
+        .filter((c) => c.status === "approved")
+        .reduce((s, c) => s + ((c.amount as number) ?? 0), 0);
+    const totalPay = commissionsTotal + claimsTotal;
+    const ratePerCup = commissions[0] ? ((commissions[0].ratePerCup as number) ?? 0) : 0;
+    const totalOrders = commissions
+        .filter((e) => e.status === "approved")
+        .reduce((s, e) => s + ((e.totalOrders as number) ?? 0), 0);
+
+    const storedProofUrl = payout.paymentProofUrl as string | null | undefined;
+    if (storedProofUrl) {
+        const storagePath = storedProofUrl.split("/payroll-proofs/")[1];
+        if (storagePath) {
+            const { data: signedData } = await supabase.storage
+                .from("payroll-proofs")
+                .createSignedUrl(storagePath, 60 * 60);
+            if (signedData?.signedUrl) payout.paymentProofUrl = signedData.signedUrl;
+        }
+    }
+
+    return { payout, commissions, claims, commissionsTotal, claimsTotal, totalPay, ratePerCup, totalOrders, paidByName };
+}
+
+// ─── Update payroll commission ────────────────────────────────────────────────
+
+export async function updatePayrollCommission(
+    supabase: SupabaseClient,
+    {
+        tenantId,
+        userId,
+        id,
+        status,
+    }: { tenantId: string; userId: string; id: string; status: "pending" | "approved" | "rejected" },
+) {
+    const { data: commission, error: commissionError } = await supabase
+        .from("payroll_commissions")
+        .select("date, user_id, store_id")
+        .eq("id", id)
+        .eq("tenant_id", tenantId)
+        .single();
+
+    if (commissionError || !commission) {
+        throw Object.assign(new Error(commissionError?.message ?? "Commission not found"), { status: 404 });
+    }
+
+    const row = commission as { date: string; user_id: string; store_id: string };
+    const payoutRow = await assertPayoutNotPaid(supabase, { tenantId, userId: row.user_id, date: row.date });
+
+    const { data, error } = await supabase
+        .from("payroll_commissions")
         .update({ status })
         .eq("id", id)
         .eq("tenant_id", tenantId)
         .select()
         .single();
 
-    if (error || !data) throw Object.assign(new Error(error?.message ?? "Entry not found"), { status: 404 });
+    if (error || !data) throw Object.assign(new Error(error?.message ?? "Commission not found"), { status: 404 });
 
-    const raw = data as { store_id: string };
-    const log = createLogger(supabase, { tenantId, userId, storeId: raw.store_id });
-    log("payroll_entry_updated", {
-        refId: id,
-        refTable: "payroll_entries",
-        metadata: { status },
-    });
+    const log = createLogger(supabase, { tenantId, userId, storeId: row.store_id });
+    log("payroll_commission_updated", { refId: id, refTable: "payroll_commissions", metadata: { status } });
+
+    if (payoutRow) {
+        upsertPayout(supabase, {
+            tenantId,
+            userId: row.user_id,
+            startDate: payoutRow.startDate,
+            endDate: payoutRow.endDate,
+        }).catch((err) => console.warn("[payroll] upsertPayout failed after commission status update:", err));
+    }
 
     return toCamelKeys(data);
 }
 
-// ─── Update payroll period ────────────────────────────────────────────────────
+// ─── Guard: leaf rows are locked once their payout is paid ───────────────────
 
-export async function updatePayrollPeriod(
+export async function assertPayoutNotPaid(
     supabase: SupabaseClient,
-    { tenantId, userId, id, status }: { tenantId: string; userId: string; id: string; status: string },
-) {
-    const { data, error } = await supabase
-        .from("payroll_periods")
-        .update({ status })
-        .eq("id", id)
+    { tenantId, userId, date }: { tenantId: string; userId: string; date: string },
+): Promise<{ id: string; status: string; startDate: string; endDate: string } | null> {
+    const { data: payout } = await supabase
+        .from("payroll_payouts")
+        .select("id, status, start_date, end_date")
         .eq("tenant_id", tenantId)
-        .select()
-        .single();
+        .eq("user_id", userId)
+        .lte("start_date", date)
+        .gte("end_date", date)
+        .maybeSingle();
 
-    if (error || !data) throw Object.assign(new Error(error?.message ?? "Period not found"), { status: 404 });
+    if ((payout as { status: string } | null)?.status === "paid") {
+        throw Object.assign(new Error("Cannot change a decision after the payout has been paid"), { status: 422 });
+    }
 
-    const log = createLogger(supabase, { tenantId, userId });
-    log("payroll_period_updated", {
-        refId: id,
-        refTable: "payroll_periods",
-        metadata: { status },
-    });
-
-    return toCamelKeys(data);
+    if (!payout) return null;
+    const row = payout as { id: string; status: string; start_date: string; end_date: string };
+    return { id: row.id, status: row.status, startDate: row.start_date, endDate: row.end_date };
 }

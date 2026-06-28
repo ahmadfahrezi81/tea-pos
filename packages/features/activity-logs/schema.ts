@@ -11,18 +11,23 @@ export const ListActivityLogsQuery = z.object({
 });
 export type ListActivityLogsQuery = z.infer<typeof ListActivityLogsQuery>;
 
+export const GetDayActivityQuery = z.object({
+    summaryId: UUIDSchema,
+});
+export type GetDayActivityQuery = z.infer<typeof GetDayActivityQuery>;
+
 // ============================================================================
 // ENUMS
 // ============================================================================
 
 export const ActivityLogType = z.enum([
     "order_created",
-    "store_open",
-    "daily_summary_closed",
-    "balance_updated",
-    "photo_uploaded",
-    "photo_deleted",
-    "photo_quantity_updated",
+    "store_opened",
+    "store_closed",
+    "opening_balance_updated",
+    "summary_photo_uploaded",
+    "summary_photo_deleted",
+    "summary_photo_updated",
     "expense_created",
     "expense_updated",
     "expense_deleted",
@@ -31,10 +36,15 @@ export const ActivityLogType = z.enum([
     "session_ended",
     "commission_config_updated",
     "payroll_entry_updated",
+    "payroll_commission_updated",
     "payroll_period_updated",
     "supply_request_created",
     "incident_report_created",
     "reimbursement_submitted",
+    "reimbursement_status_updated",
+    "claim_submitted",
+    "claim_status_updated",
+    "payroll_payout_updated",
 ]);
 
 // ============================================================================
@@ -84,6 +94,75 @@ export const ActivityLogListResponse = z
     .openapi({ title: "ActivityLogListResponse" });
 
 // ============================================================================
+// METADATA CONTRACTS
+// ============================================================================
+
+// Typed metadata per event type — enforced at the write side via createLogger.
+// Keeps callsites honest: log("store_closed", { metadata: { wrong_field: 1 } }) is a TS error.
+export type ActivityLogMetadataMap = {
+    order_created:              { total_amount: number; total_cups: number; payment_method: string };
+    store_opened:               { opening_balance?: number; date?: string; resumed?: boolean };
+    store_closed:               { total_sales: number; variance: number | null };
+    opening_balance_updated:    { opening_balance: number };
+    summary_photo_uploaded:     { photo_url: string; slot: string; quantity?: unknown };
+    summary_photo_deleted:      { photo_url: string; slot: string };
+    summary_photo_updated:      { slot: string; quantity?: unknown };
+    expense_created:            { amount: number; type: string };
+    expense_updated:            { amount: number; type: string };
+    expense_deleted:            { amount: number; type: string };
+    customer_feedback_submitted:{ location_name: string; has_notes: boolean };
+    session_transferred:        { previous_session_id: string; daily_summary_id: string };
+    session_ended:              Record<string, never>;
+    commission_config_updated:  { user_id: string; rate_per_cup: number; effective_date: string };
+    payroll_entry_updated:      { user_id?: string; total_cups?: number; rate_per_cup?: number; total_commission?: number; status?: string };
+    payroll_commission_updated: { user_id?: string; total_cups?: number; total_orders?: number; rate_per_cup?: number; total_commission?: number; status?: string };
+    payroll_period_updated:     { status: string };
+    supply_request_created:     { type: string };
+    incident_report_created:    { type: string };
+    reimbursement_submitted:    { type: string; amount: number; date: string };
+    reimbursement_status_updated: { status: string };
+    claim_submitted:            { claim_config_id: string; amount: number; date: string };
+    claim_status_updated:       { status: string };
+    payroll_payout_updated:     { status: string };
+};
+
+// ============================================================================
+// DAY ACTIVITY RESPONSE
+// ============================================================================
+
+export const DayActivitySummaryContext = z.object({
+    date: z.string(),
+    storeName: z.string(),
+    totalSales: z.number(),
+    totalOrders: z.number(),
+    totalCups: z.number(),
+    openingBalance: z.number(),
+    variance: z.number().nullable(),
+    closedAt: z.string().nullable(),
+});
+export type DayActivitySummaryContext = z.infer<typeof DayActivitySummaryContext>;
+
+// ============================================================================
+// DAY ACTIVITY SEGMENT
+// ============================================================================
+
+// One row from the day activity timeline — no grouping, no discriminated kind.
+export const EventSegment = z.object({
+    id: UUIDSchema,
+    type: ActivityLogType,
+    createdAt: z.string(),
+    userName: z.string(),
+    metadata: z.record(z.string(), z.unknown()),
+    refId: UUIDSchema.nullable(),
+    refTable: z.string().nullable(),
+});
+
+export const DayActivityResponse = z.object({
+    summary: DayActivitySummaryContext,
+    segments: z.array(EventSegment),
+});
+
+// ============================================================================
 // TYPE EXPORTS
 // ============================================================================
 
@@ -91,3 +170,5 @@ export type ActivityLogType = z.infer<typeof ActivityLogType>;
 export type ActivityLogInsert = z.infer<typeof ActivityLogInsert>;
 export type ActivityLogResponse = z.infer<typeof ActivityLogResponse>;
 export type ActivityLogListResponse = z.infer<typeof ActivityLogListResponse>;
+export type EventSegment = z.infer<typeof EventSegment>;
+export type DayActivityResponse = z.infer<typeof DayActivityResponse>;

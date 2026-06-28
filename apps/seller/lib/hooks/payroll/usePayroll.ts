@@ -3,58 +3,36 @@
 import useSWR from "swr";
 import { payrollApi } from "@/lib/api/payroll";
 import type {
-    PayrollPeriodListResponse,
-    PayrollEntryListResponse,
-    ListPayrollPeriodsQuery,
-    ListPayrollEntriesQuery,
+    PayrollCommissionListResponse,
+    ListPayrollCommissionsQuery,
 } from "@tea-pos/features/payroll/schema";
 
-export function usePayrollPeriods(params?: Partial<ListPayrollPeriodsQuery>) {
-    const key = `payroll-periods-${params?.status ?? "all"}`;
+export function usePayrollCommissions(params?: Partial<ListPayrollCommissionsQuery>) {
+    const key =
+        params?.startDate || params?.userId
+            ? `payroll-commissions-${params.startDate ?? ""}${params.endDate ?? ""}-${params.userId ?? "all"}`
+            : "payroll-commissions-all";
 
-    const { data, error, mutate, isLoading } = useSWR<PayrollPeriodListResponse>(
+    const { data, error, mutate, isLoading } = useSWR<PayrollCommissionListResponse>(
         key,
-        () => payrollApi.getPeriods(params),
-        { revalidateOnFocus: false, dedupingInterval: 5000 },
+        () => payrollApi.getCommissions(params),
+        { revalidateOnFocus: false, dedupingInterval: 60000 },
     );
 
-    const updatePeriodStatus = async (periodId: string, status: "open" | "processing" | "paid") => {
-        const result = await payrollApi.updatePeriod(periodId, { status });
+    const updateCommissionStatus = async (
+        commissionId: string,
+        status: "pending" | "approved" | "rejected",
+    ) => {
+        const result = await payrollApi.updateCommission(commissionId, { status });
         await mutate();
         return result;
     };
 
     return {
-        periods: data?.periods ?? [],
+        commissions: data?.commissions ?? [],
         isLoading,
         error,
         mutate,
-        updatePeriodStatus,
-    };
-}
-
-export function usePayrollEntries(params?: Partial<ListPayrollEntriesQuery>) {
-    const key = params?.periodId || params?.userId
-        ? `payroll-entries-${params.periodId ?? "all"}-${params.userId ?? "all"}`
-        : "payroll-entries-all";
-
-    const { data, error, mutate, isLoading } = useSWR<PayrollEntryListResponse>(
-        key,
-        () => payrollApi.getEntries(params),
-        { revalidateOnFocus: false, dedupingInterval: 5000 },
-    );
-
-    const updateEntryStatus = async (entryId: string, status: "draft" | "approved" | "paid") => {
-        const result = await payrollApi.updateEntry(entryId, { status });
-        await mutate();
-        return result;
-    };
-
-    return {
-        entries: data?.entries ?? [],
-        isLoading,
-        error,
-        mutate,
-        updateEntryStatus,
+        updateCommissionStatus,
     };
 }

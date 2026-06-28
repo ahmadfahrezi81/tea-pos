@@ -6,16 +6,19 @@ import { useSummaries } from "@/lib/hooks/summaries/useDailySummaries";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 import { Receipt } from "lucide-react";
 import { getTodayLocalStr, getCurrentLocalMonth } from "@tea-pos/utils/time";
+import { useT } from "@/lib/hooks/useT";
+import type { DailySummaryResponse } from "@tea-pos/features/summaries/schema";
 
 export default function ExpensePage() {
     const { selectedStoreId } = useStore();
+    const t = useT();
     const todayStr = useMemo(() => getTodayLocalStr(), []);
     const currentMonth = useMemo(() => getCurrentLocalMonth(), []);
 
     const { data: summariesData, isLoading } = useSummaries(selectedStoreId, currentMonth);
 
     const todaySummary = useMemo(
-        () => summariesData?.summaries.find((s) => s.date === todayStr && !s.closedAt),
+        () => summariesData?.summaries.find((s: DailySummaryResponse) => s.date === todayStr && !s.closedAt),
         [summariesData?.summaries, todayStr],
     );
 
@@ -34,18 +37,18 @@ export default function ExpensePage() {
     ) : existingExpenses.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center text-center">
             <Receipt size={40} className="text-gray-300 mb-3" />
-            <p className="text-gray-500 text-sm">No expenses recorded today.</p>
+            <p className="text-gray-500 text-sm">{t("manage.noExpenses")}</p>
         </div>
     ) : (
         <div className="divide-y divide-gray-100">
-            {existingExpenses.map((e) => (
+            {existingExpenses.map((e: any) => (
                 <div key={e.id} className="flex justify-between px-4 py-3">
                     <span className="text-base text-gray-700">{e.type}</span>
                     <span className="text-base font-medium text-gray-900">{formatRupiah(e.amount)}</span>
                 </div>
             ))}
             <div className="flex justify-between px-4 py-3">
-                <span className="text-base font-semibold text-gray-700">Total</span>
+                <span className="text-base font-semibold text-gray-700">{t("manage.total")}</span>
                 <span className="text-base font-semibold text-gray-900">
                     {formatRupiah(todaySummary?.totalExpenses ?? 0)}
                 </span>

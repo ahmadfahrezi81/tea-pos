@@ -10,6 +10,7 @@ import { useFastOrderMode } from "@/lib/context/FastOrderModeContext";
 import type { ProductResponse } from "@tea-pos/features/products/schema";
 import { CartDrawer } from "./CartDrawer";
 import { useIsIPhonePWA } from "@/lib/usePWA";
+import { useT } from "@/lib/hooks/useT";
 import { Loader2 } from "lucide-react";
 
 // ─── Product Card ─────────────────────────────────────────────────────────────
@@ -18,12 +19,14 @@ interface ProductCardProps {
     product: ProductResponse;
     quantityInCart: number;
     onAdd: (product: ProductResponse) => void;
+    tapToAddLabel: string;
 }
 
 const ProductCard = memo(function ProductCard({
     product,
     quantityInCart,
     onAdd,
+    tapToAddLabel,
 }: ProductCardProps) {
     return (
         <div
@@ -78,7 +81,7 @@ const ProductCard = memo(function ProductCard({
                     </div>
                 )}
                 <div className="text-center text-brand text-sm font-medium py-1.5 rounded-lg border border-brand">
-                    Tap to add
+                    {tapToAddLabel}
                 </div>
             </div>
         </div>
@@ -92,6 +95,7 @@ export default function MobilePOS() {
     const { fastOrderMode } = useFastOrderMode();
     const { data: products = [], isLoading: productsLoading } = useProducts();
     const isIPhonePWA = useIsIPhonePWA();
+    const t = useT();
 
     const {
         cart,
@@ -113,14 +117,31 @@ export default function MobilePOS() {
         <div className="flex flex-col gap-4 pb-24 shrink-0">
             {/* Products Grid */}
             <div className="grid grid-cols-2 gap-3">
-                {products.map((product) => (
-                    <ProductCard
-                        key={product.id}
-                        product={product}
-                        quantityInCart={cartQuantityMap[product.id] ?? 0}
-                        onAdd={addToCart}
-                    />
-                ))}
+                {productsLoading
+                    ? Array.from({ length: 6 }).map((_, i) => (
+                        <div key={i} className="bg-white rounded-2xl border border-slate-200 overflow-hidden animate-pulse">
+                            <div className="p-3">
+                                <div className="flex gap-2 mb-3">
+                                    <div className="shrink-0 w-[50px] h-[50px] bg-gray-200 rounded" />
+                                    <div className="flex-1 space-y-2 pt-1">
+                                        <div className="h-4 bg-gray-200 rounded w-3/4" />
+                                        <div className="h-4 bg-gray-200 rounded w-1/2" />
+                                    </div>
+                                </div>
+                                <div className="h-8 bg-gray-100 rounded-lg" />
+                            </div>
+                        </div>
+                    ))
+                    : products.map((product) => (
+                        <ProductCard
+                            key={product.id}
+                            product={product}
+                            quantityInCart={cartQuantityMap[product.id] ?? 0}
+                            onAdd={addToCart}
+                            tapToAddLabel={t("cart.tapToAdd")}
+                        />
+                    ))
+                }
             </div>
 
             {/* Sticky Bottom Bar */}
@@ -131,7 +152,7 @@ export default function MobilePOS() {
                     <div className="flex items-center justify-between max-w-md mx-auto">
                         <div className="flex-1">
                             <p className="text-sm text-gray-600">
-                                {itemCount} items
+                                {itemCount} {t("cart.items")}
                             </p>
                             <p className="text-lg font-bold text-gray-900">
                                 {formatRupiah(total)}
@@ -145,7 +166,7 @@ export default function MobilePOS() {
                                         className="flex items-center gap-1 bg-red-500 px-4 py-2 rounded-lg font-medium"
                                     >
                                         <span className="font-bold text-white">
-                                            Clear All
+                                            {t("cart.clearAll")}
                                         </span>
                                     </button>
                                     <button
@@ -153,7 +174,7 @@ export default function MobilePOS() {
                                         disabled={isProcessing}
                                         className="px-4 py-2 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 disabled:opacity-50 flex items-center gap-1.5"
                                     >
-                                        {isProcessing ? "Processing..." : "Confirm Order"}
+                                        {isProcessing ? t("cart.processing") : t("cart.confirmOrder")}
                                     </button>
                                 </>
                             ) : (
@@ -161,7 +182,7 @@ export default function MobilePOS() {
                                     onClick={openCart}
                                     className="px-3 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600"
                                 >
-                                    View Cart
+                                    {t("cart.viewCart")}
                                 </button>
                             )}
                         </div>

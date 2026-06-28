@@ -7,6 +7,7 @@ import CopyableField from "@/components/shared/CopyableField";
 import { SkeletonValue } from "@/components/shared/SkeletonValue";
 import { useStore } from "@/lib/context/StoreContext";
 import { getTodayLocalStr } from "@tea-pos/utils/time";
+import { useT } from "@/lib/hooks/useT";
 
 import dynamic from "next/dynamic";
 
@@ -17,14 +18,14 @@ const MiniHourlySalesChart = dynamic(() => import("./MiniHourlySalesChart"), {
     ),
 });
 
-const formatMobileDate = (dateString: string) => {
+const formatMobileDate = (dateString: string, t: (key: string) => string) => {
     const date = new Date(dateString + "T00:00:00");
     const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
 
-    if (date.toDateString() === today.toDateString()) return "Today";
-    if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
+    if (date.toDateString() === today.toDateString()) return t("orders.today");
+    if (date.toDateString() === yesterday.toDateString()) return t("orders.yesterday");
 
     return date.toLocaleDateString("en-US", {
         month: "short",
@@ -48,6 +49,7 @@ const TZ_OFFSET = Number(process.env.NEXT_PUBLIC_TIMEZONE_OFFSET ?? 7);
 
 export default function MobileOrders() {
     const { selectedStoreId } = useStore();
+    const t = useT();
 
     const [selectedDate, setSelectedDate] = useState(getTodayLocalStr);
 
@@ -115,7 +117,7 @@ export default function MobileOrders() {
                     <div className="flex items-center gap-2">
                         <Receipt size={20} className="text-gray-600" />
                         <h3 className="font-semibold text-gray-800">
-                            Daily Summary
+                            {t("orders.dailySummary")}
                         </h3>
                     </div>
                 </div>
@@ -125,16 +127,16 @@ export default function MobileOrders() {
                         <p className="text-xl font-bold text-blue-600">
                             <SkeletonValue loading={ordersLoading} className="h-7 w-8">{summaryStats.totalOrders}</SkeletonValue>
                         </p>
-                        <p className="text-sm text-gray-600">Orders</p>
+                        <p className="text-sm text-gray-600">{t("analytics.orders")}</p>
                     </div>
                     <div className="text-center">
                         <p className="text-xl font-bold text-orange-600">
                             <SkeletonValue loading={ordersLoading} className="h-7 w-8">{summaryStats.totalCups}</SkeletonValue>
                         </p>
-                        <p className="text-sm text-gray-600">Cups</p>
+                        <p className="text-sm text-gray-600">{t("analytics.cups")}</p>
                     </div>
                     <div className="text-center col-span-2 border-l-2 border-gray-300">
-                        <p className="text-sm text-gray-600">Total Sales</p>
+                        <p className="text-sm text-gray-600">{t("analytics.totalSales")}</p>
                         <p className="text-xl font-bold text-green-600">
                             <SkeletonValue loading={ordersLoading} className="h-7 w-24">{formatRupiah(summaryStats.totalSales)}</SkeletonValue>
                         </p>
@@ -146,7 +148,7 @@ export default function MobileOrders() {
             <div className="bg-white p-4 rounded-2xl">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                     <CalendarDays size={16} className="inline mr-1" />
-                    Select Date
+                    {t("orders.selectDate")}
                 </label>
                 <input
                     type="date"
@@ -192,16 +194,16 @@ export default function MobileOrders() {
                         size={48}
                         className="mx-auto text-gray-400 mb-4"
                     />
-                    <p className="text-gray-600">No orders found</p>
+                    <p className="text-gray-600">{t("orders.noOrders")}</p>
                     <p className="text-sm text-gray-500 mt-1">
-                        No orders for the selected date and store
+                        {t("orders.noOrdersForDate")}
                     </p>
                 </div>
             ) : (
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">
                         <h3 className="text-lg font-semibold text-gray-800">
-                            {formatMobileDate(selectedDate)}
+                            {formatMobileDate(selectedDate, t)}
                         </h3>
                         <span className="text-sm text-gray-500">
                             {ordersWithNumbers.length} order
@@ -243,7 +245,7 @@ export default function MobileOrders() {
                                                     sum + item.quantity,
                                                 0,
                                             )}{" "}
-                                            cups
+                                            {t("orders.cups")}
                                         </p>
                                     </div>
                                 </div>
@@ -253,7 +255,7 @@ export default function MobileOrders() {
                                 <div className="space-y-3">
                                     <div>
                                         <h4 className="font-medium text-gray-800 mb-2 text-sm">
-                                            Order Details
+                                            {t("orders.orderDetails")}
                                         </h4>
                                         <div className="text-xs text-gray-800 space-y-1">
                                             <div>
@@ -271,19 +273,19 @@ export default function MobileOrders() {
                                             </div>
                                             <p>
                                                 <span className="font-medium">
-                                                    Store:
+                                                    {t("orders.store")}:
                                                 </span>{" "}
                                                 {order.stores?.name}
                                             </p>
                                             <p>
                                                 <span className="font-medium">
-                                                    Seller:
+                                                    {t("orders.seller")}:
                                                 </span>{" "}
                                                 {order.users?.fullName}
                                             </p>
                                             <p>
                                                 <span className="font-medium">
-                                                    Full Timestamp:
+                                                    {t("orders.fullTimestamp")}:
                                                 </span>{" "}
                                                 {new Date(
                                                     order.createdAt + "Z",
@@ -294,7 +296,7 @@ export default function MobileOrders() {
 
                                     <div>
                                         <h4 className="font-medium text-gray-800 mb-1 text-sm">
-                                            Items
+                                            {t("orders.items")}
                                         </h4>
                                         <div className="space-y-2">
                                             {order.storeOrderItems.map((item) => (
@@ -313,7 +315,7 @@ export default function MobileOrders() {
                                                             {formatRupiah(
                                                                 item.unitPrice,
                                                             )}{" "}
-                                                            each
+                                                            {t("orders.each")}
                                                         </p>
                                                     </div>
                                                     <div className="text-right">

@@ -2,7 +2,6 @@
 import { z } from "zod";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 
-// Extend Zod with OpenAPI support (only needs to be done once)
 extendZodWithOpenApi(z);
 
 // Common reusable schemas

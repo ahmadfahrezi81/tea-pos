@@ -1,5 +1,6 @@
 "use client";
 import { useMemo, useRef, useEffect, useState } from "react";
+import { useT } from "@/lib/hooks/useT";
 import useDailySales from "@/lib/hooks/analytics/useDailySales";
 import {
     Area,
@@ -38,34 +39,33 @@ const CustomLabel = (props: any) => {
     );
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const CustomTooltip = ({ active, payload }: any) => {
-    if (!active || !payload?.length) return null;
-    const { date, cups } = payload[0].payload;
-    return (
-        <div className="bg-white border border-gray-100 rounded-lg shadow-md px-3 py-2 text-xs">
-            <p className="font-semibold text-gray-700">{date}</p>
-            <p className="text-brand font-bold">{cups} cups</p>
-        </div>
-    );
-};
-
 export default function DailySalesChart({ storeId, month }: Props) {
     const { data: dailySales = [], isLoading } = useDailySales(storeId, month);
     const scrollRef = useRef<HTMLDivElement>(null);
-    const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const brandColor = useBrandColor();
-    const [isScrolling, setIsScrolling] = useState(false);
+    const t = useT();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const CustomTooltip = ({ active, payload }: any) => {
+        if (!active || !payload?.length) return null;
+        const { date, cups } = payload[0].payload;
+        return (
+            <div className="bg-white border border-gray-100 rounded-lg shadow-md px-3 py-2 text-xs">
+                <p className="font-semibold text-gray-700">{date}</p>
+                <p className="text-brand font-bold">{cups} {t("analytics.cups")}</p>
+            </div>
+        );
+    };
 
     const chartConfig = useMemo(
         () =>
             ({
                 cups: {
-                    label: "Cups Sold",
+                    label: t("analytics.cupsSoldLabel"),
                     color: brandColor,
                 },
             }) satisfies ChartConfig,
-        [brandColor],
+        [brandColor, t],
     );
 
     const chartData = useMemo(() => {
@@ -86,11 +86,6 @@ export default function DailySalesChart({ storeId, month }: Props) {
         return dailySales.reduce((sum, item) => sum + item.cups, 0);
     }, [dailySales]);
 
-    const avgCups = useMemo(() => {
-        return dailySales.length > 0
-            ? Math.round(totalCups / dailySales.length)
-            : 0;
-    }, [dailySales, totalCups]);
 
     const peakDate = useMemo(() => {
         return dailySales.reduce(
@@ -119,29 +114,6 @@ export default function DailySalesChart({ storeId, month }: Props) {
         });
     }, [peakIndex, chartData]);
 
-    useEffect(() => {
-        const el = scrollRef.current;
-        if (!el) return;
-
-        const handleScroll = () => {
-            setIsScrolling(true);
-
-            if (scrollTimeoutRef.current) {
-                clearTimeout(scrollTimeoutRef.current);
-            }
-
-            scrollTimeoutRef.current = setTimeout(() => {
-                setIsScrolling(false);
-            }, 800);
-        };
-
-        el.addEventListener("scroll", handleScroll);
-        return () => {
-            el.removeEventListener("scroll", handleScroll);
-            if (scrollTimeoutRef.current)
-                clearTimeout(scrollTimeoutRef.current);
-        };
-    }, []);
 
     if (isLoading) {
         return (
@@ -163,21 +135,18 @@ export default function DailySalesChart({ storeId, month }: Props) {
             <div className="flex items-start justify-between mb-3">
                 <div>
                     <h3 className="font-semibold text-gray-800 text-lg">
-                        Daily Sales
+                        {t("analytics.dailySalesTitle")}
                     </h3>
                     <p className="text-sm text-gray-400">
-                        Cup sales throughout the month
+                        {t("analytics.dailySalesSubtitle")}
                     </p>
                 </div>
-                <div
-                    className="text-right transition-all duration-300"
-                    key={isScrolling ? "avg" : "total"}
-                >
+                <div className="text-right">
                     <p className="text-xs text-gray-800">
-                        {isScrolling ? "Avg / day" : "Total"}
+                        {t("analytics.total")}
                     </p>
                     <p className="text-2xl font-bold text-brand">
-                        {isScrolling ? avgCups : totalCups}
+                        {totalCups}
                     </p>
                 </div>
             </div>

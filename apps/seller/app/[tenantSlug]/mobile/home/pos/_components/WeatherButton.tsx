@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import useWeather from "@/lib/hooks/weather/useWeather";
 import { getWeatherMeta, isNightHour } from "@tea-pos/utils/weatherCode";
 import { getCurrentLocalHour } from "@tea-pos/utils/time";
+import type { WeatherHourlyRow } from "@tea-pos/features/weather/schema";
 
 interface WeatherButtonProps {
     onClick: () => void;
@@ -17,7 +18,7 @@ export function WeatherButton({ onClick }: WeatherButtonProps) {
     const WeatherIcon = useMemo(() => {
         if (!data?.hourly) return null;
         const current =
-            data.hourly.find((h) => h.hour === currentLocalHour) ??
+            data.hourly.find((h: WeatherHourlyRow) => h.hour === currentLocalHour) ??
             data.hourly[0];
         return getWeatherMeta(
             current.weatherCode,

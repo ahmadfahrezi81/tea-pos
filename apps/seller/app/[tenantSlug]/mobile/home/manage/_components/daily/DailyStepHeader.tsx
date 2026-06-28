@@ -38,7 +38,7 @@ export function DailyStepHeader({
     }, [currentStep]);
 
     return (
-        <div className="sticky top-0 z-10 bg-gray-50 border-b border-gray-100 w-full py-1">
+        <div className="sticky top-[-8px] z-10 bg-slate-100 w-full py-2">
             <div
                 ref={scrollRef}
                 className="overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full"
@@ -69,7 +69,7 @@ export function DailyStepHeader({
                                                 ? "bg-brand text-white active:scale-95"
                                                 : isCurrent
                                                   ? "bg-brand/10 text-brand border-2 border-brand"
-                                                  : "bg-gray-100 text-gray-400"
+                                                  : "bg-gray-300 text-gray-500"
                                         } ${isClickable ? "cursor-pointer" : "cursor-default"}`}
                                     >
                                         {isCompleted ? (
@@ -84,7 +84,7 @@ export function DailyStepHeader({
                                                 ? "text-brand"
                                                 : isCompleted
                                                   ? "text-brand/80"
-                                                  : "text-gray-400"
+                                                  : "text-gray-500"
                                         }`}
                                     >
                                         {step.label}
@@ -97,7 +97,7 @@ export function DailyStepHeader({
                                         className={`w-6 h-0.5 mx-2 mb-4 transition-colors shrink-0 ${
                                             isCompleted
                                                 ? "bg-brand"
-                                                : "bg-gray-200"
+                                                : "bg-gray-300"
                                         }`}
                                     />
                                 )}

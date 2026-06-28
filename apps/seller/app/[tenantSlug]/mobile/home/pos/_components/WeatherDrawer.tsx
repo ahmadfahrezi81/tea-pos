@@ -6,6 +6,7 @@ import { Cloud, X } from "lucide-react";
 import { getWeatherMeta, isNightHour } from "@tea-pos/utils/weatherCode";
 import useWeather from "@/lib/hooks/weather/useWeather";
 import { getCurrentLocalHour } from "@tea-pos/utils/time";
+import type { WeatherHourlyRow } from "@tea-pos/features/weather/schema";
 import { Bebas_Neue } from "next/font/google";
 
 const bebas = Bebas_Neue({
@@ -72,7 +73,7 @@ export function WeatherDrawer({ isOpen, onClose }: WeatherDrawerProps) {
         const spillsTomorrow = currentLocalHour + 6 > 23;
         const cutoffHour = (currentLocalHour + 6) % 24;
 
-        return data.hourly.filter((h) => {
+        return data.hourly.filter((h: WeatherHourlyRow) => {
             // at midnight, show yesterday's 11 PM as the past row
             if (h.date === yesterdayDateStr) {
                 return currentLocalHour === 0 && h.hour === 23;
@@ -97,7 +98,7 @@ export function WeatherDrawer({ isOpen, onClose }: WeatherDrawerProps) {
     ]);
 
     const currentHourData = data?.hourly?.find(
-        (h) => h.date === todayDateStr && h.hour === currentLocalHour,
+        (h: WeatherHourlyRow) => h.date === todayDateStr && h.hour === currentLocalHour,
     );
 
     return (
@@ -117,6 +118,7 @@ export function WeatherDrawer({ isOpen, onClose }: WeatherDrawerProps) {
                                 {data?.city ?? "Ciomas"},{" "}
                                 {data?.region ?? "Bogor"}
                             </Drawer.Title>
+                            <Drawer.Description className="sr-only">Hourly weather forecast</Drawer.Description>
                             <p className="font-bebas text-lg text-gray-500 -mt-2">
                                 As of{" "}
                                 {currentHourData?.fetchedAt
@@ -148,7 +150,7 @@ export function WeatherDrawer({ isOpen, onClose }: WeatherDrawerProps) {
 
                     {!isLoading && data && (
                         <div className="space-y-1">
-                            {visibleHours.map((hour) => {
+                            {visibleHours.map((hour: WeatherHourlyRow) => {
                                 const isCurrent =
                                     hour.date === todayDateStr &&
                                     hour.hour === currentLocalHour;

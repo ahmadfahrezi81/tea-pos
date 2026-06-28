@@ -7,6 +7,7 @@ import { FormFooter } from "@/components/shared/FormFooter";
 import useCreateCustomerFeedback from "@/lib/hooks/customer-feedbacks/useCreateCustomerFeedback";
 import { toast } from "sonner";
 import mapboxgl from "mapbox-gl";
+import { useT } from "@/lib/hooks/useT";
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN!;
 
@@ -107,6 +108,7 @@ function MiniMap({ lng, lat, shouldFly }: { lng: number; lat: number; shouldFly:
 export default function AddLocationFeedbackPage() {
     const router = useRouter();
     const { submit, isLoading, reset } = useCreateCustomerFeedback();
+    const t = useT();
 
     const sessionToken = useRef(crypto.randomUUID());
 
@@ -157,11 +159,11 @@ export default function AddLocationFeedbackPage() {
             notes: notes.trim() || null,
         });
         if (result?.success) {
-            toast.success("Feedback submitted!");
+            toast.success(t("map.submitted"));
             reset();
             router.back();
         } else {
-            toast.error("Failed to submit. Please try again.");
+            toast.error(t("map.failed"));
         }
     }, [selectedLocation, notes, submit, reset, router]);
 
@@ -180,7 +182,7 @@ export default function AddLocationFeedbackPage() {
             <div className="bg-white rounded-xl p-4 space-y-4">
                 {/* Location Search */}
                 <div className="space-y-1.5">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Location</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("map.location")}</p>
                     <div className="relative">
                         <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-3 border border-gray-100">
                             {isFetching ? (
@@ -192,7 +194,7 @@ export default function AddLocationFeedbackPage() {
                                 type="text"
                                 value={query}
                                 onChange={(e) => handleQueryChange(e.target.value)}
-                                placeholder="Search area or district..."
+                                placeholder={t("map.searchArea")}
                                 className="flex-1 bg-transparent text-base text-gray-800 placeholder:text-gray-400 focus:outline-none"
                             />
                             {query.length > 0 && (
@@ -223,11 +225,11 @@ export default function AddLocationFeedbackPage() {
 
                 {/* Notes */}
                 <div className="space-y-1.5">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Notes</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("analytics.notes")}</p>
                     <textarea
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
-                        placeholder="Any observations? (optional)"
+                        placeholder={t("map.anyObservations")}
                         rows={3}
                         className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-3 text-base text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand/90 resize-none"
                     />
@@ -235,8 +237,8 @@ export default function AddLocationFeedbackPage() {
             </div>
 
             <FormFooter
-                label="Submit Feedback"
-                loadingLabel="Submitting..."
+                label={t("map.submit")}
+                loadingLabel={t("map.submitting")}
                 onSubmit={handleSubmit}
                 disabled={!selectedLocation}
                 isLoading={isLoading}

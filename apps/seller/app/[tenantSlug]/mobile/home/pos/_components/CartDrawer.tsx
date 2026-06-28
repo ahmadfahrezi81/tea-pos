@@ -9,6 +9,7 @@ import { QrisCode } from "./QrisCode";
 import { useQrisPayment } from "@/lib/hooks/payments/useQrisPayment";
 import { useFlags } from "@/lib/context/FlagsContext";
 import { useToast } from "@/lib/context/ToastContext";
+import { useT } from "@/lib/hooks/useT";
 
 interface CartDrawerProps {
     isOpen: boolean;
@@ -37,6 +38,7 @@ export const CartDrawer = memo(function CartDrawer({
 }: CartDrawerProps) {
     const { flags: { isQrisEnabled: qris } } = useFlags();
     const { showToast } = useToast();
+    const t = useT();
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
     const [showSuccess, setShowSuccess] = useState(false);
     const [simulating, setSimulating] = useState(false);
@@ -58,12 +60,12 @@ export const CartDrawer = memo(function CartDrawer({
             onClose();
             onClearCart();
             showToast(
-                "Order confirmed!",
+                t("cart.orderConfirmed"),
                 "success",
-                `${cart.length} items · ${formatRupiah(total)}`, // use total from useMemo
+                `${cart.length} items · ${formatRupiah(total)}`,
             );
         }, 1500);
-    }, [onClose, onClearCart, showToast, total]);
+    }, [onClose, onClearCart, showToast, total, t]);
 
     // ── QRIS hook ────────────────────────────────────────────────────────────
     const {
@@ -138,8 +140,9 @@ export const CartDrawer = memo(function CartDrawer({
                                     <X size={24} />
                                 </button>
                                 <Drawer.Title className="text-xl font-bold text-gray-900">
-                                    Cart
+                                    {t("cart.title")}
                                 </Drawer.Title>
+                                <Drawer.Description className="sr-only">Cart items and checkout</Drawer.Description>
                             </div>
 
                             {/* Payment method toggle */}
@@ -152,7 +155,7 @@ export const CartDrawer = memo(function CartDrawer({
                                             : "text-gray-500"
                                     }`}
                                 >
-                                    Cash
+                                    {t("cart.paymentCash")}
                                 </button>
                                 <button
                                     onClick={() =>
@@ -164,7 +167,7 @@ export const CartDrawer = memo(function CartDrawer({
                                             : "text-gray-500"
                                     } ${!qris ? "opacity-40 cursor-not-allowed" : ""}`}
                                 >
-                                    QRIS
+                                    {t("cart.paymentQris")}
                                 </button>
                             </div>
                         </div>
@@ -179,13 +182,13 @@ export const CartDrawer = memo(function CartDrawer({
                             >
                                 <div className="px-4">
                                     <h4 className="text-xl font-bold text-gray-800 mb-4 flex items-baseline gap-1">
-                                        Current Order
+                                        {t("cart.currentOrder")}
                                         {cart.length > 0 && (
                                             <button
                                                 onClick={onClearCart}
                                                 className="text-red-500 px-2 hover:bg-red-50 text-sm rounded-full transition-colors"
                                             >
-                                                Clear All
+                                                {t("cart.clearAll")}
                                             </button>
                                         )}
                                     </h4>
@@ -193,7 +196,7 @@ export const CartDrawer = memo(function CartDrawer({
                                     {cart.length === 0 ? (
                                         <div className="text-center text-gray-500 my-20">
                                             <ShoppingCart className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                                            <p>No items in cart</p>
+                                            <p>{t("cart.noItems")}</p>
                                         </div>
                                     ) : (
                                         <div className="space-y-4 pb-4">
@@ -218,7 +221,7 @@ export const CartDrawer = memo(function CartDrawer({
                             <div className="shrink-0 bg-white px-4 pt-4 pb-8 border-t border-gray-200">
                                 <div className="flex justify-between items-center mb-4">
                                     <span className="text-xl font-bold text-gray-900">
-                                        Total Transaction
+                                        {t("cart.totalTransaction")}
                                     </span>
                                     <span className="text-xl font-bold text-gray-900">
                                         {formatRupiah(total)}
@@ -234,8 +237,8 @@ export const CartDrawer = memo(function CartDrawer({
                                     className="w-full bg-green-500 text-white py-4 rounded-xl text-lg font-semibold hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                 >
                                     {processing
-                                        ? "Processing..."
-                                        : "Confirm Order"}
+                                        ? t("cart.processing")
+                                        : t("cart.confirmOrder")}
                                 </button>
                             </div>
                         </>
@@ -249,7 +252,7 @@ export const CartDrawer = memo(function CartDrawer({
                                 <div className="flex flex-col items-center justify-center gap-3 py-20">
                                     <ShoppingCart className="w-12 h-12 text-gray-300" />
                                     <p className="text-gray-400 font-medium text-sm">
-                                        Add items to cart first
+                                        {t("cart.addItemsFirst")}
                                     </p>
                                 </div>
                             ) : (
@@ -259,20 +262,20 @@ export const CartDrawer = memo(function CartDrawer({
                                         {qrisStatus === "loading" && (
                                             <span className="flex items-center gap-1 text-sm font-semibold text-gray-500 bg-gray-100 px-3 py-0.5 rounded-full">
                                                 <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-pulse inline-block" />
-                                                Generating...
+                                                {t("cart.qrisGenerating")}
                                             </span>
                                         )}
                                         {qrisStatus === "pending" &&
                                             !showSuccess && (
                                                 <span className="flex items-center gap-1 text-sm font-semibold text-amber-600 bg-amber-50 px-3 py-0.5 rounded-full">
                                                     <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse inline-block" />
-                                                    Waiting for payment
+                                                    {t("cart.qrisWaitingPayment")}
                                                 </span>
                                             )}
                                         {showSuccess && (
                                             <span className="flex items-center gap-1 text-sm font-semibold text-green-600 bg-green-50 px-3 py-0.5 rounded-full">
                                                 <span className="w-1.5 h-1.5 bg-green-500 rounded-full inline-block" />
-                                                Paid
+                                                {t("cart.qrisPaid")}
                                             </span>
                                         )}
                                         {(qrisStatus === "expired" ||
@@ -281,8 +284,8 @@ export const CartDrawer = memo(function CartDrawer({
                                                 <span className="flex items-center gap-1 text-xs font-semibold text-red-500 bg-red-50 px-2 py-0.5 rounded-full">
                                                     <span className="w-1.5 h-1.5 bg-red-500 rounded-full inline-block" />
                                                     {qrisStatus === "expired"
-                                                        ? "Expired"
-                                                        : "Failed"}
+                                                        ? t("cart.qrisExpired")
+                                                        : t("cart.qrisFailed")}
                                                 </span>
                                             )}
                                     </div>

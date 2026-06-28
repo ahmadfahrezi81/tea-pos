@@ -100,7 +100,7 @@ export async function resumeSession(supabase: SupabaseClient, params: ResumeSess
     if (sessionError || !sessionData) throw new Error(sessionError?.message ?? "Failed to create session");
 
     const log = createLogger(supabase, { tenantId, userId, storeId });
-    log("store_open", {
+    log("store_opened", {
         refId: summaryId,
         refTable: "store_daily_summaries",
         metadata: { resumed: true },
@@ -152,7 +152,6 @@ export async function openStore(supabase: SupabaseClient, params: OpenStoreParam
             store_id: storeId,
             tenant_id: tenantId,
             opened_by: userId,
-            closed_by: userId,
             date,
             opening_balance: openingBalance,
             opening_cash_breakdown: openingCashBreakdown ?? null,
@@ -184,7 +183,7 @@ export async function openStore(supabase: SupabaseClient, params: OpenStoreParam
     if (sessionError || !sessionData) throw new Error(sessionError?.message ?? "Failed to create session");
 
     const log = createLogger(supabase, { tenantId, userId, storeId });
-    log("store_open", {
+    log("store_opened", {
         refId: dailySummaryId,
         refTable: "store_daily_summaries",
         metadata: { date, opening_balance: openingBalance },
@@ -287,6 +286,212 @@ export async function endSessionsForSummary(
         .eq("daily_summary_id", dailySummaryId)
         .eq("tenant_id", tenantId)
         .eq("status", "active");
+}
+
+// ─── Sessions by summary IDs (internal helper) ───────────────────────────────
+
+export async function fetchSessionUsersForSummaries(
+    supabase: SupabaseClient,
+    { tenantId, summaryIds }: { tenantId: string; summaryIds: string[] },
+): Promise<Record<string, Array<{ userId: string; userName: string | null; userAvatarUrl: string | null; totalCups: number | null }>>> {
+    if (summaryIds.length === 0) return {};
+
+    const [{ data: sessions, error }, { data: commissionRows }] = await Promise.all([
+        supabase
+            .from("store_sessions")
+            .select("user_id, daily_summary_id")
+            .in("daily_summary_id", summaryIds)
+            .eq("tenant_id", tenantId),
+        supabase
+            .from("payroll_commissions")
+            .select("user_id, daily_summary_id, total_cups")
+            .in("daily_summary_id", summaryIds)
+            .eq("tenant_id", tenantId),
+    ]);
+
+    if (error) throw error;
+    if (!sessions || sessions.length === 0) return {};
+
+    // cups per (summaryId, userId)
+    const cupsMap = new Map<string, number>();
+    for (const row of (commissionRows ?? []) as Array<{ user_id: string; daily_summary_id: string; total_cups: number }>) {
+        const key = `${row.daily_summary_id}:${row.user_id}`;
+        cupsMap.set(key, (cupsMap.get(key) ?? 0) + row.total_cups);
+    }
+
+    const uniqueUserIds = [...new Set(sessions.map((s) => s.user_id))];
+
+    const { data: userRows } = await supabase
+        .from("users")
+        .select("id, full_name")
+        .in("id", uniqueUserIds);
+
+    const nameMap = new Map((userRows ?? []).map((u: { id: string; full_name: string | null }) => [u.id, u.full_name ?? null]));
+
+    const avatarMap = new Map<string, string | null>();
+    await Promise.all(
+        uniqueUserIds.map(async (userId) => {
+            const { data: authUser } = await supabase.auth.admin.getUserById(userId);
+            avatarMap.set(userId, (authUser?.user?.user_metadata?.avatar_url as string | undefined) ?? null);
+        }),
+    );
+
+    const result: Record<string, Array<{ userId: string; userName: string | null; userAvatarUrl: string | null; totalCups: number | null }>> = {};
+    for (const session of sessions as Array<{ user_id: string; daily_summary_id: string }>) {
+        const { daily_summary_id, user_id } = session;
+        if (!result[daily_summary_id]) result[daily_summary_id] = [];
+        if (!result[daily_summary_id].some((u) => u.userId === user_id)) {
+            const cups = cupsMap.get(`${daily_summary_id}:${user_id}`);
+            result[daily_summary_id].push({
+                userId: user_id,
+                userName: nameMap.get(user_id) ?? null,
+                userAvatarUrl: avatarMap.get(user_id) ?? null,
+                totalCups: cups ?? null,
+            });
+        }
+    }
+    return result;
+}
+
+// ─── Sessions by month (standalone endpoint) ──────────────────────────────────
+
+export interface ListSessionsByMonthParams {
+    tenantId: string;
+    storeId: string;
+    month: string;
+}
+
+export async function listSessionsByMonth(supabase: SupabaseClient, params: ListSessionsByMonthParams) {
+    const { tenantId, storeId, month } = params;
+    const startDate = `${month}-01`;
+    const endDateObj = new Date(`${month}-01`);
+    endDateObj.setMonth(endDateObj.getMonth() + 1);
+    endDateObj.setDate(0);
+    const endDate = endDateObj.toISOString().split("T")[0];
+
+    const { data: summaries, error: summariesError } = await supabase
+        .from("store_daily_summaries")
+        .select("id")
+        .eq("store_id", storeId)
+        .eq("tenant_id", tenantId)
+        .gte("date", startDate)
+        .lte("date", endDate);
+
+    if (summariesError) throw summariesError;
+    const summaryIds = (summaries ?? []).map((s: { id: string }) => s.id);
+
+    const sessionsBySummaryId = await fetchSessionUsersForSummaries(supabase, { tenantId, summaryIds });
+    return { sessionsBySummaryId };
+}
+
+// ─── User session activity (streak grid) ─────────────────────────────────────
+
+export async function listUserSessionDates(
+    supabase: SupabaseClient,
+    { tenantId, userId, weeks = 16 }: { tenantId: string; userId: string; weeks?: number },
+): Promise<string[]> {
+    const tz = parseInt(process.env.TIMEZONE_OFFSET ?? "7", 10);
+    const from = new Date();
+    from.setDate(from.getDate() - weeks * 7);
+    from.setUTCHours(0 - tz, 0, 0, 0);
+
+    const { data, error } = await supabase
+        .from("store_sessions")
+        .select("started_at")
+        .eq("tenant_id", tenantId)
+        .eq("user_id", userId)
+        .gte("started_at", from.toISOString());
+
+    if (error) throw error;
+
+    const dates = new Set<string>();
+    for (const row of data ?? []) {
+        const local = new Date(new Date(row.started_at).getTime() + tz * 60 * 60 * 1000);
+        dates.add(local.toISOString().slice(0, 10));
+    }
+
+    return Array.from(dates).sort();
+}
+
+export async function listUserSessionDatesByMonth(
+    supabase: SupabaseClient,
+    { tenantId, userId, month }: { tenantId: string; userId: string; month: string },
+): Promise<string[]> {
+    const tz = parseInt(process.env.TIMEZONE_OFFSET ?? "7", 10);
+
+    const from = new Date(`${month}-01T00:00:00.000Z`);
+    from.setUTCHours(0 - tz, 0, 0, 0);
+
+    const to = new Date(from);
+    to.setUTCMonth(to.getUTCMonth() + 1);
+
+    const { data, error } = await supabase
+        .from("store_sessions")
+        .select("started_at")
+        .eq("tenant_id", tenantId)
+        .eq("user_id", userId)
+        .gte("started_at", from.toISOString())
+        .lt("started_at", to.toISOString());
+
+    if (error) throw error;
+
+    const dates = new Set<string>();
+    for (const row of data ?? []) {
+        const local = new Date(new Date(row.started_at).getTime() + tz * 60 * 60 * 1000);
+        dates.add(local.toISOString().slice(0, 10));
+    }
+
+    return Array.from(dates).sort();
+}
+
+// ─── Sessions by summary (detail view) ───────────────────────────────────────
+
+export async function listSessionsBySummary(
+    supabase: SupabaseClient,
+    { tenantId, summaryId }: { tenantId: string; summaryId: string },
+) {
+    const { data: sessions, error } = await supabase
+        .from("store_sessions")
+        .select("id, user_id, started_at, ended_at, status, previous_session_id, claim_code")
+        .eq("daily_summary_id", summaryId)
+        .eq("tenant_id", tenantId)
+        .order("started_at", { ascending: true });
+
+    if (error) throw error;
+    if (!sessions || sessions.length === 0) return { sessions: [] };
+
+    const uniqueUserIds = [...new Set(sessions.map((s) => s.user_id))];
+
+    const { data: userRows } = await supabase
+        .from("users")
+        .select("id, full_name")
+        .in("id", uniqueUserIds);
+
+    const nameMap = new Map(
+        (userRows ?? []).map((u: { id: string; full_name: string | null }) => [u.id, u.full_name ?? null]),
+    );
+
+    const avatarMap = new Map<string, string | null>();
+    await Promise.all(
+        uniqueUserIds.map(async (userId) => {
+            const { data: authUser } = await supabase.auth.admin.getUserById(userId);
+            avatarMap.set(userId, (authUser?.user?.user_metadata?.avatar_url as string | undefined) ?? null);
+        }),
+    );
+
+    return {
+        sessions: sessions.map((s) => ({
+            id: s.id,
+            userId: s.user_id,
+            userName: nameMap.get(s.user_id) ?? null,
+            userAvatarUrl: avatarMap.get(s.user_id) ?? null,
+            startedAt: s.started_at,
+            endedAt: s.ended_at ?? null,
+            status: s.status as "active" | "ended",
+            previousSessionId: s.previous_session_id ?? null,
+            claimCode: s.claim_code,
+        })),
+    };
 }
 
 // ─── End session ──────────────────────────────────────────────────────────────

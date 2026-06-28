@@ -97,7 +97,7 @@
 //                         type="submit"
 //                         className="w-full bg-blue-500 text-white py-4 mb-4 rounded-xl font-semibold hover:bg-blue-600"
 //                     >
-//                         Update Opening Balance
+//                         {t("analytics.updateOpeningBalance")}
 //                     </button>
 //                 </form>
 //             </div>
@@ -256,7 +256,7 @@
 //                         onClick={handleSubmit}
 //                         className="w-full bg-blue-500 text-white py-4 rounded-xl text-lg font-semibold hover:bg-blue-600 transition-colors"
 //                     >
-//                         Update Opening Balance
+//                         {t("analytics.updateOpeningBalance")}
 //                     </button>
 //                 </div>
 //             </div>
@@ -268,6 +268,7 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { DailySummary } from "@tea-pos/features/summaries/schema";
+import { useT } from "@/lib/hooks/useT";
 
 interface SetBalanceModalProps {
     isOpen: boolean;
@@ -289,6 +290,7 @@ export const SetBalanceModal = ({
     const [editForm, setEditForm] = useState({
         openingBalance: "",
     });
+    const t = useT();
 
     useEffect(() => {
         if (summary?.openingBalance != null) {
@@ -334,7 +336,7 @@ export const SetBalanceModal = ({
                     <div className="flex justify-between items-center">
                         <div className="flex flex-col space-y-1">
                             <h2 className="text-xl font-semibold text-gray-900">
-                                Set Opening Balance
+                                {t("analytics.setOpeningBalance")}
                             </h2>
                             <p className="text-md text-gray-600">
                                 {formatDate(summary.date)} · {getStoreName()}
@@ -355,7 +357,7 @@ export const SetBalanceModal = ({
                     <div className="p-4 space-y-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Opening Balance
+                                {t("analytics.openingBalance")}
                             </label>
                             <input
                                 type="number"
@@ -395,7 +397,7 @@ export const SetBalanceModal = ({
                         onClick={handleSubmit}
                         className="w-full bg-blue-500 text-white py-4 rounded-xl text-lg font-semibold hover:bg-blue-600 transition-colors"
                     >
-                        Update Opening Balance
+                        {t("analytics.updateOpeningBalance")}
                     </button>
                 </div>
             </div>

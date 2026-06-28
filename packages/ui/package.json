@@ -3,7 +3,8 @@
   "version": "0.0.1",
   "private": true,
   "exports": {
-    "./components/*": "./components/*.tsx"
+    "./components/*": "./components/*.tsx",
+    "./custom/*": "./custom/*.tsx"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.15",

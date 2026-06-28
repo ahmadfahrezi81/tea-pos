@@ -3,6 +3,7 @@ import { z } from "zod";
 import { UUIDSchema } from "../shared/common-schema";
 import { ExpenseResponse } from "../expenses/schema";
 import { PHOTO_TYPES } from "./photos-schema";
+import { SessionUserResponse } from "../sessions/schema";
 
 // ============================================================================
 // CASH BREAKDOWN SCHEMA
@@ -144,6 +145,12 @@ export const DailySummaryResponse = z
             .openapi({
                 description: "Photos for this summary",
             }),
+        sessions: z.array(SessionUserResponse).optional().openapi({
+            description: "Sellers who worked this day",
+        }),
+        photoCount: z.number().optional().openapi({
+            description: "Number of photos uploaded for this day",
+        }),
     })
     .openapi({ title: "DailySummaryResponse" });
 

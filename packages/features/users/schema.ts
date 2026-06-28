@@ -55,31 +55,21 @@ export const CreateUserInput = z
 
 export const UpdateUserInput = z
     .object({
-        fullName: z
-            .string()
-            .min(1, "Full name is required")
-            .optional()
-            .openapi({
-                description: "User's full name",
-                example: "John Doe",
-            }),
-        role: z.enum(["owner", "manager", "staff"]).optional().openapi({
-            description: "User's role in the tenant",
-            example: "manager",
-        }),
-        phoneNumber: z.string().nullable().optional().openapi({
-            description: "User's phone number with country code",
-            example: "6281234567890",
-        }),
-        status: z
-            .enum(["active", "inactive", "pending", "suspended"])
-            .optional()
-            .openapi({
-                description: "User account status",
-                example: "active",
-            }),
+        fullName: z.string().min(1).optional().openapi({ description: "User's full name", example: "John Doe" }),
+        role: z.enum(["owner", "manager", "staff"]).optional(),
+        phoneNumber: z.string().nullable().optional(),
+        status: z.enum(["active", "inactive", "pending", "suspended"]).optional(),
+        bankName: z.string().nullable().optional(),
+        bankAccountNumber: z.string().nullable().optional(),
+        bankAccountHolder: z.string().nullable().optional(),
     })
     .openapi({ title: "UpdateUserInput" });
+
+export const UpdateUserLanguageInput = z
+    .object({
+        language: z.enum(["en", "id"]),
+    })
+    .openapi({ title: "UpdateUserLanguageInput" });
 
 // export const UpdateUserInputWithId = z
 //     .object({
@@ -128,6 +118,11 @@ export const UserResponse = z
         status: z.enum(USER_STATUSES),
         createdAt: z.string().nullable(),
         updatedAt: z.string().nullable(),
+        bankName: z.string().nullable().optional(),
+        bankAccountNumber: z.string().nullable().optional(),
+        bankAccountHolder: z.string().nullable().optional(),
+        avatarUrl: z.string().nullable().optional(),
+        preferredLanguage: z.enum(["en", "id"]).default("en"),
     })
     .openapi({ title: "UserResponse" });
 
@@ -174,6 +169,7 @@ export const UpdateUserResponse = z
 export type CreateUserInput = z.infer<typeof CreateUserInput>;
 export type UpdateUserInput = z.infer<typeof UpdateUserInput>;
 export type UpdateUserInputWithId = z.infer<typeof UpdateUserInputWithId>;
+export type UpdateUserLanguageInput = z.infer<typeof UpdateUserLanguageInput>;
 export type UserResponse = z.infer<typeof UserResponse>;
 export type UserListResponse = z.infer<typeof UserListResponse>;
 export type CreateUserResponse = z.infer<typeof CreateUserResponse>;

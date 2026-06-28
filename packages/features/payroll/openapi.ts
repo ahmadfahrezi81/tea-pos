@@ -5,10 +5,10 @@ import {
     PayrollPeriodListResponse,
     PayrollPeriodResponse,
     UpdatePayrollPeriodInput,
-    ListPayrollEntriesQuery,
-    PayrollEntryListResponse,
-    PayrollEntryResponse,
-    UpdatePayrollEntryInput,
+    ListPayrollCommissionsQuery,
+    PayrollCommissionListResponse,
+    PayrollCommissionResponse,
+    UpdatePayrollCommissionInput,
 } from "./schema";
 
 export function registerPayrollRoutes(registry: OpenAPIRegistry) {
@@ -49,39 +49,39 @@ export function registerPayrollRoutes(registry: OpenAPIRegistry) {
         },
     });
 
-    // GET /api/payroll/entries
+    // GET /api/payroll/commissions
     registry.registerPath({
         method: "get",
-        path: "/api/payroll/entries",
-        description: "List payroll entries",
-        summary: "Returns payroll entries optionally filtered by period or user",
+        path: "/api/payroll/commissions",
+        description: "List payroll commissions",
+        summary: "Returns payroll commissions optionally filtered by period or user",
         tags: ["Payroll"],
-        request: { query: ListPayrollEntriesQuery },
+        request: { query: ListPayrollCommissionsQuery },
         responses: {
             200: {
-                description: "List of payroll entries",
-                content: { "application/json": { schema: PayrollEntryListResponse } },
+                description: "List of payroll commissions",
+                content: { "application/json": { schema: PayrollCommissionListResponse } },
             },
             500: { description: "Internal Server Error", content: { "application/json": { schema: ErrorResponseSchema } } },
         },
     });
 
-    // PATCH /api/payroll/entries/[id]
+    // PATCH /api/payroll/commissions/[id]
     registry.registerPath({
         method: "patch",
-        path: "/api/payroll/entries/{id}",
-        description: "Update payroll entry status",
-        summary: "Approve or mark a payroll entry as paid",
+        path: "/api/payroll/commissions/{id}",
+        description: "Update payroll commission status",
+        summary: "Approve or mark a payroll commission as paid",
         tags: ["Payroll"],
         request: {
-            body: { content: { "application/json": { schema: UpdatePayrollEntryInput } } },
+            body: { content: { "application/json": { schema: UpdatePayrollCommissionInput } } },
         },
         responses: {
             200: {
-                description: "Updated entry",
-                content: { "application/json": { schema: PayrollEntryResponse } },
+                description: "Updated commission",
+                content: { "application/json": { schema: PayrollCommissionResponse } },
             },
-            404: { description: "Entry not found", content: { "application/json": { schema: ErrorResponseSchema } } },
+            404: { description: "Commission not found", content: { "application/json": { schema: ErrorResponseSchema } } },
             500: { description: "Internal Server Error", content: { "application/json": { schema: ErrorResponseSchema } } },
         },
     });

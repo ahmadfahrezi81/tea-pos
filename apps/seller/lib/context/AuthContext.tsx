@@ -2,33 +2,11 @@
 import { createContext, useContext } from "react";
 import useSWR from "swr";
 import { createClient } from "@/lib/supabase";
-import { User, UserResponse } from "@tea-pos/features/users/schema";
-import { toCamelKeys } from "@tea-pos/utils/schemas";
+import { User } from "@tea-pos/features/users/schema";
+import { usersApi } from "@/lib/api/users";
+import type { Locale } from "@tea-pos/utils/translations";
 
 const supabase = createClient();
-
-const fetchUser = async (): Promise<User | null> => {
-    try {
-        const {
-            data: { user },
-            error,
-        } = await supabase.auth.getUser();
-        if (error || !user) return null;
-
-        const { data } = await supabase
-            .from("users")
-            .select("*")
-            .eq("id", user.id)
-            .single();
-
-        if (!data) return null;
-
-        return UserResponse.parse(toCamelKeys(data));
-    } catch (error) {
-        console.error("fetchUser error:", error);
-        return null;
-    }
-};
 
 const fetchAvatarUrl = async (): Promise<string | null> => {
     const {
@@ -42,6 +20,7 @@ interface AuthContextType {
     avatarUrl: string | null;
     isLoading: boolean;
     mutate: () => Promise<User | null | undefined>;
+    signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -57,9 +36,10 @@ export function AuthProvider({
         email?: string;
         fullName?: string;
         avatarUrl?: string;
+        preferredLanguage?: string;
     } | null;
 }) {
-    const fallbackData: User | null = initialUser
+    const fallbackData: User | undefined = initialUser
         ? {
               id: initialUser.id,
               role: initialUser.role,
@@ -69,8 +49,9 @@ export function AuthProvider({
               status: "active",
               createdAt: null,
               updatedAt: null,
+              preferredLanguage: (initialUser.preferredLanguage ?? "en") as Locale,
           }
-        : null;
+        : undefined;
 
     const {
         data: user = null,
@@ -78,12 +59,9 @@ export function AuthProvider({
         mutate,
     } = useSWR(
         "user",
-        // Don't fetch if no session exists server-side
-        initialUser ? fetchUser : null,
+        initialUser ? usersApi.get : null,
         {
             fallbackData,
-            // Server already validated the session — skip revalidation on mount,
-            // SWR will still revalidate on next focus or manual mutate()
             revalidateOnMount: !initialUser,
             revalidateOnFocus: false,
             shouldRetryOnError: true,
@@ -100,8 +78,12 @@ export function AuthProvider({
         },
     );
 
+    const signOut = async () => {
+        await fetch("/api/auth/signout", { method: "POST", credentials: "include" });
+    };
+
     return (
-        <AuthContext.Provider value={{ user, avatarUrl, isLoading, mutate }}>
+        <AuthContext.Provider value={{ user, avatarUrl, isLoading, mutate, signOut }}>
             {children}
         </AuthContext.Provider>
     );

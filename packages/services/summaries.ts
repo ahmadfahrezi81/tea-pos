@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { toCamelKeys } from "@tea-pos/utils/schemas";
 import { createLogger } from "./activity-logs";
+import { fetchSessionUsersForSummaries } from "./sessions";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -29,13 +30,6 @@ const DEFAULT_TZ = 7;
 
 // ─── Internal helpers ─────────────────────────────────────────────────────────
 
-function toLocalDateStr(utcDateStr: string, tz = DEFAULT_TZ): string {
-    return new Date(new Date(utcDateStr).getTime() + tz * 3600000).toISOString().split("T")[0];
-}
-
-function getTodayStr(tz = DEFAULT_TZ): string {
-    return toLocalDateStr(new Date().toISOString(), tz);
-}
 
 export async function seedTotalsFromOrders(
     supabase: SupabaseClient,
@@ -98,7 +92,6 @@ export async function listSummaries(supabase: SupabaseClient, params: ListSummar
     endDateObj.setMonth(endDateObj.getMonth() + 1);
     endDateObj.setDate(0);
     const endDate = endDateObj.toISOString().split("T")[0];
-    const todayStr = getTodayStr(tzOffset);
 
     const { data: summaries, error: summariesError } = await supabase
         .from("store_daily_summaries")
@@ -117,8 +110,12 @@ export async function listSummaries(supabase: SupabaseClient, params: ListSummar
 
     const summaryList = (summaries ?? []) as SummaryRow[];
     const summaryIds = summaryList.map((s) => s.id);
+    const sessionsBySummaryId = summaryIds.length > 0
+        ? await fetchSessionUsersForSummaries(supabase, { tenantId, summaryIds })
+        : {};
     const expensesBySummaryId: Record<string, Array<{ daily_summary_id: string; amount: number; [key: string]: unknown }>> = {};
     const expensesByDate: Record<string, unknown[]> = {};
+    const photoCountBySummaryId: Record<string, number> = {};
 
     if (summaryIds.length > 0) {
         const { data: expenses, error: expensesError } = await supabase
@@ -139,48 +136,26 @@ export async function listSummaries(supabase: SupabaseClient, params: ListSummar
                 expensesByDate[summary.date].push(expense);
             }
         });
+
+        const { data: photos, error: photosError } = await supabase
+            .from("store_daily_summary_photos")
+            .select("daily_summary_id")
+            .in("daily_summary_id", summaryIds)
+            .eq("tenant_id", tenantId);
+
+        if (photosError) throw photosError;
+
+        (photos ?? []).forEach((p) => {
+            photoCountBySummaryId[p.daily_summary_id] = (photoCountBySummaryId[p.daily_summary_id] ?? 0) + 1;
+        });
     }
 
-    // Write-on-read: re-aggregates today's open summary totals from live orders and
-    // persists them so the UI always shows fresh numbers. Intentional but side-effectful —
-    // fires on every GET /api/summaries call (including on tab focus via revalidateOnFocus).
-    // Long-term fix: update totals at mutation time (order created/deleted) instead.
-    const todaySummary = summaryList.find((s) => s.date === todayStr && !s.closed_at);
-    if (todaySummary) {
-        const todayOrders = await fetchOrdersForDate(supabase, storeId, tenantId, todayStr);
-        const { totalSales, totalOrders, totalCups } = aggregateOrders(todayOrders);
-        const todayExpenses = (expensesBySummaryId[todaySummary.id] ?? []).reduce((sum, e) => sum + e.amount, 0);
-        const newExpectedCash = todaySummary.opening_balance + totalSales - todayExpenses;
-
-        const changed =
-            totalSales !== todaySummary.total_sales ||
-            newExpectedCash !== todaySummary.expected_cash ||
-            totalOrders !== todaySummary.total_orders ||
-            totalCups !== todaySummary.total_cups ||
-            todayExpenses !== todaySummary.total_expenses;
-
-        if (changed) {
-            await supabase
-                .from("store_daily_summaries")
-                .update({
-                    total_sales: totalSales,
-                    total_orders: totalOrders,
-                    total_cups: totalCups,
-                    total_expenses: todayExpenses,
-                    expected_cash: newExpectedCash,
-                })
-                .eq("id", todaySummary.id)
-                .eq("tenant_id", tenantId);
-
-            todaySummary.total_sales = totalSales;
-            todaySummary.total_orders = totalOrders;
-            todaySummary.total_cups = totalCups;
-            todaySummary.total_expenses = todayExpenses;
-            todaySummary.expected_cash = newExpectedCash;
-        }
-    }
-
-    const finalSummaries = summaryList.map((s) => ({ ...s, expenses: expensesBySummaryId[s.id] ?? [] }));
+    const finalSummaries = summaryList.map((s) => ({
+        ...s,
+        expenses: expensesBySummaryId[s.id] ?? [],
+        sessions: sessionsBySummaryId[s.id] ?? [],
+        photo_count: photoCountBySummaryId[s.id] ?? 0,
+    }));
     const monthlyTotals = summaryList.reduce(
         (acc, s) => ({
             totalSales: acc.totalSales + (s.total_sales ?? 0),
@@ -196,6 +171,28 @@ export async function listSummaries(supabase: SupabaseClient, params: ListSummar
         expensesByDate: toCamelKeys(expensesByDate),
         monthlyTotals,
     };
+}
+
+// ─── Get single summary ───────────────────────────────────────────────────────
+
+export async function getSummaryById(
+    supabase: SupabaseClient,
+    { tenantId, summaryId }: { tenantId: string; summaryId: string },
+) {
+    const { data, error } = await supabase
+        .from("store_daily_summaries")
+        .select(
+            `*, stores(name),
+            opened_by_user:users!daily_summaries_opened_by_fkey(full_name),
+            closed_by_user:users!daily_summaries_closed_by_fkey(full_name)`,
+        )
+        .eq("id", summaryId)
+        .eq("tenant_id", tenantId)
+        .single();
+
+    if (error || !data) throw new Error("Summary not found");
+
+    return toCamelKeys(data) as ReturnType<typeof toCamelKeys>;
 }
 
 // ─── Create summary ───────────────────────────────────────────────────────────
@@ -256,7 +253,6 @@ export async function createSummary(supabase: SupabaseClient, params: CreateSumm
             store_id: storeId,
             tenant_id: store.tenant_id,
             opened_by: openedBy,
-            closed_by: openedBy,
             date,
             opening_balance: opening,
             opening_cash_breakdown: openingCashBreakdown ?? null,
@@ -272,7 +268,7 @@ export async function createSummary(supabase: SupabaseClient, params: CreateSumm
     if (summaryError || !summaryData) throw new Error(summaryError?.message ?? "Daily summary insert failed");
 
     const log = createLogger(supabase, { tenantId: store.tenant_id, userId: openedBy, storeId });
-    log("store_open", {
+    log("store_opened", {
         refId: (summaryData as { id: string }).id,
         refTable: "store_daily_summaries",
         metadata: { date, opening_balance: opening },
@@ -384,13 +380,13 @@ export async function updateSummary(supabase: SupabaseClient, params: UpdateSumm
     const log = createLogger(supabase, { tenantId, userId, storeId: raw.store_id });
 
     if (closedAt && !current.closed_at) {
-        log("daily_summary_closed", {
+        log("store_closed", {
             refId: id,
             refTable: "store_daily_summaries",
             metadata: { total_sales: raw.total_sales, variance: raw.variance },
         });
     } else if (openingBalance !== undefined) {
-        log("balance_updated", {
+        log("opening_balance_updated", {
             refId: id,
             refTable: "store_daily_summaries",
             metadata: { opening_balance: openingBalance },
@@ -545,7 +541,7 @@ export async function uploadSummaryPhoto(supabase: SupabaseClient, params: Uploa
     }
 
     const log = createLogger(supabase, { tenantId, userId, storeId });
-    log("photo_uploaded", {
+    log("summary_photo_uploaded", {
         refId: (photoData as { id: string }).id,
         refTable: "store_daily_summary_photos",
         metadata: { photo_url: urlData.publicUrl, slot: type, quantity: quantity ?? null },
@@ -577,11 +573,11 @@ export async function updateSummaryPhoto(
 
     if (updateError || !updated) throw new Error("Failed to update photo");
 
-    const raw = updated as { id: string; store_id: string };
-    createLogger(supabase, { tenantId, userId, storeId: raw.store_id })("photo_quantity_updated", {
+    const raw = updated as { id: string; store_id: string; type: string };
+    createLogger(supabase, { tenantId, userId, storeId: raw.store_id })("summary_photo_updated", {
         refId: raw.id,
         refTable: "store_daily_summary_photos",
-        metadata: { quantity: quantity ?? null },
+        metadata: { slot: raw.type, quantity: quantity ?? null },
     });
 
     return toCamelKeys(updated);
@@ -614,7 +610,7 @@ export async function deleteSummaryPhoto(
     if (deleteError) throw new Error(deleteError.message);
 
     const raw = photo as { store_id: string; url: string; type: string };
-    createLogger(supabase, { tenantId, userId, storeId: raw.store_id })("photo_deleted", {
+    createLogger(supabase, { tenantId, userId, storeId: raw.store_id })("summary_photo_deleted", {
         refId: id,
         refTable: "store_daily_summary_photos",
         metadata: { photo_url: raw.url, slot: raw.type },
