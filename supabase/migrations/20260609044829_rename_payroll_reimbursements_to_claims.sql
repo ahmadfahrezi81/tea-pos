@@ -1,3 +1,37 @@
+-- payroll_payouts was created on staging before this migration was written.
+-- Create it here for prod which never had it.
+create table if not exists payroll_payouts (
+  id                   uuid primary key default gen_random_uuid(),
+  tenant_id            uuid not null references tenants(id),
+  user_id              uuid not null references users(id),
+  payroll_period_id    uuid references payroll_periods(id),
+  status               text not null default 'pending',
+  cups_pay_total       integer not null default 0,
+  reimbursements_total integer not null default 0,
+  total_pay            integer not null default 0,
+  paid_at              timestamptz,
+  paid_by              uuid references users(id),
+  payment_proof_url    text,
+  created_at           timestamptz default now()
+);
+
+alter table payroll_payouts enable row level security;
+
+create policy "admins can manage payouts"
+  on payroll_payouts for all
+  using (
+    tenant_id = any(user_tenant_ids())
+    and exists (select 1 from users where id = auth.uid() and role = 'ADMIN')
+  )
+  with check (
+    tenant_id = any(user_tenant_ids())
+    and exists (select 1 from users where id = auth.uid() and role = 'ADMIN')
+  );
+
+create policy "users can read own payouts"
+  on payroll_payouts for select
+  using (user_id = auth.uid());
+
 -- Clear test data. All four tables in one statement so Postgres handles FK ordering.
 truncate payroll_reimbursements, payroll_payouts, payroll_commissions, payroll_periods;
 
