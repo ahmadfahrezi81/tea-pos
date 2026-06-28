@@ -26,7 +26,7 @@ interface SummaryRow {
     [key: string]: unknown;
 }
 
-const DEFAULT_TZ = 7;
+const DEFAULT_TZ = parseInt(process.env.TIMEZONE_OFFSET ?? "7", 10);
 
 // ─── Internal helpers ─────────────────────────────────────────────────────────
 

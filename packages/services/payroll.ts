@@ -70,13 +70,8 @@ export async function createPayrollCommissions(
         }
 
         const info = await getPayrollUserInfo(supabase, { tenantId, userId });
-        if (!info) {
-            console.warn(`[payroll] No payroll_user_info for user ${userId} in tenant ${tenantId} — skipping`);
-            continue;
-        }
-
-        const commissionConfigId = (info.commissionConfigId as string | null) ?? null;
-        const ratePerCup = (info.ratePerCup as number | null) ?? 0;
+        const commissionConfigId = (info?.commissionConfigId as string | null) ?? null;
+        const ratePerCup = (info?.ratePerCup as number | null) ?? 0;
         const totalCommission = totalCups * ratePerCup;
 
         const { data: commission, error: commissionError } = await supabase
@@ -107,7 +102,7 @@ export async function createPayrollCommissions(
         });
 
         // Auto-upsert payout and stamp payout_id on the commission
-        const frequency = (info.payFrequency as string | null) ?? "bi_weekly";
+        const frequency = (info?.payFrequency as string | null) ?? "bi_weekly";
         const { startDate, endDate } = getPayWindowBounds(date, frequency);
         const payout = await upsertPayout(supabase, { tenantId, userId, startDate, endDate }).catch((err) => {
             console.warn("[payroll] upsertPayout failed after commission create:", err);
