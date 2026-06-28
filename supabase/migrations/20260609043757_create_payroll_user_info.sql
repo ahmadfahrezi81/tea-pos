@@ -12,8 +12,7 @@ create table payroll_user_info (
   unique (tenant_id, user_id)
 );
 
--- Seed from existing data: bank fields from users, rate from tenant_commission_configs.
--- Per-user config row wins; falls back to tenant-wide row (user_id IS NULL); defaults to 0.
+-- Seed bank fields from users. Rate defaults to 0 and is set via backoffice.
 insert into payroll_user_info (
   tenant_id, user_id, rate_per_cup,
   bank_name, bank_account_number, bank_account_holder
@@ -21,17 +20,7 @@ insert into payroll_user_info (
 select
   uta.tenant_id,
   u.id,
-  coalesce(
-    (select tcc.rate_per_cup
-     from tenant_commission_configs tcc
-     where tcc.user_id = u.id and tcc.tenant_id = uta.tenant_id
-     order by tcc.effective_date desc limit 1),
-    (select tcc.rate_per_cup
-     from tenant_commission_configs tcc
-     where tcc.user_id is null and tcc.tenant_id = uta.tenant_id
-     order by tcc.effective_date desc limit 1),
-    0
-  ),
+  0,
   u.bank_name,
   u.bank_account_number,
   u.bank_account_holder
@@ -40,10 +29,6 @@ join user_tenant_assignments uta on uta.user_id = u.id
 where u.bank_name is not null
    or u.bank_account_number is not null
    or u.bank_account_holder is not null
-   or exists (
-     select 1 from tenant_commission_configs tcc
-     where tcc.user_id = u.id and tcc.tenant_id = uta.tenant_id
-   )
 on conflict (tenant_id, user_id) do nothing;
 
 -- Move bank fields off users
