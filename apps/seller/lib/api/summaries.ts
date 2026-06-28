@@ -56,4 +56,9 @@ export const summariesApi = {
             `/api/summaries/photo/count?dailySummaryId=${encodeURIComponent(dailySummaryId)}`
         );
     },
+    getUsers: async (summaryId: string) => {
+        return apiFetch<{ users: Array<{ userId: string; userName: string | null; userAvatarUrl: string | null; totalCups: number }> }>(
+            `/api/summaries/${encodeURIComponent(summaryId)}/users`
+        );
+    },
 };
