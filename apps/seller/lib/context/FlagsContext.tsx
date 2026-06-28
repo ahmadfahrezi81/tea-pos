@@ -8,9 +8,11 @@ const DEFAULT_FLAGS: Flags = {
     isQrisEnabled: false,
     isReportEnabled: false,
     isRequestEnabled: false,
-    isReimbursementEnabled: false,
+    isPayEnabled: false,
+    isClaimsEnabled: false,
     isFastOrderEnabled: false,
     isSkipManagePhotosEnabled: false,
+    isMaintenanceEnabled: false,
 };
 
 type FlagsContextType = {
