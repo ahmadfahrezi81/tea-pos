@@ -427,10 +427,10 @@ export default function MobileAnalytics() {
                                                             )}
                                                             <p className="text-base font-bold text-gray-900 truncate flex-1">
                                                                 {s.userName ??
-                                                                    "Unknown"}
+                                                                    t("common.unknown")}
                                                             </p>
                                                             {s.totalCups != null && (
-                                                                <span className="text-sm font-bold text-white bg-blue-500 px-2 py-0.5 rounded-lg shrink-0">
+                                                                <span className="text-sm font-bold text-orange-700 bg-orange-100 px-2 py-0.5 rounded-lg shrink-0">
                                                                     {s.totalCups} {t("analytics.cups")}
                                                                 </span>
                                                             )}

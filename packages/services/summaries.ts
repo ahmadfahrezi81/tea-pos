@@ -1,7 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { toCamelKeys } from "@tea-pos/utils/schemas";
 import { createLogger } from "./activity-logs";
-import { fetchSessionUsersForSummaries } from "./sessions";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -75,17 +74,72 @@ function aggregateOrders(orders: OrderRow[]) {
     );
 }
 
+// ─── Order users by summary (replaces session-based approach) ────────────────
+
+async function fetchOrderUsersForSummaries(
+    supabase: SupabaseClient,
+    { tenantId, summaryIds }: { tenantId: string; summaryIds: string[] },
+): Promise<Record<string, Array<{ userId: string; userName: string | null; userAvatarUrl: string | null; totalCups: number | null }>>> {
+    if (summaryIds.length === 0) return {};
+
+    const { data: orderRows } = await supabase
+        .from("store_orders")
+        .select("daily_summary_id, user_id, store_order_items(quantity)")
+        .in("daily_summary_id", summaryIds)
+        .eq("tenant_id", tenantId);
+
+    if (!orderRows || orderRows.length === 0) return {};
+
+    type OrderRow = { daily_summary_id: string; user_id: string; store_order_items?: Array<{ quantity: number }> };
+    const cupsMap = new Map<string, number>();
+    const userIdsBySummary = new Map<string, Set<string>>();
+
+    for (const order of orderRows as OrderRow[]) {
+        const key = `${order.daily_summary_id}:${order.user_id}`;
+        const cups = order.store_order_items?.reduce((sum, i) => sum + i.quantity, 0) ?? 0;
+        cupsMap.set(key, (cupsMap.get(key) ?? 0) + cups);
+        if (!userIdsBySummary.has(order.daily_summary_id)) userIdsBySummary.set(order.daily_summary_id, new Set());
+        userIdsBySummary.get(order.daily_summary_id)!.add(order.user_id);
+    }
+
+    const uniqueUserIds = [...new Set((orderRows as OrderRow[]).map((o) => o.user_id))];
+
+    const { data: userRows } = await supabase
+        .from("users")
+        .select("id, full_name")
+        .in("id", uniqueUserIds);
+    const nameMap = new Map((userRows ?? []).map((u: { id: string; full_name: string | null }) => [u.id, u.full_name ?? null]));
+
+    const avatarMap = new Map<string, string | null>();
+    await Promise.all(
+        uniqueUserIds.map(async (userId) => {
+            const { data: authUser } = await supabase.auth.admin.getUserById(userId);
+            avatarMap.set(userId, (authUser?.user?.user_metadata?.avatar_url as string | undefined) ?? null);
+        }),
+    );
+
+    const result: Record<string, Array<{ userId: string; userName: string | null; userAvatarUrl: string | null; totalCups: number | null }>> = {};
+    for (const [summaryId, userIds] of userIdsBySummary.entries()) {
+        result[summaryId] = [...userIds].map((userId) => ({
+            userId,
+            userName: nameMap.get(userId) ?? null,
+            userAvatarUrl: avatarMap.get(userId) ?? null,
+            totalCups: cupsMap.get(`${summaryId}:${userId}`) ?? 0,
+        }));
+    }
+    return result;
+}
+
 // ─── List summaries ───────────────────────────────────────────────────────────
 
 export interface ListSummariesParams {
     tenantId: string;
     storeId: string;
     month: string;
-    tzOffset?: number;
 }
 
 export async function listSummaries(supabase: SupabaseClient, params: ListSummariesParams) {
-    const { tenantId, storeId, month, tzOffset = DEFAULT_TZ } = params;
+    const { tenantId, storeId, month } = params;
 
     const startDate = `${month}-01`;
     const endDateObj = new Date(`${month}-01`);
@@ -111,7 +165,7 @@ export async function listSummaries(supabase: SupabaseClient, params: ListSummar
     const summaryList = (summaries ?? []) as SummaryRow[];
     const summaryIds = summaryList.map((s) => s.id);
     const sessionsBySummaryId = summaryIds.length > 0
-        ? await fetchSessionUsersForSummaries(supabase, { tenantId, summaryIds })
+        ? await fetchOrderUsersForSummaries(supabase, { tenantId, summaryIds })
         : {};
     const expensesBySummaryId: Record<string, Array<{ daily_summary_id: string; amount: number; [key: string]: unknown }>> = {};
     const expensesByDate: Record<string, unknown[]> = {};
@@ -328,20 +382,20 @@ export async function updateSummary(supabase: SupabaseClient, params: UpdateSumm
     if (closedAt && !current.closed_at) {
         const { data: summaryRow } = await supabase
             .from("store_daily_summaries")
-            .select("date, store_id, opening_balance")
+            .select("opening_balance")
             .eq("id", id)
             .eq("tenant_id", tenantId)
             .single();
 
         if (summaryRow) {
-            const { date, store_id, opening_balance } = summaryRow as {
-                date: string;
-                store_id: string;
-                opening_balance: number;
-            };
+            const { opening_balance } = summaryRow as { opening_balance: number };
 
-            const liveOrders = await fetchOrdersForDate(supabase, store_id, tenantId, date);
-            const { totalSales, totalOrders, totalCups } = aggregateOrders(liveOrders);
+            const { data: orderRows } = await supabase
+                .from("store_orders")
+                .select("total_amount, store_order_items(quantity)")
+                .eq("daily_summary_id", id)
+                .eq("tenant_id", tenantId);
+            const { totalSales, totalOrders, totalCups } = aggregateOrders((orderRows ?? []) as OrderRow[]);
 
             const { data: expenseRows } = await supabase
                 .from("store_expenses")
@@ -402,24 +456,11 @@ export async function getSummaryBreakdown(
     supabase: SupabaseClient,
     { tenantId, summaryId }: { tenantId: string; summaryId: string },
 ) {
-    const { data: summary, error: summaryError } = await supabase
-        .from("store_daily_summaries")
-        .select("store_id, date")
-        .eq("id", summaryId)
-        .eq("tenant_id", tenantId)
-        .single();
-
-    if (summaryError || !summary) throw new Error("Summary not found");
-
-    const breakdownStartUtc = new Date(new Date(`${summary.date}T00:00:00.000Z`).getTime() - DEFAULT_TZ * 3600000).toISOString();
-    const breakdownEndUtc = new Date(new Date(`${summary.date}T23:59:59.999Z`).getTime() - DEFAULT_TZ * 3600000).toISOString();
     const { data: orders, error: ordersError } = await supabase
         .from("store_orders")
         .select(`id, total_amount, store_order_items(quantity, total_price, tenant_products(name))`)
-        .eq("store_id", summary.store_id)
-        .eq("tenant_id", tenantId)
-        .gte("created_at", breakdownStartUtc)
-        .lte("created_at", breakdownEndUtc);
+        .eq("daily_summary_id", summaryId)
+        .eq("tenant_id", tenantId);
 
     if (ordersError) throw ordersError;
 

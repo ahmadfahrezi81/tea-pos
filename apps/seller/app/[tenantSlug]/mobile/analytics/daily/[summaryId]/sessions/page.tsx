@@ -8,10 +8,13 @@ import { UserCircle, ArrowRightLeft } from "lucide-react";
 import { useT } from "@/lib/hooks/useT";
 
 function formatTime(iso: string): string {
-    return new Date(iso).toLocaleTimeString("id-ID", {
+    const tz = parseInt(process.env.NEXT_PUBLIC_TIMEZONE_OFFSET ?? "7", 10);
+    const safe = iso.endsWith("Z") || iso.includes("+") ? iso : iso + "Z";
+    const localMs = new Date(safe).getTime() + tz * 3_600_000;
+    return new Date(localMs).toLocaleTimeString("id-ID", {
         hour: "2-digit",
         minute: "2-digit",
-        timeZone: "Asia/Jakarta",
+        timeZone: "UTC",
     });
 }
 
