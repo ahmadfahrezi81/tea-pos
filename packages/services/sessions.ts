@@ -390,37 +390,6 @@ export async function fetchSessionUsersForSummaries(
     return result;
 }
 
-// ─── Sessions by month (standalone endpoint) ──────────────────────────────────
-
-export interface ListSessionsByMonthParams {
-    tenantId: string;
-    storeId: string;
-    month: string;
-}
-
-export async function listSessionsByMonth(supabase: SupabaseClient, params: ListSessionsByMonthParams) {
-    const { tenantId, storeId, month } = params;
-    const startDate = `${month}-01`;
-    const endDateObj = new Date(`${month}-01`);
-    endDateObj.setMonth(endDateObj.getMonth() + 1);
-    endDateObj.setDate(0);
-    const endDate = endDateObj.toISOString().split("T")[0];
-
-    const { data: summaries, error: summariesError } = await supabase
-        .from("store_daily_summaries")
-        .select("id")
-        .eq("store_id", storeId)
-        .eq("tenant_id", tenantId)
-        .gte("date", startDate)
-        .lte("date", endDate);
-
-    if (summariesError) throw summariesError;
-    const summaryIds = (summaries ?? []).map((s: { id: string }) => s.id);
-
-    const sessionsBySummaryId = await fetchSessionUsersForSummaries(supabase, { tenantId, summaryIds });
-    return { sessionsBySummaryId };
-}
-
 // ─── User session activity (streak grid) ─────────────────────────────────────
 
 export async function listUserSessionDates(

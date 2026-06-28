@@ -49,10 +49,13 @@ export type SessionUser = {
 };
 
 function formatTimestamp(utc: string): string {
-    return new Date(utc).toLocaleString("id-ID", {
+    const tz = parseInt(process.env.NEXT_PUBLIC_TIMEZONE_OFFSET ?? "7", 10);
+    const safe = utc.endsWith("Z") || utc.includes("+") ? utc : utc + "Z";
+    const localMs = new Date(safe).getTime() + tz * 3_600_000;
+    return new Date(localMs).toLocaleString("id-ID", {
         dateStyle: "medium",
         timeStyle: "short",
-        timeZone: "Asia/Jakarta",
+        timeZone: "UTC",
     });
 }
 

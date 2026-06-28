@@ -110,11 +110,26 @@ export async function createOrder(
         0,
     );
 
+    const totalCups = items.reduce((sum, i) => sum + i.quantity, 0);
+
+    const TZ = Number(process.env.TIMEZONE_OFFSET ?? 7);
+    const todayStr = new Date(new Date().getTime() + TZ * 3600000).toISOString().split("T")[0];
+
+    const { data: activeSummary } = await supabase
+        .from("store_daily_summaries")
+        .select("id, total_sales, total_orders, total_cups, expected_cash")
+        .eq("store_id", storeId)
+        .eq("tenant_id", tenantId)
+        .eq("date", todayStr)
+        .is("closed_at", null)
+        .maybeSingle();
+
     const orderPayload = toSnakeKeys({
         storeId,
         userId,
         totalAmount,
         tenantId: store.tenant_id,
+        dailySummaryId: activeSummary?.id ?? null,
     });
     const { data: orderData, error: orderError } = await supabase
         .from("store_orders")
@@ -140,20 +155,6 @@ export async function createOrder(
         .from("store_order_items")
         .insert(orderItemsPayload);
     if (itemsError) throw new Error(itemsError.message);
-
-    const totalCups = items.reduce((sum, i) => sum + i.quantity, 0);
-
-    const TZ = Number(process.env.TIMEZONE_OFFSET ?? 7);
-    const todayStr = new Date(new Date().getTime() + TZ * 3600000).toISOString().split("T")[0];
-
-    const { data: activeSummary } = await supabase
-        .from("store_daily_summaries")
-        .select("id, total_sales, total_orders, total_cups, expected_cash")
-        .eq("store_id", storeId)
-        .eq("tenant_id", tenantId)
-        .eq("date", todayStr)
-        .is("closed_at", null)
-        .maybeSingle();
 
     if (activeSummary) {
         await supabase

@@ -845,6 +845,7 @@ export type Database = {
       store_orders: {
         Row: {
           created_at: string | null
+          daily_summary_id: string | null
           id: string
           payment_method: string
           store_id: string
@@ -854,6 +855,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          daily_summary_id?: string | null
           id?: string
           payment_method?: string
           store_id: string
@@ -863,6 +865,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          daily_summary_id?: string | null
           id?: string
           payment_method?: string
           store_id?: string
@@ -890,6 +893,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_orders_daily_summary_id_fkey"
+            columns: ["daily_summary_id"]
+            isOneToOne: false
+            referencedRelation: "store_daily_summaries"
             referencedColumns: ["id"]
           },
         ]

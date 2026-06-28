@@ -3,9 +3,8 @@ import { getCurrentTenantId } from "@tea-pos/utils/server-config/tenant";
 import { NextRequest } from "next/server";
 import {
     GetActiveSessionQuery, OpenStoreInput, OpenStoreResponse, StoreSessionResponse,
-    ListSessionsByMonthQuery, SessionsByMonthResponse,
 } from "@tea-pos/features/sessions/schema";
-import { getActiveSession, openStore, listSessionsByMonth } from "@tea-pos/services/sessions";
+import { getActiveSession, openStore } from "@tea-pos/services/sessions";
 import { ok, badRequest, unauthorized, handleError } from "@/lib/api/response";
 import { getRequestUser } from "@/lib/auth/get-request-user";
 
@@ -14,13 +13,6 @@ export async function GET(request: NextRequest) {
         const supabase = getServiceClient();
         const tenantId = await getCurrentTenantId();
         const params = Object.fromEntries(new URL(request.url).searchParams);
-
-        if (params.month) {
-            const query = ListSessionsByMonthQuery.safeParse(params);
-            if (!query.success) return badRequest("Invalid query parameters");
-            const result = await listSessionsByMonth(supabase, { tenantId, ...query.data });
-            return ok(SessionsByMonthResponse.parse(result));
-        }
 
         const query = GetActiveSessionQuery.safeParse(params);
         if (!query.success) return badRequest("Invalid query parameters");
