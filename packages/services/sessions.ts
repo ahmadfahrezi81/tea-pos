@@ -308,39 +308,56 @@ export async function fetchSessionUsersForSummaries(
     type SessionRow = { user_id: string; daily_summary_id: string; store_id: string; started_at: string; ended_at: string | null };
     const typedSessions = sessions as SessionRow[];
 
-    const uniqueUserIds = [...new Set(typedSessions.map((s) => s.user_id))];
-    const uniqueStoreIds = [...new Set(typedSessions.map((s) => s.store_id))];
-    const minStarted = typedSessions.reduce((min, s) => s.started_at < min ? s.started_at : min, typedSessions[0].started_at);
-    const now = new Date().toISOString();
-    const maxEnded = typedSessions.reduce((max, s) => {
-        const end = s.ended_at ?? now;
-        return end > max ? end : max;
-    }, typedSessions[0].ended_at ?? now);
-
-    const { data: orderRows } = await supabase
-        .from("store_orders")
-        .select("user_id, store_id, created_at, store_order_items(quantity)")
-        .eq("tenant_id", tenantId)
-        .in("user_id", uniqueUserIds)
-        .in("store_id", uniqueStoreIds)
-        .gte("created_at", minStarted)
-        .lte("created_at", maxEnded);
-
-    // Match each order to its session by user + store + time window, accumulate cups
-    const cupsMap = new Map<string, number>();
-    for (const order of (orderRows ?? []) as Array<{ user_id: string; store_id: string; created_at: string; store_order_items?: Array<{ quantity: number }> }>) {
-        const session = typedSessions.find(
-            (s) =>
-                s.user_id === order.user_id &&
-                s.store_id === order.store_id &&
-                order.created_at >= s.started_at &&
-                (s.ended_at === null || order.created_at < s.ended_at),
-        );
-        if (!session) continue;
-        const key = `${session.daily_summary_id}:${order.user_id}`;
-        const cups = order.store_order_items?.reduce((sum, i) => sum + i.quantity, 0) ?? 0;
-        cupsMap.set(key, (cupsMap.get(key) ?? 0) + cups);
+    // Group sessions by summaryId so each order query covers exactly one day —
+    // avoids the 1000-row Supabase limit that a full-month batch query would hit.
+    const sessionsBySummary = new Map<string, SessionRow[]>();
+    for (const s of typedSessions) {
+        if (!sessionsBySummary.has(s.daily_summary_id)) sessionsBySummary.set(s.daily_summary_id, []);
+        sessionsBySummary.get(s.daily_summary_id)!.push(s);
     }
+
+    const now = new Date().toISOString();
+    const cupsMap = new Map<string, number>();
+
+    await Promise.all(
+        [...sessionsBySummary.entries()].map(async ([summaryId, summarySessions]) => {
+            const userIds = [...new Set(summarySessions.map((s) => s.user_id))];
+            const storeIds = [...new Set(summarySessions.map((s) => s.store_id))];
+            const minStarted = summarySessions.reduce(
+                (min, s) => (s.started_at < min ? s.started_at : min),
+                summarySessions[0].started_at,
+            );
+            const maxEnded = summarySessions.reduce((max, s) => {
+                const end = s.ended_at ?? now;
+                return end > max ? end : max;
+            }, summarySessions[0].ended_at ?? now);
+
+            const { data: orderRows } = await supabase
+                .from("store_orders")
+                .select("user_id, store_id, created_at, store_order_items(quantity)")
+                .eq("tenant_id", tenantId)
+                .in("user_id", userIds)
+                .in("store_id", storeIds)
+                .gte("created_at", minStarted)
+                .lte("created_at", maxEnded);
+
+            for (const order of (orderRows ?? []) as Array<{ user_id: string; store_id: string; created_at: string; store_order_items?: Array<{ quantity: number }> }>) {
+                const session = summarySessions.find(
+                    (s) =>
+                        s.user_id === order.user_id &&
+                        s.store_id === order.store_id &&
+                        order.created_at >= s.started_at &&
+                        (s.ended_at === null || order.created_at < s.ended_at),
+                );
+                if (!session) continue;
+                const key = `${summaryId}:${order.user_id}`;
+                const cups = order.store_order_items?.reduce((sum, i) => sum + i.quantity, 0) ?? 0;
+                cupsMap.set(key, (cupsMap.get(key) ?? 0) + cups);
+            }
+        }),
+    );
+
+    const uniqueUserIds = [...new Set(typedSessions.map((s) => s.user_id))];
 
     const { data: userRows } = await supabase
         .from("users")
