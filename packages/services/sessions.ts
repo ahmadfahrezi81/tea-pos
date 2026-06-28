@@ -296,30 +296,51 @@ export async function fetchSessionUsersForSummaries(
 ): Promise<Record<string, Array<{ userId: string; userName: string | null; userAvatarUrl: string | null; totalCups: number | null }>>> {
     if (summaryIds.length === 0) return {};
 
-    const [{ data: sessions, error }, { data: commissionRows }] = await Promise.all([
-        supabase
-            .from("store_sessions")
-            .select("user_id, daily_summary_id")
-            .in("daily_summary_id", summaryIds)
-            .eq("tenant_id", tenantId),
-        supabase
-            .from("payroll_commissions")
-            .select("user_id, daily_summary_id, total_cups")
-            .in("daily_summary_id", summaryIds)
-            .eq("tenant_id", tenantId),
-    ]);
+    const { data: sessions, error } = await supabase
+        .from("store_sessions")
+        .select("user_id, daily_summary_id, store_id, started_at, ended_at")
+        .in("daily_summary_id", summaryIds)
+        .eq("tenant_id", tenantId);
 
     if (error) throw error;
     if (!sessions || sessions.length === 0) return {};
 
-    // cups per (summaryId, userId)
-    const cupsMap = new Map<string, number>();
-    for (const row of (commissionRows ?? []) as Array<{ user_id: string; daily_summary_id: string; total_cups: number }>) {
-        const key = `${row.daily_summary_id}:${row.user_id}`;
-        cupsMap.set(key, (cupsMap.get(key) ?? 0) + row.total_cups);
-    }
+    type SessionRow = { user_id: string; daily_summary_id: string; store_id: string; started_at: string; ended_at: string | null };
+    const typedSessions = sessions as SessionRow[];
 
-    const uniqueUserIds = [...new Set(sessions.map((s) => s.user_id))];
+    const uniqueUserIds = [...new Set(typedSessions.map((s) => s.user_id))];
+    const uniqueStoreIds = [...new Set(typedSessions.map((s) => s.store_id))];
+    const minStarted = typedSessions.reduce((min, s) => s.started_at < min ? s.started_at : min, typedSessions[0].started_at);
+    const now = new Date().toISOString();
+    const maxEnded = typedSessions.reduce((max, s) => {
+        const end = s.ended_at ?? now;
+        return end > max ? end : max;
+    }, typedSessions[0].ended_at ?? now);
+
+    const { data: orderRows } = await supabase
+        .from("store_orders")
+        .select("user_id, store_id, created_at, store_order_items(quantity)")
+        .eq("tenant_id", tenantId)
+        .in("user_id", uniqueUserIds)
+        .in("store_id", uniqueStoreIds)
+        .gte("created_at", minStarted)
+        .lte("created_at", maxEnded);
+
+    // Match each order to its session by user + store + time window, accumulate cups
+    const cupsMap = new Map<string, number>();
+    for (const order of (orderRows ?? []) as Array<{ user_id: string; store_id: string; created_at: string; store_order_items?: Array<{ quantity: number }> }>) {
+        const session = typedSessions.find(
+            (s) =>
+                s.user_id === order.user_id &&
+                s.store_id === order.store_id &&
+                order.created_at >= s.started_at &&
+                (s.ended_at === null || order.created_at < s.ended_at),
+        );
+        if (!session) continue;
+        const key = `${session.daily_summary_id}:${order.user_id}`;
+        const cups = order.store_order_items?.reduce((sum, i) => sum + i.quantity, 0) ?? 0;
+        cupsMap.set(key, (cupsMap.get(key) ?? 0) + cups);
+    }
 
     const { data: userRows } = await supabase
         .from("users")
@@ -337,16 +358,15 @@ export async function fetchSessionUsersForSummaries(
     );
 
     const result: Record<string, Array<{ userId: string; userName: string | null; userAvatarUrl: string | null; totalCups: number | null }>> = {};
-    for (const session of sessions as Array<{ user_id: string; daily_summary_id: string }>) {
+    for (const session of typedSessions) {
         const { daily_summary_id, user_id } = session;
         if (!result[daily_summary_id]) result[daily_summary_id] = [];
         if (!result[daily_summary_id].some((u) => u.userId === user_id)) {
-            const cups = cupsMap.get(`${daily_summary_id}:${user_id}`);
             result[daily_summary_id].push({
                 userId: user_id,
                 userName: nameMap.get(user_id) ?? null,
                 userAvatarUrl: avatarMap.get(user_id) ?? null,
-                totalCups: cups ?? null,
+                totalCups: cupsMap.get(`${daily_summary_id}:${user_id}`) ?? 0,
             });
         }
     }
