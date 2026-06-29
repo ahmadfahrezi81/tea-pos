@@ -223,20 +223,25 @@ export async function createAutoClaimsForDailySummary(
             .select("claim_config_id, payroll_claim_configs!inner(id, frequency, amount, claim_source, auto_threshold_hours)")
             .eq("tenant_id", tenantId)
             .eq("user_id", userId)
-            .eq("payroll_claim_configs.claim_source", "auto");
+            .eq("payroll_claim_configs.is_enabled", true);
 
         type AutoType = { id: string; frequency: string; amount: number; claim_source: string; auto_threshold_hours: number | null };
         const autoTypes = (
             (eligibilityRows ?? []) as unknown as Array<{ payroll_claim_configs: AutoType }>
-        ).map((r) => r.payroll_claim_configs);
+        ).map((r) => r.payroll_claim_configs)
+         .filter((t) => t.claim_source !== "manual");
 
         for (const type of autoTypes) {
-            if (type.auto_threshold_hours === null) {
-                console.warn(`[payroll] Auto claim type ${type.id} has no auto_threshold_hours configured — skipping`);
-                continue;
+            let status: string;
+            if (type.claim_source === "auto_submit") {
+                status = "pending";
+            } else {
+                if (type.auto_threshold_hours === null) {
+                    console.warn(`[payroll] Auto claim type ${type.id} has no auto_threshold_hours configured — skipping`);
+                    continue;
+                }
+                status = totalHours >= type.auto_threshold_hours ? "approved" : "rejected";
             }
-
-            const status = totalHours >= type.auto_threshold_hours ? "approved" : "rejected";
 
             const { data, error } = await supabase
                 .from("payroll_claims")
