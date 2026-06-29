@@ -23,6 +23,7 @@ function ClaimTypeRow({ type }: { type: PayrollClaimTypeResponse }) {
                 <p className="text-sm text-gray-400">
                     {FREQUENCY_LABEL[type.frequency]}
                     {type.claimSource === "auto" && " · Auto"}
+                    {type.claimSource === "auto_submit" && " · Auto submit"}
                 </p>
             </div>
             <span className={`font-mono font-bold text-base uppercase ${type.isEnabled ? "text-green-500" : "text-gray-400"}`}>

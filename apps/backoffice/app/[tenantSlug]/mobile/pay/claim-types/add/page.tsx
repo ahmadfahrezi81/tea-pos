@@ -21,7 +21,7 @@ export default function AddClaimTypePage() {
     const [slug, setSlug] = useState("");
     const [frequency, setFrequency] = useState<"daily" | "weekly" | "monthly" | "one_time">("weekly");
     const [amount, setAmount] = useState(0);
-    const [claimSource, setClaimSource] = useState<"manual" | "auto">("manual");
+    const [claimSource, setClaimSource] = useState<"manual" | "auto" | "auto_submit">("manual");
     const [autoThresholdHours, setAutoThresholdHours] = useState(4);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -84,13 +84,13 @@ export default function AddClaimTypePage() {
                 <div className="space-y-1.5">
                     <p className="text-sm font-medium text-gray-700">Decided by</p>
                     <div className="flex gap-2">
-                        {(["manual", "auto"] as const).map((s) => (
+                        {(["manual", "auto_submit", "auto"] as const).map((s) => (
                             <button
                                 key={s}
                                 onClick={() => setClaimSource(s)}
                                 className={`flex-1 py-2 rounded-xl text-sm font-semibold border ${claimSource === s ? "bg-brand text-white border-brand" : "border-gray-200 text-gray-600"}`}
                             >
-                                {s === "manual" ? "Staff submits" : "Auto (hours worked)"}
+                                {s === "manual" ? "Staff submits" : s === "auto_submit" ? "Auto submit" : "Auto (hours)"}
                             </button>
                         ))}
                     </div>

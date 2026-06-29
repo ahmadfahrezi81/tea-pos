@@ -11,8 +11,8 @@ export const CreatePayrollClaimTypeInput = z
         slug: z.string().min(1).max(100).regex(/^[A-Z0-9_]+$/, "Slug must be uppercase letters, digits, and underscores"),
         frequency: z.enum(["daily", "weekly", "monthly", "one_time"]),
         amount: z.number().int().min(0).default(0),
-        claimSource: z.enum(["manual", "auto"]).default("manual"),
-        autoThresholdHours: z.number().int().min(0).optional(),
+        claimSource: z.enum(["manual", "auto", "auto_submit"]).default("manual"),
+        autoThresholdHours: z.number().min(0).optional(),
     })
     .refine((v) => v.claimSource !== "auto" || v.autoThresholdHours !== undefined, {
         message: "autoThresholdHours is required for auto claim types",
@@ -25,8 +25,8 @@ export const UpdatePayrollClaimTypeInput = z
         name: z.string().min(1).max(100).optional(),
         isEnabled: z.boolean().optional(),
         amount: z.number().int().min(0).optional(),
-        claimSource: z.enum(["manual", "auto"]).optional(),
-        autoThresholdHours: z.number().int().min(0).optional(),
+        claimSource: z.enum(["manual", "auto", "auto_submit"]).optional(),
+        autoThresholdHours: z.number().min(0).optional(),
     })
     .openapi({ title: "UpdatePayrollClaimTypeInput" });
 
@@ -56,8 +56,8 @@ export const PayrollClaimTypeResponse = z
         frequency: z.enum(["daily", "weekly", "monthly", "one_time"]),
         isEnabled: z.boolean(),
         amount: z.number().int().default(0),
-        claimSource: z.enum(["manual", "auto"]),
-        autoThresholdHours: z.number().int().nullable(),
+        claimSource: z.enum(["manual", "auto", "auto_submit"]),
+        autoThresholdHours: z.number().nullable(),
         createdAt: z.string().nullable(),
     })
     .openapi({ title: "PayrollClaimTypeResponse" });
