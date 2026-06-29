@@ -11,6 +11,7 @@ import {
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 import { SummaryPhotoThumbnail } from "@/app/[tenantSlug]/mobile/home/manage/_components/daily/SummaryPhotoThumbnail";
 import type { EventSegment } from "@tea-pos/features/activity-logs/schema";
+import { PHOTO_SLOTS } from "@tea-pos/features/shared/photo-slots";
 import { useT } from "@/lib/hooks/useT";
 
 // ─── Shared timeline row ──────────────────────────────────────────────────────
@@ -137,6 +138,11 @@ function EventNode({
         typeof segment.metadata?.slot === "string"
             ? (segment.metadata.slot as string)
             : undefined;
+    const photoQty =
+        segment.metadata?.quantity != null &&
+        typeof (segment.metadata.quantity as Record<string, unknown>).value === "number"
+            ? (segment.metadata.quantity as { value: number; unit: string })
+            : null;
 
     return (
         <TimelineRow
@@ -221,6 +227,16 @@ function EventNode({
                         className="w-16 h-16"
                         isSaved={false}
                     />
+                )}
+                {photoQty && photoSlot && (
+                    <div className="bg-slate-100 rounded-xl px-3 py-2 flex items-center justify-between">
+                        <span className="text-sm text-gray-600">
+                            {PHOTO_SLOTS.find((s) => s.type === photoSlot)?.label ?? photoSlot}
+                        </span>
+                        <span className="text-sm font-bold text-gray-800">
+                            {photoQty.value} {photoQty.unit}
+                        </span>
+                    </div>
                 )}
             </div>
         </TimelineRow>
