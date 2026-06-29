@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Camera, ImagePlus, Loader2, CircleMinus, X } from "lucide-react";
 import { Drawer } from "vaul";
 import { compressPhoto } from "@/lib/compressPhoto";
@@ -17,25 +17,29 @@ export function PhotoPicker({ previewUrl, onCapture, onRemove, onError, allowGal
     const inputRef = useRef<HTMLInputElement>(null);
     const [isCompressing, setIsCompressing] = useState(false);
     const [permissionBlocked, setPermissionBlocked] = useState(false);
+    const [cameraPermission, setCameraPermission] = useState<PermissionState | null>(null);
 
-    const handleClick = async () => {
-        try {
-            const status = await navigator.permissions.query({ name: "camera" as PermissionName });
-            if (status.state === "denied") {
-                setPermissionBlocked(true);
-                return;
-            }
-            if (status.state === "prompt") {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                    stream.getTracks().forEach((t) => t.stop());
-                } catch {
-                    setPermissionBlocked(true);
-                    return;
-                }
-            }
-        } catch {
-            // permissions API not supported (iOS Safari etc.) — fall through to native input
+    useEffect(() => {
+        let permStatus: PermissionStatus | null = null;
+        navigator.permissions
+            .query({ name: "camera" as PermissionName })
+            .then((status) => {
+                permStatus = status;
+                setCameraPermission(status.state);
+                status.onchange = () => setCameraPermission(status.state);
+            })
+            .catch(() => {
+                // permissions API not supported — stays null, input handles it natively
+            });
+        return () => {
+            if (permStatus) permStatus.onchange = null;
+        };
+    }, []);
+
+    const handleClick = () => {
+        if (cameraPermission === "denied") {
+            setPermissionBlocked(true);
+            return;
         }
         inputRef.current?.click();
     };
