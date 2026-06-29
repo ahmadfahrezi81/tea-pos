@@ -159,6 +159,8 @@ export default function EditClaimTypePage({ params }: { params: Promise<{ id: st
                         <p className="text-base text-gray-500">
                             {type.claimSource === "auto"
                                 ? `Auto — needs ${type.autoThresholdHours ?? "?"}h worked`
+                                : type.claimSource === "auto_submit"
+                                ? "Auto submit — admin reviews"
                                 : "Staff submits"}
                         </p>
                     </div>
