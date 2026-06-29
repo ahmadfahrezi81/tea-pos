@@ -121,7 +121,6 @@ export default function OpenStorePage() {
                         if (photo) URL.revokeObjectURL(photo.preview);
                         setPhoto(null);
                     }}
-                    onError={(msg) => setError(msg)}
                 />
                 <p className="text-xs text-gray-400 mt-2">{t("manage.openingPhotoDesc")}</p>
             </div>

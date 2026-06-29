@@ -16,9 +16,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Development:**
 
-- `pnpm dev` — Start all dev servers (Turbo manages both admin and seller apps)
+- `pnpm dev` — Start all dev servers (Turbo manages seller and backoffice apps)
 - `pnpm dev:seller` — Start seller app only
-- `pnpm dev:admin` — Start admin app only
+- `pnpm dev:admin` — Start admin app only (admin is archived — see note below)
 - `pnpm build` — Build all apps and packages
 - `pnpm lint` — Lint all workspaces with ESLint 9 + TypeScript 5
 
@@ -59,7 +59,8 @@ Monorepo for a **multi-tenant POS system** for tea shops:
 ```
 ├── apps/
 │   ├── seller/          # Seller-facing mobile PWA (POS, orders, analytics)
-│   ├── admin/           # Admin dashboard (undergoing refactor — not a pattern reference)
+│   ├── backoffice/      # Backoffice dashboard — active development
+│   ├── admin/           # ARCHIVED — broken, excluded from workspace. Do not use as reference.
 │
 ├── packages/
 │   ├── db/              # Supabase auto-gen types (types.ts) — read-only
@@ -260,4 +261,4 @@ Any API route that calls a mutating service must call `getRequestUser()` and pas
 - **`pnpm install` first** if dependencies changed. Use `turbo build --no-cache` if build seems stale.
 - **Middleware is per-app.** `apps/seller/middleware.ts` and `apps/admin` are separate — update both if changing auth logic.
 - **Tenant slug is immutable.** Renaming requires a data migration.
-- **Admin app is being refactored.** Don't use it as a pattern reference.
+- **Admin app is archived.** Excluded from pnpm workspace and builds. Code preserved in `apps/admin/` but broken and unmaintained for 6+ months. Do not reference or modify it.

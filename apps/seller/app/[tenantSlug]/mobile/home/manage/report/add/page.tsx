@@ -106,7 +106,6 @@ export default function AddReportPage() {
                         previewUrl={photoPreview}
                         onCapture={(file, url) => { setPhotoFile(file); setPhotoPreview(url); }}
                         onRemove={() => { setPhotoFile(null); setPhotoPreview(null); }}
-                        onError={(msg) => setError(msg)}
                     />
                 </div>
 

@@ -28,7 +28,6 @@ interface SinglePhotoStepProps {
     onQuantityChange: (
         quantity: { value: number; unit: string } | null,
     ) => void;
-    onError?: (message: string) => void;
 }
 
 export function SinglePhotoStep({
@@ -40,7 +39,6 @@ export function SinglePhotoStep({
     onPhotoChange,
     onSavedPhotoDelete,
     onQuantityChange,
-    onError,
 }: SinglePhotoStepProps) {
     const t = useT();
     const quantityConfig = QUANTITY_CONFIG[type] ?? null;
@@ -109,7 +107,6 @@ export function SinglePhotoStep({
                                 if (photo) URL.revokeObjectURL(photo.preview);
                                 onPhotoChange(null);
                             }}
-                            onError={onError}
                         />
                     )}
                 </div>

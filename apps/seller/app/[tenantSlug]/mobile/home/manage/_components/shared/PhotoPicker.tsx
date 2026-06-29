@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Camera, ImagePlus, Loader2, CircleMinus, X } from "lucide-react";
 import { Drawer } from "vaul";
 import { compressPhoto } from "@/lib/compressPhoto";
@@ -9,43 +9,76 @@ interface PhotoPickerProps {
     previewUrl: string | null;
     onCapture: (file: File, previewUrl: string) => void;
     onRemove: () => void;
-    onError?: (message: string) => void;
     allowGallery?: boolean;
 }
 
-export function PhotoPicker({ previewUrl, onCapture, onRemove, onError, allowGallery = false }: PhotoPickerProps) {
+export function PhotoPicker({ previewUrl, onCapture, onRemove, allowGallery = false }: PhotoPickerProps) {
     const inputRef = useRef<HTMLInputElement>(null);
     const [isCompressing, setIsCompressing] = useState(false);
-    const [permissionBlocked, setPermissionBlocked] = useState(false);
+    const [errorSheet, setErrorSheet] = useState<"permission" | "generic" | null>(null);
+    const [genericErrorMsg, setGenericErrorMsg] = useState("");
+    const [cameraPermission, setCameraPermission] = useState<PermissionState | null>(null);
+    const cameraPermissionRef = useRef<PermissionState | null>(null);
+    const filePickedRef = useRef(false);
+    const visibilityListenerRef = useRef<(() => void) | null>(null);
 
-    const handleClick = async () => {
-        try {
-            const status = await navigator.permissions.query({ name: "camera" as PermissionName });
-            if (status.state === "denied") {
-                setPermissionBlocked(true);
-                return;
+    useEffect(() => {
+        let permStatus: PermissionStatus | null = null;
+        navigator.permissions
+            .query({ name: "camera" as PermissionName })
+            .then((status) => {
+                permStatus = status;
+                setCameraPermission(status.state);
+                cameraPermissionRef.current = status.state;
+                status.onchange = () => {
+                    setCameraPermission(status.state);
+                    cameraPermissionRef.current = status.state;
+                };
+            })
+            .catch(() => {});
+        return () => {
+            if (permStatus) permStatus.onchange = null;
+            if (visibilityListenerRef.current) {
+                document.removeEventListener("visibilitychange", visibilityListenerRef.current);
             }
-            if (status.state === "prompt") {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                    stream.getTracks().forEach((t) => t.stop());
-                } catch {
-                    setPermissionBlocked(true);
-                    return;
-                }
-            }
-        } catch {
-            // permissions API not supported (iOS Safari etc.) — fall through to native input
+        };
+    }, []);
+
+    const handleClick = () => {
+        if (cameraPermission === "denied") {
+            setErrorSheet("permission");
+            return;
         }
+
+        filePickedRef.current = false;
+
+        if (visibilityListenerRef.current) {
+            document.removeEventListener("visibilitychange", visibilityListenerRef.current);
+        }
+
+        const onVisible = () => {
+            if (document.visibilityState !== "visible") return;
+            document.removeEventListener("visibilitychange", onVisible);
+            visibilityListenerRef.current = null;
+            setTimeout(() => {
+                if (!filePickedRef.current && cameraPermissionRef.current === "denied") {
+                    setErrorSheet("permission");
+                }
+            }, 500);
+        };
+
+        visibilityListenerRef.current = onVisible;
+        document.addEventListener("visibilitychange", onVisible);
         inputRef.current?.click();
     };
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) {
-            setPermissionBlocked(true);
+            setErrorSheet("permission");
             return;
         }
+        filePickedRef.current = true;
         setIsCompressing(true);
         try {
             const compressed = await compressPhoto(file);
@@ -55,7 +88,8 @@ export function PhotoPicker({ previewUrl, onCapture, onRemove, onError, allowGal
             if (["image/jpeg", "image/jpg", "image/webp"].includes(file.type)) {
                 onCapture(file, URL.createObjectURL(file));
             } else {
-                onError?.("Failed to process photo. Please try again.");
+                setGenericErrorMsg("Failed to process photo. Please try again.");
+                setErrorSheet("generic");
             }
         } finally {
             setIsCompressing(false);
@@ -118,42 +152,73 @@ export function PhotoPicker({ previewUrl, onCapture, onRemove, onError, allowGal
                 )}
             </div>
 
-            <Drawer.Root open={permissionBlocked} onOpenChange={setPermissionBlocked}>
+            <Drawer.Root open={errorSheet !== null} onOpenChange={(open) => { if (!open) setErrorSheet(null); }}>
                 <Drawer.Portal>
                     <Drawer.Overlay className="fixed inset-0 bg-black/60 z-50" />
                     <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl px-4 pt-5 pb-8 focus:outline-none">
                         <div className="absolute top-2 left-0 right-0 flex justify-center">
                             <div className="w-8 h-1 rounded-full bg-gray-300" />
                         </div>
-                        <div className="flex items-center justify-between mb-1">
-                            <Drawer.Title className="text-xl font-bold text-gray-900">
-                                Camera Access Blocked
-                            </Drawer.Title>
-                            <button
-                                onClick={() => setPermissionBlocked(false)}
-                                className="p-1.5 rounded-full text-gray-900 hover:bg-gray-100 -mr-2"
-                            >
-                                <X size={26} />
-                            </button>
-                        </div>
-                        <Drawer.Description className="sr-only">
-                            Camera permission is required to take photos
-                        </Drawer.Description>
-                        <p className="text-sm text-gray-500 mb-4">
-                            This app needs camera access to take photos.
-                        </p>
-                        <ol className="text-sm text-gray-700 space-y-1 list-decimal list-inside mb-6">
-                            <li>Open your phone&apos;s <strong>Settings</strong></li>
-                            <li>Go to <strong>Apps</strong> → your browser</li>
-                            <li>Tap <strong>Permissions</strong> → <strong>Camera</strong> → Allow</li>
-                            <li>Come back and try again</li>
-                        </ol>
-                        <button
-                            onClick={() => setPermissionBlocked(false)}
-                            className="w-full py-3 rounded-xl bg-brand text-white font-semibold"
-                        >
-                            Got it
-                        </button>
+
+                        {errorSheet === "permission" && (
+                            <>
+                                <div className="flex items-center justify-between mb-1">
+                                    <Drawer.Title className="text-xl font-bold text-gray-900">
+                                        Camera Access Blocked
+                                    </Drawer.Title>
+                                    <button
+                                        onClick={() => setErrorSheet(null)}
+                                        className="p-1.5 rounded-full text-gray-900 hover:bg-gray-100 -mr-2"
+                                    >
+                                        <X size={26} />
+                                    </button>
+                                </div>
+                                <Drawer.Description className="sr-only">
+                                    Camera permission is required to take photos
+                                </Drawer.Description>
+                                <p className="text-sm text-gray-500 mb-4">
+                                    This app needs camera access to take photos.
+                                </p>
+                                <ol className="text-sm text-gray-700 space-y-1 list-decimal list-inside mb-6">
+                                    <li>Open your phone&apos;s <strong>Settings</strong></li>
+                                    <li>Go to <strong>Apps</strong> → your browser</li>
+                                    <li>Tap <strong>Permissions</strong> → <strong>Camera</strong> → Allow</li>
+                                    <li>Come back and try again</li>
+                                </ol>
+                                <button
+                                    onClick={() => setErrorSheet(null)}
+                                    className="w-full py-3 rounded-xl bg-brand text-white font-semibold"
+                                >
+                                    Got it
+                                </button>
+                            </>
+                        )}
+
+                        {errorSheet === "generic" && (
+                            <>
+                                <div className="flex items-center justify-between mb-1">
+                                    <Drawer.Title className="text-xl font-bold text-gray-900">
+                                        Photo Error
+                                    </Drawer.Title>
+                                    <button
+                                        onClick={() => setErrorSheet(null)}
+                                        className="p-1.5 rounded-full text-gray-900 hover:bg-gray-100 -mr-2"
+                                    >
+                                        <X size={26} />
+                                    </button>
+                                </div>
+                                <Drawer.Description className="sr-only">
+                                    An error occurred while processing the photo
+                                </Drawer.Description>
+                                <p className="text-sm text-gray-500 mb-6">{genericErrorMsg}</p>
+                                <button
+                                    onClick={() => setErrorSheet(null)}
+                                    className="w-full py-3 rounded-xl bg-brand text-white font-semibold"
+                                >
+                                    Try Again
+                                </button>
+                            </>
+                        )}
                     </Drawer.Content>
                 </Drawer.Portal>
             </Drawer.Root>

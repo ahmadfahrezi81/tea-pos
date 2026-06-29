@@ -58,14 +58,6 @@ function isoMondayStr(dateStr: string): string {
     return d.toISOString().slice(0, 10);
 }
 
-function isoWeekNumStr(dateStr: string): number {
-    const d = new Date(dateStr + "T12:00:00Z");
-    const thu = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
-    thu.setUTCDate(thu.getUTCDate() + 4 - (thu.getUTCDay() || 7));
-    const yearStart = new Date(Date.UTC(thu.getUTCFullYear(), 0, 1));
-    return Math.ceil(((thu.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7);
-}
-
 export function getExpectedPayoutDate(endDate: string): string {
     return addDaysToStr(endDate, 1);
 }
@@ -82,9 +74,13 @@ export function getPayWindowBounds(
             return { startDate: mon, endDate: addDaysToStr(mon, 6) };
         }
         case "bi_weekly": {
-            const mon = isoMondayStr(dateStr);
-            const wn = isoWeekNumStr(dateStr);
-            const start = wn % 2 === 0 ? mon : addDaysToStr(mon, -7);
+            // Epoch = Monday of ISO Week 2, 2025. All bi-weekly blocks are fixed
+            // 14-day windows from this anchor — no ISO week parity, no year-boundary drift.
+            const EPOCH = "2025-01-06";
+            const epochMs = new Date(EPOCH + "T12:00:00Z").getTime();
+            const dateMs = new Date(dateStr + "T12:00:00Z").getTime();
+            const blockIndex = Math.floor(Math.round((dateMs - epochMs) / 86_400_000) / 14);
+            const start = addDaysToStr(EPOCH, blockIndex * 14);
             return { startDate: start, endDate: addDaysToStr(start, 13) };
         }
         case "monthly": {
