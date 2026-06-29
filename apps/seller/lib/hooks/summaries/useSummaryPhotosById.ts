@@ -13,7 +13,7 @@ export const useSummaryPhotosById = (summaryId?: string | null) => {
             revalidateOnFocus: false,
             revalidateOnMount: true,
             revalidateIfStale: false,
-            dedupingInterval: 5_000,
+            dedupingInterval: 30_000,
         },
     );
 

@@ -215,7 +215,7 @@ export async function createAutoClaimsForDailySummary(
         const userSessions = typedSessions.filter((s) => s.user_id === userId);
         const totalHours = userSessions.reduce((sum, s) => {
             const endedAt = s.ended_at ? new Date(s.ended_at) : new Date();
-            return sum + (endedAt.getTime() - new Date(s.started_at).getTime()) / 3600000;
+            return sum + Math.max(0, (endedAt.getTime() - new Date(s.started_at).getTime()) / 3600000);
         }, 0);
 
         const { data: eligibilityRows } = await supabase
