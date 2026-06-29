@@ -421,6 +421,7 @@ export default function ManageCloseDayPage() {
                                     if (saved) await handleSavedPhotoDelete(saved.id);
                                 }}
                                 onQuantityChange={(q) => handleQuantityChange(slot.type, q)}
+                                onError={(msg) => setError(msg)}
                             />
                         );
                     })()}
