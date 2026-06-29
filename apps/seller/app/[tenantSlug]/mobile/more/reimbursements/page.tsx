@@ -13,8 +13,6 @@ import { format } from "date-fns";
 import { useT } from "@/lib/hooks/useT";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 
-const SHOW_ALL_ENTITLEMENTS = false; // dev flag: true = show all types, false = claimable only
-
 const STATUS_STYLE: Record<string, string> = {
     pending: "bg-yellow-100 text-yellow-700",
     approved: "bg-green-100 text-green-700",
@@ -29,11 +27,11 @@ export default function ReimbursementsPage() {
     const [selectedMonth, setSelectedMonth] = useState(getCurrentLocalMonth());
 
     const today = getTodayLocalStr();
-    const window = info
+    const payWindow = info
         ? getPayWindowBounds(today, info.payFrequency ?? "bi_weekly")
         : null;
 
-    const { types, isLoading: typesLoading } = useClaimableTypes(window);
+    const { types, isLoading: typesLoading } = useClaimableTypes(payWindow);
 
     const filteredClaims = claims.filter((c: any) =>
         c.date?.startsWith(selectedMonth),
@@ -55,32 +53,28 @@ export default function ReimbursementsPage() {
                             />
                         ))}
                     </div>
-                ) : (() => {
-                    const displayTypes = SHOW_ALL_ENTITLEMENTS ? types : types.filter((type: any) => type.claimable);
-                    if (displayTypes.length === 0) return (
-                        <div className="py-1 space-y-0.5">
-                            <p className="text-sm font-medium text-gray-700">All claims used for this period</p>
-                            <p className="text-xs text-gray-500">You've already submitted all available claims.</p>
-                        </div>
-                    );
-                    return (
+                ) : types.length === 0 ? (
+                    <div className="py-1 space-y-0.5">
+                        <p className="text-sm font-medium text-gray-700">No entitlements yet</p>
+                        <p className="text-xs text-gray-500">Ask your manager to assign claim types to you.</p>
+                    </div>
+                ) : (
                     <div className="divide-y divide-gray-100">
-                        {displayTypes.map((type: any) => (
+                        {types.map((type: any) => (
                             <div key={type.id} className="flex items-center justify-between py-2.5">
                                 <div>
                                     <p className="text-sm font-medium text-gray-800">{type.name}</p>
                                     <p className="text-xs text-gray-600 font-medium">
                                         {type.frequency === "daily" ? "Daily" : type.frequency === "weekly" ? t("claims.freqWeekly") : type.frequency === "monthly" ? t("claims.freqMonthly") : type.frequency === "one_time" ? t("claims.freqOneTime") : type.frequency}
                                         {" · "}
-                                        {type.claimSource === "auto" ? t("claims.auto") : "Manual"}
+                                        {type.claimSource === "auto" ? t("claims.auto") : type.claimSource === "auto_submit" ? "Auto submit" : "Manual"}
                                     </p>
                                 </div>
                                 <p className="text-base font-bold text-gray-900">{formatRupiah(type.amount ?? 0)}</p>
                             </div>
                         ))}
                     </div>
-                    );
-                })()}
+                )}
             </div>
 
             {/* Month selector */}

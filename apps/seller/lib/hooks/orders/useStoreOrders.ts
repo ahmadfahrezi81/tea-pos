@@ -8,6 +8,6 @@ export default function useStoreOrders(storeId: string | null, date: string) {
     return useSWR<Order[]>(
         key,
         () => ordersApi.list({ storeId: storeId!, date }).then((r) => r.orders),
-        { revalidateOnFocus: false, dedupingInterval: 5000 },
+        { revalidateOnFocus: false, dedupingInterval: 30_000 },
     );
 }

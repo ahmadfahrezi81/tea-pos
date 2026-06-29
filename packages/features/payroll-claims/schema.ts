@@ -68,7 +68,7 @@ export const PayrollClaimResponse = z
         photoUrl: z.string().nullable(),
         status: z.enum(["pending", "approved", "rejected"]),
         hoursWorked: z.number().nullable().optional(),
-        autoThresholdHours: z.number().int().nullable().optional(),
+        autoThresholdHours: z.number().nullable().optional(),
         createdAt: z.string(),
     })
     .openapi({ title: "PayrollClaimResponse" });
@@ -83,7 +83,7 @@ export const ClaimableTypeResponse = z
         name: z.string(),
         frequency: z.enum(["daily", "weekly", "monthly", "one_time"]),
         amount: z.number().int().default(0),
-        claimSource: z.enum(["manual", "auto"]),
+        claimSource: z.enum(["manual", "auto", "auto_submit"]),
         claimable: z.boolean(),
     })
     .openapi({ title: "ClaimableTypeResponse" });
