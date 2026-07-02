@@ -93,7 +93,7 @@ export default function MoreMenu() {
     const { user } = useAuth();
     const { assignedStores } = useStore();
     const { fastOrderMode, toggleFastOrderMode } = useFastOrderMode();
-    const { flags: { isFastOrderEnabled, isPayEnabled, isClaimsEnabled } } = useFlags();
+    const { flags: { isFastOrderEnabled } } = useFlags();
     const [isWeatherOpen, setIsWeatherOpen] = useState(false);
     const t = useT();
 
@@ -113,13 +113,11 @@ export default function MoreMenu() {
                         icon={<Banknote size={22} strokeWidth={2} className="text-gray-900" />}
                         label={t("more.myPay")}
                         onClick={() => navigation.push(url("/mobile/more/earnings"))}
-                        disabled={!isPayEnabled}
                     />
                     <SettingsRow
                         icon={<ReceiptText size={22} strokeWidth={2} className="text-gray-900" />}
                         label={t("more.myClaims")}
                         onClick={() => navigation.push(url("/mobile/more/reimbursements"))}
-                        disabled={!isClaimsEnabled}
                     />
                     <SettingsRow
                         icon={<Store size={22} strokeWidth={2} className="text-gray-900" />}

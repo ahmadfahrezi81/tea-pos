@@ -63,20 +63,20 @@ export default function EarningsPage() {
                 className="relative w-full bg-white rounded-2xl p-4 text-left active:bg-gray-50 space-y-3"
             >
                 {/* Header */}
-                <ChevronRight size={20} strokeWidth={2.5} className="text-brand/90 absolute top-4 right-4" />
+                <ChevronRight size={24} strokeWidth={2.5} className="text-brand/90 absolute top-4 right-4 -mr-1" />
                 <div className="space-y-1 pr-7">
-                    <p className="text-lg font-bold text-gray-900">
-                        {sameWeek ? `Week ${weekStart}` : `Week ${weekStart} · Week ${weekEnd}`}
-                    </p>
-                    <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm text-gray-500">
-                            {format(parseISO(payout.startDate), "EEE, d MMM")} – {format(parseISO(payout.endDate), "EEE, d MMM")}
+                    <div className="flex items-center gap-2">
+                        <p className="text-lg font-bold text-gray-900">
+                            {sameWeek ? `Week ${weekStart}` : `Week ${weekStart} · Week ${weekEnd}`}
                         </p>
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ${STATUS_STYLE[status] ?? STATUS_STYLE.pending}`}>
+                        <span className={`text-sm font-medium px-2 py-0.5 rounded-full shrink-0 ${STATUS_STYLE[status] ?? STATUS_STYLE.pending}`}>
                             {status === "pending" ? "Ongoing" : status === "paid" ? t("earnings.statusPaid") : status}
                             {status === "paid" && payout.paidAt ? ` · ${format(new Date(payout.paidAt), "d MMM")}` : ""}
                         </span>
                     </div>
+                    <p className="text-sm text-gray-500">
+                        {format(parseISO(payout.startDate), "EEE, d MMM")} – {format(parseISO(payout.endDate), "EEE, d MMM")}
+                    </p>
                 </div>
 
                 {/* Stats */}

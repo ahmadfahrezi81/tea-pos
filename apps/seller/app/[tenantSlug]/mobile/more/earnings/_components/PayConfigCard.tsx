@@ -37,7 +37,7 @@ export function PayConfigCard() {
 
     const rows = [
         { label: "Pay Frequency", value: FREQUENCY_LABELS[frequency] ?? frequency },
-        { label: "Per Cup", value: info?.ratePerCup ? formatRupiah(info.ratePerCup) : "—" },
+        { label: "Per Cup", value: info?.ratePerCup != null ? formatRupiah(info.ratePerCup) : "—" },
         { label: "Next Expected Payout", value: format(parseISO(expectedPayout), "EEE, d MMM yyyy") },
     ];
 

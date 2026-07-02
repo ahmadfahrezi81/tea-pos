@@ -108,14 +108,9 @@ export default function MobileManage() {
                             <Cloud size={32} className="text-blue-400" />
                         )}
                     </div>
-                    <div>
-                        <p className="text-sm text-gray-500 font-medium">
-                            {t("manage.weather")}
-                        </p>
-                        <p className="text-sm font-semibold text-gray-800 -mt-1">
-                            {t("manage.forecast")}
-                        </p>
-                    </div>
+                    <p className="text-sm font-semibold text-gray-800">
+                        {t("manage.weatherForecast")}
+                    </p>
                 </button>
             </div>
 
