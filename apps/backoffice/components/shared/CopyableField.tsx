@@ -1,3 +1,4 @@
+"use client";
 import React, { useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { useToast } from "@/lib/context/ToastContext";

@@ -3,9 +3,11 @@ import { getServiceClient } from "@/lib/supabase/service";
 import { getCurrentTenantId } from "@tea-pos/utils/server-config/tenant";
 import { getPayslip } from "@tea-pos/services/payroll";
 import { getSummaryById, getSummaryBreakdown, listSummaryPhotos } from "@tea-pos/services/summaries";
+import { PHOTO_SLOTS } from "@tea-pos/features/shared/photo-slots";
 import { listExpenses } from "@tea-pos/services/expenses";
 import { fetchSessionUsersForSummaries } from "@tea-pos/services/sessions";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
+import CopyableField from "@/components/shared/CopyableField";
 
 function formatTimestamp(utc: string) {
     return new Date(utc).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Jakarta" });
@@ -40,18 +42,21 @@ export default async function DaySummaryPage({
     let breakdown: Record<string, { quantity: number; revenue: number }>;
     let expenses: Array<{ id: string; type: string; amount: number; notes?: string | null }>;
     let sessionsMap: Record<string, Array<{ userId: string; userName: string | null; userAvatarUrl: string | null; totalCups: number | null }>>;
+    let photos: Array<{ type: string; url: string; quantity?: { value: number; unit: string } | null }>;
 
     try {
-        const [rawSummary, rawBreakdown, rawExpenses, rawSessions] = await Promise.all([
+        const [rawSummary, rawBreakdown, rawExpenses, rawSessions, rawPhotos] = await Promise.all([
             getSummaryById(supabase, { tenantId, summaryId: dailySummaryId }),
             getSummaryBreakdown(supabase, { tenantId, summaryId: dailySummaryId }),
             listExpenses(supabase, { tenantId, dailySummaryId }),
             fetchSessionUsersForSummaries(supabase, { tenantId, summaryIds: [dailySummaryId] }),
+            listSummaryPhotos(supabase, { tenantId, dailySummaryId }),
         ]);
         summary = rawSummary as Record<string, unknown>;
         breakdown = rawBreakdown.breakdown;
         expenses = rawExpenses as typeof expenses;
         sessionsMap = rawSessions;
+        photos = (rawPhotos ?? []) as typeof photos;
     } catch {
         notFound();
     }
@@ -109,6 +114,13 @@ export default async function DaySummaryPage({
                             <span className="font-medium text-gray-800">{formatTimestamp(s.closedAt)}</span>
                         </div>
                     )}
+                    <div className="pt-1.5 border-t border-gray-100 flex justify-between items-center">
+                        <span className="text-gray-500">Summary ID</span>
+                        <div className="flex items-center gap-1">
+                            <span className="font-mono text-xs text-gray-400">{s.id.slice(0, 8)}…</span>
+                            <CopyableField label="Summary ID" value={s.id} />
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -202,6 +214,53 @@ export default async function DaySummaryPage({
                     <p className="text-sm text-gray-700 bg-slate-100 p-2.5 rounded-xl">{s.notes}</p>
                 </div>
             )}
+
+            {/* Photos */}
+            {photos.length > 0 && (() => {
+                const openingPhoto = photos.find((p) => p.type === "opening");
+                const closingPhotos = photos.filter((p) => p.type.startsWith("closing:"));
+                return (
+                    <div className="bg-white rounded-2xl p-3 space-y-4">
+                        <h4 className="text-sm font-semibold text-gray-800">Photos</h4>
+                        {openingPhoto && (
+                            <div className="space-y-1.5">
+                                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Opening</p>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div className="bg-slate-50 rounded-xl overflow-hidden aspect-square">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img src={openingPhoto.url} alt="Opening" className="w-full h-full object-cover" />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        {closingPhotos.length > 0 && (
+                            <div className="space-y-1.5">
+                                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Closing</p>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {PHOTO_SLOTS.map((slot) => {
+                                        const photo = closingPhotos.find((p) => p.type === slot.type);
+                                        if (!photo) return null;
+                                        return (
+                                            <div key={slot.type} className="bg-slate-50 rounded-xl overflow-hidden">
+                                                <div className="aspect-square">
+                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                    <img src={photo.url} alt={slot.label} className="w-full h-full object-cover" />
+                                                </div>
+                                                <div className="p-2">
+                                                    <p className="text-xs font-semibold text-gray-800">{slot.label}</p>
+                                                    {photo.quantity && (
+                                                        <p className="text-xs text-gray-500">{photo.quantity.value} {photo.quantity.unit}</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                );
+            })()}
 
             {/* Breakdown */}
             <div className="bg-white rounded-2xl p-3 space-y-2">

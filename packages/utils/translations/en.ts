@@ -12,7 +12,8 @@ export const en = {
         current: "current",
         unknown: "Unknown",
         authRequired: "Authentication Required",
-        authRequiredSub: "Unable to load your profile. Please check your connection and try again.",
+        authRequiredSub:
+            "Unable to load your profile. Please check your connection and try again.",
     },
     home: {
         gate: {
@@ -29,7 +30,8 @@ export const en = {
         },
         takeover: {
             takenBy: "Session already taken by",
-            askCode: "Ask the current seller for their 2-digit code to take over.",
+            askCode:
+                "Ask the current seller for their 2-digit code to take over.",
             takeOver: "Take Over",
         },
     },
@@ -53,7 +55,8 @@ export const en = {
         selectMonth: "Select Month",
         notCounted: "Not counted",
         unclosedWarning: "Overdue Unclosed Day(s)",
-        unclosedSub: "Please close these days to maintain accurate financial records.",
+        unclosedSub:
+            "Please close these days to maintain accurate financial records.",
         statusOpen: "Open",
         statusClosed: "Closed",
         setOpeningBalance: "Set Opening Balance",
@@ -127,8 +130,7 @@ export const en = {
         noRequests: "No supply requests today.",
         noReports: "No reports filed today.",
         sessionCode: "Session Code",
-        weather: "Weather",
-        forecast: "Forecast",
+        weatherForecast: "Weather Forecast",
         closeSteps: {
             ice: "Ice",
             syrup: "Syrup",
@@ -149,7 +151,7 @@ export const en = {
             syrup: "Photo the remaining syrup bottles.",
             bags: "Photo the remaining bags.",
             cups: "Count and photo the remaining cups.",
-            tea: "Measure and photo the remaining tea waste.",
+            tea: "Estimate and photo the remaining tea waste.",
             opening: "Take a photo of the opening setup.",
         },
         cashStep: {
@@ -236,8 +238,10 @@ export const en = {
         submitClaim: "Submit Claim",
         submitting: "Submitting...",
         selectType: "Select type...",
-        noClaimEntitlements: "You have no claim entitlements. Contact your manager.",
-        allSubmitted: "All your entitlements for this period have already been submitted.",
+        noClaimEntitlements:
+            "You have no claim entitlements. Contact your manager.",
+        allSubmitted:
+            "All your entitlements for this period have already been submitted.",
         noWorkedDates: "No worked dates found for this period.",
         failedToSubmit: "Failed to submit claim",
     },
@@ -261,7 +265,8 @@ export const en = {
         statusWaitingLong: "WAITING FOR PAYMENT",
         statusPaidLong: "PAID",
         viewProof: "View transfer screenshot",
-        addBankDetails: "Add your bank details in Payroll Info so admin can pay you.",
+        addBankDetails:
+            "Add your bank details in Payroll Info so admin can pay you.",
         viewConfig: "Pay Config",
         viewCalendar: "Calendar",
         payConfig: "Pay Config",

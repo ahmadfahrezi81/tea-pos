@@ -291,7 +291,7 @@ export default function UserPayslipPage({
                                                 className="flex items-center gap-1 active:opacity-60"
                                             >
                                                 <span className="text-sm font-medium text-gray-800 truncate">{c.storeName ?? "—"}</span>
-                                                <Info size={13} className="shrink-0 text-gray-500" />
+                                                <Info size={14} strokeWidth={2.5} className="shrink-0 text-blue-500" />
                                             </button>
                                         ) : (
                                             <p className="text-sm font-medium text-gray-800 truncate">{c.storeName ?? "—"}</p>
