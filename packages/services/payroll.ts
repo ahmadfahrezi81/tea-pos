@@ -71,8 +71,15 @@ export async function createPayrollCommissions(
 
         const info = await getPayrollUserInfo(supabase, { tenantId, userId });
         const commissionConfigId = (info?.commissionConfigId as string | null) ?? null;
+        const commissionConfigSlug = (info?.commissionConfigSlug as string | null) ?? null;
         const ratePerCup = (info?.ratePerCup as number | null) ?? 0;
         const totalCommission = totalCups * ratePerCup;
+
+        // Family-business / zero-rate employees earn no commission — auto-approve
+        // so they don't clutter the admin review queue. Identified by rate = 0
+        // or the reserved SELLER_0 commission config slug.
+        const commissionStatus =
+            ratePerCup === 0 || commissionConfigSlug === "SELLER_0" ? "approved" : "pending";
 
         const { data: commission, error: commissionError } = await supabase
             .from("payroll_commissions")
@@ -87,6 +94,7 @@ export async function createPayrollCommissions(
                 rate_per_cup: ratePerCup,
                 commission_config_id: commissionConfigId,
                 total_commission: totalCommission,
+                status: commissionStatus,
             })
             .select()
             .single();
