@@ -7,7 +7,6 @@ export const FLAGS = {
         REPORT: "feature-report",
         REQUEST: "feature-request",
         REIMBURSEMENT: "feature-reimbursement",
-
         FAST_ORDER: "feature-fast-order",
     },
     OPS: {
