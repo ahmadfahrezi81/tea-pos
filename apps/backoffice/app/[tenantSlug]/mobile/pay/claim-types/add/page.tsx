@@ -37,7 +37,7 @@ export default function AddClaimTypePage() {
                 frequency,
                 amount,
                 claimSource,
-                ...(claimSource === "auto" ? { autoThresholdHours } : {}),
+                ...((claimSource === "auto" || claimSource === "auto_submit") ? { autoThresholdHours } : {}),
             });
             router.back();
         } catch (err) {
@@ -95,9 +95,11 @@ export default function AddClaimTypePage() {
                         ))}
                     </div>
                 </div>
-                {claimSource === "auto" && (
+                {(claimSource === "auto" || claimSource === "auto_submit") && (
                     <div className="space-y-1.5">
-                        <p className="text-sm font-medium text-gray-700">Minimum hours worked</p>
+                        <p className="text-sm font-medium text-gray-700">
+                            Minimum hours worked{claimSource === "auto_submit" ? " (optional)" : ""}
+                        </p>
                         <NumberInput value={autoThresholdHours} onChange={setAutoThresholdHours} unit="hours" />
                     </div>
                 )}

@@ -234,6 +234,9 @@ export async function createAutoClaimsForDailySummary(
         for (const type of autoTypes) {
             let status: string;
             if (type.claim_source === "auto_submit") {
+                // If a threshold is configured, skip users who haven't worked enough.
+                // Null threshold means always submit.
+                if (type.auto_threshold_hours !== null && totalHours < type.auto_threshold_hours) continue;
                 status = "pending";
             } else {
                 if (type.auto_threshold_hours === null) {
