@@ -74,9 +74,27 @@ originally framed, not less.
 
 By the time the handler finishes building its JSON response (right after
 firing both), essentially no extra wall-clock time has been granted to
-either — this is why it's 100% reproducible rather than flaky. It's not a
-timing coin-flip so much as commissions structurally needing more to happen
-before it reaches safety.
+either.
+
+**Update after further testing:** this turned out to be a one-off, not
+100% reproducible as first reported — later attempts to reproduce it
+directly didn't reliably fail. That actually strengthens this theory over
+the "deterministic per-row exception" framing considered earlier in this
+doc: a real bug that throws every time would reproduce every time; a race
+against response-cutoff (worse under real-world jitter — a slow round trip,
+a brief connection hiccup — but usually fine) reproduces intermittently,
+which is what was actually observed. Root cause is still best understood as
+"unawaited work racing the response, on a chain long enough that it
+sometimes loses" rather than a specific bad input or code path.
+
+This doesn't change the fix. `await` removes the timing dependency
+entirely regardless of why any individual attempt was slow (heavy
+`upsertPayout` chain, a slow query, a connection blip) — it doesn't matter
+which one, none of them are still an exposure once the response can't
+return before the work finishes. The per-user idempotency guard (Bug 1b)
+is separately valuable regardless of cause: it's what makes *any* partial
+failure — this race, a genuine dropped connection, anything — safe to
+retry instead of permanently stuck.
 
 Ruled out: the recent Supabase "degraded performance" incident (existing,
 non-restarted/resized projects are explicitly not affected per their status
