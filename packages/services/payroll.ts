@@ -20,14 +20,6 @@ export async function createPayrollCommissions(
 ) {
     const { tenantId, storeId, dailySummaryId, date, triggeredByUserId } = params;
 
-    const { count: existingCount } = await supabase
-        .from("payroll_commissions")
-        .select("id", { count: "exact", head: true })
-        .eq("daily_summary_id", dailySummaryId)
-        .eq("tenant_id", tenantId);
-
-    if ((existingCount ?? 0) > 0) return [];
-
     const { data: sessions, error: sessionsError } = await supabase
         .from("store_sessions")
         .select("*")
@@ -76,10 +68,11 @@ export async function createPayrollCommissions(
         const totalCommission = totalCups * ratePerCup;
 
         // Family-business / zero-rate employees earn no commission — auto-approve
-        // so they don't clutter the admin review queue. Identified by rate = 0
-        // or the reserved SELLER_0 commission config slug.
-        const commissionStatus =
-            ratePerCup === 0 || commissionConfigSlug === "SELLER_0" ? "approved" : "pending";
+        // so they don't clutter the admin review queue. Identified only by the
+        // reserved SELLER_0 commission config slug — not by rate === 0, since an
+        // employee with no payroll_user_info row at all also defaults to rate 0
+        // and that case (missing config) is exactly what pending review should catch.
+        const commissionStatus = commissionConfigSlug === "SELLER_0" ? "approved" : "pending";
 
         const { data: commission, error: commissionError } = await supabase
             .from("payroll_commissions")
@@ -99,7 +92,12 @@ export async function createPayrollCommissions(
             .select()
             .single();
 
-        if (commissionError) throw commissionError;
+        if (commissionError) {
+            // Already created for this user/daily-summary (retried close-day
+            // request) — skip this user, don't abort the whole batch.
+            if (commissionError.code === "23505") continue;
+            throw commissionError;
+        }
         created.push(toCamelKeys(commission));
 
         const log = createLogger(supabase, { tenantId, userId: triggeredByUserId, storeId });

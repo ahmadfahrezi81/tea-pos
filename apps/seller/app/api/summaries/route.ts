@@ -69,20 +69,29 @@ export async function PUT(request: NextRequest) {
         if (body.data.closedAt) {
             const s = summary as { id: string; storeId: string; date: string };
             await endSessionsForSummary(supabase, { tenantId, dailySummaryId: s.id });
-            createPayrollCommissions(supabase, {
-                tenantId,
-                storeId: s.storeId,
-                dailySummaryId: s.id,
-                date: s.date,
-                triggeredByUserId: user.id,
-            }).catch((e) => console.error("[payroll] createPayrollCommissions failed:", e));
-            createAutoClaimsForDailySummary(supabase, {
-                tenantId,
-                storeId: s.storeId,
-                dailySummaryId: s.id,
-                date: s.date,
-                triggeredByUserId: user.id,
-            }).catch((e) => console.error("[payroll] createAutoClaimsForDailySummary failed:", e));
+
+            const [commissionsResult, claimsResult] = await Promise.allSettled([
+                createPayrollCommissions(supabase, {
+                    tenantId,
+                    storeId: s.storeId,
+                    dailySummaryId: s.id,
+                    date: s.date,
+                    triggeredByUserId: user.id,
+                }),
+                createAutoClaimsForDailySummary(supabase, {
+                    tenantId,
+                    storeId: s.storeId,
+                    dailySummaryId: s.id,
+                    date: s.date,
+                    triggeredByUserId: user.id,
+                }),
+            ]);
+            if (commissionsResult.status === "rejected") {
+                console.error("[payroll] createPayrollCommissions failed:", commissionsResult.reason);
+            }
+            if (claimsResult.status === "rejected") {
+                console.error("[payroll] createAutoClaimsForDailySummary failed:", claimsResult.reason);
+            }
         }
 
         const parsed = UpdateDailySummaryResponse.safeParse(summary);
