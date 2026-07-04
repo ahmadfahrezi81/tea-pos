@@ -112,6 +112,8 @@ export default function AddClaimTypePage() {
                 onSubmit={handleSave}
                 disabled={!name || !slug}
                 isLoading={saving}
+                confirmTitle="Create claim type?"
+                confirmMessage="Staff will need to be marked eligible before they can submit against it."
             />
         </div>
     );

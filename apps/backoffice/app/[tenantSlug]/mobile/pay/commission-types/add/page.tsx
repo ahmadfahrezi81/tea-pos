@@ -63,6 +63,8 @@ export default function AddCommissionTypePage() {
                 onSubmit={handleSave}
                 disabled={!name || !slug}
                 isLoading={saving}
+                confirmTitle="Create commission type?"
+                confirmMessage="Staff can be assigned to it afterward from the staff pay page."
             />
         </div>
     );

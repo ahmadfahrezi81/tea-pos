@@ -105,6 +105,8 @@ export default function EditCommissionTypePage({ params }: { params: Promise<{ i
                 onSubmit={handleSave}
                 disabled={!name}
                 isLoading={saving}
+                confirmTitle="Save commission type?"
+                confirmMessage="This affects commissions for every staff member assigned to it going forward."
             />
         </div>
     );

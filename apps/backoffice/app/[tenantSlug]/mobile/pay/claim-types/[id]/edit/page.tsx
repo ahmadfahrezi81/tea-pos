@@ -209,6 +209,8 @@ export default function EditClaimTypePage({ params }: { params: Promise<{ id: st
                 onSubmit={handleSave}
                 disabled={!name}
                 isLoading={saving}
+                confirmTitle="Save claim type?"
+                confirmMessage="This updates the claim type and any eligibility changes made below."
             />
         </div>
     );

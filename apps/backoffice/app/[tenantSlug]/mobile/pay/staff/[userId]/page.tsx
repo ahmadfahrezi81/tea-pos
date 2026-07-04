@@ -154,6 +154,8 @@ export default function StaffPayrollInfoPage({ params }: { params: Promise<{ use
                 loadingLabel="Saving..."
                 onSubmit={handleSave}
                 isLoading={saving}
+                confirmTitle="Save pay settings?"
+                confirmMessage="This changes their commission type for future closed days."
             />
         </div>
     );
