@@ -9,6 +9,7 @@ import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
 import { FormFooter } from "@/components/shared/FormFooter";
 import { getTodayLocalStr, getCurrentLocalMonth } from "@tea-pos/utils/time";
 import { useT } from "@/lib/hooks/useT";
+import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
 import type { DailySummaryResponse } from "@tea-pos/features/summaries/schema";
 
 const EXPENSE_OPTIONS = [
@@ -26,6 +27,7 @@ export default function AddExpensePage() {
     const currentMonth = useMemo(() => getCurrentLocalMonth(), []);
 
     const { data: summariesData, isLoading, createExpenses } = useSummaries(selectedStoreId, currentMonth);
+    const { showError } = useErrorSheet();
 
     const todaySummary = useMemo(
         () => summariesData?.summaries.find((s: DailySummaryResponse) => s.date === todayStr && !s.closedAt),
@@ -36,14 +38,12 @@ export default function AddExpensePage() {
     const [customLabel, setCustomLabel] = useState("");
     const [amount, setAmount] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
     const isValid = amount > 0 && !(label === "Custom" && !customLabel.trim());
 
     const handleSubmit = async () => {
         if (!todaySummary || !selectedStoreId || !isValid) return;
         setIsSubmitting(true);
-        setError(null);
         try {
             await createExpenses({
                 dailySummaryId: todaySummary.id,
@@ -52,7 +52,7 @@ export default function AddExpensePage() {
             });
             router.back();
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to save expense");
+            showError(err);
         } finally {
             setIsSubmitting(false);
         }
@@ -94,10 +94,6 @@ export default function AddExpensePage() {
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("manage.amount")}</p>
                     <NumberInput value={amount} onChange={setAmount} currency />
                 </div>
-
-                {error && (
-                    <p className="text-sm text-red-600">{error}</p>
-                )}
             </div>
 
             <FormFooter

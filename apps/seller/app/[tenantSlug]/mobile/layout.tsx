@@ -4,6 +4,7 @@ import InactivityRefreshPopup from "@/components/shared/InactivityRefreshPopup";
 import { StoreProvider } from "@/lib/context/StoreContext";
 import { FastOrderModeProvider } from "@/lib/context/FastOrderModeContext";
 import { ToastProvider } from "@/lib/context/ToastContext";
+import { ErrorSheetProvider } from "@/lib/context/ErrorSheetContext";
 import { RealtimeProvider } from "@/lib/context/RealtimeContext";
 import { PostHogAnalytics } from "@/lib/posthog/PostHogAnalytics";
 import { FlagsProvider } from "@/lib/context/FlagsContext";
@@ -22,10 +23,12 @@ export default function MobileLayout({ children }: MobileLayoutProps) {
                     </Suspense>
                     <FastOrderModeProvider>
                         <ToastProvider>
-                            <MobileLayoutClient>
-                                {children}
-                                <InactivityRefreshPopup />
-                            </MobileLayoutClient>
+                            <ErrorSheetProvider>
+                                <MobileLayoutClient>
+                                    {children}
+                                    <InactivityRefreshPopup />
+                                </MobileLayoutClient>
+                            </ErrorSheetProvider>
                         </ToastProvider>
                     </FastOrderModeProvider>
                 </FlagsProvider>

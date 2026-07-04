@@ -12,6 +12,7 @@ import { PhotoPicker } from "../_components/shared/PhotoPicker";
 import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
 import { FormFooter } from "@/components/shared/FormFooter";
 import { useT } from "@/lib/hooks/useT";
+import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
 
 export default function OpenStorePage() {
     const { selectedStoreId, selectedStore } = useStore();
@@ -20,18 +21,17 @@ export default function OpenStorePage() {
     const { uploadPhoto } = useSummaryPhotos();
     const { flags: { isSkipManagePhotosEnabled: skipManagePhotos } } = useFlags();
     const t = useT();
+    const { showError } = useErrorSheet();
 
     const todayStr = useMemo(() => getTodayLocalStr(), []);
     const [openingBalance, setOpeningBalance] = useState(0);
     const [balanceConfirmed, setBalanceConfirmed] = useState(false);
     const [photo, setPhoto] = useState<{ file: File; preview: string } | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
     const handleSubmit = async () => {
         if (!selectedStoreId || (!photo && !skipPhotos)) return;
         setIsSubmitting(true);
-        setError(null);
         try {
             let dailySummaryId: string;
             if (gate === "no_summary") {
@@ -49,7 +49,7 @@ export default function OpenStorePage() {
             }
             navigation.push(url("/mobile/home/manage"));
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to open store");
+            showError(err);
         } finally {
             setIsSubmitting(false);
         }
@@ -124,12 +124,6 @@ export default function OpenStorePage() {
                 />
                 <p className="text-xs text-gray-400 mt-2">{t("manage.openingPhotoDesc")}</p>
             </div>
-
-            {error && (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">
-                    {error}
-                </div>
-            )}
 
             <FormFooter
                 label={t("manage.openStore")}

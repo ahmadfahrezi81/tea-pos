@@ -1,10 +1,14 @@
+import { ApiError } from "@tea-pos/utils/errors";
+
 export async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
     const res = await fetch(url, options);
     if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        const err = new Error((body as { error?: string }).error ?? `Request failed: ${res.status}`);
-        (err as Error & { status: number }).status = res.status;
-        throw err;
+        throw new ApiError(
+            (body as { error?: string }).error ?? `Request failed: ${res.status}`,
+            res.status,
+            `${options?.method ?? "GET"} ${url}`,
+        );
     }
     return res.json() as Promise<T>;
 }

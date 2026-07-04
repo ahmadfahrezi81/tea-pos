@@ -6,10 +6,12 @@ import { usePayrollCommissionTypes } from "@/lib/hooks/payroll-commission-types/
 import { TextInput } from "@tea-pos/ui/custom/TextInput";
 import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
 import { FormFooter } from "@/components/shared/FormFooter";
+import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
 
 export default function AddCommissionTypePage() {
     const router = useRouter();
     const { create } = usePayrollCommissionTypes();
+    const { showError } = useErrorSheet();
     const [name, setName] = useState("");
     const [slug, setSlug] = useState("");
     const [ratePerCup, setRatePerCup] = useState(0);
@@ -28,7 +30,7 @@ export default function AddCommissionTypePage() {
             });
             router.back();
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to create");
+            showError(err);
         } finally {
             setSaving(false);
         }
@@ -63,6 +65,8 @@ export default function AddCommissionTypePage() {
                 onSubmit={handleSave}
                 disabled={!name || !slug}
                 isLoading={saving}
+                confirmTitle="Create commission type?"
+                confirmMessage="Staff can be assigned to it afterward from the staff pay page."
             />
         </div>
     );

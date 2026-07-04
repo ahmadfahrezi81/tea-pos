@@ -13,6 +13,7 @@ import { Textarea } from "../../_components/shared/Textarea";
 import { PhotoPicker } from "../../_components/shared/PhotoPicker";
 import { FormFooter } from "@/components/shared/FormFooter";
 import { useT } from "@/lib/hooks/useT";
+import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
 
 const TYPE_OPTIONS = SUPPLY_REQUEST_TYPES.map((t) => ({
     value: t,
@@ -26,6 +27,7 @@ export default function AddRequestPage() {
     const { create } = useSupplyRequests(selectedStoreId);
     const { upload } = useUpload();
     const t = useT();
+    const { showError } = useErrorSheet();
 
     const todayStr = useMemo(() => getTodayLocalStr(), []);
 
@@ -35,12 +37,10 @@ export default function AddRequestPage() {
     const [photoFile, setPhotoFile] = useState<File | null>(null);
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
     const handleSubmit = async () => {
         if (!selectedType || !selectedStoreId) return;
         setIsSubmitting(true);
-        setError(null);
         try {
             let photoUrl: string | undefined;
             if (photoFile) {
@@ -54,7 +54,7 @@ export default function AddRequestPage() {
             });
             router.back();
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to send request");
+            showError(err);
         } finally {
             setIsSubmitting(false);
         }
@@ -96,8 +96,6 @@ export default function AddRequestPage() {
                         onRemove={() => { setPhotoFile(null); setPhotoPreview(null); }}
                     />
                 </div>
-
-                {error && <p className="text-sm text-red-600">{error}</p>}
             </div>
 
             <FormFooter

@@ -9,6 +9,7 @@ import { TextInput } from "@tea-pos/ui/custom/TextInput";
 import { FormFooter } from "@/components/shared/FormFooter";
 import { Copy, Check, Search, X } from "lucide-react";
 import { useToast } from "@/lib/context/ToastContext";
+import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
 
 function EligibilityToggle({
     userId,
@@ -53,6 +54,7 @@ export default function EditClaimTypePage({ params }: { params: Promise<{ id: st
     const [isEnabled, setIsEnabled] = useState(true);
     const [search, setSearch] = useState("");
     const { showToast } = useToast();
+    const { showError } = useErrorSheet();
     const [copied, setCopied] = useState(false);
     const [pendingEligibility, setPendingEligibility] = useState<Record<string, string[]>>({});
     const [eligibilityOverrides, setEligibilityOverrides] = useState<Record<string, boolean>>({});
@@ -94,7 +96,7 @@ export default function EditClaimTypePage({ params }: { params: Promise<{ id: st
             );
             router.back();
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to save");
+            showError(err);
         } finally {
             setSaving(false);
         }
@@ -209,6 +211,8 @@ export default function EditClaimTypePage({ params }: { params: Promise<{ id: st
                 onSubmit={handleSave}
                 disabled={!name}
                 isLoading={saving}
+                confirmTitle="Save claim type?"
+                confirmMessage="This updates the claim type and any eligibility changes made below."
             />
         </div>
     );

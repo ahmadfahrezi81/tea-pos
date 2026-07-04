@@ -10,6 +10,7 @@ import { Drawer } from "vaul";
 import { X, ChevronRight } from "lucide-react";
 import type { PayrollUserInfoResponse } from "@tea-pos/features/payroll-user-info/schema";
 import { useT } from "@/lib/hooks/useT";
+import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
 
 function BankPickerDrawer({
     isOpen,
@@ -75,16 +76,15 @@ function EditForm({ info, update }: {
 }) {
     const router = useRouter();
     const t = useT();
+    const { showError } = useErrorSheet();
     const [bankName, setBankName] = useState(info?.bankName ?? "");
     const [bankAccountNumber, setBankAccountNumber] = useState(Number(info?.bankAccountNumber?.replace(/\D/g, "") || 0));
     const [bankAccountHolder, setBankAccountHolder] = useState(info?.bankAccountHolder ?? "");
     const [isBankPickerOpen, setIsBankPickerOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
     const handleSave = async () => {
         setIsSaving(true);
-        setError(null);
         try {
             await update({
                 bankName: bankName.trim() || undefined,
@@ -93,7 +93,7 @@ function EditForm({ info, update }: {
             });
             router.back();
         } catch (err) {
-            setError(err instanceof Error ? err.message : t("account.failedToSave"));
+            showError(err);
         } finally {
             setIsSaving(false);
         }
@@ -134,7 +134,6 @@ function EditForm({ info, update }: {
                             />
                         </div>
                     </div>
-                    {error && <p className="text-sm text-red-500">{error}</p>}
                 </div>
 
                 <button

@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { usePayouts } from "@/lib/hooks/payroll/usePayroll";
 import { useTenantUsers } from "@/lib/hooks/users/useTenantUsers";
+import { useAllPayrollUserInfos } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
 import { parseISO, format, getISOWeek, startOfMonth, endOfMonth } from "date-fns";
@@ -11,9 +12,12 @@ import Image from "next/image";
 import { getCurrentLocalMonth } from "@tea-pos/utils/time";
 import type { PayoutResponse } from "@tea-pos/features/payroll/schema";
 
+const NON_SELLER_SLUG = "SELLER_0";
+
 const STATUS_STYLE: Record<string, string> = {
     pending: "bg-yellow-100 text-yellow-700",
     paid: "bg-green-100 text-green-700",
+    needs_review: "bg-orange-100 text-orange-700",
 };
 
 type StatusFilter = "all" | "ongoing" | "paid" | "needs_review";
@@ -30,11 +34,15 @@ function FilterDrawer({
     onClose,
     statusFilter,
     onStatusFilterChange,
+    showNonSellers,
+    onShowNonSellersChange,
 }: {
     isOpen: boolean;
     onClose: () => void;
     statusFilter: StatusFilter;
     onStatusFilterChange: (v: StatusFilter) => void;
+    showNonSellers: boolean;
+    onShowNonSellersChange: (v: boolean) => void;
 }) {
     if (!isOpen) return null;
     return (
@@ -50,7 +58,7 @@ function FilterDrawer({
                     </button>
                 </div>
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Status</p>
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-1 mb-5">
                     {(Object.entries(STATUS_FILTER_LABELS) as [StatusFilter, string][]).map(([value, label]) => (
                         <button
                             key={value}
@@ -64,6 +72,19 @@ function FilterDrawer({
                         </button>
                     ))}
                 </div>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Staff</p>
+                <button
+                    onClick={() => onShowNonSellersChange(!showNonSellers)}
+                    className="w-full flex items-center justify-between px-3 py-3 rounded-xl active:bg-gray-50 text-left"
+                >
+                    <div>
+                        <p className={`text-[15px] font-medium ${showNonSellers ? "text-brand" : "text-gray-800"}`}>
+                            Show non-sellers
+                        </p>
+                        <p className="text-xs text-gray-400">Staff with no commission rate ({NON_SELLER_SLUG})</p>
+                    </div>
+                    {showNonSellers && <Check size={16} className="text-brand shrink-0" />}
+                </button>
             </div>
         </div>
     );
@@ -75,13 +96,21 @@ export default function StaffPayoutsPage() {
     const [query, setQuery] = useState("");
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+    const [showNonSellers, setShowNonSellers] = useState(false);
 
     const { payouts, isLoading } = usePayouts();
     const { users } = useTenantUsers();
+    const { infos } = useAllPayrollUserInfos();
 
     const userById = Object.fromEntries(users.map((u) => [u.id, u]));
+    const infoByUserId = Object.fromEntries(infos.map((i) => [i.userId, i]));
     const monthStart = startOfMonth(parseISO(`${selectedMonth}-01`));
     const monthEnd = endOfMonth(monthStart);
+
+    const isNonSeller = (userId: string) => {
+        const info = infoByUserId[userId];
+        return info?.commissionConfigSlug === NON_SELLER_SLUG || (info?.ratePerCup ?? 0) === 0;
+    };
 
     const filtered = useMemo(() => {
         const q = query.trim().toLowerCase();
@@ -94,6 +123,8 @@ export default function StaffPayoutsPage() {
             if (statusFilter === "paid" && p.status !== "paid") return false;
             if (statusFilter === "needs_review" && !((p.pendingCount ?? 0) > 0)) return false;
 
+            if (!showNonSellers && isNonSeller(p.userId)) return false;
+
             if (q) {
                 const user = userById[p.userId];
                 const name = (user?.fullName ?? "").toLowerCase();
@@ -102,18 +133,19 @@ export default function StaffPayoutsPage() {
 
             return true;
         });
-    }, [payouts, selectedMonth, monthStart, monthEnd, statusFilter, query, userById]);
+    }, [payouts, selectedMonth, monthStart, monthEnd, statusFilter, showNonSellers, query, userById, infoByUserId]);
 
     const pending = filtered.filter((p) => p.status === "pending").sort((a, b) => (b.pendingCount ?? 0) - (a.pendingCount ?? 0) || b.startDate.localeCompare(a.startDate));
     const done = filtered.filter((p) => p.status !== "pending").sort((a, b) => b.startDate.localeCompare(a.startDate));
 
-    const activeFilterCount = statusFilter !== "all" ? 1 : 0;
+    const activeFilterCount = (statusFilter !== "all" ? 1 : 0) + (showNonSellers ? 1 : 0);
 
     function renderCard(payout: PayoutResponse) {
         const user = userById[payout.userId];
         const weekStart = getISOWeek(parseISO(payout.startDate));
         const weekEnd = getISOWeek(parseISO(payout.endDate));
         const sameWeek = weekStart === weekEnd;
+        const needsReview = payout.status === "pending" && (payout.pendingCount ?? 0) > 0;
 
         return (
             <button
@@ -131,8 +163,8 @@ export default function StaffPayoutsPage() {
                         </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                        <span className={`text-sm font-medium px-2.5 py-0.5 rounded-full ${STATUS_STYLE[payout.status] ?? STATUS_STYLE.pending}`}>
-                            {payout.status === "pending" ? "Ongoing" : `Paid${payout.paidAt ? ` · ${format(new Date(payout.paidAt), "d MMM")}` : ""}`}
+                        <span className={`text-sm font-medium px-2.5 py-0.5 rounded-full ${needsReview ? STATUS_STYLE.needs_review : (STATUS_STYLE[payout.status] ?? STATUS_STYLE.pending)}`}>
+                            {needsReview ? "Needs Review" : payout.status === "pending" ? "Ongoing" : `Paid${payout.paidAt ? ` · ${format(new Date(payout.paidAt), "d MMM")}` : ""}`}
                         </span>
                         <ArrowUpRight size={18} className="text-gray-400" />
                     </div>
@@ -249,6 +281,8 @@ export default function StaffPayoutsPage() {
                 onClose={() => setIsFilterOpen(false)}
                 statusFilter={statusFilter}
                 onStatusFilterChange={(v) => { setStatusFilter(v); setIsFilterOpen(false); }}
+                showNonSellers={showNonSellers}
+                onShowNonSellersChange={setShowNonSellers}
             />
         </div>
     );

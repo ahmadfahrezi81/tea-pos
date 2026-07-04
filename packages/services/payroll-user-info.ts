@@ -7,11 +7,23 @@ export async function listPayrollUserInfos(
 ) {
     const { data, error } = await supabase
         .from("payroll_user_info")
-        .select("*")
+        .select("*, payroll_commission_configs(name, slug, rate_per_cup)")
         .eq("tenant_id", tenantId);
 
     if (error) throw error;
-    return (data ?? []).map((row) => toCamelKeys(row) as Record<string, unknown>);
+
+    return (data ?? []).map((row) => {
+        const { payroll_commission_configs: commissionConfig, ...rest } = row as Record<string, unknown> & {
+            payroll_commission_configs: { name: string; slug: string; rate_per_cup: number } | null;
+        };
+
+        return {
+            ...(toCamelKeys(rest) as Record<string, unknown>),
+            commissionConfigName: commissionConfig?.name ?? null,
+            commissionConfigSlug: commissionConfig?.slug ?? null,
+            ratePerCup: commissionConfig?.rate_per_cup ?? null,
+        } as Record<string, unknown>;
+    });
 }
 
 export async function getPayrollUserInfo(
