@@ -6,6 +6,7 @@ import { usePayrollClaimTypes } from "@/lib/hooks/payroll-claim-types/usePayroll
 import { TextInput } from "@tea-pos/ui/custom/TextInput";
 import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
 import { FormFooter } from "@/components/shared/FormFooter";
+import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
 
 const FREQUENCY_LABEL: Record<string, string> = {
     daily: "Daily",
@@ -17,6 +18,7 @@ const FREQUENCY_LABEL: Record<string, string> = {
 export default function AddClaimTypePage() {
     const router = useRouter();
     const { create } = usePayrollClaimTypes();
+    const { showError } = useErrorSheet();
     const [name, setName] = useState("");
     const [slug, setSlug] = useState("");
     const [frequency, setFrequency] = useState<"daily" | "weekly" | "monthly" | "one_time">("weekly");
@@ -41,7 +43,7 @@ export default function AddClaimTypePage() {
             });
             router.back();
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to create");
+            showError(err);
         } finally {
             setSaving(false);
         }

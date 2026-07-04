@@ -8,6 +8,7 @@ import { useTenantUsers } from "@/lib/hooks/users/useTenantUsers";
 import { FormFooter } from "@/components/shared/FormFooter";
 import { Check, UserCircle } from "lucide-react";
 import Image from "next/image";
+import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
 
 export default function StaffPayrollInfoPage({ params }: { params: Promise<{ userId: string }> }) {
     const { userId } = use(params);
@@ -15,12 +16,12 @@ export default function StaffPayrollInfoPage({ params }: { params: Promise<{ use
     const { users } = useTenantUsers();
     const { info, isLoading: infoLoading, update } = usePayrollUserInfo(userId);
     const { commissionTypes, isLoading: typesLoading } = usePayrollCommissionTypes();
+    const { showError } = useErrorSheet();
 
     const user = users.find((u) => u.id === userId);
 
     const [selectedTypeId, setSelectedTypeId] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (info) {
@@ -30,12 +31,11 @@ export default function StaffPayrollInfoPage({ params }: { params: Promise<{ use
 
     const handleSave = async () => {
         setSaving(true);
-        setError(null);
         try {
             await update({ commissionConfigId: selectedTypeId ?? undefined });
             router.back();
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to save");
+            showError(err);
         } finally {
             setSaving(false);
         }
@@ -51,6 +51,8 @@ export default function StaffPayrollInfoPage({ params }: { params: Promise<{ use
             </div>
         );
     }
+
+    if (!user) return <p className="p-4 text-sm text-gray-400">Staff member not found.</p>;
 
     const enabledTypes = commissionTypes.filter((t) => t.isEnabled);
     const hasBankInfo = info?.bankName || info?.bankAccountNumber;
@@ -146,8 +148,6 @@ export default function StaffPayrollInfoPage({ params }: { params: Promise<{ use
                     )}
                 </div>
             </div>
-
-            {error && <p className="text-sm text-red-500 px-1">{error}</p>}
 
             <FormFooter
                 label="Save Changes"

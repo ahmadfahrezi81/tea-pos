@@ -8,6 +8,7 @@ import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
 import { FormFooter } from "@/components/shared/FormFooter";
 import { Copy, Check } from "lucide-react";
 import { useToast } from "@/lib/context/ToastContext";
+import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
 
 export default function EditCommissionTypePage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
@@ -15,6 +16,7 @@ export default function EditCommissionTypePage({ params }: { params: Promise<{ i
     const { commissionTypes, isLoading, update } = usePayrollCommissionTypes();
     const type = commissionTypes.find((t) => t.id === id);
     const { showToast } = useToast();
+    const { showError } = useErrorSheet();
 
     const [name, setName] = useState("");
     const [isEnabled, setIsEnabled] = useState(true);
@@ -39,7 +41,7 @@ export default function EditCommissionTypePage({ params }: { params: Promise<{ i
             await update(id, { name: name.trim(), isEnabled, ratePerCup });
             router.back();
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to save");
+            showError(err);
         } finally {
             setSaving(false);
         }

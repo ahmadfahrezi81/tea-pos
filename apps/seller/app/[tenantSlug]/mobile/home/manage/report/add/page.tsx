@@ -16,6 +16,7 @@ import { Textarea } from "../../_components/shared/Textarea";
 import { PhotoPicker } from "../../_components/shared/PhotoPicker";
 import { FormFooter } from "@/components/shared/FormFooter";
 import { useT } from "@/lib/hooks/useT";
+import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
 
 const TYPE_OPTIONS = INCIDENT_CATEGORIES.map((c) => ({
     value: c,
@@ -29,6 +30,7 @@ export default function AddReportPage() {
     const { create } = useIncidentReports(selectedStoreId);
     const { upload } = useUpload();
     const t = useT();
+    const { showError } = useErrorSheet();
 
     const todayStr = useMemo(() => getTodayLocalStr(), []);
 
@@ -38,7 +40,6 @@ export default function AddReportPage() {
     const [photoFile, setPhotoFile] = useState<File | null>(null);
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
     const resolvedType = selectedType === "other" ? customType.trim() : selectedType;
     const isValid = !!resolvedType && notes.trim().length > 0;
@@ -46,7 +47,6 @@ export default function AddReportPage() {
     const handleSubmit = async () => {
         if (!isValid || !selectedStoreId) return;
         setIsSubmitting(true);
-        setError(null);
         try {
             let photoUrl: string | undefined;
             if (photoFile) {
@@ -60,7 +60,7 @@ export default function AddReportPage() {
             });
             router.back();
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to submit report");
+            showError(err);
         } finally {
             setIsSubmitting(false);
         }
@@ -108,8 +108,6 @@ export default function AddReportPage() {
                         onRemove={() => { setPhotoFile(null); setPhotoPreview(null); }}
                     />
                 </div>
-
-                {error && <p className="text-sm text-red-600">{error}</p>}
             </div>
 
             <FormFooter

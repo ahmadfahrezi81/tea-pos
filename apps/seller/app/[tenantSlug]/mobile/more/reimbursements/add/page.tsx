@@ -12,6 +12,7 @@ import { SelectInput } from "../../../home/manage/_components/shared/SelectInput
 import { Textarea } from "../../../home/manage/_components/shared/Textarea";
 import { PhotoPicker } from "../../../home/manage/_components/shared/PhotoPicker";
 import { FormFooter } from "@/components/shared/FormFooter";
+import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
 import { format, parseISO } from "date-fns";
 
 function getLocalToday() {
@@ -26,6 +27,7 @@ export default function AddClaimPage() {
     const { create } = usePayrollClaims();
     const { upload } = useUpload();
     const { info, isLoading: infoLoading } = usePayrollUserInfo();
+    const { showError } = useErrorSheet();
 
     const window = info
         ? getPayWindowBounds(getLocalToday(), info.payFrequency ?? "bi_weekly")
@@ -40,7 +42,6 @@ export default function AddClaimPage() {
     const [photoFile, setPhotoFile] = useState<File | null>(null);
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
     const selectedType = types.find((type: any) => type.id === selectedTypeId);
     const isWeekly = selectedType?.frequency === "weekly";
@@ -59,7 +60,6 @@ export default function AddClaimPage() {
     const handleSubmit = async () => {
         if (!isValid || !user) return;
         setIsSubmitting(true);
-        setError(null);
         try {
             let photoUrl: string | undefined;
             if (photoFile) {
@@ -68,7 +68,7 @@ export default function AddClaimPage() {
             await create({ claimConfigId: selectedTypeId, amount, date: effectiveDate, notes: notes.trim() || undefined, photoUrl });
             router.back();
         } catch (err) {
-            setError(err instanceof Error ? err.message : t("claims.failedToSubmit"));
+            showError(err);
         } finally {
             setIsSubmitting(false);
         }
@@ -162,8 +162,6 @@ export default function AddClaimPage() {
                         />
                     </div>
                 </>}
-
-                {error && <p className="text-sm text-red-600">{error}</p>}
             </div>
 
             <FormFooter

@@ -26,6 +26,7 @@ import { useFlags } from "@/lib/context/FlagsContext";
 import { getTodayLocalStr, getCurrentLocalMonth } from "@tea-pos/utils/time";
 import { useMobileFooterSlot } from "../../../components/MobileFooterSlotContext";
 import { useT } from "@/lib/hooks/useT";
+import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
 
 // ============================================================================
 // CONSTANTS
@@ -46,6 +47,7 @@ export default function ManageCloseDayPage() {
     const { selectedStoreId, selectedStore } = useStore();
     const { mutate: mutateSession } = useSession(selectedStoreId);
     const { showToast } = useToast();
+    const { showError } = useErrorSheet();
     const { flags: { isSkipManagePhotosEnabled: skipManagePhotos } } = useFlags();
     const t = useT();
 
@@ -126,7 +128,6 @@ export default function ManageCloseDayPage() {
 
     const [isUploading, setIsUploading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
     const [photos, setPhotos] = useState<SlottedPhoto[]>([]);
     const [quantities, setQuantities] = useState<
@@ -203,8 +204,6 @@ export default function ManageCloseDayPage() {
     }, [currentStep, goToStep]);
 
     const handleNext = useCallback(async () => {
-        setError(null);
-
         // Refresh summary before moving to review step to ensure expectedCash is fresh
         if (currentStep === PHOTO_STEP_COUNT - 1 && summaryId) {
             await mutate();
@@ -235,7 +234,7 @@ export default function ManageCloseDayPage() {
                         return next;
                     });
                 } catch (err) {
-                    setError(err instanceof Error ? err.message : "Failed to upload photo");
+                    showError(err);
                     setIsUploading(false);
                     return;
                 }
@@ -251,7 +250,7 @@ export default function ManageCloseDayPage() {
                         return next;
                     });
                 } catch (err) {
-                    setError(err instanceof Error ? err.message : "Failed to update quantity");
+                    showError(err);
                     setIsUploading(false);
                     return;
                 }
@@ -276,12 +275,12 @@ export default function ManageCloseDayPage() {
         getSlotPhoto,
         getSavedSlotPhoto,
         photoSlots,
+        showError,
     ]);
 
     const handleConfirm = useCallback(async () => {
         if (!summaryId || !summary) return;
         setIsSubmitting(true);
-        setError(null);
         try {
             // Refresh summary one more time before final submission to ensure expectedCash is accurate
             await mutate();
@@ -294,12 +293,11 @@ export default function ManageCloseDayPage() {
             showToast("Day closed successfully!", "success");
             navigation.push(url(paramSummaryId ? "/mobile/analytics" : "/mobile/home/manage"));
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to close day");
-            showToast(err instanceof Error ? err.message : "Failed to close day", "error");
+            showError(err);
         } finally {
             setIsSubmitting(false);
         }
-    }, [summaryId, summary, actualCash, updateSummary, url, STEP_KEY, paramSummaryId, mutate, showToast]);
+    }, [summaryId, summary, actualCash, updateSummary, url, STEP_KEY, paramSummaryId, mutate, showToast, showError]);
 
     const handleSavedPhotoDelete = useCallback(
         async (id: string) => {
@@ -439,13 +437,6 @@ export default function ManageCloseDayPage() {
                     />
                 )}
             </div>
-
-            {error && (
-                <div className="fixed bottom-28 left-4 right-4 bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700 text-center">
-                    {error}
-                </div>
-            )}
-
         </div>
     );
 }

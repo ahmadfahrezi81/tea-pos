@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/utils/logger";
+import { toApiError } from "@tea-pos/utils/errors";
 
 export function ok<T>(data: T, status = 200) {
     return NextResponse.json(data, { status });
@@ -22,8 +23,9 @@ export function forbidden(message = "Forbidden") {
 }
 
 export function handleError(route: string, error: unknown) {
-    logger.error(route, error);
-    const message = error instanceof Error ? error.message : "Internal server error";
-    const status = (error as { status?: number }).status ?? 500;
-    return err(message, status);
+    const apiError = toApiError(error, "Internal server error");
+    if (apiError.status >= 500) {
+        logger.error(`${route} → ${apiError.status}`, apiError);
+    }
+    return err(apiError.message, apiError.status);
 }

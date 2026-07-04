@@ -7,6 +7,7 @@ import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
 import { TextInput } from "@tea-pos/ui/custom/TextInput";
 import type { User, UpdateUserInput } from "@tea-pos/features/users/schema";
 import { useT } from "@/lib/hooks/useT";
+import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
 
 function stripPhonePrefix(phone: string | null): number {
     if (!phone) return 0;
@@ -24,17 +25,16 @@ function splitFullName(fullName: string) {
 function EditForm({ user, update }: { user: User; update: (input: UpdateUserInput) => Promise<User> }) {
     const router = useRouter();
     const t = useT();
+    const { showError } = useErrorSheet();
     const { firstName: initFirst, lastName: initLast } = splitFullName(user.fullName);
     const [firstName, setFirstName] = useState(initFirst);
     const [lastName, setLastName] = useState(initLast);
     const [phoneDigits, setPhoneDigits] = useState(stripPhonePrefix(user.phoneNumber));
 
     const [isSaving, setIsSaving] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
     const handleSave = async () => {
         setIsSaving(true);
-        setError(null);
         try {
             const fullName = [firstName.trim(), lastName.trim()].filter(Boolean).join(" ");
             await update({
@@ -43,7 +43,7 @@ function EditForm({ user, update }: { user: User; update: (input: UpdateUserInpu
             });
             router.back();
         } catch (err) {
-            setError(err instanceof Error ? err.message : t("account.failedToSave"));
+            showError(err);
         } finally {
             setIsSaving(false);
         }
@@ -70,7 +70,6 @@ function EditForm({ user, update }: { user: User; update: (input: UpdateUserInpu
                         placeholder="812 345 6789"
                     />
                 </div>
-                {error && <p className="text-sm text-red-500">{error}</p>}
             </div>
 
             <button
