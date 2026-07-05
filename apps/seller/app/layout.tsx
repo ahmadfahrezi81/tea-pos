@@ -5,7 +5,6 @@ import { SWRConfig } from "swr";
 import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "@/lib/context/AuthContext";
 import { LanguageProvider } from "@/lib/context/LanguageContext";
-import { FeaturesProvider } from "@/lib/context/features-provider";
 import type { Locale } from "@tea-pos/utils/translations";
 
 export const viewport: Viewport = {
@@ -60,14 +59,12 @@ export default async function RootLayout({
                 <SWRConfig
                     value={{ dedupingInterval: 5000, revalidateOnFocus: false, errorRetryCount: 3 }}
                 >
-                    <FeaturesProvider>
-                        <AuthProvider initialUser={initialUser}>
-                            <LanguageProvider initialLocale={initialLocale}>
-                                {children}
-                                <Analytics />
-                            </LanguageProvider>
-                        </AuthProvider>
-                    </FeaturesProvider>
+                    <AuthProvider initialUser={initialUser}>
+                        <LanguageProvider initialLocale={initialLocale}>
+                            {children}
+                            <Analytics />
+                        </LanguageProvider>
+                    </AuthProvider>
                 </SWRConfig>
             </body>
         </html>

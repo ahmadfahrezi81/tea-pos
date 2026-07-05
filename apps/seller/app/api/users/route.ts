@@ -1,24 +1,15 @@
 import { getServiceClient } from "@/lib/supabase/service";
 import { getRequestUser } from "@/lib/auth/get-request-user";
 import { UserResponse, UpdateUserInput } from "@tea-pos/features/users/schema";
-import { getUser, listTenantUsers, updateUser } from "@tea-pos/services/users";
-import { getCurrentTenantId } from "@tea-pos/utils/server-config/tenant";
+import { getUser, updateUser } from "@tea-pos/services/users";
 import { NextRequest } from "next/server";
-import { ok, badRequest, unauthorized, forbidden, handleError } from "@/lib/api/response";
+import { ok, badRequest, unauthorized, handleError } from "@/lib/api/response";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
     try {
         const user = await getRequestUser();
         if (!user) return unauthorized();
         const supabase = getServiceClient();
-
-        const { searchParams } = new URL(request.url);
-        if (searchParams.get("all") === "true") {
-            if (user.role !== "ADMIN") return forbidden();
-            const tenantId = await getCurrentTenantId();
-            const users = await listTenantUsers(supabase, { tenantId });
-            return ok({ users });
-        }
 
         const data = await getUser(supabase, { userId: user.id });
         return ok(UserResponse.parse(data));

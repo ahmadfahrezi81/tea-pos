@@ -4,11 +4,10 @@ import { NextRequest } from "next/server";
 import {
     CreatePayrollClaimInput,
     ListPayrollClaimsQuery,
-    ListAllPayrollClaimsQuery,
     PayrollClaimListResponse,
     PayrollClaimResponse,
 } from "@tea-pos/features/payroll-claims/schema";
-import { createPayrollClaim, listMyPayrollClaims, listAllPayrollClaims } from "@tea-pos/services/payroll-claims";
+import { createPayrollClaim, listMyPayrollClaims } from "@tea-pos/services/payroll-claims";
 import { ok, badRequest, unauthorized, handleError } from "@/lib/api/response";
 import { getRequestUser } from "@/lib/auth/get-request-user";
 
@@ -20,14 +19,6 @@ export async function GET(request: NextRequest) {
         const supabase = getServiceClient();
         const tenantId = await getCurrentTenantId();
         const searchParams = Object.fromEntries(new URL(request.url).searchParams);
-
-        if (user.role === "ADMIN" && searchParams.all === "true") {
-            const allQuery = ListAllPayrollClaimsQuery.safeParse(searchParams);
-            if (!allQuery.success) return badRequest("Invalid query parameters");
-            const claims = await listAllPayrollClaims(supabase, { tenantId, ...allQuery.data });
-            const parsed = PayrollClaimListResponse.safeParse({ claims });
-            return ok(parsed.success ? parsed.data : { claims });
-        }
 
         const query = ListPayrollClaimsQuery.safeParse(searchParams);
         if (!query.success) return badRequest("Invalid query parameters");
