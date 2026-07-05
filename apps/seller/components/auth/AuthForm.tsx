@@ -14,6 +14,7 @@ export default function AuthForm() {
             provider: "google",
             options: {
                 redirectTo: `${window.location.origin}/auth/callback`,
+                queryParams: { prompt: "select_account" },
             },
         });
         // No need to setIsLoading(false) — page will redirect

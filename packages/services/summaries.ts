@@ -98,24 +98,19 @@ export async function getSummaryUsers(
 
     const uniqueUserIds = [...cupsMap.keys()];
 
-    const [userRows, avatarEntries] = await Promise.all([
-        supabase.from("users").select("id, full_name").in("id", uniqueUserIds)
-            .then(({ data }) => data ?? []),
-        Promise.all(
-            uniqueUserIds.map(async (userId) => {
-                const { data } = await supabase.auth.admin.getUserById(userId);
-                return [userId, (data?.user?.user_metadata?.avatar_url as string | undefined) ?? null] as const;
-            }),
-        ),
-    ]);
+    const { data: userRows } = await supabase
+        .from("users")
+        .select("id, full_name, avatar_url")
+        .in("id", uniqueUserIds);
 
-    const nameMap = new Map((userRows as Array<{ id: string; full_name: string | null }>).map((u) => [u.id, u.full_name ?? null]));
-    const avatarMap = new Map(avatarEntries);
+    const userMap = new Map(
+        (userRows ?? []).map((u) => [u.id, { fullName: u.full_name ?? null, avatarUrl: u.avatar_url ?? null }]),
+    );
 
     return uniqueUserIds.map((userId) => ({
         userId,
-        userName: nameMap.get(userId) ?? null,
-        userAvatarUrl: avatarMap.get(userId) ?? null,
+        userName: userMap.get(userId)?.fullName ?? null,
+        userAvatarUrl: userMap.get(userId)?.avatarUrl ?? null,
         totalCups: cupsMap.get(userId) ?? 0,
     }));
 }

@@ -1,4 +1,5 @@
 import { getSSRClient } from "@/lib/supabase/ssr";
+import { getServiceClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -11,6 +12,15 @@ export async function GET(request: NextRequest) {
             await supabase.auth.exchangeCodeForSession(code);
 
         if (!error && data.user) {
+            const avatarUrl = (data.user.user_metadata?.avatar_url as string | undefined) ?? null;
+            if (avatarUrl) {
+                const { error: syncError } = await getServiceClient()
+                    .from("users")
+                    .update({ avatar_url: avatarUrl })
+                    .eq("id", data.user.id);
+                if (syncError) console.error("[auth/callback] avatar_url sync failed:", syncError);
+            }
+
             const { data: tenantAssignments } = await supabase
                 .from("user_tenant_assignments")
                 .select("tenant_id, tenants(slug)")

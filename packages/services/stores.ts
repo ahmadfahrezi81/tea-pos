@@ -13,13 +13,22 @@ export async function listUserStores(supabase: SupabaseClient, { tenantId, userI
 
     const storeIds = (assignments ?? []).map((a) => a.store_id);
 
-    const [{ data: stores, error: storesError }, { data: users, error: usersError }] = await Promise.all([
+    const [{ data: stores, error: storesError }, { data: tenantUsers, error: usersError }] = await Promise.all([
         supabase.from("stores").select("*").eq("tenant_id", tenantId).in("id", storeIds).order("name"),
-        supabase.from("users").select("id, full_name, email").order("full_name"),
+        supabase
+            .from("user_tenant_assignments")
+            .select("users(id, full_name, email)")
+            .eq("tenant_id", tenantId),
     ]);
 
     if (storesError) throw storesError;
     if (usersError) throw usersError;
+
+    type UserRow = { id: string; full_name: string; email: string };
+    const users = (tenantUsers ?? [])
+        .map((r) => r.users as unknown as UserRow | null)
+        .filter((u): u is UserRow => u !== null)
+        .sort((a, b) => a.full_name.localeCompare(b.full_name));
 
     const assignmentsByStore: Record<string, Array<{ user_id: string; is_default: boolean }>> = {};
     (assignments ?? []).forEach((a) => {
@@ -29,7 +38,7 @@ export async function listUserStores(supabase: SupabaseClient, { tenantId, userI
 
     return {
         stores: toCamelKeys(stores ?? []),
-        users: toCamelKeys(users ?? []),
+        users: toCamelKeys(users),
         assignments: toCamelKeys(assignmentsByStore),
     };
 }
