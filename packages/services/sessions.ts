@@ -43,19 +43,16 @@ export async function getStoreGateState(supabase: SupabaseClient, params: GetSto
 
     const { data: userRow } = await supabase
         .from("users")
-        .select("full_name")
+        .select("full_name, avatar_url")
         .eq("id", session.user_id)
         .single();
-
-    const { data: authUser } = await supabase.auth.admin.getUserById(session.user_id);
-    const avatarUrl = authUser?.user?.user_metadata?.avatar_url ?? null;
 
     return {
         gate: "open" as const,
         session: {
             ...toCamelKeys(session),
             userName: userRow?.full_name ?? null,
-            userAvatarUrl: avatarUrl,
+            userAvatarUrl: userRow?.avatar_url ?? null,
         },
     };
 }
@@ -361,17 +358,11 @@ export async function fetchSessionUsersForSummaries(
 
     const { data: userRows } = await supabase
         .from("users")
-        .select("id, full_name")
+        .select("id, full_name, avatar_url")
         .in("id", uniqueUserIds);
 
-    const nameMap = new Map((userRows ?? []).map((u: { id: string; full_name: string | null }) => [u.id, u.full_name ?? null]));
-
-    const avatarMap = new Map<string, string | null>();
-    await Promise.all(
-        uniqueUserIds.map(async (userId) => {
-            const { data: authUser } = await supabase.auth.admin.getUserById(userId);
-            avatarMap.set(userId, (authUser?.user?.user_metadata?.avatar_url as string | undefined) ?? null);
-        }),
+    const userMap = new Map(
+        (userRows ?? []).map((u) => [u.id, { fullName: u.full_name ?? null, avatarUrl: u.avatar_url ?? null }]),
     );
 
     const result: Record<string, Array<{ userId: string; userName: string | null; userAvatarUrl: string | null; totalCups: number | null }>> = {};
@@ -381,8 +372,8 @@ export async function fetchSessionUsersForSummaries(
         if (!result[daily_summary_id].some((u) => u.userId === user_id)) {
             result[daily_summary_id].push({
                 userId: user_id,
-                userName: nameMap.get(user_id) ?? null,
-                userAvatarUrl: avatarMap.get(user_id) ?? null,
+                userName: userMap.get(user_id)?.fullName ?? null,
+                userAvatarUrl: userMap.get(user_id)?.avatarUrl ?? null,
                 totalCups: cupsMap.get(`${daily_summary_id}:${user_id}`) ?? 0,
             });
         }
@@ -470,27 +461,19 @@ export async function listSessionsBySummary(
 
     const { data: userRows } = await supabase
         .from("users")
-        .select("id, full_name")
+        .select("id, full_name, avatar_url")
         .in("id", uniqueUserIds);
 
-    const nameMap = new Map(
-        (userRows ?? []).map((u: { id: string; full_name: string | null }) => [u.id, u.full_name ?? null]),
-    );
-
-    const avatarMap = new Map<string, string | null>();
-    await Promise.all(
-        uniqueUserIds.map(async (userId) => {
-            const { data: authUser } = await supabase.auth.admin.getUserById(userId);
-            avatarMap.set(userId, (authUser?.user?.user_metadata?.avatar_url as string | undefined) ?? null);
-        }),
+    const userMap = new Map(
+        (userRows ?? []).map((u) => [u.id, { fullName: u.full_name ?? null, avatarUrl: u.avatar_url ?? null }]),
     );
 
     return {
         sessions: sessions.map((s) => ({
             id: s.id,
             userId: s.user_id,
-            userName: nameMap.get(s.user_id) ?? null,
-            userAvatarUrl: avatarMap.get(s.user_id) ?? null,
+            userName: userMap.get(s.user_id)?.fullName ?? null,
+            userAvatarUrl: userMap.get(s.user_id)?.avatarUrl ?? null,
             startedAt: s.started_at,
             endedAt: s.ended_at ?? null,
             status: s.status as "active" | "ended",
