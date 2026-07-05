@@ -12,20 +12,15 @@ import type {
     ClaimableDatesResponse,
 } from "@tea-pos/features/payroll-claims/schema";
 
-interface UsePayrollClaimsOptions {
-    all?: boolean;
-}
-
-export function usePayrollClaims(options?: UsePayrollClaimsOptions) {
+export function usePayrollClaims() {
     const { user } = useAuth();
     const userId = user?.id;
-    const isAll = options?.all === true;
 
-    const key = isAll ? "payroll-claims-all" : userId ? `payroll-claims-${userId}` : null;
+    const key = userId ? `payroll-claims-${userId}` : null;
 
     const { data, error, mutate, isLoading } = useSWR<PayrollClaimListResponse>(
         key,
-        () => (isAll ? payrollClaimsApi.listAll() : payrollClaimsApi.list()),
+        () => payrollClaimsApi.list(),
         { revalidateOnFocus: false, dedupingInterval: 60000 },
     );
 

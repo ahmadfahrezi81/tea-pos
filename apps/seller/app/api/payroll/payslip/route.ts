@@ -19,12 +19,9 @@ export async function GET(request: NextRequest) {
         );
         if (!query.success) return badRequest("Invalid query parameters");
 
-        const targetUserId =
-            user.role === "ADMIN" && query.data.userId ? query.data.userId : user.id;
-
         const payslip = await getPayslip(supabase, {
             tenantId,
-            userId: targetUserId,
+            userId: user.id,
             payoutId: query.data.payoutId,
         });
         return ok(payslip);
