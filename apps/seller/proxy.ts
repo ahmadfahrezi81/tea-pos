@@ -54,6 +54,15 @@ function setTenantAccessCookie(response: NextResponse, key: string) {
     });
 }
 
+function setTenantIdCookie(response: NextResponse, slug: string, id: string) {
+    response.cookies.set("x-tenant-id", `${slug}:${id}`, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: TENANT_COOKIE_TTL,
+    });
+}
+
 const redirectTo = (path: string, req: NextRequest) =>
     NextResponse.redirect(new URL(path, req.url));
 
@@ -99,6 +108,15 @@ export async function proxy(request: NextRequest) {
     const tenantSlug = pathname.split("/").filter(Boolean)[0];
     const shouldResolveTenant = tenantSlug && !RESERVED_SLUGS.has(tenantSlug);
 
+    // Tenant slugs are immutable, so a cached slug:id pair never goes stale —
+    // skip the DB lookup entirely once the cookie already matches this slug.
+    const [cachedTenantSlug, cachedTenantId] =
+        request.cookies.get("x-tenant-id")?.value?.split(":") ?? [];
+    const tenantCacheHit =
+        shouldResolveTenant &&
+        cachedTenantSlug === tenantSlug &&
+        !!cachedTenantId;
+
     // ── Auth + tenant lookup in parallel ─────────────────────────────────────
     const [
         {
@@ -107,7 +125,7 @@ export async function proxy(request: NextRequest) {
         tenantResult,
     ] = await Promise.all([
         supabase.auth.getUser(),
-        shouldResolveTenant
+        shouldResolveTenant && !tenantCacheHit
             ? supabase
                   .from("tenants")
                   .select("id")
@@ -117,18 +135,14 @@ export async function proxy(request: NextRequest) {
     ]);
 
     // ── Tenant cookie ─────────────────────────────────────────────────────────
-    const tenantId =
-        tenantResult.data?.id ??
-        request.cookies.get("x-tenant-id")?.value ??
-        null;
+    const tenantId = tenantCacheHit
+        ? cachedTenantId
+        : (tenantResult.data?.id ?? null);
 
-    if (tenantResult.data?.id) {
-        response.cookies.set("x-tenant-id", tenantResult.data.id, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            maxAge: TENANT_COOKIE_TTL,
-        });
+    if (tenantCacheHit) {
+        setTenantIdCookie(response, tenantSlug, cachedTenantId);
+    } else if (tenantResult.data?.id) {
+        setTenantIdCookie(response, tenantSlug, tenantResult.data.id);
     } else if (!shouldResolveTenant) {
         response.cookies.delete("x-tenant-id");
     }
@@ -137,15 +151,17 @@ export async function proxy(request: NextRequest) {
     // Always fetch fresh from DB — role changes must take effect immediately.
     // No fallback: unknown or missing role = denied.
     let resolvedRole: string | null = null;
+    let resolvedStatus: string | null = null;
     if (user) {
         const avatarUrl = (user.user_metadata?.avatar_url as string) ?? "";
         const { data: profile } = await supabase
             .from("users")
-            .select("role, full_name, email, preferred_language")
+            .select("role, status, full_name, email, preferred_language")
             .eq("id", user.id)
             .single();
 
         resolvedRole = profile?.role ?? null;
+        resolvedStatus = profile?.status ?? null;
 
         if (resolvedRole) {
             setUserCookie(
@@ -206,6 +222,15 @@ export async function proxy(request: NextRequest) {
     // Role check — must pass before anything else, no exceptions
     if (!resolvedRole || !ALLOWED_ROLES.has(resolvedRole))
         return redirectTo("/unauthorized?reason=no-access", request);
+
+    // Account status — only "active" may use the app. Anything else
+    // (inactive/suspended/pending) is locked out immediately. Allowlist so a
+    // future status defaults to denied. Reason carries the status for messaging.
+    if (resolvedStatus !== "active")
+        return redirectTo(
+            `/unauthorized?reason=${resolvedStatus ?? "no-access"}&tenant=${tenantSlug}`,
+            request,
+        );
 
     // ── Tenant access cache ───────────────────────────────────────────────────
     // Role check already passed above — safe to use cache now

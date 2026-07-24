@@ -57,18 +57,24 @@ import { cookies } from "next/headers";
  *
  * For API routes: Reads from cookie set by middleware
  * For Server Components: Reads from cookie set by layout
+ *
+ * The seller app's cookie value is `${tenantSlug}:${tenantId}` (added so
+ * proxy.ts can skip a DB lookup when the slug already matches); backoffice
+ * still writes a bare tenant id. Since UUIDs never contain a colon, splitting
+ * on the first one and taking what's after it is safe for both formats.
  */
 export async function getCurrentTenantId(): Promise<string> {
     const cookieStore = await cookies();
-    const tenantId = cookieStore.get("x-tenant-id")?.value;
+    const raw = cookieStore.get("x-tenant-id")?.value;
 
-    if (!tenantId) {
+    if (!raw) {
         throw new Error(
             "Tenant ID not found in session. Please ensure you are accessing the app through a valid tenant URL (e.g., /tealicious/...)"
         );
     }
 
-    return tenantId;
+    const separatorIndex = raw.indexOf(":");
+    return separatorIndex === -1 ? raw : raw.slice(separatorIndex + 1);
 }
 
 /**
