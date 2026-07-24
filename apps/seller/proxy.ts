@@ -151,15 +151,17 @@ export async function proxy(request: NextRequest) {
     // Always fetch fresh from DB — role changes must take effect immediately.
     // No fallback: unknown or missing role = denied.
     let resolvedRole: string | null = null;
+    let resolvedStatus: string | null = null;
     if (user) {
         const avatarUrl = (user.user_metadata?.avatar_url as string) ?? "";
         const { data: profile } = await supabase
             .from("users")
-            .select("role, full_name, email, preferred_language")
+            .select("role, status, full_name, email, preferred_language")
             .eq("id", user.id)
             .single();
 
         resolvedRole = profile?.role ?? null;
+        resolvedStatus = profile?.status ?? null;
 
         if (resolvedRole) {
             setUserCookie(
@@ -220,6 +222,15 @@ export async function proxy(request: NextRequest) {
     // Role check — must pass before anything else, no exceptions
     if (!resolvedRole || !ALLOWED_ROLES.has(resolvedRole))
         return redirectTo("/unauthorized?reason=no-access", request);
+
+    // Account status — only "active" may use the app. Anything else
+    // (inactive/suspended/pending) is locked out immediately. Allowlist so a
+    // future status defaults to denied. Reason carries the status for messaging.
+    if (resolvedStatus !== "active")
+        return redirectTo(
+            `/unauthorized?reason=${resolvedStatus ?? "no-access"}&tenant=${tenantSlug}`,
+            request,
+        );
 
     // ── Tenant access cache ───────────────────────────────────────────────────
     // Role check already passed above — safe to use cache now

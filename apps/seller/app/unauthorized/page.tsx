@@ -13,13 +13,27 @@ type User = {
     role: string;
 };
 
+// Reasons where the user has no valid destination in this app — never
+// auto-redirect them back to a tenant (it would loop) and hide the dashboard
+// button. Covers access denial and locked account statuses.
+const TERMINAL_REASONS = new Set([
+    "no-access",
+    "suspended",
+    "inactive",
+    "pending",
+]);
+
 export default function UnauthorizedPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const reason = searchParams.get("reason");
 
     const [user, setUser] = useState<User | null>(null);
-    const [validTenantSlug, setValidTenantSlug] = useState<string | null>(null);
+    // Seeded from the ?tenant= slug the proxy passes when it locks someone out,
+    // so "Try again" has a destination without relying on a network call.
+    const [validTenantSlug, setValidTenantSlug] = useState<string | null>(
+        searchParams.get("tenant"),
+    );
     const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     useEffect(() => {
@@ -49,8 +63,10 @@ export default function UnauthorizedPage() {
                     if (data.tenants && data.tenants.length > 0) {
                         setValidTenantSlug(data.tenants[0].slug);
 
-                        // Auto-redirect if user has valid tenant and not "no-access"
-                        if (reason !== "no-access") {
+                        // Auto-redirect users who have a valid destination.
+                        // Terminal reasons (access denied, locked account) must
+                        // NOT redirect — the proxy would just bounce them back.
+                        if (!TERMINAL_REASONS.has(reason || "")) {
                             router.push(`/${data.tenants[0].slug}/mobile`);
                         }
                     }
@@ -64,10 +80,7 @@ export default function UnauthorizedPage() {
         checkValidTenant();
     }, [reason, router]);
 
-    const handleLogout = async () => {
-        const confirmed = window.confirm("Are you sure you want to log out?");
-        if (!confirmed) return;
-
+    const handleSignOut = async () => {
         setIsLoggingOut(true);
 
         try {
@@ -104,6 +117,21 @@ export default function UnauthorizedPage() {
             description:
                 "You don't have permission to access this tenant. Please contact your administrator.",
         },
+        suspended: {
+            title: "Account Suspended",
+            description:
+                "Your account has been suspended. Please contact your administrator to restore access.",
+        },
+        inactive: {
+            title: "Account Deactivated",
+            description:
+                "Your account is no longer active. Please contact your administrator if you believe this is a mistake.",
+        },
+        pending: {
+            title: "Account Pending",
+            description:
+                "Your account isn't active yet. Please complete setup or contact your administrator.",
+        },
     };
 
     const message = messages[reason || ""] || {
@@ -111,24 +139,44 @@ export default function UnauthorizedPage() {
         description: "You don't have access to this resource.",
     };
 
+    // A locked account (suspended/inactive/pending/no-access) has no valid
+    // destination — show a lock, and its only real action is signing out.
+    const isTerminal = TERMINAL_REASONS.has(reason || "");
+    // Serious lock-outs read red; benign/config states read amber.
+    const isSevere = reason === "suspended" || reason === "no-access";
+    const accentBg = isSevere ? "bg-red-100" : "bg-amber-100";
+    const accentText = isSevere ? "text-red-600" : "text-amber-600";
+
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
             <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
                 {/* Icon */}
                 <div className="flex justify-center mb-4">
-                    <div className="rounded-full bg-red-100 p-3">
+                    <div className={`rounded-full ${accentBg} p-3`}>
                         <svg
-                            className="h-8 w-8 text-red-600"
+                            className={`h-8 w-8 ${accentText}`}
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
+                            aria-hidden="true"
                         >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                            />
+                            {isTerminal ? (
+                                // Lock — access restricted, not an error
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 0h10.5a2.25 2.25 0 012.25 2.25v6.75a2.25 2.25 0 01-2.25 2.25H6.75a2.25 2.25 0 01-2.25-2.25v-6.75a2.25 2.25 0 012.25-2.25z"
+                                />
+                            ) : (
+                                // Warning — configuration / setup issue
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                                />
+                            )}
                         </svg>
                     </div>
                 </div>
@@ -158,40 +206,48 @@ export default function UnauthorizedPage() {
 
                 {/* Actions */}
                 <div className="space-y-3">
-                    {validTenantSlug && (
-                        <Link
-                            href={`/${validTenantSlug}/mobile`}
-                            className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg text-center transition"
-                        >
-                            Go to My Dashboard
-                        </Link>
-                    )}
+                    {validTenantSlug &&
+                        (isTerminal ? (
+                            // Re-check access. A full navigation (not <Link>) forces
+                            // a fresh request through the proxy, so a reactivated
+                            // user gets back in without signing out and back in.
+                            <a
+                                href={`/${validTenantSlug}/mobile`}
+                                className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg text-center transition"
+                            >
+                                Try again
+                            </a>
+                        ) : (
+                            <Link
+                                href={`/${validTenantSlug}/mobile`}
+                                className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg text-center transition"
+                            >
+                                Go to My Dashboard
+                            </Link>
+                        ))}
 
+                    {/* Sign out is the primary action only when there's no
+                        other path above it; otherwise it's a calm secondary. */}
                     <button
-                        onClick={handleLogout}
+                        onClick={handleSignOut}
                         disabled={isLoggingOut}
-                        className="block w-full bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-medium py-2.5 px-4 rounded-lg text-center transition"
+                        className={
+                            validTenantSlug
+                                ? "block w-full bg-white hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-lg text-center border border-gray-300 transition"
+                                : "block w-full bg-gray-900 hover:bg-gray-800 disabled:bg-gray-400 text-white font-medium py-2.5 px-4 rounded-lg text-center transition"
+                        }
                     >
-                        {isLoggingOut ? "Logging out..." : "Log Out"}
+                        {isLoggingOut ? "Signing out..." : "Sign out"}
                     </button>
 
-                    <Link
-                        href="/login"
-                        className="block w-full bg-white hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-lg text-center border border-gray-300 transition"
-                    >
-                        Back to Login
-                    </Link>
-                </div>
-
-                {/* Help Text */}
-                <div className="mt-6 text-center text-sm text-gray-500">
-                    Need help?{" "}
-                    <a
-                        href="mailto:support@yourcompany.com"
-                        className="text-blue-600 hover:text-blue-700 font-medium"
-                    >
-                        Contact Support
-                    </a>
+                    {!isTerminal && (
+                        <Link
+                            href="/login"
+                            className="block w-full bg-white hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-lg text-center border border-gray-300 transition"
+                        >
+                            Back to Login
+                        </Link>
+                    )}
                 </div>
             </div>
         </div>
