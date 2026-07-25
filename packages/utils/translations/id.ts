@@ -69,6 +69,8 @@ export const id: DeepPartial<typeof en> = {
         dailySalesTitle: "Penjualan Harian",
         dailySalesSubtitle: "Penjualan Cups sepanjang bulan",
         cupsSoldLabel: "Cups Terjual",
+        teaWasteTitle: "Sisa Teh",
+        teaWasteSubtitle: "Liter terbuang saat tutup sepanjang bulan",
     },
     daily: {
         store: "Toko",

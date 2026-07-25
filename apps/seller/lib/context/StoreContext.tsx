@@ -63,8 +63,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const [isPickerOpen, setIsPickerOpen] = useState(false);
 
     const [hideInactiveStores, setHideInactiveStoresRaw] = useState<boolean>(() => {
-        if (typeof window === "undefined") return false;
-        return localStorage.getItem("hideInactiveStores") === "true";
+        if (typeof window === "undefined") return true;
+        // Default ON — demo/inactive stores hidden unless the user opted out.
+        const stored = localStorage.getItem("hideInactiveStores");
+        return stored === null ? true : stored === "true";
     });
 
     const setSelectedStoreId = (id: string) => {

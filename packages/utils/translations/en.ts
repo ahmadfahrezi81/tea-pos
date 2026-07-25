@@ -66,6 +66,8 @@ export const en = {
         dailySalesTitle: "Daily Sales",
         dailySalesSubtitle: "Cup sales throughout the month",
         cupsSoldLabel: "Cups Sold",
+        teaWasteTitle: "Tea Waste",
+        teaWasteSubtitle: "Litres wasted at closing throughout the month",
     },
     daily: {
         store: "Store",
