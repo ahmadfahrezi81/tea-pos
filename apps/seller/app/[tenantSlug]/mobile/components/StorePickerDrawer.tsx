@@ -1,6 +1,6 @@
 "use client";
 import { Drawer } from "vaul";
-import { Check, X } from "lucide-react";
+import { Check, X, Eye, EyeOff } from "lucide-react";
 import { useStore } from "@/lib/context/StoreContext";
 
 export function StorePickerDrawer() {
@@ -10,9 +10,18 @@ export function StorePickerDrawer() {
         assignedStores,
         isPickerOpen,
         setIsPickerOpen,
+        hideInactiveStores,
+        setHideInactiveStores,
     } = useStore();
 
     if (assignedStores.length === 0) return null;
+
+    const hasHideableStores = assignedStores.some(
+        (s) => s.status === "fake" || s.status === "inactive",
+    );
+    const visibleStores = hideInactiveStores
+        ? assignedStores.filter((s) => s.status === "active")
+        : assignedStores;
 
     return (
         <Drawer.Root
@@ -36,9 +45,35 @@ export function StorePickerDrawer() {
                     </div>
 
                     <div className="flex items-center justify-between mb-4">
-                        <Drawer.Title className="text-xl font-bold text-gray-900">
-                            Select Store
-                        </Drawer.Title>
+                        <div className="flex items-center gap-3">
+                            <Drawer.Title className="text-xl font-bold text-gray-900">
+                                Select Store
+                            </Drawer.Title>
+                            {hasHideableStores && (
+                                <button
+                                    type="button"
+                                    role="switch"
+                                    aria-checked={hideInactiveStores}
+                                    aria-label="Hide demo and inactive stores"
+                                    onClick={() => setHideInactiveStores(!hideInactiveStores)}
+                                    className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
+                                        hideInactiveStores ? "bg-brand" : "bg-gray-300"
+                                    }`}
+                                >
+                                    <span
+                                        className={`inline-flex h-7 w-9 items-center justify-center rounded-full bg-white shadow transform transition-transform ${
+                                            hideInactiveStores ? "translate-x-[18px]" : "translate-x-0.5"
+                                        }`}
+                                    >
+                                        {hideInactiveStores ? (
+                                            <EyeOff size={16} className="text-brand" />
+                                        ) : (
+                                            <Eye size={16} className="text-gray-400" />
+                                        )}
+                                    </span>
+                                </button>
+                            )}
+                        </div>
                         <Drawer.Description className="sr-only">Select a store to manage</Drawer.Description>
                         <button
                             onClick={() => setIsPickerOpen(false)}
@@ -51,9 +86,9 @@ export function StorePickerDrawer() {
                     {/* <div className="h-px bg-gray-200 -mx-6 mb-3" /> */}
 
                     <div className="space-y-3">
-                        {assignedStores.map((store, index) => {
+                        {visibleStores.map((store, index) => {
                             const isSelected = store.id === selectedStoreId;
-                            const isLast = index === assignedStores.length - 1;
+                            const isLast = index === visibleStores.length - 1;
                             return (
                                 <button
                                     key={store.id}
