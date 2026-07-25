@@ -203,8 +203,8 @@ export const en = {
         viewCart: "View Cart",
     },
     chats: {
-        emptyTitle: "Your inbox is empty",
-        emptySubtitle: "Messages will appear here",
+        emptyTitle: "Chats are coming soon",
+        emptySubtitle: "This feature is still in development",
     },
     notifications: {
         title: "Notifications",

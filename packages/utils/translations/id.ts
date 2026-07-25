@@ -207,8 +207,8 @@ export const id: DeepPartial<typeof en> = {
         viewCart: "Keranjang",
     },
     chats: {
-        emptyTitle: "Kotak masuk kosong",
-        emptySubtitle: "Pesan akan muncul di sini",
+        emptyTitle: "Chat segera hadir",
+        emptySubtitle: "Fitur ini masih dalam pengembangan",
     },
     notifications: {
         title: "Notifikasi",
