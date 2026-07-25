@@ -69,6 +69,8 @@ export const id: DeepPartial<typeof en> = {
         dailySalesTitle: "Penjualan Harian",
         dailySalesSubtitle: "Penjualan Cups sepanjang bulan",
         cupsSoldLabel: "Cups Terjual",
+        teaWasteTitle: "Sisa Teh",
+        teaWasteSubtitle: "Liter terbuang saat tutup sepanjang bulan",
     },
     daily: {
         store: "Toko",
@@ -207,8 +209,8 @@ export const id: DeepPartial<typeof en> = {
         viewCart: "Keranjang",
     },
     chats: {
-        emptyTitle: "Kotak masuk kosong",
-        emptySubtitle: "Pesan akan muncul di sini",
+        emptyTitle: "Chat segera hadir",
+        emptySubtitle: "Fitur ini masih dalam pengembangan",
     },
     notifications: {
         title: "Notifikasi",

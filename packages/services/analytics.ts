@@ -29,33 +29,6 @@ function parseMonthRange(month: string) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function fetchAllOrders(supabase: SupabaseClient, storeId: string, tenantId: string, start: string, end: string): Promise<any[]> {
-    const pageSize = 1000;
-    let from = 0;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let all: any[] = [];
-
-    while (true) {
-        const { data, error } = await supabase
-            .from("store_orders")
-            .select(`id, created_at, store_order_items(quantity)`)
-            .eq("tenant_id", tenantId)
-            .eq("store_id", storeId)
-            .gte("created_at", start)
-            .lte("created_at", end)
-            .order("created_at", { ascending: true })
-            .range(from, from + pageSize - 1);
-
-        if (error) throw error;
-        if (!data || data.length === 0) break;
-        all = all.concat(data);
-        from += pageSize;
-    }
-
-    return all;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function fetchAllOrderItems(supabase: SupabaseClient, storeId: string, tenantId: string, start: string, end: string): Promise<any[]> {
     const pageSize = 1000;
     let from = 0;
@@ -90,21 +63,79 @@ function sumOrderItemCups(orderItems: any[]): number {
 
 export async function getDailySales(supabase: SupabaseClient, params: MonthSalesParams) {
     const { tenantId, storeId, month } = params;
-    const tz = params.tzOffset ?? Number(process.env.TIMEZONE_OFFSET ?? 7);
-    const { startDate, endDate } = parseMonthRange(month);
 
-    const orders = await fetchAllOrders(supabase, storeId, tenantId, startDate.toISOString(), endDate.toISOString());
+    // Read pre-aggregated per-day totals from daily summaries (≤31 rows)
+    // instead of paginating every order for the month — same source the
+    // mini chart uses, and the summary `date` is already the business date.
+    const [year, monthNum] = month.split("-").map((v) => parseInt(v, 10));
+    const startStr = `${month}-01`;
+    const nextMonthStr =
+        monthNum === 12
+            ? `${year + 1}-01-01`
+            : `${year}-${String(monthNum + 1).padStart(2, "0")}-01`;
 
-    const dailyData: Record<string, number> = {};
-    for (const order of orders) {
-        if (!order.created_at) continue;
-        const dateKey = new Date(new Date(order.created_at).getTime() + tz * 3600000).toISOString().split("T")[0];
-        if (!dailyData[dateKey]) dailyData[dateKey] = 0;
-        dailyData[dateKey] += sumOrderItemCups(order.store_order_items);
+    const { data, error } = await supabase
+        .from("store_daily_summaries")
+        .select("date, total_cups")
+        .eq("tenant_id", tenantId)
+        .eq("store_id", storeId)
+        .gte("date", startStr)
+        .lt("date", nextMonthStr)
+        .gt("total_cups", 0)
+        .order("date", { ascending: true });
+
+    if (error) throw error;
+
+    return (data ?? []).map((row) => ({ date: row.date, cups: row.total_cups ?? 0 }));
+}
+
+export async function getTeaWaste(supabase: SupabaseClient, params: MonthSalesParams) {
+    const { tenantId, storeId, month } = params;
+
+    const [year, monthNum] = month.split("-").map((v) => parseInt(v, 10));
+    const startStr = `${month}-01`;
+    const nextMonthStr =
+        monthNum === 12
+            ? `${year + 1}-01-01`
+            : `${year}-${String(monthNum + 1).padStart(2, "0")}-01`;
+
+    // Business date lives on the daily summary; map its id → date for the month.
+    const { data: summaries, error: summariesError } = await supabase
+        .from("store_daily_summaries")
+        .select("id, date")
+        .eq("tenant_id", tenantId)
+        .eq("store_id", storeId)
+        .gte("date", startStr)
+        .lt("date", nextMonthStr);
+
+    if (summariesError) throw summariesError;
+
+    const idToDate = new Map<string, string>();
+    for (const s of summaries ?? []) idToDate.set(s.id, s.date);
+    if (idToDate.size === 0) return [];
+
+    // closing:tea photos carry a { value, unit: "L" } quantity JSONB.
+    const { data: photos, error: photosError } = await supabase
+        .from("store_daily_summary_photos")
+        .select("daily_summary_id, quantity")
+        .eq("tenant_id", tenantId)
+        .eq("type", "closing:tea")
+        .in("daily_summary_id", [...idToDate.keys()]);
+
+    if (photosError) throw photosError;
+
+    const litersByDate: Record<string, number> = {};
+    for (const photo of photos ?? []) {
+        const date = photo.daily_summary_id ? idToDate.get(photo.daily_summary_id) : undefined;
+        if (!date) continue;
+        const quantity = photo.quantity as { value?: number } | null;
+        const value = typeof quantity?.value === "number" ? quantity.value : 0;
+        litersByDate[date] = (litersByDate[date] ?? 0) + value;
     }
 
-    return Object.entries(dailyData)
-        .map(([date, cups]) => ({ date, cups }))
+    return Object.entries(litersByDate)
+        .map(([date, liters]) => ({ date, liters }))
+        .filter((d) => d.liters > 0)
         .sort((a, b) => a.date.localeCompare(b.date));
 }
 

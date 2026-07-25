@@ -24,6 +24,12 @@ const ProductSalesChart = dynamic(() => import("./ProductSalesChart"), {
         <div className="h-48 animate-pulse bg-gray-100 rounded-xl" />
     ),
 });
+const TeaWasteChart = dynamic(() => import("./TeaWasteChart"), {
+    ssr: false,
+    loading: () => (
+        <div className="h-48 animate-pulse bg-gray-100 rounded-xl" />
+    ),
+});
 
 const formatMonthForInput = (date: Date) => {
     const year = date.getFullYear();
@@ -69,6 +75,7 @@ export default function MobileDailySales() {
                 storeId={selectedStoreId}
                 month={selectedMonth}
             />
+            <TeaWasteChart storeId={selectedStoreId} month={selectedMonth} />
         </div>
     );
 }

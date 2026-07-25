@@ -66,6 +66,8 @@ export const en = {
         dailySalesTitle: "Daily Sales",
         dailySalesSubtitle: "Cup sales throughout the month",
         cupsSoldLabel: "Cups Sold",
+        teaWasteTitle: "Tea Waste",
+        teaWasteSubtitle: "Litres wasted at closing throughout the month",
     },
     daily: {
         store: "Store",
@@ -203,8 +205,8 @@ export const en = {
         viewCart: "View Cart",
     },
     chats: {
-        emptyTitle: "Your inbox is empty",
-        emptySubtitle: "Messages will appear here",
+        emptyTitle: "Chats are coming soon",
+        emptySubtitle: "This feature is still in development",
     },
     notifications: {
         title: "Notifications",

@@ -77,6 +77,22 @@ export const DayOfWeekSalesQuery = z
     })
     .openapi({ title: "DayOfWeekSalesQuery" });
 
+export const TeaWasteQuery = z
+    .object({
+        storeId: UUIDSchema.openapi({
+            description: "Store ID to fetch tea waste for",
+            example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        }),
+        month: z
+            .string()
+            .regex(/^\d{4}-\d{2}$/)
+            .openapi({
+                description: "Month in YYYY-MM format",
+                example: "2025-10",
+            }),
+    })
+    .openapi({ title: "TeaWasteQuery" });
+
 // ============================================================================
 // ADMIN DASHBOARD QUERY SCHEMAS (NEW)
 // ============================================================================
@@ -213,6 +229,27 @@ export const DayOfWeekSalesResponse = z
     })
     .openapi({ title: "DayOfWeekSalesResponse" });
 
+export const TeaWasteDataPoint = z
+    .object({
+        date: z.string().openapi({
+            description: "Date in YYYY-MM-DD format",
+            example: "2025-10-15",
+        }),
+        liters: z.number().min(0).openapi({
+            description: "Litres of tea waste recorded at closing on this day",
+            example: 3.5,
+        }),
+    })
+    .openapi({ title: "TeaWasteDataPoint" });
+
+export const TeaWasteResponse = z
+    .object({
+        data: z.array(TeaWasteDataPoint).openapi({
+            description: "Array of daily tea waste data points",
+        }),
+    })
+    .openapi({ title: "TeaWasteResponse" });
+
 // ============================================================================
 // ADMIN DASHBOARD RESPONSE SCHEMAS (NEW)
 // ============================================================================
@@ -347,3 +384,7 @@ export type AdminStoreBreakdownResponse = z.infer<
 export type DayOfWeekSalesQuery = z.infer<typeof DayOfWeekSalesQuery>;
 export type DayOfWeekSalesDataPoint = z.infer<typeof DayOfWeekSalesDataPoint>;
 export type DayOfWeekSalesResponse = z.infer<typeof DayOfWeekSalesResponse>;
+
+export type TeaWasteQuery = z.infer<typeof TeaWasteQuery>;
+export type TeaWasteDataPoint = z.infer<typeof TeaWasteDataPoint>;
+export type TeaWasteResponse = z.infer<typeof TeaWasteResponse>;

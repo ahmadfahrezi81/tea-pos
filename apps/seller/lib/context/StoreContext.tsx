@@ -21,6 +21,8 @@ type StoreContextType = {
     stores: Store[];
     isPickerOpen: boolean;
     setIsPickerOpen: (v: boolean) => void;
+    hideInactiveStores: boolean;
+    setHideInactiveStores: (v: boolean) => void;
 };
 
 // ─── Context ──────────────────────────────────────────────────────────────────
@@ -60,9 +62,21 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
     const [isPickerOpen, setIsPickerOpen] = useState(false);
 
+    const [hideInactiveStores, setHideInactiveStoresRaw] = useState<boolean>(() => {
+        if (typeof window === "undefined") return true;
+        // Default ON — demo/inactive stores hidden unless the user opted out.
+        const stored = localStorage.getItem("hideInactiveStores");
+        return stored === null ? true : stored === "true";
+    });
+
     const setSelectedStoreId = (id: string) => {
         localStorage.setItem("selectedStoreId", id);
         setSelectedStoreIdRaw(id);
+    };
+
+    const setHideInactiveStores = (v: boolean) => {
+        localStorage.setItem("hideInactiveStores", String(v));
+        setHideInactiveStoresRaw(v);
     };
 
     // If stored ID doesn't match any known store, use default.
@@ -92,8 +106,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             stores,
             isPickerOpen,
             setIsPickerOpen,
+            hideInactiveStores,
+            setHideInactiveStores,
         }),
-        [resolvedStoreId, selectedStore, stores, isPickerOpen],
+        [resolvedStoreId, selectedStore, stores, isPickerOpen, hideInactiveStores],
     );
 
     return (

@@ -8,6 +8,7 @@ import { getPayWindowBounds, getExpectedPayoutDate } from "@tea-pos/utils/week";
 import { format, parseISO } from "date-fns";
 import { getTodayLocalStr } from "@tea-pos/utils/time";
 import CopyableField from "@/components/shared/CopyableField";
+import { CalendarClock } from "lucide-react";
 
 export function PayConfigCard() {
     const { info, isLoading } = usePayrollUserInfo();
@@ -38,24 +39,39 @@ export function PayConfigCard() {
     const rows = [
         { label: "Pay Frequency", value: FREQUENCY_LABELS[frequency] ?? frequency },
         { label: "Per Cup", value: info?.ratePerCup != null ? formatRupiah(info.ratePerCup) : "—" },
-        { label: "Next Expected Payout", value: format(parseISO(expectedPayout), "EEE, d MMM yyyy") },
     ];
 
     const slug = info?.commissionConfigSlug ?? null;
 
     return (
-        <div className="bg-white p-4 rounded-2xl space-y-2 text-sm">
-            {rows.map(({ label, value }) => (
-                <div key={label} className="flex justify-between items-center">
-                    <span className="text-gray-500">{label}</span>
-                    <span className="font-medium text-gray-800">{value}</span>
+        <div className="space-y-3">
+            {/* Next expected payout — its own section so pay date is unmistakable */}
+            <div className="bg-white p-3 rounded-2xl flex items-center gap-3">
+                <div className="w-11 h-11 rounded-xl bg-brand/10 flex items-center justify-center shrink-0">
+                    <CalendarClock size={24} className="text-brand" />
                 </div>
-            ))}
-            <div className="flex justify-between items-center">
-                <span className="text-gray-500">Commission Config</span>
-                <div className="flex items-center gap-1">
-                    <span className="font-medium text-gray-800">{slug ?? "—"}</span>
-                    {slug && <CopyableField label="Commission Config" value={slug} />}
+                <div className="min-w-0">
+                    <p className="text-xs font-medium text-gray-500">Next Expected Payout</p>
+                    <p className="text-lg font-bold text-gray-900">
+                        {format(parseISO(expectedPayout), "EEE, d MMM yyyy")}
+                    </p>
+                </div>
+            </div>
+
+            {/* Pay config details */}
+            <div className="bg-white p-4 rounded-2xl space-y-2 text-sm">
+                {rows.map(({ label, value }) => (
+                    <div key={label} className="flex justify-between items-center">
+                        <span className="text-gray-500">{label}</span>
+                        <span className="font-medium text-gray-800">{value}</span>
+                    </div>
+                ))}
+                <div className="flex justify-between items-center">
+                    <span className="text-gray-500">Commission Config</span>
+                    <div className="flex items-center gap-1">
+                        <span className="font-medium text-gray-800">{slug ?? "—"}</span>
+                        {slug && <CopyableField label="Commission Config" value={slug} />}
+                    </div>
                 </div>
             </div>
         </div>

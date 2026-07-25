@@ -124,14 +124,14 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
                 {[
                     { label: "Payroll From", value: format(parseISO(payout.startDate), "EEE, d MMM yyyy") },
                     { label: "Payroll To", value: format(parseISO(payout.endDate), "EEE, d MMM yyyy") },
+                    { label: "Expected payout", value: expectedPayoutDate ? format(parseISO(expectedPayoutDate), "EEE, d MMM yyyy") : "—", valueClass: "font-semibold text-blue-600" },
                     { label: "Per Cup", value: ratePerCup > 0 ? formatRupiah(ratePerCup) : "—" },
-                    { label: "Expected payout", value: expectedPayoutDate ? format(parseISO(expectedPayoutDate), "EEE, d MMM yyyy") : "—" },
                     { label: "Paid on", value: payout.paidAt ? format(new Date(payout.paidAt), "d MMM yyyy") : "—" },
                     { label: "Paid by", value: paidByName ?? "—" },
-                ].map(({ label, value }) => (
+                ].map(({ label, value, valueClass }) => (
                     <div key={label} className="flex justify-between items-center">
                         <span className="text-gray-500">{label}</span>
-                        <span className="font-medium text-gray-800">{value}</span>
+                        <span className={valueClass ?? "font-medium text-gray-800"}>{value}</span>
                     </div>
                 ))}
                 <div className="flex justify-between items-center pt-1.5 border-t border-gray-100">
