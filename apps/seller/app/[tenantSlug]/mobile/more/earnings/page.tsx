@@ -6,7 +6,7 @@ import { usePayouts } from "@/lib/hooks/payroll/usePayouts";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
 import { parseISO, format, getISOWeek } from "date-fns";
-import { ChevronRight, CalendarDays } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import type { PayoutResponse } from "@tea-pos/features/payroll/schema";
 import { useT } from "@/lib/hooks/useT";
 import { SkeletonValue } from "@/components/shared/SkeletonValue";
@@ -55,53 +55,58 @@ export default function EarningsPage() {
         const weekStart = getISOWeek(parseISO(payout.startDate));
         const weekEnd = getISOWeek(parseISO(payout.endDate));
         const sameWeek = weekStart === weekEnd;
+        const reviewedCount = (payout.approvedCount ?? 0) + (payout.pendingCount ?? 0);
 
         return (
             <button
                 key={payout.id}
                 onClick={() => navigation.push(url(`/mobile/more/earnings/${payout.id}`))}
-                className="relative w-full bg-white rounded-2xl p-4 text-left active:bg-gray-50 space-y-3"
+                className="w-full bg-white rounded-2xl p-3 text-left active:bg-gray-50 space-y-3"
             >
                 {/* Header */}
-                <ChevronRight size={24} strokeWidth={2.5} className="text-brand/90 absolute top-4 right-4 -mr-1" />
-                <div className="space-y-1 pr-7">
-                    <div className="flex items-center gap-2">
+                <div className="flex items-start justify-between gap-2">
+                    <div className="space-y-0.5">
                         <p className="text-lg font-bold text-gray-900">
-                            {sameWeek ? `Week ${weekStart}` : `Week ${weekStart} · Week ${weekEnd}`}
+                            {sameWeek ? `Week ${weekStart}` : `Week ${weekStart} - Week ${weekEnd}`}
                         </p>
-                        <span className={`text-sm font-medium px-2 py-0.5 rounded-full shrink-0 ${STATUS_STYLE[status] ?? STATUS_STYLE.pending}`}>
+                        <p className="text-sm text-gray-500">
+                            {format(parseISO(payout.startDate), "EEE, d MMM")} – {format(parseISO(payout.endDate), "EEE, d MMM")}
+                        </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                        <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${STATUS_STYLE[status] ?? STATUS_STYLE.pending}`}>
                             {status === "pending" ? "Ongoing" : status === "paid" ? t("earnings.statusPaid") : status}
                             {status === "paid" && payout.paidAt ? ` · ${format(new Date(payout.paidAt), "d MMM")}` : ""}
                         </span>
+                        {reviewedCount > 0 && (
+                            <span className="text-xs font-medium text-gray-500">
+                                {payout.approvedCount ?? 0} / {reviewedCount} approved
+                            </span>
+                        )}
                     </div>
-                    <p className="text-sm text-gray-500">
-                        {format(parseISO(payout.startDate), "EEE, d MMM")} – {format(parseISO(payout.endDate), "EEE, d MMM")}
-                    </p>
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-4 gap-2">
+                <div className="bg-slate-100 rounded-xl p-2 grid grid-cols-4 gap-2">
                     <div className="bg-orange-100 p-2 rounded-lg">
-                        <p className="text-xs font-semibold text-gray-700">{t("analytics.orders")}</p>
-                        <p className="text-xl font-bold text-orange-900">{payout.totalOrders}</p>
+                        <p className="text-xs font-semibold text-gray-500">{t("analytics.orders")}</p>
+                        <p className="text-lg font-bold text-orange-600">{payout.totalOrders}</p>
                     </div>
                     <div className="bg-blue-100 p-2 rounded-lg">
-                        <p className="text-xs font-semibold text-gray-700">Cups</p>
-                        <p className="text-xl font-bold text-blue-900">{payout.totalCups}</p>
+                        <p className="text-xs font-semibold text-gray-500">Cups</p>
+                        <p className="text-lg font-bold text-blue-600">{payout.totalCups}</p>
                     </div>
                     <div className="bg-green-100 p-2 rounded-lg col-span-2">
-                        <p className="text-xs font-semibold text-gray-700">{t("earnings.totalRow")}</p>
-                        <p className="text-xl font-bold text-green-900">{`Rp ${payout.totalPay.toLocaleString("id-ID")}`}</p>
+                        <p className="text-xs font-semibold text-gray-500">{t("earnings.totalRow")}</p>
+                        <p className="text-lg font-bold text-green-600">{`Rp ${payout.totalPay.toLocaleString("id-ID")}`}</p>
                     </div>
-                    <div className="col-span-4 grid grid-cols-2 gap-2">
-                        <div className="bg-yellow-100 p-2 rounded-lg">
-                            <p className="text-xs font-semibold text-gray-700">Pending</p>
-                            <p className="text-xl font-bold text-yellow-900">{payout.pendingCount ?? 0}</p>
-                        </div>
-                        <div className="bg-purple-100 p-2 rounded-lg">
-                            <p className="text-xs font-semibold text-gray-700">Approved</p>
-                            <p className="text-xl font-bold text-purple-900">{payout.approvedCount ?? 0}</p>
-                        </div>
+                    <div className="bg-teal-100 p-2 rounded-lg col-span-2">
+                        <p className="text-xs font-semibold text-gray-500">Commission</p>
+                        <p className="text-lg font-bold text-teal-600">{`Rp ${payout.commissionsTotal.toLocaleString("id-ID")}`}</p>
+                    </div>
+                    <div className="bg-purple-100 p-2 rounded-lg col-span-2">
+                        <p className="text-xs font-semibold text-gray-500">Claims</p>
+                        <p className="text-lg font-bold text-purple-600">{`Rp ${payout.claimsTotal.toLocaleString("id-ID")}`}</p>
                     </div>
                 </div>
             </button>
