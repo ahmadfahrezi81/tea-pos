@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect } from "react";
 import { Camera, ImagePlus, Loader2, CircleMinus, X } from "lucide-react";
 import { Drawer } from "vaul";
-import { compressPhoto } from "@/lib/compressPhoto";
+import { clampAspectRatio, compressPhoto } from "@/lib/compressPhoto";
 
 interface PhotoPickerProps {
     previewUrl: string | null;
@@ -81,7 +81,9 @@ export function PhotoPicker({ previewUrl, onCapture, onRemove, allowGallery = fa
         filePickedRef.current = true;
         setIsCompressing(true);
         try {
-            const compressed = await compressPhoto(file);
+            const compressed = await clampAspectRatio(
+                await compressPhoto(file),
+            );
             onCapture(compressed, URL.createObjectURL(compressed));
         } catch (err) {
             console.error("Compression failed:", err);
