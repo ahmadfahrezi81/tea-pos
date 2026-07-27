@@ -13,6 +13,7 @@ import {
     LabelList,
 } from "recharts";
 import { ChartConfig, ChartContainer } from "@tea-pos/ui/components/chart";
+import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 
 interface Props {
     storeId: string;
@@ -21,10 +22,14 @@ interface Props {
 
 // Daily tea-waste goal (litres). Lower is better — bars at/under this stay
 // green, over turns red. TODO: make store-configurable via settings.
-const TARGET_LITERS = 8;
+const TARGET_LITERS = 12;
 
 const GOOD_COLOR = "#16a34a"; // green-600 — at or under target
 const BAD_COLOR = "#dc2626"; // red-600 — over target
+
+// Tea costs ~Rp 250/cup and a litre pours ~4 cups, so a wasted litre is
+// ~Rp 1.000. TODO: make store-configurable alongside TARGET_LITERS.
+const COST_PER_LITER = 1000;
 
 export default function TeaWasteChart({ storeId, month }: Props) {
     const { data: teaWaste = [], isLoading } = useTeaWaste(storeId, month);
@@ -64,6 +69,16 @@ export default function TeaWasteChart({ storeId, month }: Props) {
         const sum = teaWaste.reduce((acc, item) => acc + item.liters, 0);
         return Math.round(sum * 10) / 10;
     }, [teaWaste]);
+
+    // Rp wasted for the month, plus a per-day average over the days that
+    // actually have a closing reading (not the full calendar month).
+    const { totalCost, avgCostPerDay } = useMemo(() => {
+        const cost = totalLiters * COST_PER_LITER;
+        return {
+            totalCost: cost,
+            avgCostPerDay: teaWaste.length ? cost / teaWaste.length : 0,
+        };
+    }, [totalLiters, teaWaste.length]);
 
     const maxLiters = useMemo(
         () => teaWaste.reduce((max, item) => Math.max(max, item.liters), 0),
@@ -117,7 +132,7 @@ export default function TeaWasteChart({ storeId, month }: Props) {
         [t],
     );
 
-    const slotWidth = 80;
+    const slotWidth = 60;
     const chartWidth = Math.max(chartData.length * slotWidth, 300);
 
     useEffect(() => {
@@ -163,7 +178,7 @@ export default function TeaWasteChart({ storeId, month }: Props) {
                     <p className="text-xs text-gray-800">
                         {t("analytics.total")}
                     </p>
-                    <p className="text-2xl font-bold text-gray-900 whitespace-nowrap">
+                    <p className="text-2xl font-bold text-red-600 whitespace-nowrap">
                         {totalLiters}L
                     </p>
                 </div>
@@ -205,15 +220,8 @@ export default function TeaWasteChart({ storeId, month }: Props) {
                                 stroke="#9ca3af"
                                 strokeDasharray="4 4"
                                 strokeWidth={1.5}
-                                label={{
-                                    value: `Target ${TARGET_LITERS}L`,
-                                    position: "insideTopRight",
-                                    fill: "#9ca3af",
-                                    fontSize: 11,
-                                    fontWeight: 600,
-                                }}
                             />
-                            <Bar dataKey="liters" radius={[4, 4, 0, 0]} maxBarSize={44}>
+                            <Bar dataKey="liters" radius={[4, 4, 0, 0]} maxBarSize={36}>
                                 {chartData.map((entry) => (
                                     <Cell
                                         key={entry.dateRaw}
@@ -229,6 +237,46 @@ export default function TeaWasteChart({ storeId, month }: Props) {
                         </BarChart>
                     </ChartContainer>
                 </div>
+            </div>
+
+            <div className="mt-4 rounded-xl bg-slate-50 p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    {t("analytics.teaWasteCostTitle")}
+                </p>
+                <dl className="mt-2 space-y-1.5 text-sm">
+                    <div className="flex items-baseline justify-between">
+                        <dt className="text-gray-500">
+                            {t("analytics.teaWasteLitresWasted")}
+                        </dt>
+                        <dd className="font-medium text-gray-700">
+                            {totalLiters} L
+                        </dd>
+                    </div>
+                    <div className="flex items-baseline justify-between">
+                        <dt className="text-gray-500">
+                            {t("analytics.teaWasteCostPerLitre")}
+                        </dt>
+                        <dd className="font-medium text-gray-700">
+                            {formatRupiah(COST_PER_LITER)}
+                        </dd>
+                    </div>
+                    <div className="flex items-baseline justify-between">
+                        <dt className="text-gray-500">
+                            {t("analytics.avgPerDay")}
+                        </dt>
+                        <dd className="font-medium text-gray-700">
+                            {formatRupiah(Math.round(avgCostPerDay))}
+                        </dd>
+                    </div>
+                    <div className="flex items-baseline justify-between border-t border-slate-200 pt-2">
+                        <dt className="font-medium text-gray-700">
+                            {t("analytics.teaWasteTotalCost")}
+                        </dt>
+                        <dd className="text-base font-bold text-red-600">
+                            {formatRupiah(totalCost)}
+                        </dd>
+                    </div>
+                </dl>
             </div>
         </div>
     );

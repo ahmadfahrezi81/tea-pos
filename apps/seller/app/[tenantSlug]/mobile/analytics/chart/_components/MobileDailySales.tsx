@@ -70,12 +70,12 @@ export default function MobileDailySales() {
             </div>
 
             <DailySalesChart storeId={selectedStoreId} month={selectedMonth} />
+            <TeaWasteChart storeId={selectedStoreId} month={selectedMonth} />
             <DayOfWeekChart storeId={selectedStoreId} month={selectedMonth} />
             <ProductSalesChart
                 storeId={selectedStoreId}
                 month={selectedMonth}
             />
-            <TeaWasteChart storeId={selectedStoreId} month={selectedMonth} />
         </div>
     );
 }

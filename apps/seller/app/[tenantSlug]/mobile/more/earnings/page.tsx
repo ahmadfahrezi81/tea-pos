@@ -87,7 +87,7 @@ export default function EarningsPage() {
                 </div>
 
                 {/* Stats */}
-                <div className="bg-slate-100 rounded-xl p-2 grid grid-cols-4 gap-2">
+                <div className="bg-slate-50 rounded-xl p-2 grid grid-cols-4 gap-2">
                     <div className="bg-orange-100 p-2 rounded-lg">
                         <p className="text-xs font-semibold text-gray-500">{t("analytics.orders")}</p>
                         <p className="text-lg font-bold text-orange-600">{payout.totalOrders}</p>

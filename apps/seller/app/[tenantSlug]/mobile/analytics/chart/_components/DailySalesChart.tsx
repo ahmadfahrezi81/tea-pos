@@ -18,6 +18,12 @@ interface Props {
     month: string; // YYYY-MM
 }
 
+const formatDayLabel = (isoDate: string) =>
+    new Date(isoDate + "T00:00:00").toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+    });
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomLabel = (props: any) => {
     const { x, y, value, payload, peakDate } = props;
@@ -70,13 +76,7 @@ export default function DailySalesChart({ storeId, month }: Props) {
 
     const chartData = useMemo(() => {
         return dailySales.map((item) => ({
-            date: new Date(item.date + "T00:00:00").toLocaleDateString(
-                "en-US",
-                {
-                    month: "short",
-                    day: "numeric",
-                },
-            ),
+            date: formatDayLabel(item.date),
             dateRaw: item.date,
             cups: item.cups,
         }));
@@ -85,6 +85,25 @@ export default function DailySalesChart({ storeId, month }: Props) {
     const totalCups = useMemo(() => {
         return dailySales.reduce((sum, item) => sum + item.cups, 0);
     }, [dailySales]);
+
+    // Best / worst day and the daily average, over the days that actually
+    // have sales — not every calendar day in the month.
+    const { highestDay, lowestDay, avgCups } = useMemo(() => {
+        if (dailySales.length === 0) {
+            return { highestDay: null, lowestDay: null, avgCups: 0 };
+        }
+        let highest = dailySales[0];
+        let lowest = dailySales[0];
+        for (const item of dailySales) {
+            if (item.cups > highest.cups) highest = item;
+            if (item.cups < lowest.cups) lowest = item;
+        }
+        return {
+            highestDay: highest,
+            lowestDay: lowest,
+            avgCups: Math.round(totalCups / dailySales.length),
+        };
+    }, [dailySales, totalCups]);
 
 
     const peakDate = useMemo(() => {
@@ -237,6 +256,48 @@ export default function DailySalesChart({ storeId, month }: Props) {
                         </AreaChart>
                     </ChartContainer>
                 </div>
+            </div>
+
+            <div className="mt-4 rounded-xl bg-slate-50 p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    {t("analytics.dailySalesBreakdownTitle")}
+                </p>
+                <dl className="mt-2 space-y-1.5 text-sm">
+                    <div className="flex items-baseline justify-between">
+                        <dt className="text-gray-500">
+                            {t("analytics.highestDay")}
+                        </dt>
+                        <dd className="font-medium text-gray-700">
+                            {highestDay?.cups ?? 0}{" "}
+                            <span className="text-gray-400">
+                                {highestDay
+                                    ? formatDayLabel(highestDay.date)
+                                    : "—"}
+                            </span>
+                        </dd>
+                    </div>
+                    <div className="flex items-baseline justify-between">
+                        <dt className="text-gray-500">
+                            {t("analytics.lowestDay")}
+                        </dt>
+                        <dd className="font-medium text-gray-700">
+                            {lowestDay?.cups ?? 0}{" "}
+                            <span className="text-gray-400">
+                                {lowestDay
+                                    ? formatDayLabel(lowestDay.date)
+                                    : "—"}
+                            </span>
+                        </dd>
+                    </div>
+                    <div className="flex items-baseline justify-between border-t border-slate-200 pt-2">
+                        <dt className="font-medium text-gray-700">
+                            {t("analytics.avgPerDay")}
+                        </dt>
+                        <dd className="text-base font-bold text-brand">
+                            {avgCups}
+                        </dd>
+                    </div>
+                </dl>
             </div>
         </div>
     );
