@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import { Camera, ImagePlus, Loader2, CircleMinus, X } from "lucide-react";
 import { Drawer } from "vaul";
 import { clampAspectRatio, compressPhoto } from "@/lib/compressPhoto";
+import { useT } from "@/lib/hooks/useT";
 
 interface PhotoPickerProps {
     previewUrl: string | null;
@@ -13,6 +14,7 @@ interface PhotoPickerProps {
 }
 
 export function PhotoPicker({ previewUrl, onCapture, onRemove, allowGallery = false }: PhotoPickerProps) {
+    const t = useT();
     const inputRef = useRef<HTMLInputElement>(null);
     const [isCompressing, setIsCompressing] = useState(false);
     const [errorSheet, setErrorSheet] = useState<"permission" | "generic" | null>(null);
@@ -90,7 +92,7 @@ export function PhotoPicker({ previewUrl, onCapture, onRemove, allowGallery = fa
             if (["image/jpeg", "image/jpg", "image/webp"].includes(file.type)) {
                 onCapture(file, URL.createObjectURL(file));
             } else {
-                setGenericErrorMsg("Failed to process photo. Please try again.");
+                setGenericErrorMsg(t("manage.photoProcessFailed"));
                 setErrorSheet("generic");
             }
         } finally {
@@ -120,7 +122,7 @@ export function PhotoPicker({ previewUrl, onCapture, onRemove, allowGallery = fa
                 {isCompressing ? (
                     <div className="w-full h-full flex flex-col items-center justify-center gap-2">
                         <Loader2 size={28} className="text-brand animate-spin" />
-                        <p className="text-sm text-gray-400">Compressing...</p>
+                        <p className="text-sm text-gray-400">{t("manage.photoCompressing")}</p>
                     </div>
                 ) : previewUrl ? (
                     <>
@@ -136,7 +138,7 @@ export function PhotoPicker({ previewUrl, onCapture, onRemove, allowGallery = fa
                             onClick={handleClick}
                             className="absolute bottom-2 right-2 bg-black/70 rounded-lg px-3 py-1.5"
                         >
-                            <span className="text-white text-sm font-semibold">Retake</span>
+                            <span className="text-white text-sm font-semibold">{t("manage.photoRetake")}</span>
                         </button>
                     </>
                 ) : (
@@ -149,7 +151,7 @@ export function PhotoPicker({ previewUrl, onCapture, onRemove, allowGallery = fa
                         ) : (
                             <Camera size={40} strokeWidth={2} className="text-brand" />
                         )}
-                        <span className="text-sm font-medium text-gray-900">Tap to add photo</span>
+                        <span className="text-sm font-medium text-gray-900">{t("manage.photoTapToAdd")}</span>
                     </button>
                 )}
             </div>
@@ -166,7 +168,7 @@ export function PhotoPicker({ previewUrl, onCapture, onRemove, allowGallery = fa
                             <>
                                 <div className="flex items-center justify-between mb-1">
                                     <Drawer.Title className="text-xl font-bold text-gray-900">
-                                        Camera Access Blocked
+                                        {t("manage.cameraBlockedTitle")}
                                     </Drawer.Title>
                                     <button
                                         onClick={() => setErrorSheet(null)}
@@ -176,22 +178,22 @@ export function PhotoPicker({ previewUrl, onCapture, onRemove, allowGallery = fa
                                     </button>
                                 </div>
                                 <Drawer.Description className="sr-only">
-                                    Camera permission is required to take photos
+                                    {t("manage.cameraBlockedDesc")}
                                 </Drawer.Description>
                                 <p className="text-sm text-gray-500 mb-4">
-                                    This app needs camera access to take photos.
+                                    {t("manage.cameraBlockedBody")}
                                 </p>
                                 <ol className="text-sm text-gray-700 space-y-1 list-decimal list-inside mb-6">
-                                    <li>Open your phone&apos;s <strong>Settings</strong></li>
-                                    <li>Go to <strong>Apps</strong> → your browser</li>
-                                    <li>Tap <strong>Permissions</strong> → <strong>Camera</strong> → Allow</li>
-                                    <li>Come back and try again</li>
+                                    <li>{t("manage.cameraStep1")}</li>
+                                    <li>{t("manage.cameraStep2")}</li>
+                                    <li>{t("manage.cameraStep3")}</li>
+                                    <li>{t("manage.cameraStep4")}</li>
                                 </ol>
                                 <button
                                     onClick={() => setErrorSheet(null)}
                                     className="w-full py-3 rounded-xl bg-brand text-white font-semibold"
                                 >
-                                    Got it
+                                    {t("common.gotIt")}
                                 </button>
                             </>
                         )}
@@ -200,7 +202,7 @@ export function PhotoPicker({ previewUrl, onCapture, onRemove, allowGallery = fa
                             <>
                                 <div className="flex items-center justify-between mb-1">
                                     <Drawer.Title className="text-xl font-bold text-gray-900">
-                                        Photo Error
+                                        {t("manage.photoErrorTitle")}
                                     </Drawer.Title>
                                     <button
                                         onClick={() => setErrorSheet(null)}
@@ -210,14 +212,14 @@ export function PhotoPicker({ previewUrl, onCapture, onRemove, allowGallery = fa
                                     </button>
                                 </div>
                                 <Drawer.Description className="sr-only">
-                                    An error occurred while processing the photo
+                                    {t("manage.photoErrorDesc")}
                                 </Drawer.Description>
                                 <p className="text-sm text-gray-500 mb-6">{genericErrorMsg}</p>
                                 <button
                                     onClick={() => setErrorSheet(null)}
                                     className="w-full py-3 rounded-xl bg-brand text-white font-semibold"
                                 >
-                                    Try Again
+                                    {t("common.tryAgain")}
                                 </button>
                             </>
                         )}

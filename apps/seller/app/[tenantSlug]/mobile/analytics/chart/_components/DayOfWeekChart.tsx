@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { ChartConfig, ChartContainer } from "@tea-pos/ui/components/chart";
 import { useBrandColor } from "@/lib/hooks/useBrandColor";
+import { useT } from "@/lib/hooks/useT";
 import type { DayOfWeekSalesDataPoint } from "@tea-pos/features/analytics/schema";
 
 interface Props {
@@ -25,21 +26,26 @@ export default function DayOfWeekChart({ storeId, month }: Props) {
         month,
     );
     const brandColor = useBrandColor();
+    const t = useT();
+
+    // API returns English day names — used as sort keys and translation lookups
+    const dayLabel = (day: string) => t(`common.weekdaysFull.${day.toLowerCase()}`);
 
     const chartConfig = useMemo(
         () =>
             ({
                 averageCups: {
-                    label: "Avg Cups",
+                    label: t("analytics.avgCups"),
                     color: brandColor,
                 },
                 label: {
                     color: "var(--background)",
                 },
             }) satisfies ChartConfig,
-        [brandColor],
+        [brandColor, t],
     );
 
+    // Must stay in the API's own values — this is a sort key, not display text
     const dayOrder = [
         "Monday",
         "Tuesday",
@@ -88,14 +94,14 @@ export default function DayOfWeekChart({ storeId, month }: Props) {
             <div className="flex items-start justify-between mb-3">
                 <div>
                     <h3 className="font-semibold text-gray-800 text-lg">
-                        Day of Week
+                        {t("analytics.dayOfWeek")}
                     </h3>
-                    <p className="text-sm text-gray-400">Average cups by day</p>
+                    <p className="text-sm text-gray-400">{t("analytics.avgCupsByDay")}</p>
                 </div>
                 <div className="text-right">
-                    <p className="text-xs text-gray-800">Best day</p>
+                    <p className="text-xs text-gray-800">{t("analytics.bestDay")}</p>
                     <p className="text-2xl font-bold text-brand">
-                        {bestDay?.dayOfWeek}
+                        {bestDay?.dayOfWeek ? dayLabel(bestDay.dayOfWeek) : ""}
                     </p>
                 </div>
             </div>
@@ -148,6 +154,7 @@ export default function DayOfWeekChart({ storeId, month }: Props) {
                             className="fill-(--color-label)"
                             fontSize={14}
                             fontWeight={600}
+                            formatter={(val: string) => dayLabel(val)}
                         />
                         <LabelList
                             dataKey="averageCups"

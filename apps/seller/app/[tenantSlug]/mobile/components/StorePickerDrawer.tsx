@@ -2,6 +2,7 @@
 import { Drawer } from "vaul";
 import { Check, X, Eye, EyeOff } from "lucide-react";
 import { useStore } from "@/lib/context/StoreContext";
+import { useT } from "@/lib/hooks/useT";
 
 export function StorePickerDrawer() {
     const {
@@ -13,6 +14,7 @@ export function StorePickerDrawer() {
         hideInactiveStores,
         setHideInactiveStores,
     } = useStore();
+    const t = useT();
 
     if (assignedStores.length === 0) return null;
 
@@ -47,14 +49,14 @@ export function StorePickerDrawer() {
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
                             <Drawer.Title className="text-xl font-bold text-gray-900">
-                                Select Store
+                                {t("home.selectStore")}
                             </Drawer.Title>
                             {hasHideableStores && (
                                 <button
                                     type="button"
                                     role="switch"
                                     aria-checked={hideInactiveStores}
-                                    aria-label="Hide demo and inactive stores"
+                                    aria-label={t("home.hideInactiveStores")}
                                     onClick={() => setHideInactiveStores(!hideInactiveStores)}
                                     className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
                                         hideInactiveStores ? "bg-brand" : "bg-gray-300"
@@ -74,7 +76,7 @@ export function StorePickerDrawer() {
                                 </button>
                             )}
                         </div>
-                        <Drawer.Description className="sr-only">Select a store to manage</Drawer.Description>
+                        <Drawer.Description className="sr-only">{t("home.selectStoreDesc")}</Drawer.Description>
                         <button
                             onClick={() => setIsPickerOpen(false)}
                             className="p-1.5 rounded-full text-gray-900 hover:bg-gray-100 -mr-2"
@@ -111,7 +113,7 @@ export function StorePickerDrawer() {
                                         )}
                                         {store.status === "inactive" && (
                                             <span className="text-[10px] font-semibold px-1.5 py-0.5 mt-0.5 rounded bg-gray-100 text-gray-500">
-                                                INACTIVE
+                                                {t("home.storeInactive")}
                                             </span>
                                         )}
                                     </div>
