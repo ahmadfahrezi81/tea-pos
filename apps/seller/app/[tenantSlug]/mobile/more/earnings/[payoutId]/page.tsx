@@ -9,7 +9,7 @@ import { parseISO, format, eachDayOfInterval, getISOWeek } from "date-fns";
 import { useT } from "@/lib/hooks/useT";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 
-const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const WEEKDAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 
 const STATUS_PILL: Record<string, string> = {
     pending: "bg-yellow-100 text-yellow-700",
@@ -97,10 +97,12 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
             <div className="bg-white p-4 rounded-2xl">
                 <div className="flex items-center justify-between mb-3">
                     <h3 className="font-semibold text-gray-800">
-                        {sameWeek ? `Week ${weekStart}` : `Week ${weekStart} · Week ${weekEnd}`}
+                        {sameWeek
+                            ? `${t("earnings.week")} ${weekStart}`
+                            : `${t("earnings.week")} ${weekStart} · ${t("earnings.week")} ${weekEnd}`}
                     </h3>
                     <span className={`px-2 py-0.5 rounded-full text-sm font-medium ${STATUS_PILL[status] ?? STATUS_PILL.pending}`}>
-                        {status === "pending" ? "Ongoing" : status === "paid" ? t("earnings.statusPaid") : status}
+                        {status === "pending" ? t("earnings.statusOngoing") : status === "paid" ? t("earnings.statusPaid") : status}
                     </span>
                 </div>
                 <div className="grid grid-cols-4 gap-2">
@@ -122,12 +124,12 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
             {/* Payout info */}
             <div className="bg-white p-4 rounded-2xl space-y-2 text-sm">
                 {[
-                    { label: "Payroll From", value: format(parseISO(payout.startDate), "EEE, d MMM yyyy") },
-                    { label: "Payroll To", value: format(parseISO(payout.endDate), "EEE, d MMM yyyy") },
-                    { label: "Expected payout", value: expectedPayoutDate ? format(parseISO(expectedPayoutDate), "EEE, d MMM yyyy") : "—", valueClass: "font-semibold text-blue-600" },
-                    { label: "Per Cup", value: ratePerCup > 0 ? formatRupiah(ratePerCup) : "—" },
-                    { label: "Paid on", value: payout.paidAt ? format(new Date(payout.paidAt), "d MMM yyyy") : "—" },
-                    { label: "Paid by", value: paidByName ?? "—" },
+                    { label: t("earnings.payrollFrom"), value: format(parseISO(payout.startDate), "EEE, d MMM yyyy") },
+                    { label: t("earnings.payrollTo"), value: format(parseISO(payout.endDate), "EEE, d MMM yyyy") },
+                    { label: t("earnings.expectedPayout"), value: expectedPayoutDate ? format(parseISO(expectedPayoutDate), "EEE, d MMM yyyy") : "—", valueClass: "font-semibold text-blue-600" },
+                    { label: t("earnings.perCupLabel"), value: ratePerCup > 0 ? formatRupiah(ratePerCup) : "—" },
+                    { label: t("earnings.paidOn"), value: payout.paidAt ? format(new Date(payout.paidAt), "d MMM yyyy") : "—" },
+                    { label: t("earnings.paidBy"), value: paidByName ?? "—" },
                 ].map(({ label, value, valueClass }) => (
                     <div key={label} className="flex justify-between items-center">
                         <span className="text-gray-500">{label}</span>
@@ -155,7 +157,7 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
                                 onClick={() => setShowProof(false)}
                             >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={payout.paymentProofUrl} alt="Transfer proof" className="rounded-xl max-h-[80vh] w-auto object-contain" />
+                                <img src={payout.paymentProofUrl} alt={t("earnings.transferProof")} className="rounded-xl max-h-[80vh] w-auto object-contain" />
                             </div>
                         )}
                     </>
@@ -166,8 +168,8 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
             <div className="bg-white rounded-2xl px-3 py-3 space-y-1.5">
                 <div className="grid grid-cols-8 gap-1 mb-1">
                     <span />
-                    {WEEKDAY_LABELS.map((d) => (
-                        <span key={d} className="text-xs font-semibold text-gray-500 text-center">{d}</span>
+                    {WEEKDAY_KEYS.map((d) => (
+                        <span key={d} className="text-xs font-semibold text-gray-500 text-center">{t(`common.weekdays.${d}`)}</span>
                     ))}
                 </div>
                 {[week1, week2].filter((w) => w.length > 0).map((week, wi) => (
@@ -211,14 +213,14 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
                                     {format(day, "EEE, MMM d")}
                                 </h4>
                                 <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${allReviewed ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
-                                    {allReviewed ? "Done" : "Pending"}
+                                    {allReviewed ? t("earnings.statusDone") : t("claims.statusPending")}
                                 </span>
                             </div>
 
                             {dayCommissions.length > 0 && (() => {
                                 return (
                                 <div className="space-y-1.5">
-                                    <p className="text-sm font-semibold text-gray-900">Commission</p>
+                                    <p className="text-sm font-semibold text-gray-900">{t("earnings.commissionsRow")}</p>
                                     <div className="bg-slate-100 rounded-xl px-3 py-2 space-y-2">
                                         {dayCommissions.map((c) => (
                                             <div key={c.id} className="flex items-center justify-between gap-2">
@@ -249,7 +251,7 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
                             {dayClaims.length > 0 && (() => {
                                 return (
                                 <div className="space-y-1.5">
-                                    <p className="text-sm font-semibold text-gray-900">Claims</p>
+                                    <p className="text-sm font-semibold text-gray-900">{t("earnings.claimsRow")}</p>
                                     <div className="bg-slate-100 rounded-xl px-3 py-2 space-y-2">
                                         {dayClaims.map((c) => (
                                             <div key={c.id} className="flex items-center justify-between gap-2 text-sm">

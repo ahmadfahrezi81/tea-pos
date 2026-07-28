@@ -17,6 +17,15 @@ export const id: DeepPartial<typeof en> = {
         authRequired: "Butuh Autentikasi",
         authRequiredSub:
             "Gagal memuat profil. Periksa koneksi internet Anda dan coba lagi.",
+        weekdays: {
+            mon: "Sen",
+            tue: "Sel",
+            wed: "Rab",
+            thu: "Kam",
+            fri: "Jum",
+            sat: "Sab",
+            sun: "Min",
+        },
     },
     home: {
         gate: {
@@ -256,6 +265,12 @@ export const id: DeepPartial<typeof en> = {
         allSubmitted: "Semua hak klaim Anda periode ini sudah dikirim.",
         noWorkedDates: "Tidak ada tanggal kerja untuk periode ini.",
         failedToSubmit: "Gagal mengirim klaim",
+        noEntitlementsYet: "Belum ada hak klaim",
+        noEntitlementsHint:
+            "Minta manajer Anda menetapkan tipe klaim untuk Anda.",
+        freqDaily: "Harian",
+        sourceAutoSubmit: "Kirim otomatis",
+        sourceManual: "Manual",
     },
     earnings: {
         title: "Gaji Saya",
@@ -288,6 +303,24 @@ export const id: DeepPartial<typeof en> = {
         forLabel: "Untuk",
         payslipId: "ID Slip Gaji",
         selectYear: "Pilih Tahun",
+        week: "Minggu",
+        statusOngoing: "Berjalan",
+        statusDone: "Selesai",
+        approvedSuffix: "disetujui",
+        payrollFrom: "Penggajian Dari",
+        payrollTo: "Penggajian Sampai",
+        expectedPayout: "Perkiraan pembayaran",
+        perCupLabel: "Per Cup",
+        paidOn: "Dibayar pada",
+        paidBy: "Dibayar oleh",
+        transferProof: "Bukti transfer",
+        nextExpectedPayout: "Perkiraan Pembayaran Berikutnya",
+        payFrequency: "Frekuensi Gaji",
+        commissionConfig: "Konfig Komisi",
+        freqDaily: "Harian",
+        freqWeekly: "Mingguan",
+        freqBiWeekly: "Dua Mingguan",
+        freqMonthly: "Bulanan",
     },
     account: {
         personalDetails: "Data Pribadi",

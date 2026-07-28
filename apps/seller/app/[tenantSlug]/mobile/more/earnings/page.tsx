@@ -67,7 +67,9 @@ export default function EarningsPage() {
                 <div className="flex items-start justify-between gap-2">
                     <div className="space-y-0.5">
                         <p className="text-lg font-bold text-gray-900">
-                            {sameWeek ? `Week ${weekStart}` : `Week ${weekStart} - Week ${weekEnd}`}
+                            {sameWeek
+                                ? `${t("earnings.week")} ${weekStart}`
+                                : `${t("earnings.week")} ${weekStart} - ${t("earnings.week")} ${weekEnd}`}
                         </p>
                         <p className="text-sm text-gray-500">
                             {format(parseISO(payout.startDate), "EEE, d MMM")} – {format(parseISO(payout.endDate), "EEE, d MMM")}
@@ -75,12 +77,12 @@ export default function EarningsPage() {
                     </div>
                     <div className="flex flex-col items-end gap-1 shrink-0">
                         <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${STATUS_STYLE[status] ?? STATUS_STYLE.pending}`}>
-                            {status === "pending" ? "Ongoing" : status === "paid" ? t("earnings.statusPaid") : status}
+                            {status === "pending" ? t("earnings.statusOngoing") : status === "paid" ? t("earnings.statusPaid") : status}
                             {status === "paid" && payout.paidAt ? ` · ${format(new Date(payout.paidAt), "d MMM")}` : ""}
                         </span>
                         {reviewedCount > 0 && (
                             <span className="text-xs font-medium text-gray-500">
-                                {payout.approvedCount ?? 0} / {reviewedCount} approved
+                                {payout.approvedCount ?? 0} / {reviewedCount} {t("earnings.approvedSuffix")}
                             </span>
                         )}
                     </div>
@@ -93,7 +95,7 @@ export default function EarningsPage() {
                         <p className="text-lg font-bold text-orange-600">{payout.totalOrders}</p>
                     </div>
                     <div className="bg-blue-100 p-2 rounded-lg">
-                        <p className="text-xs font-semibold text-gray-500">Cups</p>
+                        <p className="text-xs font-semibold text-gray-500">{t("analytics.cups")}</p>
                         <p className="text-lg font-bold text-blue-600">{payout.totalCups}</p>
                     </div>
                     <div className="bg-green-100 p-2 rounded-lg col-span-2">
@@ -101,11 +103,11 @@ export default function EarningsPage() {
                         <p className="text-lg font-bold text-green-600">{`Rp ${payout.totalPay.toLocaleString("id-ID")}`}</p>
                     </div>
                     <div className="bg-teal-100 p-2 rounded-lg col-span-2">
-                        <p className="text-xs font-semibold text-gray-500">Commission</p>
+                        <p className="text-xs font-semibold text-gray-500">{t("earnings.commissionsRow")}</p>
                         <p className="text-lg font-bold text-teal-600">{`Rp ${payout.commissionsTotal.toLocaleString("id-ID")}`}</p>
                     </div>
                     <div className="bg-purple-100 p-2 rounded-lg col-span-2">
-                        <p className="text-xs font-semibold text-gray-500">Claims</p>
+                        <p className="text-xs font-semibold text-gray-500">{t("earnings.claimsRow")}</p>
                         <p className="text-lg font-bold text-purple-600">{`Rp ${payout.claimsTotal.toLocaleString("id-ID")}`}</p>
                     </div>
                 </div>

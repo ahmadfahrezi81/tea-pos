@@ -55,8 +55,8 @@ export default function ReimbursementsPage() {
                     </div>
                 ) : types.length === 0 ? (
                     <div className="py-1 space-y-0.5">
-                        <p className="text-sm font-medium text-gray-700">No entitlements yet</p>
-                        <p className="text-xs text-gray-500">Ask your manager to assign claim types to you.</p>
+                        <p className="text-sm font-medium text-gray-700">{t("claims.noEntitlementsYet")}</p>
+                        <p className="text-xs text-gray-500">{t("claims.noEntitlementsHint")}</p>
                     </div>
                 ) : (
                     <div className="divide-y divide-gray-100">
@@ -65,9 +65,9 @@ export default function ReimbursementsPage() {
                                 <div>
                                     <p className="text-sm font-medium text-gray-800">{type.name}</p>
                                     <p className="text-xs text-gray-600 font-medium">
-                                        {type.frequency === "daily" ? "Daily" : type.frequency === "weekly" ? t("claims.freqWeekly") : type.frequency === "monthly" ? t("claims.freqMonthly") : type.frequency === "one_time" ? t("claims.freqOneTime") : type.frequency}
+                                        {type.frequency === "daily" ? t("claims.freqDaily") : type.frequency === "weekly" ? t("claims.freqWeekly") : type.frequency === "monthly" ? t("claims.freqMonthly") : type.frequency === "one_time" ? t("claims.freqOneTime") : type.frequency}
                                         {" · "}
-                                        {type.claimSource === "auto" ? t("claims.auto") : type.claimSource === "auto_submit" ? "Auto submit" : "Manual"}
+                                        {type.claimSource === "auto" ? t("claims.auto") : type.claimSource === "auto_submit" ? t("claims.sourceAutoSubmit") : t("claims.sourceManual")}
                                     </p>
                                 </div>
                                 <p className="text-base font-bold text-gray-900">{formatRupiah(type.amount ?? 0)}</p>
