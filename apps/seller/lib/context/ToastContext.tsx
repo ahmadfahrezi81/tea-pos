@@ -10,6 +10,7 @@ import {
     useEffect,
 } from "react";
 import { CheckCircle2, AlertCircle, AlertTriangle, Info } from "lucide-react";
+import { randomId } from "@tea-pos/utils/uuid";
 
 // --- Types ---
 type ToastType = "success" | "error" | "warning" | "info";
@@ -38,7 +39,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
     const showToast = useCallback(
         (message: string, type: ToastType = "info", subtitle?: string) => {
-            const id = crypto.randomUUID();
+            const id = randomId();
             setToasts((prev) => [...prev, { id, message, subtitle, type }]);
             setTimeout(() => dismissToast(id), 4000);
         },

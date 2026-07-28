@@ -29,7 +29,10 @@ export const metadata: Metadata = {
         title: "Backoffice",
     },
     other: {
+        // Browser auto-translate rewrites text nodes under React, which breaks
+        // layout and can crash reconciliation with removeChild errors.
         "mobile-web-app-capable": "yes",
+        google: "notranslate",
     },
 };
 
@@ -44,7 +47,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     }
 
     return (
-        <html lang="en" suppressHydrationWarning>
+        <html lang="en" translate="no" className="notranslate" suppressHydrationWarning>
             <body>
                 <SWRConfig value={{ dedupingInterval: 5000, revalidateOnFocus: false }}>
                     <FeaturesProvider>

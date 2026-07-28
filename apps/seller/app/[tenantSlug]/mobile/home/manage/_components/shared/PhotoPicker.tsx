@@ -26,6 +26,9 @@ export function PhotoPicker({ previewUrl, onCapture, onRemove, allowGallery = fa
 
     useEffect(() => {
         let permStatus: PermissionStatus | null = null;
+        // Not just a rejected promise on unsupported browsers — navigator.permissions
+        // is undefined on older iOS and some Android WebViews, which throws here.
+        if (!navigator.permissions?.query) return;
         navigator.permissions
             .query({ name: "camera" as PermissionName })
             .then((status) => {

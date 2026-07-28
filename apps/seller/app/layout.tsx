@@ -32,6 +32,10 @@ export const metadata: Metadata = {
     },
     other: {
         "mobile-web-app-capable": "yes",
+        // The app ships its own en/id translations. Browser auto-translate
+        // rewrites text nodes under React, which breaks layout and can crash
+        // reconciliation with removeChild errors.
+        google: "notranslate",
     },
 };
 
@@ -54,7 +58,12 @@ export default async function RootLayout({
         resolvedLocale === "en" || resolvedLocale === "id" ? resolvedLocale : undefined;
 
     return (
-        <html lang="en" suppressHydrationWarning>
+        <html
+            lang={initialLocale ?? "en"}
+            translate="no"
+            className="notranslate"
+            suppressHydrationWarning
+        >
             <body>
                 <SWRConfig
                     value={{ dedupingInterval: 5000, revalidateOnFocus: false, errorRetryCount: 3 }}

@@ -205,15 +205,10 @@ input[type="date"]::-webkit-date-and-time-value {
 }
 
 
-/* PWA safe area fixes */
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-    .pb-safe {
-        padding-bottom: env(safe-area-inset-bottom);
-    }
-
-    .footer-safe {
-        padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem);
-    }
+/* Stop Android Chrome's pull-to-refresh from reloading mid-flow */
+html,
+body {
+    overscroll-behavior-y: contain;
 }
 
 /* Toast Animation */
