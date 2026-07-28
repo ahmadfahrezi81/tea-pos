@@ -1,7 +1,10 @@
+import { ComingSoon } from "@tea-pos/ui/custom/ComingSoon";
+
 export default function MorePage() {
     return (
-        <div className="bg-white rounded-xl p-4">
-            <p className="text-sm text-gray-400">More coming soon.</p>
-        </div>
+        <ComingSoon
+            title="More is coming soon"
+            subtitle="This feature is still in development"
+        />
     );
 }

@@ -3,6 +3,13 @@
 /* app/globals.css */
 @import "leaflet/dist/leaflet.css";
 
+/* Tailwind's auto source detection is rooted at this app, so shared
+   components are never scanned and classes used only there are silently
+   dropped. Must be a glob — the bare directory form works in `next build`
+   but not under Turbopack dev. Add a line when importing from a new
+   @tea-pos/ui subdirectory. */
+@source "../../../packages/ui/custom/**/*.tsx";
+
 @custom-variant dark (&:is(.dark *));
 
 body {
