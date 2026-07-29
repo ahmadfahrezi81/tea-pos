@@ -90,13 +90,11 @@ export default function MobileLayoutClient({
     );
 
     /**
-     * Going back unwinds history rather than adding to it. Pushing the parent
-     * would leave [More, Pay, More] behind, so the system back button would walk
-     * *into* the page the user just left.
-     *
-     * With nothing of ours to unwind — a deep link or a hard reload straight
-     * onto a subpage — it replaces instead of pushing, for the same reason:
-     * going "up" should not leave the page behind us either.
+     * Going back unwinds history rather than pushing another entry. Pushing the
+     * parent instead would leave [More, Pay, More] behind, so the system back
+     * button would walk *into* the page the user just left. Falls back to a push
+     * when there is nothing of ours to unwind — a deep link or a hard reload
+     * straight onto a subpage.
      */
     const handleBack = useCallback(
         (fallbackPath: string) => {
@@ -107,12 +105,9 @@ export default function MobileLayoutClient({
                 });
                 return;
             }
-            setPendingPath(fallbackPath);
-            startTransition(() => {
-                router.replace(fallbackPath);
-            });
+            handleNavClick(fallbackPath);
         },
-        [router, saveScroll],
+        [router, saveScroll, handleNavClick],
     );
 
     // Every way back out of a page ends in a popstate — the system back button,

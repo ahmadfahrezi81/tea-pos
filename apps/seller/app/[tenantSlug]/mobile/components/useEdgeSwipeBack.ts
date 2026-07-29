@@ -34,17 +34,34 @@ function ownsHorizontalDrag(target: EventTarget | null, root: Element): boolean 
 }
 
 /**
- * Swipe in from the left edge to go back.
+ * True only when the app is running installed, with no browser chrome of its
+ * own. `display-mode` covers installed PWAs on both platforms; `standalone` is
+ * the older iOS-only property, kept as a fallback.
+ */
+function isStandalone(): boolean {
+    return (
+        window.matchMedia("(display-mode: standalone)").matches ||
+        (navigator as Navigator & { standalone?: boolean }).standalone === true
+    );
+}
+
+/**
+ * Swipe in from the left edge to go back — installed app only.
  *
- * An installed iOS PWA runs with no browser chrome at all — no back button and
- * no system edge gesture — so without this the only way out of a subpage is the
- * header arrow. This fires back as a discrete gesture rather than dragging the
- * page with the finger, which would need a page transition to drag.
+ * An installed PWA runs with no browser chrome at all, so without this the only
+ * way out of a subpage is the header arrow. In a normal browser tab the browser
+ * already provides its own edge gesture, and adding a second one on top means a
+ * single swipe travels back twice: far enough to leave the app's own history
+ * and force a full document load. So this stays off wherever the browser is
+ * already handling it.
+ *
+ * Fires back as a discrete gesture rather than dragging the page with the
+ * finger, which would need a page transition to drag.
  */
 export function useEdgeSwipeBack({ containerRef, enabled, onBack }: Options) {
     useEffect(() => {
         const el = containerRef.current;
-        if (!el || !enabled) return;
+        if (!el || !enabled || !isStandalone()) return;
 
         let startX = 0;
         let startY = 0;
