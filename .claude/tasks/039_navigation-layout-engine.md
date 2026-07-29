@@ -551,6 +551,48 @@ shouldn't be treated as one commitment:
 
 ### Phase 1 — Chrome back in flow (seller only, no extraction)
 
+**SHIPPED** as `d0c3bfb`, merged with Phase 2 in one commit per the
+recommendation below. `tsc` clean, `eslint` clean (2 pre-existing warnings on
+unrelated prefetch effects), `next build` clean. **Not yet device-tested — the
+matrix in Verification is still outstanding.**
+
+Two things came up during implementation that this plan had not accounted for:
+
+1. **A third copy of the footer-height guess**, in `MobilePOS.tsx:150` — the
+   sticky cart bar was `fixed bottom-[98px]` / `bottom-[66px]`, another
+   `useIsIPhonePWA` branch. With `viewport-fit=cover` the footer grows by the
+   bottom inset, so on iPhone *Safari* (where `navigator.standalone` is false,
+   giving `bottom-[66px]`) the bar would have overlapped the tab nav by ~33px.
+   Fixed by moving the bar into the footer slot, where it needs no offset at
+   all; `MobilePOS`'s `pb-24` clearance went with it. This is the highest-stakes
+   screen in the app, so it's the first thing to check on device.
+2. **Tailwind arbitrary values silently drop invalid CSS.**
+   `pt-[calc(0.75rem+env(safe-area-inset-top))]` compiles, but CSS `calc`
+   requires whitespace around `+`, so the declaration is dropped and the header
+   loses its top inset with no error anywhere. Tailwind maps `_` to a space, so
+   it must be written `calc(0.75rem_+_env(safe-area-inset-top))`. Verified by
+   grepping the built CSS for `padding-top:calc(.75rem + env(...))` rather than
+   trusting the build's exit code — worth repeating for any future `env()` work.
+
+Deviations from the plan as written, both deliberate:
+
+- **`select-none` was left on the shell root** rather than scoped to the chrome
+  (item 9). It's a behavior change, not a layout one, and bundling it would
+  have added a second variable to an already device-test-heavy commit. Also
+  genuinely uncertain: this is a touch POS, and allowing long-press selection
+  over tappable product cards may be worse than not being able to copy an order
+  total. Decide it on its own.
+- **`viewportFit: "cover"` was added to seller only, not "both apps."** The
+  plan said both; that would be actively wrong, because backoffice still has
+  `fixed` chrome and no safe-area handling, so `cover` there would push its tab
+  bar under the home indicator. Backoffice gets it in Phase 6, together with
+  the in-flow shell.
+
+Found but not acted on: `setOverlay` / `MobileOverlayContext` has **zero
+consumers** in seller (grepped `app/**/*.tsx`) — a second dead mechanism
+alongside `MobileScrollContext` from item 5. Fold into Phase 3, which is
+already touching that area.
+
 - `MobileHeader.tsx:37` — drop `fixed top-0 left-0 right-0 z-40`, add
   `shrink-0`.
 - `MobileFooterNav.tsx:27` — drop `fixed bottom-0 left-0 right-0`, add
@@ -623,6 +665,8 @@ route entries, and mixing a mechanical 33-route edit into a structural layout
 change makes both harder to review and harder to revert independently.
 
 ### Phase 2 — Safe areas + stable viewport
+
+**SHIPPED** in the same commit as Phase 1 (`d0c3bfb`).
 
 Only safe once Phase 1 lands, per the earlier revert. **Strongly consider
 shipping this as one commit with Phase 1** — see the note at the end of Phase 1.
