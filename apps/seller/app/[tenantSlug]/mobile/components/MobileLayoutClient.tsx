@@ -21,7 +21,7 @@ import { MobileFooterNav } from "./MobileFooterNav";
 import { MobileFooterSlotContext } from "./MobileFooterSlotContext";
 import { useScrollRestoration } from "./useScrollRestoration";
 import { useEdgeSwipeBack } from "./useEdgeSwipeBack";
-import { resolveRoute, rootTabSuffixes, tabGroups } from "../config/navigation";
+import { isSubPage, resolveRoute, rootTabSuffixes, tabGroups } from "../config/navigation";
 import { useFlags } from "@/lib/context/FlagsContext";
 import { useT } from "@/lib/hooks/useT";
 
@@ -185,12 +185,12 @@ export default function MobileLayoutClient({
                         : null;
                 return {
                     path: url(tab.pathSuffix),
-                    label: v?.label ?? tab.label,
+                    label: t((v ?? tab).labelKey),
                     icon: v?.icon ?? tab.icon,
                     matchPaths: tab.matchSuffixes.map(url),
                 };
             }),
-        [navPath, url],
+        [navPath, url, t],
     );
 
     useEffect(() => {
@@ -198,9 +198,9 @@ export default function MobileLayoutClient({
     }, [tabs]);
 
     const currentRoute = resolveRoute(pathname);
-    const currentTitle = currentRoute?.title ?? "Mobile";
-    const currentIsSubPage = currentRoute?.subPage ?? false;
-    const footerCtaLabel = currentRoute?.footerCtaKey ? t(currentRoute.footerCtaKey) : currentRoute?.footerCta;
+    const currentTitle = currentRoute ? t(currentRoute.titleKey) : "Mobile";
+    const currentIsSubPage = isSubPage(currentRoute);
+    const footerCtaLabel = currentRoute?.footerCtaKey ? t(currentRoute.footerCtaKey) : undefined;
     const parentSuffix = currentRoute?.parent;
     const parentPath = !parentSuffix
         ? url("/mobile")

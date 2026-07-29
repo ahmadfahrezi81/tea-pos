@@ -29,9 +29,8 @@ export function MobileHeader({
 }: MobileHeaderProps) {
     const currentRoute = resolveRoute(currentPath);
     const isInlineHeader = currentRoute?.inlineHeader ?? false;
-    const isChart = currentRoute?.isChart ?? false;
     const headerAction = currentRoute?.headerAction;
-    const hideStorePicker = currentRoute?.hideStorePicker ?? false;
+    const showStorePicker = (currentRoute?.storePicker ?? false) && !!selectedStore;
 
     return (
         <header className="shrink-0 bg-slate-100 px-4 py-3 pt-[calc(0.75rem_+_env(safe-area-inset-top))]">
@@ -76,7 +75,7 @@ export function MobileHeader({
                                     </p>
                                 </div>
                             )
-                        ) : isChart ? (
+                        ) : (
                             <div className="flex flex-col gap-2">
                                 <button
                                     onClick={onBack}
@@ -85,16 +84,20 @@ export function MobileHeader({
                                     <ArrowLeft size={30} strokeWidth={2.5} />
                                 </button>
                                 <div className="flex items-center gap-2">
-                                    <p className="text-2xl font-semibold tracking-tight text-gray-900">
+                                    <p
+                                        className={`text-2xl tracking-tight text-gray-900 ${
+                                            showStorePicker ? "font-semibold" : "font-bold"
+                                        }`}
+                                    >
                                         {currentTitle}
                                     </p>
-                                    {selectedStore && (
+                                    {showStorePicker && (
                                         <button
                                             onClick={onStorePicker}
                                             className="flex items-center mt-1 gap-0.5 active:scale-95"
                                         >
                                             <p className="text-lg text-brand font-bold">
-                                                {selectedStore.name}
+                                                {selectedStore!.name}
                                             </p>
                                             <ChevronsUpDown
                                                 size={14}
@@ -105,31 +108,19 @@ export function MobileHeader({
                                     )}
                                 </div>
                             </div>
-                        ) : (
-                            <div className="flex flex-col gap-2">
-                                <button
-                                    onClick={onBack}
-                                    className="text-gray-900 active:scale-95 self-start pr-2 pl-0 py-1"
-                                >
-                                    <ArrowLeft size={30} strokeWidth={2.5} />
-                                </button>
-                                <p className="text-2xl font-bold tracking-tight text-gray-900">
-                                    {currentTitle}
-                                </p>
-                            </div>
                         )
                     ) : (
                         <div className="flex items-baseline gap-2">
                             <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">
                                 {currentTitle}
                             </h1>
-                            {selectedStore && !hideStorePicker && (
+                            {showStorePicker && (
                                 <button
                                     onClick={onStorePicker}
                                     className="flex items-center gap-0.5 active:scale-95"
                                 >
                                     <span className="text-[22px] font-semibold tracking-tight text-brand">
-                                        {selectedStore.name}
+                                        {selectedStore!.name}
                                     </span>
                                     <ChevronsUpDown
                                         size={18}
