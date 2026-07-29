@@ -831,7 +831,50 @@ stabilises — at which point switching is opt-in rather than forced.
 
 ### Phase 5 — Back gesture and history
 
-Most speculative phase; treat as exploratory.
+**SHIPPED** as `ab0f872`. `tsc`, `eslint`, `next build` clean. **Not yet
+device-tested, and this is the phase where that matters most** — both
+behaviours are touch- and history-driven, neither is observable in a build.
+
+Found while implementing, and not in the plan: **the back arrow was pushing
+history, not unwinding it.** `onBack` called `handleNavClick(parentPath)`, i.e.
+`router.push`, so More → My Pay → back left `[More, Pay, More]` and the Android
+system back button then walked *into* the page just left. This was a real
+existing bug, independent of gestures, and arguably the more valuable half of
+the phase. Back now uses `router.back()` when there is an entry of ours to
+unwind, falling back to a push only for deep links and hard reloads onto a
+subpage.
+
+Subtlety worth remembering: `router.back()` fires `popstate` just as the system
+button does, so the depth counter is decremented in the listener **only**.
+Decrementing at the call site as well double-counted, stranded the counter at
+zero, and silently reverted the behaviour to pushing.
+
+**`popstate` interception was deliberately not built**, contrary to the plan's
+second bullet. The plan assumed raw history diverges from the `parent`
+hierarchy, but in this app it mostly doesn't: subpages hide the tab bar
+(`!currentIsSubPage` gates `MobileFooterNav`), so a subpage cannot be navigated
+away from laterally and its history is linear. Forcing hierarchy on top of that
+buys little and risks the well-known PWA anti-pattern where back can no longer
+exit the app. Revisit only if a concrete case shows up where they disagree.
+
+The edge swipe fires back as a **discrete gesture, not an interactive drag** —
+the page does not follow the finger, because dragging needs a page transition
+to drag and Phase 4 deliberately didn't build one. If it feels abrupt on
+device, that's the trade, and the honest fix is the slide, not tuning the
+gesture.
+
+Guards, since the plan flagged conflicts as the main risk: it only arms within
+24px of the left edge, only on subpages, bails as soon as vertical movement
+dominates, and ignores touches starting on anything that owns horizontal
+dragging — `.mapboxgl-map` / `.leaflet-container` explicitly, plus any ancestor
+that genuinely scrolls horizontally (`scrollWidth > clientWidth` with
+`overflow-x: auto|scroll`), so future carousels are covered without needing to
+be registered anywhere.
+
+`packages/utils/navigation.ts` was left as the module-level singleton. Nothing
+in this phase needed it to change, and the plan already noted it works.
+
+Original plan follows.
 
 - Edge-swipe-from-left → navigate to `parent` on subpages. Fills the real gap
   from item 7: standalone iOS PWA users have no back affordance except the
