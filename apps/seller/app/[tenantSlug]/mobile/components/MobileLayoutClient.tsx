@@ -20,6 +20,7 @@ import { MobileHeader } from "./MobileHeader";
 import { MobileFooterNav } from "./MobileFooterNav";
 import { MobileFooterSlotContext } from "./MobileFooterSlotContext";
 import { useScrollRestoration } from "./useScrollRestoration";
+import { useEdgeSwipeBack } from "./useEdgeSwipeBack";
 import { resolveRoute, rootTabSuffixes, tabGroups } from "../config/navigation";
 import { useFlags } from "@/lib/context/FlagsContext";
 import { useT } from "@/lib/hooks/useT";
@@ -47,6 +48,8 @@ export default function MobileLayoutClient({
     const setFooterSlot = useCallback((node: ReactNode) => setFooterSlotNode(node), []);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const lastRootTabRef = useRef<string>(url("/mobile/more"));
+    /** History entries this shell pushed, so back can unwind instead of push. */
+    const pushDepthRef = useRef(0);
 
     const { user, avatarUrl, mutate: refreshProfile } = useAuth();
     const { flags: { isMaintenanceEnabled } } = useFlags();
@@ -75,6 +78,7 @@ export default function MobileLayoutClient({
             // Save while the outgoing page is still the one on screen.
             saveScroll();
             setPendingPath(path.split("?")[0]);
+            pushDepthRef.current += 1;
             // Inside a transition the current screen stays mounted and
             // interactive until the next one is ready to commit, instead of
             // being torn down and replaced by a placeholder.
@@ -84,6 +88,38 @@ export default function MobileLayoutClient({
         },
         [pathname, router, saveScroll],
     );
+
+    /**
+     * Going back unwinds history rather than pushing another entry. Pushing the
+     * parent instead would leave [More, Pay, More] behind, so the system back
+     * button would walk *into* the page the user just left. Falls back to a push
+     * when there is nothing of ours to unwind — a deep link or a hard reload
+     * straight onto a subpage.
+     */
+    const handleBack = useCallback(
+        (fallbackPath: string) => {
+            saveScroll();
+            if (pushDepthRef.current > 0) {
+                startTransition(() => {
+                    router.back();
+                });
+                return;
+            }
+            handleNavClick(fallbackPath);
+        },
+        [router, saveScroll, handleNavClick],
+    );
+
+    // Every way back out of a page ends in a popstate — the system back button,
+    // and router.back() above — so the depth is decremented here only. Doing it
+    // at the call site too would double-count and strand the counter at zero.
+    useEffect(() => {
+        const onPopState = () => {
+            pushDepthRef.current = Math.max(0, pushDepthRef.current - 1);
+        };
+        window.addEventListener("popstate", onPopState);
+        return () => window.removeEventListener("popstate", onPopState);
+    }, []);
 
     useEffect(() => {
         if (rootTabPaths.includes(pathname)) {
@@ -173,6 +209,14 @@ export default function MobileLayoutClient({
           : url(parentSuffix);
     const showAccountIcon = rootTabPaths.some((p) => pathname === p);
 
+    const goBack = useCallback(() => handleBack(parentPath), [handleBack, parentPath]);
+
+    useEdgeSwipeBack({
+        containerRef: scrollContainerRef,
+        enabled: currentIsSubPage,
+        onBack: goBack,
+    });
+
     const scrollPaddingBottom = currentRoute?.scrollPaddingBottom ?? "pb-8";
 
     // Whether any bottom chrome renders. Drives the footer background so the
@@ -194,7 +238,7 @@ export default function MobileLayoutClient({
                     selectedStore={selectedStore}
                     showAccountIcon={showAccountIcon}
                     avatarUrl={avatarUrl}
-                    onBack={() => handleNavClick(parentPath)}
+                    onBack={goBack}
                     onStorePicker={() => setIsPickerOpen(true)}
                     onAccount={() => handleNavClick(url("/mobile/account"))}
                 />
