@@ -20,7 +20,6 @@ import { MobileHeader } from "./MobileHeader";
 import { MobileFooterNav } from "./MobileFooterNav";
 import { MobileFooterSlotContext } from "./MobileFooterSlotContext";
 import { useScrollRestoration } from "./useScrollRestoration";
-import { useEdgeSwipeBack } from "./useEdgeSwipeBack";
 import { isSubPage, resolveRoute, rootTabSuffixes, tabGroups } from "../config/navigation";
 import { useFlags } from "@/lib/context/FlagsContext";
 import { useT } from "@/lib/hooks/useT";
@@ -210,12 +209,6 @@ export default function MobileLayoutClient({
     const showAccountIcon = rootTabPaths.some((p) => pathname === p);
 
     const goBack = useCallback(() => handleBack(parentPath), [handleBack, parentPath]);
-
-    useEdgeSwipeBack({
-        containerRef: scrollContainerRef,
-        enabled: currentIsSubPage,
-        onBack: goBack,
-    });
 
     const scrollPaddingBottom = currentRoute?.scrollPaddingBottom ?? "pb-8";
 
