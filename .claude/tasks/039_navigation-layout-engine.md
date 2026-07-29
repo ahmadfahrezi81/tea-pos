@@ -888,7 +888,36 @@ away from laterally and its history is linear. Forcing hierarchy on top of that
 buys little and risks the well-known PWA anti-pattern where back can no longer
 exit the app. Revisit only if a concrete case shows up where they disagree.
 
-**Device testing found a bug the plan's risk list missed** (fixed in `2c4f2ab`).
+**The edge swipe was ultimately deleted** (`0b5d447`). Keep the history half;
+the gesture half was a mistake from the premise up. Full story below, because
+the failure mode is instructive.
+
+**Item 7's premise was out of date.** It claimed an installed iOS PWA has "no
+back button, no swipe-from-edge." WebKit gives Home Screen web apps native
+back/forward swipe, and Android standalone has the system back gesture — so no
+platform actually lacked one. The whole gesture solved a problem that no longer
+existed.
+
+**And the first fix made it worse where it mattered.** Restricting the gesture
+to standalone (`2c4f2ab`, below) removed the conflict from browser tabs — the
+one place the gesture was never needed — while leaving it intact in the PWA,
+the only place it ran. Same double navigation, same lag, now exclusively on the
+primary target. Narrowing the scope of a wrong thing is not a fix.
+
+The lesson for the rest of this task: **a capability the platform already
+provides is not a gap.** The plan's confidence table rated this phase Low for
+the right reason but the wrong cause — the risk was never that the gesture
+would be hard to implement well, it was that it should not be implemented at
+all. Check what the platform does before hand-rolling platform behaviour.
+
+Native also does it better: their gesture tracks the finger and can be
+abandoned mid-swipe, which a discrete threshold gesture cannot without a page
+transition to drag — and Phase 4 deliberately has none.
+
+---
+
+Earlier device-testing round, kept for the record (fixed in `2c4f2ab`,
+superseded by the deletion above).
 The plan anticipated the gesture conflicting with *content* — carousels, the
 map, drawers — and those guards held up. What it missed is that the gesture
 conflicts with **the browser itself**: in a normal tab, the browser already owns
@@ -926,9 +955,8 @@ in this phase needed it to change, and the plan already noted it works.
 
 Original plan follows.
 
-- Edge-swipe-from-left → navigate to `parent` on subpages. Fills the real gap
-  from item 7: standalone iOS PWA users have no back affordance except the
-  header button.
+- ~~Edge-swipe-from-left → navigate to `parent` on subpages.~~ **Built, then
+  deleted — the premise was false, see above. Do not rebuild it.**
 - `popstate` handling so Android's system back follows the app's `parent`
   hierarchy rather than raw history order.
 - **No prior art to copy here, unlike everywhere else in this task.** The
