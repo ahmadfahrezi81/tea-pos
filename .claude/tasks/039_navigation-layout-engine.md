@@ -699,20 +699,51 @@ shipping this as one commit with Phase 1** — see the note at the end of Phase 
 
 ### Phase 3 — Scroll ownership
 
-- Actually provide `MobileScrollContext` from the shell — this alone
-  un-breaks `MobileAnalytics.tsx:138`.
-- Per-route scroll memory: a `Map<string, number>` on a ref, saved on
-  navigate-away, restored on return inside `requestAnimationFrame`. Honor the
-  currently-dead `preserveScroll` flag so it's opt-in per route rather than
-  global (a fresh POS screen should *not* restore).
-- Fold the store-picker `dataset.scrollY` hack (`:102-113`) into the same
-  mechanism — it's a special case of the same thing.
-- Delete `MobileAnalytics`'s bespoke sessionStorage restore once the engine
-  covers it.
+**SHIPPED** as `579a88f` (scroll memory) and `f87f3ff` (dead overlay slot).
+`tsc`, `eslint` and `next build` clean. **Not yet device-tested.**
 
-Note this phase is partly blocked by Phase 4 in practice: preserving scroll on
-a component that gets unmounted on every navigation only half-works. They
-reinforce each other.
+What shipped, and where it departed from the plan:
+
+- **New `components/useScrollRestoration.ts`** (81 lines) owns the
+  `Map<string, number>`, keyed on the real pathname and gated on the
+  previously-dead `preserveScroll` flag. Only `/mobile/analytics` opts in
+  today, so POS still opens at the top.
+- **Saving is explicit, not effect cleanup.** The plan said "saved on
+  navigate-away," which is only achievable synchronously: the shell reuses one
+  scroll container, so the moment the page unmounts the container collapses and
+  the browser clamps `scrollTop` to 0. Any cleanup runs after that and reads 0.
+  `handleNavClick` now saves before pushing, while the outgoing page is still
+  mounted.
+- **Restoring retries; `requestAnimationFrame` alone is not enough.** A page's
+  data arrives after its route does, so on the first frame the content is short
+  and the saved offset clamps — which is exactly what the old per-page code was
+  working around by keying its restore off `summariesData`. The hook re-applies
+  on a `ResizeObserver` as content grows, stopping as soon as the offset sticks
+  (so it never fights the user mid-scroll) or after 1.2s.
+- **`MobileScrollContext` was deleted, not provided.** The plan said to provide
+  it, on the assumption its `MobileAnalytics` consumer would stay. Since the
+  engine subsumes that consumer and the shell reaches its own container
+  directly, providing it would have left a context with zero consumers — the
+  same dead surface this phase removes.
+- **The store-picker `dataset.scrollY` hack was left alone**, contrary to the
+  plan's "fold it in." It works, and it triggers on drawer state rather than
+  navigation; merging them means the navigation recorder and the picker
+  overwriting each other's saved offset. Revisit only if it actually breaks.
+- **Also removed the dead overlay slot** (`f87f3ff`) — `setOverlay` had zero
+  consumers, so `overlay` was permanently null and its render branch
+  unreachable.
+
+The dead-code finding in item 5 turned out to be worse than recorded: the
+restore was dead **three** ways over, not two. Besides the missing provider and
+the unread `preserveScroll` flag, `MobileAnalytics.tsx:139` read
+`sessionStorage["scroll:<path>"]` — a key **nothing in the codebase ever
+wrote** (grepped: two `sessionStorage` references in the whole seller app, both
+in that one block, one `getItem` and one `removeItem`). Even with a working
+provider it could never have restored anything.
+
+Still not covered: browser/system back does not route through `handleNavClick`
+and so saves nothing. Deliberately left to Phase 5 with the rest of history
+handling.
 
 ### Phase 4 — Real transitions (the actual "feels like Grab" phase)
 
