@@ -17,7 +17,6 @@ import { StorePickerDrawer } from "./StorePickerDrawer";
 import { navigation } from "@tea-pos/utils/navigation";
 import { MobileHeader } from "./MobileHeader";
 import { MobileFooterNav } from "./MobileFooterNav";
-import { MobileOverlayContext } from "./MobileOverlayContext";
 import { MobileFooterSlotContext } from "./MobileFooterSlotContext";
 import { useScrollRestoration } from "./useScrollRestoration";
 import { resolveRoute, rootTabSuffixes, tabGroups } from "../config/navigation";
@@ -38,8 +37,6 @@ export default function MobileLayoutClient({
     const [shellReady, setShellReady] = useState(false);
     const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
     const [isTransitioning, setIsTransitioning] = useState(false);
-    const [overlay, setOverlayNode] = useState<ReactNode>(null);
-    const setOverlay = useCallback((node: ReactNode) => setOverlayNode(node), []);
     const [footerSlot, setFooterSlotNode] = useState<ReactNode>(null);
     const setFooterSlot = useCallback((node: ReactNode) => setFooterSlotNode(node), []);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -165,7 +162,6 @@ export default function MobileLayoutClient({
 
     return (
         <MobileFooterSlotContext.Provider value={{ setFooterSlot }}>
-        <MobileOverlayContext.Provider value={{ setOverlay }}>
             {/* Shell — header, content and footer are real flex children, so the
                 content region is exactly the leftover space. No height is ever
                 guessed: the browser computes it, and the safe-area insets on the
@@ -201,11 +197,6 @@ export default function MobileLayoutClient({
                                 <div className="h-44 bg-slate-200 rounded-2xl" />
                                 <div className="h-12 bg-slate-200 rounded-2xl" />
                             </div>
-                        </div>
-                    )}
-                    {overlay && (
-                        <div className="absolute inset-0 z-10 px-3 py-4">
-                            {overlay}
                         </div>
                     )}
                 </main>
@@ -328,7 +319,6 @@ export default function MobileLayoutClient({
                     </div>
                 </div>
             )}
-        </MobileOverlayContext.Provider>
         </MobileFooterSlotContext.Provider>
     );
 }
