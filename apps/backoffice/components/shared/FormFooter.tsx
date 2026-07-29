@@ -2,7 +2,7 @@
 
 import { useLayoutEffect, useState } from "react";
 import { Loader2, X } from "lucide-react";
-import { useMobileFooterSlot } from "@/app/[tenantSlug]/mobile/components/MobileFooterSlotContext";
+import { useFooterSlot } from "@tea-pos/shell/FooterSlotContext";
 
 const VARIANT_CLASS = {
     brand: "bg-brand",
@@ -27,7 +27,7 @@ export function FormFooter({
     disabled = false, isLoading = false, variant = "brand",
     confirmTitle, confirmMessage,
 }: FormFooterProps) {
-    const { setFooterSlot } = useMobileFooterSlot();
+    const { setFooterSlot } = useFooterSlot();
     const [confirmOpen, setConfirmOpen] = useState(false);
     const requiresConfirm = Boolean(confirmTitle || confirmMessage);
 

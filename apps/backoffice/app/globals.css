@@ -39,6 +39,18 @@ body {
     animation: indeterminate 1.5s ease-in-out infinite;
 }
 
+/* Navigation progress, used by @tea-pos/shell. Shown only once a route is slow
+   enough to notice, over the outgoing page rather than in place of it. Colour
+   comes from the class alongside it so this stays purely positional. */
+.nav-pending-bar {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -100%;
+    width: 100%;
+    animation: indeterminate 1.2s ease-in-out infinite;
+}
+
 @theme inline {
     --color-background: var(--background);
     --color-foreground: var(--foreground);
