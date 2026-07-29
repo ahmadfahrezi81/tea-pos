@@ -642,6 +642,37 @@ route table rather than the shell.
 
 ### Phase 1c — `RouteConfig` schema cleanup
 
+**SHIPPED** as `5fbd575`. 402 → 303 lines, and a typical route is now one line.
+`tsc`, `eslint`, `next build` clean.
+
+**Verified behaviourally identical rather than eyeballed.** Since this touched
+all 33 entries, the old and new tables were parsed and diffed field by field —
+resolved title, parent, subpage-ness, header variant, action, CTA, padding and
+picker visibility — all 33 match. Worth repeating for any future table-wide
+edit; it caught nothing here, but it is the only cheap way to be sure.
+
+**Found while doing it: `titleKey` and `labelKey` were dead, and that was an
+i18n bug, not just dead weight.** Declared on all 33 routes and all 5 tabs,
+read by nothing — the shell rendered `route.title` and `tab.label`, the
+untranslated English. So every page header and every tab label stayed English
+regardless of locale, while the footer CTA immediately below was translated
+(`footerCtaKey` *was* wired). That inconsistency is what made it visible. Both
+now go through `t()`; all 32 keys were verified present in en and id first.
+This is the **fifth** dead mechanism in this shell, after `MobileScrollContext`,
+the sessionStorage scroll restore, `preserveScroll`, and the overlay slot.
+
+On the two capability replacements the plan called for:
+
+- `isChart` + `hideStorePicker` → one positive `storePicker`. Neither passed
+  the capability test: `isChart` named two screens that happen to look alike,
+  and `hideStorePicker` expressed an absence as a negative flag. What both
+  actually controlled was whether the store picker sits beside the title, and
+  the two subpage header branches they selected between collapse into one.
+- The plan's phrasing for `hideStorePicker` was "the absence of a header slot."
+  Left as a boolean here — real header slots are Phase 6's `headerSlot={...}`
+  seam, and inventing that machinery for one flag ahead of the extraction would
+  be building the abstraction twice.
+
 Mechanical, no behavior change, but it's the phase that decides whether this
 engine is pleasant to extend in a year. Per "Maintainability lives in the route
 table" in Design.
