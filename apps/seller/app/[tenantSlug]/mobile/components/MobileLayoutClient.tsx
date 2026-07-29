@@ -19,6 +19,7 @@ import { MobileHeader } from "./MobileHeader";
 import { MobileFooterNav } from "./MobileFooterNav";
 import { MobileOverlayContext } from "./MobileOverlayContext";
 import { MobileFooterSlotContext } from "./MobileFooterSlotContext";
+import { useScrollRestoration } from "./useScrollRestoration";
 import { resolveRoute, rootTabSuffixes, tabGroups } from "../config/navigation";
 import { useFlags } from "@/lib/context/FlagsContext";
 import { useT } from "@/lib/hooks/useT";
@@ -58,14 +59,24 @@ export default function MobileLayoutClient({
 
     const rootTabPaths = useMemo(() => rootTabSuffixes.map(url), [url]);
 
+    const saveScroll = useScrollRestoration({
+        containerRef: scrollContainerRef,
+        pathname,
+        enabled: resolveRoute(pathname)?.preserveScroll ?? false,
+        ready: shellReady && !isTransitioning,
+    });
+
     const handleNavClick = useCallback(
         (path: string) => {
             if (path === pathname) return;
+            // Must happen before the page unmounts — once it does, the shared
+            // scroll container collapses and the offset is lost.
+            saveScroll();
             setOptimisticPath(path.split("?")[0]);
             setIsTransitioning(true);
             router.push(path);
         },
-        [pathname, router],
+        [pathname, router, saveScroll],
     );
 
     useEffect(() => {
