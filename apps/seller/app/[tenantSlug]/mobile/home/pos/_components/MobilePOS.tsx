@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useEffect } from "react";
 import Image from "next/image";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 import { useProducts } from "@/lib/hooks/products/useProducts";
@@ -9,9 +9,8 @@ import { useStore } from "@/lib/context/StoreContext";
 import { useFastOrderMode } from "@/lib/context/FastOrderModeContext";
 import type { ProductResponse } from "@tea-pos/features/products/schema";
 import { CartDrawer } from "./CartDrawer";
-import { useIsIPhonePWA } from "@/lib/usePWA";
+import { useMobileFooterSlot } from "../../../components/MobileFooterSlotContext";
 import { useT } from "@/lib/hooks/useT";
-import { Loader2 } from "lucide-react";
 
 // ─── Product Card ─────────────────────────────────────────────────────────────
 
@@ -88,13 +87,80 @@ const ProductCard = memo(function ProductCard({
     );
 });
 
+// ─── Cart Summary Bar ─────────────────────────────────────────────────────────
+
+interface CartSummaryBarProps {
+    itemCount: number;
+    total: number;
+    fastOrderMode: boolean;
+    isProcessing: boolean;
+    onClearCart: () => void;
+    onProcessOrder: () => void;
+    onOpenCart: () => void;
+    t: ReturnType<typeof useT>;
+}
+
+function CartSummaryBar({
+    itemCount,
+    total,
+    fastOrderMode,
+    isProcessing,
+    onClearCart,
+    onProcessOrder,
+    onOpenCart,
+    t,
+}: CartSummaryBarProps) {
+    return (
+        <div className="bg-white border-y border-gray-400 p-4">
+            <div className="flex items-center justify-between max-w-md mx-auto">
+                <div className="flex-1">
+                    <p className="text-sm text-gray-600">
+                        {itemCount} {t("cart.items")}
+                    </p>
+                    <p className="text-lg font-bold text-gray-900">
+                        {formatRupiah(total)}
+                    </p>
+                </div>
+                <div className="flex items-center gap-2">
+                    {fastOrderMode ? (
+                        <>
+                            <button
+                                onClick={onClearCart}
+                                className="flex items-center gap-1 bg-red-500 px-4 py-2 rounded-lg font-medium"
+                            >
+                                <span className="font-bold text-white">
+                                    {t("cart.clearAll")}
+                                </span>
+                            </button>
+                            <button
+                                onClick={onProcessOrder}
+                                disabled={isProcessing}
+                                className="px-4 py-2 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 disabled:opacity-50 flex items-center gap-1.5"
+                            >
+                                {isProcessing ? t("cart.processing") : t("cart.confirmOrder")}
+                            </button>
+                        </>
+                    ) : (
+                        <button
+                            onClick={onOpenCart}
+                            className="px-3 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600"
+                        >
+                            {t("cart.viewCart")}
+                        </button>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function MobilePOS() {
     const { selectedStoreId } = useStore();
     const { fastOrderMode } = useFastOrderMode();
     const { data: products = [], isLoading: productsLoading } = useProducts();
-    const isIPhonePWA = useIsIPhonePWA();
+    const { setFooterSlot } = useMobileFooterSlot();
     const t = useT();
 
     const {
@@ -113,8 +179,43 @@ export default function MobilePOS() {
         processOrder,
     } = useCart(selectedStoreId);
 
+    // The cart bar is bottom chrome, so it lives in the shell's footer region
+    // (above the tab nav) instead of being positioned against a hardcoded
+    // footer height. The shell owns the safe-area inset below it.
+    const hasCartItems = cart.length > 0;
+    useEffect(() => {
+        if (!hasCartItems) {
+            setFooterSlot(null);
+            return;
+        }
+        setFooterSlot(
+            <CartSummaryBar
+                itemCount={itemCount}
+                total={total}
+                fastOrderMode={fastOrderMode}
+                isProcessing={isProcessing}
+                onClearCart={clearCart}
+                onProcessOrder={processOrder}
+                onOpenCart={openCart}
+                t={t}
+            />,
+        );
+        return () => setFooterSlot(null);
+    }, [
+        hasCartItems,
+        itemCount,
+        total,
+        fastOrderMode,
+        isProcessing,
+        clearCart,
+        processOrder,
+        openCart,
+        t,
+        setFooterSlot,
+    ]);
+
     return (
-        <div className="flex flex-col gap-4 pb-24 shrink-0">
+        <div className="flex flex-col gap-4 shrink-0">
             {/* Products Grid */}
             <div className="grid grid-cols-2 gap-3">
                 {productsLoading
@@ -143,52 +244,6 @@ export default function MobilePOS() {
                     ))
                 }
             </div>
-
-            {/* Sticky Bottom Bar */}
-            {cart.length > 0 && (
-                <div
-                    className={`fixed ${isIPhonePWA ? "bottom-[98px]" : "bottom-[66px]"} left-0 right-0 bg-white border-y border-gray-400 p-4 z-40`}
-                >
-                    <div className="flex items-center justify-between max-w-md mx-auto">
-                        <div className="flex-1">
-                            <p className="text-sm text-gray-600">
-                                {itemCount} {t("cart.items")}
-                            </p>
-                            <p className="text-lg font-bold text-gray-900">
-                                {formatRupiah(total)}
-                            </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            {fastOrderMode ? (
-                                <>
-                                    <button
-                                        onClick={clearCart}
-                                        className="flex items-center gap-1 bg-red-500 px-4 py-2 rounded-lg font-medium"
-                                    >
-                                        <span className="font-bold text-white">
-                                            {t("cart.clearAll")}
-                                        </span>
-                                    </button>
-                                    <button
-                                        onClick={processOrder}
-                                        disabled={isProcessing}
-                                        className="px-4 py-2 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 disabled:opacity-50 flex items-center gap-1.5"
-                                    >
-                                        {isProcessing ? t("cart.processing") : t("cart.confirmOrder")}
-                                    </button>
-                                </>
-                            ) : (
-                                <button
-                                    onClick={openCart}
-                                    className="px-3 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600"
-                                >
-                                    {t("cart.viewCart")}
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {/* Cart Drawer — only in normal mode */}
             {!fastOrderMode && (

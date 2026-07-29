@@ -15,7 +15,6 @@ import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { useStore } from "@/lib/context/StoreContext";
 import { StorePickerDrawer } from "./StorePickerDrawer";
 import { navigation } from "@tea-pos/utils/navigation";
-import { useIsIPhonePWA } from "@/lib/usePWA";
 import { MobileHeader } from "./MobileHeader";
 import { MobileFooterNav } from "./MobileFooterNav";
 import { MobileOverlayContext } from "./MobileOverlayContext";
@@ -50,7 +49,6 @@ export default function MobileLayoutClient({
     const t = useT();
     const { data: storesData } = useStores();
     const { selectedStore, setIsPickerOpen, isPickerOpen } = useStore();
-    const isIPhonePWA = useIsIPhonePWA();
 
     useEffect(() => {
         if (user && storesData !== undefined) {
@@ -138,8 +136,6 @@ export default function MobileLayoutClient({
     const currentRoute = resolveRoute(currentPath);
     const currentTitle = currentRoute?.title ?? "Mobile";
     const currentIsSubPage = currentRoute?.subPage ?? false;
-    const isInlineHeader = currentRoute?.inlineHeader ?? false;
-    const hasHeaderAction = !!currentRoute?.headerAction;
     const footerCtaLabel = currentRoute?.footerCtaKey ? t(currentRoute.footerCtaKey) : currentRoute?.footerCta;
     const parentSuffix = currentRoute?.parent;
     const parentPath = !parentSuffix
@@ -149,26 +145,16 @@ export default function MobileLayoutClient({
           : url(parentSuffix);
     const showAccountIcon = rootTabPaths.some((p) => currentPath === p);
 
-    const scrollPaddingTop = hasHeaderAction
-        ? "pt-30"
-        : isInlineHeader
-          ? "pt-16"
-          : currentIsSubPage
-            ? "pt-27"
-            : "pt-19";
-
-    const scrollPaddingBottom = currentRoute?.scrollPaddingBottom ?? (
-        (hasHeaderAction || !!footerCtaLabel) ? "pb-32" : "pb-28"
-    );
+    const scrollPaddingBottom = currentRoute?.scrollPaddingBottom ?? "pb-8";
 
     return (
         <MobileFooterSlotContext.Provider value={{ setFooterSlot }}>
         <MobileOverlayContext.Provider value={{ setOverlay }}>
-            {/* Shell — always rendered so header/footer are on screen from first paint */}
-            <div
-                className="h-dvh flex flex-col bg-gradient-to-b from-slate-100 to-slate-200 select-none overflow-hidden"
-                style={{ '--mobile-footer-h': isIPhonePWA ? '97px' : '65px' } as React.CSSProperties}
-            >
+            {/* Shell — header, content and footer are real flex children, so the
+                content region is exactly the leftover space. No height is ever
+                guessed: the browser computes it, and the safe-area insets on the
+                chrome are absorbed automatically. */}
+            <div className="h-[100svh] flex flex-col bg-gradient-to-b from-slate-100 to-slate-200 select-none overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
                 <MobileHeader
                     currentPath={currentPath}
                     currentTitle={currentTitle}
@@ -181,18 +167,18 @@ export default function MobileLayoutClient({
                     onAccount={() => handleNavClick(url("/mobile/account"))}
                 />
 
-                <div className="flex-1 relative overflow-hidden">
+                {/* min-h-0 is required: a flex child defaults to min-height:auto and
+                    would refuse to shrink below its content, pushing the footer
+                    off-screen instead of scrolling internally. */}
+                <main className="flex-1 min-h-0 relative">
                     <div
                         ref={scrollContainerRef}
-                        className={`absolute inset-0 overflow-y-auto p-4 ${scrollPaddingBottom} ${scrollPaddingTop}`}
+                        className={`absolute inset-0 overflow-y-auto p-4 ${scrollPaddingBottom}`}
                     >
                         {shellReady && !isTransitioning && children}
                     </div>
                     {isTransitioning && (
-                        <div
-                            className={`absolute inset-x-0 top-0 z-10 px-4 pb-4 ${scrollPaddingTop}`}
-                            style={{ bottom: "var(--mobile-footer-h)" }}
-                        >
+                        <div className="absolute inset-0 z-10 p-4">
                             <div className="animate-pulse space-y-3">
                                 <div className="h-20 bg-slate-200 rounded-2xl" />
                                 <div className="h-40 bg-slate-200 rounded-2xl" />
@@ -202,37 +188,36 @@ export default function MobileLayoutClient({
                         </div>
                     )}
                     {overlay && (
-                        <div
-                            className={`absolute inset-x-0 top-0 z-10 ${scrollPaddingTop} pb-5 px-3`}
-                            style={{ bottom: 'var(--mobile-footer-h)' }}
-                        >
+                        <div className="absolute inset-0 z-10 px-3 py-4">
                             {overlay}
                         </div>
                     )}
-                    {(footerSlot || footerCtaLabel) && (
-                        <div className="absolute bottom-0 left-0 right-0 z-20">
-                            {footerSlot ?? (
-                                <div className="bg-white border-t border-gray-200 p-4 pb-8">
-                                    <button
-                                        onClick={() => handleNavClick(`${currentPath}/add`)}
-                                        className="w-full bg-brand text-white py-4 rounded-xl font-semibold text-base active:scale-[0.98] transition-transform"
-                                    >
-                                        {footerCtaLabel}
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </div>
+                </main>
 
-                {!currentIsSubPage && (
-                    <MobileFooterNav
-                        tabs={tabs}
-                        currentPath={currentPath}
-                        onTabClick={handleNavClick}
-                        isIPhonePWA={isIPhonePWA}
-                    />
-                )}
+                {/* Bottom chrome — one region. A page-provided slot (or the route's
+                    CTA) stacks above the tab nav, and the safe-area inset is applied
+                    once here rather than by each occupant. */}
+                <footer className="shrink-0 pb-[env(safe-area-inset-bottom)]">
+                    {(footerSlot || footerCtaLabel) && (
+                        footerSlot ?? (
+                            <div className="bg-white border-t border-gray-200 p-4">
+                                <button
+                                    onClick={() => handleNavClick(`${currentPath}/add`)}
+                                    className="w-full bg-brand text-white py-4 rounded-xl font-semibold text-base active:scale-[0.98] transition-transform"
+                                >
+                                    {footerCtaLabel}
+                                </button>
+                            </div>
+                        )
+                    )}
+                    {!currentIsSubPage && (
+                        <MobileFooterNav
+                            tabs={tabs}
+                            currentPath={currentPath}
+                            onTabClick={handleNavClick}
+                        />
+                    )}
+                </footer>
 
                 <StorePickerDrawer />
             </div>

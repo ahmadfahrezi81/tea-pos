@@ -34,7 +34,7 @@ export function MobileHeader({
     const hideStorePicker = currentRoute?.hideStorePicker ?? false;
 
     return (
-        <header className="fixed top-0 left-0 right-0 z-40 bg-slate-100 p-4 py-3">
+        <header className="shrink-0 bg-slate-100 px-4 py-3 pt-[calc(0.75rem_+_env(safe-area-inset-top))]">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 flex-1">
                     {isSubPage ? (

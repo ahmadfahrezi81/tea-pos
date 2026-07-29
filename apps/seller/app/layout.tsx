@@ -12,6 +12,13 @@ export const viewport: Viewport = {
         { color: "#ffffff", media: "(prefers-color-scheme: light)" },
         { color: "#ffffff", media: "(prefers-color-scheme: dark)" },
     ],
+    // Draw into the notch/home-indicator area. Safe: the mobile shell's header
+    // and footer apply env(safe-area-inset-*) themselves, and because they are
+    // in the flex flow the content region shrinks by exactly those insets.
+    viewportFit: "cover",
+    // Android: resize the layout when the soft keyboard opens so footer CTAs
+    // stay reachable instead of being covered. Safari ignores this.
+    interactiveWidget: "resizes-content",
 };
 
 export const metadata: Metadata = {

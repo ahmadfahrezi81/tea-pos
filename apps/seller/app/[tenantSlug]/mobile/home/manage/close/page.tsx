@@ -336,7 +336,7 @@ export default function ManageCloseDayPage() {
             return () => setFooterSlot(null);
         }
         setFooterSlot(
-            <div className="bg-white border-t border-gray-200 p-4 pb-8 flex gap-3">
+            <div className="bg-white border-t border-gray-200 p-4 flex gap-3">
                 {!isFirstStep && (
                     <button
                         onClick={handleBack}
