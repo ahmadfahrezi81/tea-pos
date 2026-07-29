@@ -1,9 +1,14 @@
 # Task 039 — Navigation & Layout Engine (measured chrome, real transitions)
 
-**Status: Planned, not started.** Scope is deliberately phased so each phase is
-independently shippable and independently revertible. Execution happens on a
-throwaway branch off `staging` (`feat/nav-engine`) — if the result doesn't feel
-right on real devices, the branch gets dropped and nothing is lost.
+**Status: All phases shipped on `feat/nav-engine`.** Seller is device-tested
+through phases 1–5 and 1c; backoffice inherited everything at once in phase 6
+and has **not** been tested on a device yet. Outstanding across the whole task:
+Android (tab and installed), landscape, and a small SE-class phone.
+
+Scope was deliberately phased so each phase was independently shippable and
+independently revertible, on a throwaway branch off `staging` — which earned
+its keep: the edge-swipe gesture was built, narrowed, and then deleted
+outright once device testing showed the premise was wrong.
 
 **Revised after review.** The first draft proposed measuring the fixed header
 and footer with a `ResizeObserver` and publishing their heights as CSS
@@ -972,6 +977,44 @@ Original plan follows.
   for anything above.
 
 ### Phase 6 — Extract `packages/shell` (only after 1–5 are proven in seller)
+
+**SHIPPED** as `1937f02` (package + seller migration) and `274282a`
+(backoffice adoption). Both apps: `tsc`, `eslint`, `next build` clean.
+**Backoffice is untested on a device — all six phases land there at once.**
+
+Sequenced as package-from-seller first, then backoffice, rather than the plan's
+"get both to an identical state, then extract." By this point seller had moved
+six phases ahead, so making them identical *before* extracting would have meant
+writing the new shell into backoffice and then immediately deleting it again.
+Migrating seller onto the package is the behaviour-neutral step (it is the code
+seller already runs), which leaves backoffice adoption as the only new risk.
+
+Two things needed design decisions rather than a copy:
+
+- **Tab variants.** Seller's POS tab relabels to Manage inside the manage
+  section, which depends on the path being navigated to — known only to the
+  shell. `variant` moved onto the shared `Tab` type: the app translates both
+  labels, the shell picks which applies. A first attempt had the app read
+  `window.location.pathname`, which would not re-render on navigation and
+  would break SSR.
+- **Store-picker scroll.** Its save/restore lived in the layout, which no
+  longer owns the scroll container. It moved into `StorePickerDrawer` via a new
+  `ScrollContext` — a better home regardless, since the drawer is what drops
+  the position. Note this is the same `MobileScrollContext` deleted in Phase 3
+  as dead; it comes back because there is now a real consumer, which is the
+  right reason for it to exist.
+
+The `hasHeaderAction` divergence (item 10) resolved as predicted: the shared
+header handles both `"add"` and `"edit"`, and the bug class disappeared with
+the constants it depended on rather than needing a targeted fix.
+
+Setup that is easy to miss when adding to this package later: both apps need
+the `@source "../../../packages/shell/**/*.tsx"` glob in `globals.css`, the
+`@tea-pos/shell` entry in `transpilePackages`, and a `tsconfig` path. Backoffice
+also needed `.nav-pending-bar` copied into its stylesheet — it is a hand-written
+class, not a Tailwind utility, so `@source` does not carry it. **Verify by
+grepping the built CSS**, not by trusting a green build: a dropped class fails
+silently.
 
 Do **not** start this until the earlier phases have been on a real device.
 Extracting first would mean building the abstraction around the magic-number
