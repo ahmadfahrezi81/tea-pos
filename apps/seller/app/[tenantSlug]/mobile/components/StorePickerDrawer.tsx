@@ -1,6 +1,8 @@
 "use client";
+import { useEffect } from "react";
 import { Drawer } from "vaul";
 import { Check, X, Eye, EyeOff } from "lucide-react";
+import { useShellScroll } from "@tea-pos/shell/ScrollContext";
 import { useStore } from "@/lib/context/StoreContext";
 import { useT } from "@/lib/hooks/useT";
 
@@ -15,6 +17,23 @@ export function StorePickerDrawer() {
         setHideInactiveStores,
     } = useStore();
     const t = useT();
+    const { scrollRef } = useShellScroll();
+
+    // Opening the drawer locks scrolling, which drops the page's position.
+    // Stash it on the way in and put it back on the way out — the drawer causes
+    // this, so the drawer cleans it up.
+    useEffect(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+        if (isPickerOpen) {
+            el.dataset.scrollY = String(el.scrollTop);
+            return;
+        }
+        const saved = el.dataset.scrollY;
+        if (saved !== undefined) {
+            requestAnimationFrame(() => el.scrollTo(0, Number(saved)));
+        }
+    }, [isPickerOpen, scrollRef]);
 
     if (assignedStores.length === 0) return null;
 

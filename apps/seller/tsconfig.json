@@ -26,6 +26,9 @@
       "@/*": [
         "./*"
       ],
+      "@tea-pos/shell/*": [
+        "../../packages/shell/*"
+      ],
       "@tea-pos/ui/*": [
         "../../packages/ui/*"
       ],

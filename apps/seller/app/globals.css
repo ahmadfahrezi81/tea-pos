@@ -9,6 +9,7 @@
    but not under Turbopack dev. Add a line when importing from a new
    @tea-pos/ui subdirectory. */
 @source "../../../packages/ui/custom/**/*.tsx";
+@source "../../../packages/shell/**/*.tsx";
 
 @custom-variant dark (&:is(.dark *));
 

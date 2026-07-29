@@ -50,6 +50,7 @@ const nextConfig: NextConfig = {
         ],
     },
     transpilePackages: [
+        "@tea-pos/shell",
         "@tea-pos/ui",
         "@tea-pos/db",
         "@tea-pos/features",

@@ -2,7 +2,7 @@
 
 import { useLayoutEffect } from "react";
 import { Loader2 } from "lucide-react";
-import { useMobileFooterSlot } from "@/app/[tenantSlug]/mobile/components/MobileFooterSlotContext";
+import { useFooterSlot } from "@tea-pos/shell/FooterSlotContext";
 
 const VARIANT_CLASS = {
     brand: "bg-brand",
@@ -27,7 +27,7 @@ export function FormFooter({
     isLoading = false,
     variant = "brand",
 }: FormFooterProps) {
-    const { setFooterSlot } = useMobileFooterSlot();
+    const { setFooterSlot } = useFooterSlot();
 
     useLayoutEffect(() => {
         setFooterSlot(

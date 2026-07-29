@@ -19,6 +19,7 @@
         "@tea-pos/db": "workspace:*",
         "@tea-pos/features": "workspace:*",
         "@tea-pos/services": "workspace:*",
+        "@tea-pos/shell": "workspace:*",
         "@tea-pos/ui": "workspace:*",
         "@tea-pos/utils": "workspace:*",
         "@vercel/analytics": "^1.5.0",

@@ -9,7 +9,7 @@ import { useStore } from "@/lib/context/StoreContext";
 import { useFastOrderMode } from "@/lib/context/FastOrderModeContext";
 import type { ProductResponse } from "@tea-pos/features/products/schema";
 import { CartDrawer } from "./CartDrawer";
-import { useMobileFooterSlot } from "../../../components/MobileFooterSlotContext";
+import { useFooterSlot } from "@tea-pos/shell/FooterSlotContext";
 import { useT } from "@/lib/hooks/useT";
 
 // ─── Product Card ─────────────────────────────────────────────────────────────
@@ -160,7 +160,7 @@ export default function MobilePOS() {
     const { selectedStoreId } = useStore();
     const { fastOrderMode } = useFastOrderMode();
     const { data: products = [], isLoading: productsLoading } = useProducts();
-    const { setFooterSlot } = useMobileFooterSlot();
+    const { setFooterSlot } = useFooterSlot();
     const t = useT();
 
     const {

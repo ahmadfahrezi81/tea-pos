@@ -24,7 +24,7 @@ import { Loader2 } from "lucide-react";
 import { useToast } from "@/lib/context/ToastContext";
 import { useFlags } from "@/lib/context/FlagsContext";
 import { getTodayLocalStr, getCurrentLocalMonth } from "@tea-pos/utils/time";
-import { useMobileFooterSlot } from "../../../components/MobileFooterSlotContext";
+import { useFooterSlot } from "@tea-pos/shell/FooterSlotContext";
 import { useT } from "@/lib/hooks/useT";
 import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
 
@@ -307,7 +307,7 @@ export default function ManageCloseDayPage() {
         [deletePhoto, mutatePhotos],
     );
 
-    const { setFooterSlot } = useMobileFooterSlot();
+    const { setFooterSlot } = useFooterSlot();
 
     const storeName = selectedStore?.name ?? "Unknown Store";
     const isFirstStep = currentStep === 0;

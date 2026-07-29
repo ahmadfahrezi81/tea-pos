@@ -1,0 +1,22 @@
+{
+  "name": "@tea-pos/shell",
+  "version": "0.0.1",
+  "private": true,
+  "exports": {
+    "./*": "./*.tsx",
+    "./routes": "./routes.ts",
+    "./useScrollRestoration": "./useScrollRestoration.ts"
+  },
+  "dependencies": {
+    "lucide-react": "^0.539.0"
+  },
+  "peerDependencies": {
+    "next": "^16.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.13",
+    "@types/react-dom": "^19"
+  }
+}

@@ -10,60 +10,30 @@ import type { LucideIcon } from "lucide-react";
 
 // ─── Route Metadata ───────────────────────────────────────────────────────────
 
-/**
- * What the shell needs to know about a route.
- *
- * Every field describes a *layout capability*, never a specific screen — the
- * test being whether some unrelated future route could plausibly want it. That
- * rule is what keeps this table from growing a flag per page.
- *
- * Only `titleKey` and `parent` are required; everything else defaults to off,
- * so a typical route is one line.
- */
-export type RouteConfig = {
-    /** i18n key for the header title. */
-    titleKey: string;
-    /**
-     * `null` marks a root tab. `"lastRootTab"` returns to whichever tab the user
-     * came from. Anything else is a route suffix. Also determines whether this
-     * is a subpage — see `isSubPage`.
-     */
-    parent: string | null | "lastRootTab";
-    /** Compact header: title beside a close button, rather than under a back arrow. */
-    inlineHeader?: boolean;
-    /** Primary action button in the header, linking to `<route>/add` or `/edit`. */
-    headerAction?: "add" | "edit";
-    /** Show the store picker next to the title. */
-    storePicker?: boolean;
-    /** i18n key for a full-width button in the footer region, linking to `<route>/add`. */
-    footerCtaKey?: string;
-    /** Overrides the scroll region's bottom padding. */
-    scrollPaddingBottom?: string;
-    /** Return to this route at the scroll offset it was left at. */
-    preserveScroll?: boolean;
-};
+export type { RouteConfig } from "@tea-pos/shell/routes";
+import type { RouteConfig } from "@tea-pos/shell/routes";
 
 export const mobileRoutes = {
     // ── Root tabs ─────────────────────────────────────────────────────────────
     "/mobile/home/pos": {
         titleKey: "nav.pos",
         parent: null,
-        storePicker: true,
+        titleAccessory: true,
     },
     "/mobile/home/manage": {
         titleKey: "nav.manage",
         parent: null,
-        storePicker: true,
+        titleAccessory: true,
     },
     "/mobile/orders": {
         titleKey: "nav.orders",
         parent: null,
-        storePicker: true,
+        titleAccessory: true,
     },
     "/mobile/analytics": {
         titleKey: "nav.analytics",
         parent: null,
-        storePicker: true,
+        titleAccessory: true,
         preserveScroll: true,
     },
     "/mobile/chats": {
@@ -122,14 +92,14 @@ export const mobileRoutes = {
     "/mobile/orders/chart": {
         titleKey: "nav.dailyChart",
         parent: "/mobile/orders",
-        storePicker: true,
+        titleAccessory: true,
     },
 
     // ── Analytics ─────────────────────────────────────────────────────────────
     "/mobile/analytics/chart": {
         titleKey: "nav.monthlyChart",
         parent: "/mobile/analytics",
-        storePicker: true,
+        titleAccessory: true,
     },
     "/mobile/analytics/daily/open": {
         titleKey: "nav.openStore",
@@ -215,10 +185,6 @@ export const mobileRoutes = {
         parent: "/mobile/account/payroll-info",
     },
 } satisfies Record<string, RouteConfig>;
-
-/** A route is a subpage exactly when it has somewhere to go back to. */
-export const isSubPage = (route: RouteConfig | null): boolean =>
-    route ? route.parent !== null : false;
 
 export const rootTabSuffixes = Object.entries(mobileRoutes)
     .filter(([, c]) => c.parent === null)

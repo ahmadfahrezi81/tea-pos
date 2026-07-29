@@ -1,12 +1,5 @@
 "use client";
-import type { LucideIcon } from "lucide-react";
-
-export interface Tab {
-    path: string;
-    label: string;
-    icon: LucideIcon;
-    matchPaths: string[];
-}
+import type { Tab } from "./routes";
 
 interface MobileFooterNavProps {
     tabs: Tab[];
