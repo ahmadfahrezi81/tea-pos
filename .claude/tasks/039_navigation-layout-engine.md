@@ -857,6 +857,25 @@ away from laterally and its history is linear. Forcing hierarchy on top of that
 buys little and risks the well-known PWA anti-pattern where back can no longer
 exit the app. Revisit only if a concrete case shows up where they disagree.
 
+**Device testing found a bug the plan's risk list missed** (fixed in `2c4f2ab`).
+The plan anticipated the gesture conflicting with *content* — carousels, the
+map, drawers — and those guards held up. What it missed is that the gesture
+conflicts with **the browser itself**: in a normal tab, the browser already owns
+the left-edge back gesture, so listening for it too meant one swipe went back
+twice. On Chrome for iOS that was far enough to leave the app's own history and
+force a full document load, which presented as the shell's loading screen never
+clearing. The extra navigation also made every gesture feel slow.
+
+The gesture only ever existed to replace *missing* browser chrome, so it is now
+limited to installed PWAs via `display-mode: standalone` (with the older iOS
+`navigator.standalone` as fallback). This is platform detection driving
+*behaviour*, not geometry, which the guiding principle explicitly permits.
+
+Also reverted in the same commit: `862c208`, which had changed the deep-link
+fallback from push to `router.replace`. Reported as making navigation slower.
+It only tidied history in the deep-link case, which push already handled
+acceptably — not worth carrying a regression for.
+
 The edge swipe fires back as a **discrete gesture, not an interactive drag** —
 the page does not follow the finger, because dragging needs a page transition
 to drag and Phase 4 deliberately didn't build one. If it feels abrupt on
