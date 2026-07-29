@@ -56,12 +56,20 @@ export function useScrollRestoration({
     }, [containerRef, pathname, enabled]);
 
     useIsomorphicLayoutEffect(() => {
-        if (!ready || !enabled) return;
+        if (!ready) return;
 
         const el = containerRef.current;
-        const target = positions.current.get(pathname) ?? 0;
-        const content = el?.firstElementChild;
-        if (!el || !content || target === 0) return;
+        if (!el) return;
+
+        // Pages are no longer unmounted between routes, so the shared container
+        // keeps whatever offset the previous page left behind. Every route has
+        // to be positioned explicitly — the top, unless it saved something.
+        const target = enabled ? positions.current.get(pathname) ?? 0 : 0;
+        const content = el.firstElementChild;
+        if (target === 0 || !content) {
+            el.scrollTop = target;
+            return;
+        }
 
         let observer: ResizeObserver | null = null;
         let timer: ReturnType<typeof setTimeout> | null = null;

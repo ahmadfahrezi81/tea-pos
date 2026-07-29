@@ -6,6 +6,7 @@ import React, {
     useState,
     useRef,
     useCallback,
+    useTransition,
 } from "react";
 import Image from "next/image";
 import { useStores } from "@/lib/hooks/stores/useStores";
@@ -27,6 +28,9 @@ interface MobileLayoutClientProps {
     children: ReactNode;
 }
 
+/** How long a navigation may take before it earns a loading indicator. */
+const PENDING_BAR_DELAY_MS = 200;
+
 export default function MobileLayoutClient({
     children,
 }: MobileLayoutClientProps) {
@@ -35,8 +39,10 @@ export default function MobileLayoutClient({
     const { url } = useTenantSlug();
 
     const [shellReady, setShellReady] = useState(false);
-    const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
-    const [isTransitioning, setIsTransitioning] = useState(false);
+    const [isPending, startTransition] = useTransition();
+    // Only drives the tab highlight, so a tap lights up immediately even though
+    // the header and content deliberately wait for the new route to commit.
+    const [pendingPath, setPendingPath] = useState<string | null>(null);
     const [footerSlot, setFooterSlotNode] = useState<ReactNode>(null);
     const setFooterSlot = useCallback((node: ReactNode) => setFooterSlotNode(node), []);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -60,18 +66,21 @@ export default function MobileLayoutClient({
         containerRef: scrollContainerRef,
         pathname,
         enabled: resolveRoute(pathname)?.preserveScroll ?? false,
-        ready: shellReady && !isTransitioning,
+        ready: shellReady && !isPending,
     });
 
     const handleNavClick = useCallback(
         (path: string) => {
             if (path === pathname) return;
-            // Must happen before the page unmounts — once it does, the shared
-            // scroll container collapses and the offset is lost.
+            // Save while the outgoing page is still the one on screen.
             saveScroll();
-            setOptimisticPath(path.split("?")[0]);
-            setIsTransitioning(true);
-            router.push(path);
+            setPendingPath(path.split("?")[0]);
+            // Inside a transition the current screen stays mounted and
+            // interactive until the next one is ready to commit, instead of
+            // being torn down and replaced by a placeholder.
+            startTransition(() => {
+                router.push(path);
+            });
         },
         [pathname, router, saveScroll],
     );
@@ -87,13 +96,21 @@ export default function MobileLayoutClient({
     }, [handleNavClick]);
 
     useEffect(() => {
-        if (optimisticPath && pathname === optimisticPath) {
-            setTimeout(() => {
-                setOptimisticPath(null);
-                setIsTransitioning(false);
-            }, 0);
+        setPendingPath(null);
+    }, [pathname]);
+
+    // A prefetched tab commits in well under this, so the common case shows no
+    // loading affordance at all. Only a genuinely slow route gets one, which
+    // keeps the bar meaningful instead of flashing on every tap.
+    const [showPendingBar, setShowPendingBar] = useState(false);
+    useEffect(() => {
+        if (!isPending) {
+            setShowPendingBar(false);
+            return;
         }
-    }, [pathname, optimisticPath]);
+        const timer = setTimeout(() => setShowPendingBar(true), PENDING_BAR_DELAY_MS);
+        return () => clearTimeout(timer);
+    }, [isPending]);
 
     useEffect(() => {
         router.prefetch(url("/mobile/home/pos"));
@@ -118,13 +135,16 @@ export default function MobileLayoutClient({
         }
     }, [isPickerOpen]);
 
-    const currentPath = optimisticPath || pathname;
+    // The header and content both follow `pathname`, the committed route, so the
+    // title never jumps ahead of the page it labels. Only the tab bar runs ahead
+    // via `navPath`, because a tap has to acknowledge itself immediately.
+    const navPath = pendingPath ?? pathname;
 
     const tabs = useMemo(
         () =>
             tabGroups.global.map((tab) => {
                 const v =
-                    tab.variant && currentPath.includes(tab.variant.pathContains)
+                    tab.variant && navPath.includes(tab.variant.pathContains)
                         ? tab.variant
                         : null;
                 return {
@@ -134,14 +154,14 @@ export default function MobileLayoutClient({
                     matchPaths: tab.matchSuffixes.map(url),
                 };
             }),
-        [currentPath, url],
+        [navPath, url],
     );
 
     useEffect(() => {
         tabs.forEach((tab) => router.prefetch(tab.path));
     }, [tabs]);
 
-    const currentRoute = resolveRoute(currentPath);
+    const currentRoute = resolveRoute(pathname);
     const currentTitle = currentRoute?.title ?? "Mobile";
     const currentIsSubPage = currentRoute?.subPage ?? false;
     const footerCtaLabel = currentRoute?.footerCtaKey ? t(currentRoute.footerCtaKey) : currentRoute?.footerCta;
@@ -151,7 +171,7 @@ export default function MobileLayoutClient({
         : parentSuffix === "lastRootTab"
           ? lastRootTabRef.current
           : url(parentSuffix);
-    const showAccountIcon = rootTabPaths.some((p) => currentPath === p);
+    const showAccountIcon = rootTabPaths.some((p) => pathname === p);
 
     const scrollPaddingBottom = currentRoute?.scrollPaddingBottom ?? "pb-8";
 
@@ -168,7 +188,7 @@ export default function MobileLayoutClient({
                 chrome are absorbed automatically. */}
             <div className="h-[100svh] flex flex-col bg-gradient-to-b from-slate-100 to-slate-200 select-none overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
                 <MobileHeader
-                    currentPath={currentPath}
+                    currentPath={pathname}
                     currentTitle={currentTitle}
                     isSubPage={currentIsSubPage}
                     selectedStore={selectedStore}
@@ -183,22 +203,19 @@ export default function MobileLayoutClient({
                     would refuse to shrink below its content, pushing the footer
                     off-screen instead of scrolling internally. */}
                 <main className="flex-1 min-h-0 relative">
+                    {/* Only a slow navigation gets an indicator, and it sits over
+                        the outgoing page rather than replacing it. */}
+                    {showPendingBar && (
+                        <div className="absolute inset-x-0 top-0 z-10 h-0.5 overflow-hidden">
+                            <div className="nav-pending-bar bg-brand" />
+                        </div>
+                    )}
                     <div
                         ref={scrollContainerRef}
                         className={`absolute inset-0 overflow-y-auto p-4 ${scrollPaddingBottom}`}
                     >
-                        {shellReady && !isTransitioning && children}
+                        {shellReady && children}
                     </div>
-                    {isTransitioning && (
-                        <div className="absolute inset-0 z-10 p-4">
-                            <div className="animate-pulse space-y-3">
-                                <div className="h-20 bg-slate-200 rounded-2xl" />
-                                <div className="h-40 bg-slate-200 rounded-2xl" />
-                                <div className="h-44 bg-slate-200 rounded-2xl" />
-                                <div className="h-12 bg-slate-200 rounded-2xl" />
-                            </div>
-                        </div>
-                    )}
                 </main>
 
                 {/* Bottom chrome — one region. A page-provided slot (or the route's
@@ -209,7 +226,7 @@ export default function MobileLayoutClient({
                         footerSlot ?? (
                             <div className="bg-white border-t border-gray-200 p-4">
                                 <button
-                                    onClick={() => handleNavClick(`${currentPath}/add`)}
+                                    onClick={() => handleNavClick(`${pathname}/add`)}
                                     className="w-full bg-brand text-white py-4 rounded-xl font-semibold text-base active:scale-[0.98] transition-transform"
                                 >
                                     {footerCtaLabel}
@@ -220,7 +237,7 @@ export default function MobileLayoutClient({
                     {!currentIsSubPage && (
                         <MobileFooterNav
                             tabs={tabs}
-                            currentPath={currentPath}
+                            currentPath={navPath}
                             onTabClick={handleNavClick}
                         />
                     )}
