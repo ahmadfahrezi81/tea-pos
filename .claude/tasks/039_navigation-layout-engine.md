@@ -747,7 +747,41 @@ handling.
 
 ### Phase 4 — Real transitions (the actual "feels like Grab" phase)
 
-The highest-value and highest-risk phase.
+**Core SHIPPED** as `2624b9a` — no-unmount, `useTransition`, skeleton removed,
+delayed progress bar. `tsc`, `eslint`, `next build` clean. **Not yet
+device-tested.** The directional slide is **deliberately not done** — see the
+decision at the end of this phase.
+
+Notes from the implementation:
+
+- **`optimisticPath` was mostly removed, not kept.** The plan didn't say what
+  to do with it. Keeping it wholesale would have meant the header renaming
+  itself to a page that hasn't arrived — previously masked because the content
+  underneath was a skeleton anyway, but obvious once the outgoing page stays on
+  screen. Header and content now both follow the committed `pathname`; only the
+  tab highlight runs ahead, via `navPath`, so a tap still acknowledges itself
+  instantly.
+- **The no-unmount change broke scroll positioning**, and the fix belongs with
+  it. Phase 3's hook relied on the container collapsing to 0 when a page
+  unmounted. With pages persisting, a new route inherited the previous page's
+  offset. `useScrollRestoration` now positions every route explicitly rather
+  than depending on that side effect.
+- **The pending bar is delayed 200ms.** Showing it on `isPending` directly
+  means it flashes on every prefetched tap, which is worse than showing
+  nothing. Reuses the existing `indeterminate` keyframe in `globals.css`.
+
+**Decision on the directional slide: not built, and not just deferred.**
+The plan's own note — that it's "the easiest thing to make feel cheap and
+janky" — argues for feeling the no-unmount change on real devices first, since
+that alone may close the gap. Beyond taste, there's a concrete obstacle worth
+recording: `document.startViewTransition()` wants a callback that mutates the
+DOM synchronously, but an App Router navigation commits asynchronously well
+after `router.push()` returns. Bridging the two means holding the transition
+open on a promise resolved from an effect when the new route lands — real
+machinery, with a hang to get wrong if a navigation is interrupted. The clean
+version is React's `<ViewTransition>`, which needs an experimental React build
+this project isn't on (see the version constraint above). Revisit only if the
+app still feels flat with the blanking gone.
 
 - Stop unmounting: remove the `!isTransitioning &&` gate at `:189`.
 - Wrap navigation in React's `useTransition` — `startTransition(() =>
