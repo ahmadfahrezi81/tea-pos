@@ -147,6 +147,11 @@ export default function MobileLayoutClient({
 
     const scrollPaddingBottom = currentRoute?.scrollPaddingBottom ?? "pb-8";
 
+    // Whether any bottom chrome renders. Drives the footer background so the
+    // safe-area strip below it reads as part of the bar rather than a gap —
+    // and stays transparent on subpages that have no bottom chrome at all.
+    const hasFooterChrome = !!footerSlot || !!footerCtaLabel || !currentIsSubPage;
+
     return (
         <MobileFooterSlotContext.Provider value={{ setFooterSlot }}>
         <MobileOverlayContext.Provider value={{ setOverlay }}>
@@ -197,7 +202,7 @@ export default function MobileLayoutClient({
                 {/* Bottom chrome — one region. A page-provided slot (or the route's
                     CTA) stacks above the tab nav, and the safe-area inset is applied
                     once here rather than by each occupant. */}
-                <footer className="shrink-0 pb-[env(safe-area-inset-bottom)]">
+                <footer className={`shrink-0 pb-[env(safe-area-inset-bottom)] ${hasFooterChrome ? "bg-white" : ""}`}>
                     {(footerSlot || footerCtaLabel) && (
                         footerSlot ?? (
                             <div className="bg-white border-t border-gray-200 p-4">
