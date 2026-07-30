@@ -226,6 +226,16 @@ body {
     overscroll-behavior-y: contain;
 }
 
+/* Without this the browser holds every tap to see whether a second one is
+   coming and turns it into a double-tap zoom, which reads as lag on each
+   button press. Scoped to things you tap: panning and pinch-zoom elsewhere
+   are untouched, and so is the map, which does its own gesture handling. */
+button,
+a,
+[role="button"] {
+    touch-action: manipulation;
+}
+
 /* Toast Animation */
 @keyframes slideDown {
     from {

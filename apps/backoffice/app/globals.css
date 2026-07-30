@@ -17,6 +17,22 @@ body {
     font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
+/* Stop Android Chrome's pull-to-refresh from reloading mid-flow */
+html,
+body {
+    overscroll-behavior-y: contain;
+}
+
+/* Without this the browser holds every tap to see whether a second one is
+   coming and turns it into a double-tap zoom, which reads as lag on each
+   button press. Scoped to things you tap: panning and pinch-zoom elsewhere
+   are untouched. */
+button,
+a,
+[role="button"] {
+    touch-action: manipulation;
+}
+
 @keyframes indeterminate {
     0% { left: -100%; width: 100%; }
     50% { left: 0%; width: 100%; }
