@@ -1,5 +1,6 @@
 import "./globals.css";
 import { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
 import { cookies } from "next/headers";
 import { SWRConfig } from "swr";
 import { Analytics } from "@vercel/analytics/next";
@@ -7,10 +8,27 @@ import { AuthProvider } from "@/lib/context/AuthContext";
 import { LanguageProvider } from "@/lib/context/LanguageContext";
 import type { Locale } from "@tea-pos/utils/translations";
 
+/**
+ * system-ui resolves to a different typeface on every platform — San Francisco
+ * on iOS, Roboto on stock Android, One UI Sans on Samsung — so the same screen
+ * has different letterforms and metrics on each device. Inter is self-hosted by
+ * next/font, so it also works offline, which matters for an installed PWA.
+ */
+const inter = Inter({
+    subsets: ["latin"],
+    variable: "--font-inter",
+    display: "swap",
+});
+
+/** slate-100 — the header and the top of the shell gradient. */
+const SHELL_TOP_COLOR = "#f1f5f9";
+
 export const viewport: Viewport = {
+    // Tints the status bar to match the header underneath it, instead of
+    // leaving a white strip above a slate header.
     themeColor: [
-        { color: "#ffffff", media: "(prefers-color-scheme: light)" },
-        { color: "#ffffff", media: "(prefers-color-scheme: dark)" },
+        { color: SHELL_TOP_COLOR, media: "(prefers-color-scheme: light)" },
+        { color: SHELL_TOP_COLOR, media: "(prefers-color-scheme: dark)" },
     ],
     // Draw into the notch/home-indicator area. Safe: the mobile shell's header
     // and footer apply env(safe-area-inset-*) themselves, and because they are
@@ -68,7 +86,7 @@ export default async function RootLayout({
         <html
             lang={initialLocale ?? "en"}
             translate="no"
-            className="notranslate"
+            className={`${inter.variable} notranslate`}
             suppressHydrationWarning
         >
             <body>

@@ -13,8 +13,10 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Inter is loaded in app/layout.tsx. The system stack stays as a fallback for
+   the first paint and for any glyph Inter's latin subset does not cover. */
 body {
-    font-family: system-ui, -apple-system, sans-serif;
+    font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .container {
