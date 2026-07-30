@@ -64,7 +64,7 @@ export function DailyStepHeader({
                                             isClickable && onStepClick(index)
                                         }
                                         disabled={!isClickable}
-                                        className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-colors ${
+                                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
                                             isCompleted
                                                 ? "bg-brand text-white active:scale-95"
                                                 : isCurrent
@@ -94,7 +94,7 @@ export function DailyStepHeader({
                                 {/* Connector line */}
                                 {index < steps.length - 1 && (
                                     <div
-                                        className={`w-6 h-0.5 mx-2 mb-4 transition-colors shrink-0 ${
+                                        className={`w-3 h-0.5 mx-1 mb-4 transition-colors shrink-0 ${
                                             isCompleted
                                                 ? "bg-brand"
                                                 : "bg-gray-300"
