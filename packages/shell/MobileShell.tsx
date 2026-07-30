@@ -101,7 +101,12 @@ export function MobileShell({
 
     const navigate = useCallback(
         (path: string) => {
-            if (path === pathname) return;
+            // Tapping the tab you are already on returns to the top, the way
+            // native tab bars do. No timing window, so nothing to misfire.
+            if (path === pathname) {
+                scrollContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+                return;
+            }
             // Save while the outgoing page is still the one on screen.
             saveScroll();
             setPendingPath(path.split("?")[0]);
