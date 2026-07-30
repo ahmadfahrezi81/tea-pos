@@ -209,7 +209,9 @@ export function MobileShell({
 
     const goBack = useCallback(() => goBackTo(parentPath), [goBackTo, parentPath]);
 
-    const scrollPaddingBottom = route?.scrollPaddingBottom ?? "pb-8";
+    // Defaults to nothing, so the p-4 below applies evenly on all four sides.
+    // Routes opt out (pb-0 for full-bleed content) or add room as they need it.
+    const scrollPaddingBottom = route?.scrollPaddingBottom ?? "";
 
     return (
         <ScrollContext.Provider value={scrollContext}>

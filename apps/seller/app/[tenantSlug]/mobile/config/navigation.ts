@@ -158,7 +158,6 @@ export const mobileRoutes = {
         titleKey: "nav.account",
         parent: "lastRootTab",
         inlineHeader: true,
-        scrollPaddingBottom: "pb-8",
     },
     "/mobile/account/details": {
         titleKey: "nav.personalDetails",
