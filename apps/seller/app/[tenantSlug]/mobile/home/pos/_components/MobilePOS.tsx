@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useEffect } from "react";
+import { memo } from "react";
 import Image from "next/image";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 import { useProducts } from "@/lib/hooks/products/useProducts";
@@ -9,7 +9,7 @@ import { useStore } from "@/lib/context/StoreContext";
 import { useFastOrderMode } from "@/lib/context/FastOrderModeContext";
 import type { ProductResponse } from "@tea-pos/features/products/schema";
 import { CartDrawer } from "./CartDrawer";
-import { useFooterSlot } from "@tea-pos/shell/FooterSlotContext";
+import { FooterSlot } from "@tea-pos/shell/FooterSlotContext";
 import { useT } from "@/lib/hooks/useT";
 
 // ─── Product Card ─────────────────────────────────────────────────────────────
@@ -160,7 +160,6 @@ export default function MobilePOS() {
     const { selectedStoreId } = useStore();
     const { fastOrderMode } = useFastOrderMode();
     const { data: products = [], isLoading: productsLoading } = useProducts();
-    const { setFooterSlot } = useFooterSlot();
     const t = useT();
 
     const {
@@ -179,43 +178,27 @@ export default function MobilePOS() {
         processOrder,
     } = useCart(selectedStoreId);
 
-    // The cart bar is bottom chrome, so it lives in the shell's footer region
-    // (above the tab nav) instead of being positioned against a hardcoded
-    // footer height. The shell owns the safe-area inset below it.
-    const hasCartItems = cart.length > 0;
-    useEffect(() => {
-        if (!hasCartItems) {
-            setFooterSlot(null);
-            return;
-        }
-        setFooterSlot(
-            <CartSummaryBar
-                itemCount={itemCount}
-                total={total}
-                fastOrderMode={fastOrderMode}
-                isProcessing={isProcessing}
-                onClearCart={clearCart}
-                onProcessOrder={processOrder}
-                onOpenCart={openCart}
-                t={t}
-            />,
-        );
-        return () => setFooterSlot(null);
-    }, [
-        hasCartItems,
-        itemCount,
-        total,
-        fastOrderMode,
-        isProcessing,
-        clearCart,
-        processOrder,
-        openCart,
-        t,
-        setFooterSlot,
-    ]);
-
     return (
         <div className="flex flex-col gap-4 shrink-0">
+            {/* The cart bar is bottom chrome, so it renders into the shell's
+                footer region (above the tab nav) instead of being positioned
+                against a hardcoded footer height. The shell owns the safe-area
+                inset below it. */}
+            {cart.length > 0 && (
+                <FooterSlot>
+                    <CartSummaryBar
+                        itemCount={itemCount}
+                        total={total}
+                        fastOrderMode={fastOrderMode}
+                        isProcessing={isProcessing}
+                        onClearCart={clearCart}
+                        onProcessOrder={processOrder}
+                        onOpenCart={openCart}
+                        t={t}
+                    />
+                </FooterSlot>
+            )}
+
             {/* Products Grid */}
             <div className="grid grid-cols-2 gap-3">
                 {productsLoading

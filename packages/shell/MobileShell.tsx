@@ -83,8 +83,9 @@ export function MobileShell({
     // Only drives the tab highlight, so a tap lights up immediately even though
     // the header and content deliberately wait for the new route to commit.
     const [pendingPath, setPendingPath] = useState<string | null>(null);
-    const [footerSlot, setFooterSlotNode] = useState<ReactNode>(null);
-    const setFooterSlot = useCallback((node: ReactNode) => setFooterSlotNode(node), []);
+    // A DOM node, not a stored ReactNode: pages portal into it, so the shell
+    // never re-renders because of what a page put in its footer.
+    const [footerSlotEl, setFooterSlotEl] = useState<HTMLDivElement | null>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const scrollContext = useMemo(() => ({ scrollRef: scrollContainerRef }), []);
     const lastRootTabRef = useRef<string>(homePath);
@@ -210,14 +211,9 @@ export function MobileShell({
 
     const scrollPaddingBottom = route?.scrollPaddingBottom ?? "pb-8";
 
-    // Whether any bottom chrome renders. Drives the footer background so the
-    // safe-area strip below it reads as part of the bar rather than a gap —
-    // and stays transparent on subpages that have no bottom chrome at all.
-    const hasFooterChrome = !!footerSlot || !!footerCtaLabel || !currentIsSubPage;
-
     return (
         <ScrollContext.Provider value={scrollContext}>
-        <FooterSlotContext.Provider value={{ setFooterSlot }}>
+        <FooterSlotContext.Provider value={footerSlotEl}>
             <div className="h-[100svh] flex flex-col bg-gradient-to-b from-slate-100 to-slate-200 select-none overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
                 <MobileHeader
                     route={route}
@@ -254,21 +250,25 @@ export function MobileShell({
 
                 {/* Bottom chrome — one region. A page-provided slot (or the route's
                     CTA) stacks above the tab nav, and the safe-area inset is applied
-                    once here rather than by each occupant. */}
-                <footer
-                    className={`shrink-0 pb-[env(safe-area-inset-bottom)] ${hasFooterChrome ? "bg-white" : ""}`}
-                >
-                    {(footerSlot || footerCtaLabel) &&
-                        (footerSlot ?? (
-                            <div className="bg-white border-t border-gray-200 p-4">
-                                <button
-                                    onClick={() => navigate(`${pathname}/add`)}
-                                    className="w-full bg-brand text-white py-4 rounded-xl font-semibold text-base active:scale-[0.98] transition-transform"
-                                >
-                                    {footerCtaLabel}
-                                </button>
-                            </div>
-                        ))}
+                    once here rather than by each occupant.
+
+                    The background turns white only when the region actually holds
+                    something: the tab nav, the route CTA, or an occupied slot all
+                    make a non-empty child, while a subpage with no chrome leaves
+                    only the empty slot div — where a white safe-area strip would
+                    read as an unexplained band above the home indicator. */}
+                <footer className="shrink-0 pb-[env(safe-area-inset-bottom)] [&:has(>:not(:empty))]:bg-white">
+                    <div ref={setFooterSlotEl} />
+                    {footerCtaLabel && (
+                        <div className="bg-white border-t border-gray-200 p-4">
+                            <button
+                                onClick={() => navigate(`${pathname}/add`)}
+                                className="w-full bg-brand text-white py-4 rounded-xl font-semibold text-base active:scale-[0.98] transition-transform"
+                            >
+                                {footerCtaLabel}
+                            </button>
+                        </div>
+                    )}
                     {!currentIsSubPage && (
                         <MobileFooterNav
                             tabs={resolvedTabs}
