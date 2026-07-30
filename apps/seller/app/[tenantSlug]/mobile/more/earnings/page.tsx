@@ -98,10 +98,6 @@ export default function EarningsPage() {
                         <p className="text-xs font-semibold text-gray-500">{t("analytics.cups")}</p>
                         <p className="text-lg font-bold text-blue-600">{payout.totalCups}</p>
                     </div>
-                    <div className="bg-green-100 p-2 rounded-lg col-span-2">
-                        <p className="text-xs font-semibold text-gray-500">{t("earnings.totalRow")}</p>
-                        <p className="text-lg font-bold text-green-600">{`Rp ${payout.totalPay.toLocaleString("id-ID")}`}</p>
-                    </div>
                     <div className="bg-teal-100 p-2 rounded-lg col-span-2">
                         <p className="text-xs font-semibold text-gray-500">{t("earnings.commissionsRow")}</p>
                         <p className="text-lg font-bold text-teal-600">{`Rp ${payout.commissionsTotal.toLocaleString("id-ID")}`}</p>
@@ -109,6 +105,10 @@ export default function EarningsPage() {
                     <div className="bg-purple-100 p-2 rounded-lg col-span-2">
                         <p className="text-xs font-semibold text-gray-500">{t("earnings.claimsRow")}</p>
                         <p className="text-lg font-bold text-purple-600">{`Rp ${payout.claimsTotal.toLocaleString("id-ID")}`}</p>
+                    </div>
+                    <div className="bg-green-100 p-2 rounded-lg col-span-2">
+                        <p className="text-xs font-semibold text-gray-500">{t("earnings.totalRow")}</p>
+                        <p className="text-lg font-bold text-green-600">{`Rp ${payout.totalPay.toLocaleString("id-ID")}`}</p>
                     </div>
                 </div>
             </button>

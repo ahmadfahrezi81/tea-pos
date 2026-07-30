@@ -14,7 +14,13 @@ interface NumberInputProps {
     currency?: boolean;
     unit?: string;
     prefix?: string;
-    /** Skip thousand-separator formatting — for phone numbers, bank accounts, etc. */
+    /**
+     * Skip thousand-separator formatting, for digit runs that are not amounts.
+     *
+     * Still a number, so it cannot hold a leading zero and loses precision past
+     * Number.MAX_SAFE_INTEGER. Anything where those matter — account numbers,
+     * reference codes — wants TextInput with inputMode="numeric" instead.
+     */
     raw?: boolean;
 }
 
