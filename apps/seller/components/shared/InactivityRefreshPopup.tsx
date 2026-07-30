@@ -17,13 +17,18 @@ export default function RefreshOnStaleData() {
     const [showPrompt, setShowPrompt] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
     // A ref, not state: activity fires constantly and none of it should
-    // re-render the tree. Only the interval below reads it.
-    const lastActivityRef = useRef(Date.now());
+    // re-render the tree. Only the interval below reads it. Seeded on mount
+    // rather than here, because reading the clock during render is impure.
+    const lastActivityRef = useRef(0);
 
     useEffect(() => {
         const markActive = () => {
             lastActivityRef.current = Date.now();
         };
+
+        // Mounting counts as activity: the clock has to start somewhere, and
+        // starting it at 0 would fire the prompt on the very first tick.
+        markActive();
 
         ACTIVITY_EVENTS.forEach((event) =>
             window.addEventListener(event, markActive, { passive: true }),
