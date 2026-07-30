@@ -216,7 +216,16 @@ export function MobileShell({
     return (
         <ScrollContext.Provider value={scrollContext}>
         <FooterSlotContext.Provider value={footerSlotEl}>
-            <div className="h-[100svh] flex flex-col bg-gradient-to-b from-slate-100 to-slate-200 select-none overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+            {/* svh in a browser tab, dvh when installed. svh is the right unit
+                against a live URL bar — it stops the shell resizing as the bar
+                hides and shows. An installed PWA has no such chrome, so the two
+                are the same size there, but dvh recomputes on viewport changes
+                where svh is measured once. iOS gets that measurement wrong after
+                a full document load inside the standalone window — which is
+                exactly what the /auth/callback redirect does on login — and
+                leaves the shell short of the screen until something forces a
+                relayout. */}
+            <div className="h-[100svh] [@media(display-mode:standalone)]:h-dvh flex flex-col bg-gradient-to-b from-slate-100 to-slate-200 select-none overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
                 <MobileHeader
                     route={route}
                     title={title}

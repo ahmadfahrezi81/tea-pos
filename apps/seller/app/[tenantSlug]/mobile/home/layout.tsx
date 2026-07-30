@@ -38,7 +38,11 @@ export default function HomeLayout({
 
     if (showGate) {
         return (
-            <div className="flex flex-col h-full gap-4">
+            // min-h-full, not h-full: when the Android keyboard shrinks the
+            // viewport the gate must keep its natural height and let the shell
+            // scroll, rather than being squeezed until its centred content
+            // spills out over the page behind it.
+            <div className="flex flex-col min-h-full gap-4">
                 <AtAGlance summaryId={summaryId ?? undefined} />
                 <div className="flex-1 min-h-0">
                     <StoreGate
