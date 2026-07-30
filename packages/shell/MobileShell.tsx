@@ -14,6 +14,7 @@ import { MobileFooterNav } from "./MobileFooterNav";
 import { FooterSlotContext } from "./FooterSlotContext";
 import { ScrollContext } from "./ScrollContext";
 import { useScrollRestoration } from "./useScrollRestoration";
+import { useStandaloneViewportHeight } from "./useStandaloneViewportHeight";
 import { isSubPage, type ResolveRoute, type Tab } from "./routes";
 
 /** How long a navigation may take before it earns a loading indicator. */
@@ -91,6 +92,8 @@ export function MobileShell({
     const lastRootTabRef = useRef<string>(homePath);
     /** History entries this shell pushed, so back can unwind instead of push. */
     const pushDepthRef = useRef(0);
+
+    useStandaloneViewportHeight();
 
     const saveScroll = useScrollRestoration({
         containerRef: scrollContainerRef,
@@ -221,16 +224,14 @@ export function MobileShell({
     return (
         <ScrollContext.Provider value={scrollContext}>
         <FooterSlotContext.Provider value={footerSlotEl}>
-            {/* svh in a browser tab, dvh when installed. svh is the right unit
-                against a live URL bar — it stops the shell resizing as the bar
-                hides and shows. An installed PWA has no such chrome, so the two
-                are the same size there, but dvh recomputes on viewport changes
-                where svh is measured once. iOS gets that measurement wrong after
-                a full document load inside the standalone window — which is
-                exactly what the /auth/callback redirect does on login — and
-                leaves the shell short of the screen until something forces a
-                relayout. */}
-            <div className="h-[100svh] [@media(display-mode:standalone)]:h-dvh flex flex-col bg-gradient-to-b from-slate-100 to-slate-200 select-none overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+            {/* svh in a browser tab: measured against the largest URL-bar state,
+                so the shell does not resize as the bar hides and shows.
+
+                Installed, --shell-height takes over — see
+                useStandaloneViewportHeight for why the CSS units cannot be
+                trusted to stay fresh there. dvh is the fallback for the first
+                paint, before the hook has measured anything. */}
+            <div data-shell-root className="h-[100svh] [@media(display-mode:standalone)]:h-[var(--shell-height,100dvh)] flex flex-col bg-gradient-to-b from-slate-100 to-slate-200 select-none overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
                 <MobileHeader
                     route={route}
                     title={title}
