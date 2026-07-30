@@ -119,8 +119,8 @@ function EditForm({ info, update }: {
                         <p className="text-xs font-medium text-gray-500">{t("account.accountNumberLabel")}</p>
                         <NumberInput
                             raw
-                            value={bankAccountNumber}
-                            onChange={setBankAccountNumber}
+                            value={bankAccountNumber || null}
+                            onChange={(v) => setBankAccountNumber(v ?? 0)}
                             placeholder="1234567890"
                         />
                     </div>

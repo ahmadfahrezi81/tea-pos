@@ -197,7 +197,7 @@ export function SummaryDetailsCard({
                 <NumberInput
                     value={actualCash ?? summary.expectedCash}
                     currency
-                    onChange={(val) => onActualCashChange?.(val)}
+                    onChange={(val) => onActualCashChange?.(val ?? 0)}
                 />
                 <p className="text-sm text-gray-600">
                     {t("manage.cashStep.expected")}{" "}

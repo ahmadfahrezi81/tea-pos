@@ -67,7 +67,7 @@ export default function AddClaimTypePage() {
                 </div>
                 <div className="space-y-1.5">
                     <p className="text-sm font-medium text-gray-700">Amount</p>
-                    <NumberInput value={amount} onChange={setAmount} currency prefix="Rp" />
+                    <NumberInput value={amount || null} onChange={(v) => setAmount(v ?? 0)} currency prefix="Rp" />
                 </div>
                 <div className="space-y-1.5">
                     <p className="text-sm font-medium text-gray-700">Frequency</p>
@@ -102,7 +102,7 @@ export default function AddClaimTypePage() {
                         <p className="text-sm font-medium text-gray-700">
                             Minimum hours worked{claimSource === "auto_submit" ? " (optional)" : ""}
                         </p>
-                        <NumberInput value={autoThresholdHours} onChange={setAutoThresholdHours} unit="hours" />
+                        <NumberInput value={autoThresholdHours || null} onChange={(v) => setAutoThresholdHours(v ?? 0)} unit="hours" />
                     </div>
                 )}
                 {error && <p className="text-sm text-red-500">{error}</p>}
