@@ -41,9 +41,9 @@ export function DailyStepHeader({
         <div className="w-full pb-3">
             <div
                 ref={scrollRef}
-                className="overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full"
+                className="overflow-x-auto [&::-webkit-scrollbar]:hidden"
             >
-                <div className="flex items-center min-w-max pb-1.5">
+                <div className="flex items-center min-w-max">
                     {steps.map((step, index) => {
                         const isCompleted = index < currentStep;
                         const isCurrent = index === currentStep;
@@ -94,7 +94,7 @@ export function DailyStepHeader({
                                 {/* Connector line */}
                                 {index < steps.length - 1 && (
                                     <div
-                                        className={`w-3 h-0.5 mx-1 mb-4 transition-colors shrink-0 ${
+                                        className={`w-5 h-0.5 mx-1.5 mb-4 transition-colors shrink-0 ${
                                             isCompleted
                                                 ? "bg-brand"
                                                 : "bg-gray-300"
