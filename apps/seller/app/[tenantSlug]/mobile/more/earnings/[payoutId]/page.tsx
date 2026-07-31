@@ -4,7 +4,6 @@ import { use, useState } from "react";
 import { usePayslip } from "@/lib/hooks/payroll/usePayslip";
 import { useExpectedPayoutDate } from "@/lib/hooks/payroll/useExpectedPayoutDate";
 import CopyableField from "@/components/shared/CopyableField";
-import { usePayrollUserInfo } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
 import { parseISO, format, eachDayOfInterval, getISOWeek } from "date-fns";
 import { useT } from "@/lib/hooks/useT";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
@@ -19,7 +18,6 @@ const STATUS_PILL: Record<string, string> = {
 export default function PayslipPage({ params }: { params: Promise<{ payoutId: string }> }) {
     const { payoutId } = use(params);
     const { payslip, isLoading } = usePayslip(payoutId);
-    const { info: payrollInfo } = usePayrollUserInfo();
     const [showProof, setShowProof] = useState(false);
     const t = useT();
 
@@ -56,7 +54,7 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
         paidByName: string | null;
     };
 
-    const { payout, commissions, claims, commissionsTotal, claimsTotal, totalPay, ratePerCup, totalOrders, paidByName } = ps;
+    const { payout, commissions, claims, totalPay, ratePerCup, totalOrders, paidByName } = ps;
 
     const status = payout.status;
 

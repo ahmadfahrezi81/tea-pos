@@ -6,7 +6,7 @@ import {
     PayrollUserInfoResponse,
 } from "@tea-pos/features/payroll-user-info/schema";
 import { getPayrollUserInfo, upsertPayrollUserInfo } from "@tea-pos/services/payroll-user-info";
-import { ok, err, badRequest, unauthorized, handleError } from "@/lib/api/response";
+import { ok, badRequest, unauthorized, handleError } from "@/lib/api/response";
 import { getRequestUser } from "@/lib/auth/get-request-user";
 
 export async function GET(_request: NextRequest) {

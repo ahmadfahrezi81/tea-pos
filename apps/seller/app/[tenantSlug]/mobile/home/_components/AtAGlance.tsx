@@ -23,14 +23,6 @@ function getCurrentMinutes(currentTime?: string): number {
     return now.getHours() * 60 + now.getMinutes();
 }
 
-function formatTime(minutes: number): string {
-    const h = Math.floor(minutes / 60) % 24;
-    const m = minutes % 60;
-    const ampm = h >= 12 ? "PM" : "AM";
-    const display = h % 12 === 0 ? 12 : h % 12;
-    return `${display}:${String(m).padStart(2, "0")} ${ampm}`;
-}
-
 function formatDate(): string {
     return new Date().toLocaleDateString("en-US", {
         weekday: "short",

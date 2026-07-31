@@ -44,7 +44,7 @@ const QUANTITY_REQUIRED_SLOTS: PhotoType[] = ["closing:cups", "closing:tea"];
 export default function ManageCloseDayPage() {
     const searchParams = useSearchParams();
     const { url } = useTenantSlug();
-    const { selectedStoreId, selectedStore } = useStore();
+    const { selectedStoreId } = useStore();
     const { mutate: mutateSession } = useSession(selectedStoreId);
     const { showToast } = useToast();
     const { showError } = useErrorSheet();
@@ -307,7 +307,6 @@ export default function ManageCloseDayPage() {
         [deletePhoto, mutatePhotos],
     );
 
-    const storeName = selectedStore?.name ?? "Unknown Store";
     const isFirstStep = currentStep === 0;
     const isLastStep = currentStep === STEPS.length - 1;
     const isBusy = isUploading || isSubmitting;
@@ -422,8 +421,6 @@ export default function ManageCloseDayPage() {
                         summary={summary}
                         photos={photos}
                         savedPhotos={savedPhotos}
-                        notes=""
-                        storeName={storeName}
                         confirmed={confirmed}
                         onConfirmChange={setConfirmed}
                         actualCash={actualCash}

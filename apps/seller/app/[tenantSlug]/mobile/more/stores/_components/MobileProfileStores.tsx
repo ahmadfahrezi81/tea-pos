@@ -6,7 +6,6 @@ import { useT } from "@/lib/hooks/useT";
 export default function MobileProfileStores() {
     const { data: storeData, isLoading } = useStores();
     const stores = storeData?.stores ?? [];
-    const assignments = storeData?.assignments ?? {};
     const t = useT();
 
     return (
