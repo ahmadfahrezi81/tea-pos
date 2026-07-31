@@ -231,7 +231,7 @@ export function MobileShell({
                 useStandaloneViewportHeight for why the CSS units cannot be
                 trusted to stay fresh there. dvh is the fallback for the first
                 paint, before the hook has measured anything. */}
-            <div data-shell-root className="h-[100svh] [@media(display-mode:standalone)]:h-[var(--shell-height,100dvh)] flex flex-col bg-gradient-to-b from-slate-100 to-slate-200 select-none overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+            <div className="h-[100svh] [@media(display-mode:standalone)]:h-[var(--shell-height,100dvh)] flex flex-col bg-gradient-to-b from-slate-100 to-slate-200 select-none overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
                 <MobileHeader
                     route={route}
                     title={title}
