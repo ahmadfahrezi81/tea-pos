@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState, useMemo } from "react";
+import { useRef, useEffect, useLayoutEffect, useState, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useT } from "@/lib/hooks/useT";
 import { useDayActivityBigEvents } from "@/lib/hooks/activity-logs/useStoreActivityLogs";
@@ -54,13 +54,53 @@ function createdAtToLocalMinutes(createdAt: string): number {
 
 // ─── Tooltip portal ───────────────────────────────────────────────────────────
 
-function TooltipPortal({ label, anchorRef }: { label: string; anchorRef: React.RefObject<HTMLDivElement | null> }) {
-    if (!anchorRef.current) return null;
-    const rect = anchorRef.current.getBoundingClientRect();
+/**
+ * A label pinned above `anchor`, portalled to the body so it escapes the
+ * timeline's overflow.
+ *
+ * The position is written straight to the node in a layout effect, rather than
+ * measured during render. The tooltip is `fixed`, so its coordinates are only
+ * valid for as long as the anchor stays put: measuring during render froze the
+ * rect at the moment the tooltip opened, and the label then hung in place while
+ * the marker scrolled away underneath it.
+ *
+ * Styling the node directly rather than storing the rect in state keeps
+ * scrolling off React's critical path — following the anchor is a paint
+ * concern, and re-rendering the tree for every scroll event to move a label by
+ * a few pixels would be work for nothing.
+ *
+ * Scroll is captured rather than bubbled: the shell scrolls an inner div, and
+ * scroll events from an element do not reach window any other way.
+ */
+function TooltipPortal({ label, anchor }: { label: string; anchor: HTMLDivElement | null }) {
+    const elRef = useRef<HTMLDivElement>(null);
+
+    useLayoutEffect(() => {
+        const el = elRef.current;
+        if (!anchor || !el) return;
+
+        // Runs before paint, so the node is never shown at its unpositioned
+        // origin even on the first frame.
+        const place = () => {
+            const rect = anchor.getBoundingClientRect();
+            el.style.top = `${rect.top - 28}px`;
+            el.style.left = `${rect.left + rect.width / 2}px`;
+        };
+        place();
+
+        window.addEventListener("scroll", place, { passive: true, capture: true });
+        window.addEventListener("resize", place, { passive: true });
+        return () => {
+            window.removeEventListener("scroll", place, { capture: true });
+            window.removeEventListener("resize", place);
+        };
+    }, [anchor]);
+
+    if (!anchor) return null;
     return createPortal(
         <div
+            ref={elRef}
             className="fixed z-[9999] bg-gray-800 text-white text-[10px] font-medium px-2 py-0.5 rounded-md whitespace-nowrap shadow-lg pointer-events-none -translate-x-1/2"
-            style={{ top: rect.top - 28, left: rect.left + rect.width / 2 }}
         >
             {label}
         </div>,
@@ -97,8 +137,11 @@ export function AtAGlance({ events: passedEvents, summaryId }: AtAGlanceProps) {
     const numHours = totalMinutes / 60;
 
     const scrollRef = useRef<HTMLDivElement>(null);
-    const eventRefs = useRef<Record<string, HTMLDivElement | null>>({});
     const [activeEventId, setActiveEventId] = useState<string | null>(null);
+    // Only the open tooltip needs an anchor, so the active marker reports its
+    // own element through a callback ref. Keeping a record of every marker's
+    // node meant reading that record during render to find the active one.
+    const [activeAnchor, setActiveAnchor] = useState<HTMLDivElement | null>(null);
 
     const t = useT();
     const greeting = t(`home.greeting.${getGreetingKey()}`);
@@ -242,14 +285,11 @@ export function AtAGlance({ events: passedEvents, summaryId }: AtAGlanceProps) {
                             const pos = Math.min(Math.max(timeToPos(mins), 0), 1);
                             const isActive = activeEventId === event.id;
                             const isPassed = progressPos >= pos;
-                            const anchorRef: React.RefObject<HTMLDivElement | null> = {
-                                current: eventRefs.current[event.id] ?? null,
-                            };
 
                             return (
                                 <div
                                     key={event.id}
-                                    ref={(el) => { eventRefs.current[event.id] = el; }}
+                                    ref={isActive ? setActiveAnchor : undefined}
                                     className="absolute top-1/2 z-10"
                                     style={{
                                         left: `${pos * 100}%`,
@@ -259,7 +299,7 @@ export function AtAGlance({ events: passedEvents, summaryId }: AtAGlanceProps) {
                                     {isActive && (
                                         <TooltipPortal
                                             label={`${EVENT_LABEL[event.type] ?? event.type} · ${formatEventTime(event.createdAt)}`}
-                                            anchorRef={anchorRef}
+                                            anchor={activeAnchor}
                                         />
                                     )}
                                     <button
