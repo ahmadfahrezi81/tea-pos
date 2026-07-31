@@ -23,9 +23,16 @@ const SETTLE_MS = 300;
  * does not. iOS has its own version of this after a full document load inside
  * the standalone window, which is what the /auth/callback redirect on login is.
  *
- * innerHeight is the layout viewport, the same thing vh units measure and the
- * same thing interactive-widget=resizes-content shrinks for the keyboard, so
- * reading it preserves the current keyboard behaviour rather than replacing it.
+ * The height read here must be the *layout* viewport — the same thing vh units
+ * measure, and the same thing interactive-widget=resizes-content shrinks for the
+ * Android keyboard — so that writing it preserves the existing behaviour rather
+ * than replacing it.
+ *
+ * `documentElement.clientHeight` is that on every engine. `window.innerHeight`
+ * is not: on WebKit it reports the *visual* viewport, so it shrinks when the
+ * user pinch-zooms and when the iOS keyboard opens. Reading it collapsed the
+ * shell on iOS — the tab bar rode up the screen with bare page background below
+ * it — which is the whole reason this note exists.
  */
 export function useStandaloneViewportHeight() {
     useEffect(() => {
@@ -39,7 +46,7 @@ export function useStandaloneViewportHeight() {
                 root.style.removeProperty("--shell-height");
                 return;
             }
-            root.style.setProperty("--shell-height", `${window.innerHeight}px`);
+            root.style.setProperty("--shell-height", `${root.clientHeight}px`);
         };
 
         // Being told the app is visible again does not mean the viewport has
