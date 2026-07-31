@@ -69,12 +69,12 @@ export function SinglePhotoStep({
                             Quantity <span className="text-red-500">*</span>
                         </p>
                         <NumberInput
-                            value={quantity?.value ?? 0}
+                            value={quantity?.value ?? null}
                             unit={quantityConfig.unit}
                             placeholder={quantityConfig.placeholder}
                             onChange={(val) =>
                                 onQuantityChange(
-                                    val === 0 ? null : { value: val, unit: quantityConfig.unit },
+                                    val === null ? null : { value: val, unit: quantityConfig.unit },
                                 )
                             }
                         />

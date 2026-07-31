@@ -1,8 +1,7 @@
 "use client";
 
-import { useLayoutEffect } from "react";
 import { Loader2 } from "lucide-react";
-import { useMobileFooterSlot } from "@/app/[tenantSlug]/mobile/components/MobileFooterSlotContext";
+import { FooterSlot } from "@tea-pos/shell/FooterSlotContext";
 
 const VARIANT_CLASS = {
     brand: "bg-brand",
@@ -27,10 +26,8 @@ export function FormFooter({
     isLoading = false,
     variant = "brand",
 }: FormFooterProps) {
-    const { setFooterSlot } = useMobileFooterSlot();
-
-    useLayoutEffect(() => {
-        setFooterSlot(
+    return (
+        <FooterSlot>
             <div className="bg-white border-t border-gray-200 p-4 pb-8">
                 <button
                     type="button"
@@ -45,9 +42,6 @@ export function FormFooter({
                     )}
                 </button>
             </div>
-        );
-        return () => setFooterSlot(null);
-    }, [label, loadingLabel, onSubmit, disabled, isLoading, variant, setFooterSlot]);
-
-    return null;
+        </FooterSlot>
+    );
 }

@@ -11,8 +11,6 @@ interface ReviewStepProps {
     summary: DailySummary;
     photos: SlottedPhoto[];
     savedPhotos: SavedSlottedPhoto[];
-    notes: string;
-    storeName: string;
     confirmed: boolean;
     onConfirmChange: (confirmed: boolean) => void;
     actualCash: number;
@@ -23,8 +21,6 @@ export function ReviewStep({
     summary,
     photos,
     savedPhotos,
-    notes,
-    storeName,
     confirmed,
     onConfirmChange,
     actualCash,

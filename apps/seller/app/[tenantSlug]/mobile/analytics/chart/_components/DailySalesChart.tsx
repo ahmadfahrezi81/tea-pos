@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useRef, useEffect, useState } from "react";
+import { useMemo, useRef, useEffect } from "react";
 import { useT } from "@/lib/hooks/useT";
 import useDailySales from "@/lib/hooks/analytics/useDailySales";
 import {
@@ -45,23 +45,29 @@ const CustomLabel = (props: any) => {
     );
 };
 
+// Declared at module scope, not inside the chart. A component created during
+// render gets a fresh identity every time, so React treats it as a different
+// type and remounts the tooltip on each parent render instead of updating it.
+// It reaches for its own `t` rather than closing over the chart's, which is
+// what kept it inside in the first place.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const CustomTooltip = ({ active, payload }: any) => {
+    const t = useT();
+    if (!active || !payload?.length) return null;
+    const { date, cups } = payload[0].payload;
+    return (
+        <div className="bg-white border border-gray-100 rounded-lg shadow-md px-3 py-2 text-xs">
+            <p className="font-semibold text-gray-700">{date}</p>
+            <p className="text-brand font-bold">{cups} {t("analytics.cups")}</p>
+        </div>
+    );
+};
+
 export default function DailySalesChart({ storeId, month }: Props) {
     const { data: dailySales = [], isLoading } = useDailySales(storeId, month);
     const scrollRef = useRef<HTMLDivElement>(null);
     const brandColor = useBrandColor();
     const t = useT();
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const CustomTooltip = ({ active, payload }: any) => {
-        if (!active || !payload?.length) return null;
-        const { date, cups } = payload[0].payload;
-        return (
-            <div className="bg-white border border-gray-100 rounded-lg shadow-md px-3 py-2 text-xs">
-                <p className="font-semibold text-gray-700">{date}</p>
-                <p className="text-brand font-bold">{cups} {t("analytics.cups")}</p>
-            </div>
-        );
-    };
 
     const chartConfig = useMemo(
         () =>

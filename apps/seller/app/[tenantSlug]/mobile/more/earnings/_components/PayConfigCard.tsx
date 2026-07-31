@@ -30,15 +30,15 @@ export function PayConfigCard() {
     const expectedPayout = getExpectedPayoutDate(endDate);
 
     const FREQUENCY_LABELS: Record<string, string> = {
-        daily: "Daily",
-        weekly: "Weekly",
-        bi_weekly: "Bi-Weekly",
-        monthly: "Monthly",
+        daily: t("earnings.freqDaily"),
+        weekly: t("earnings.freqWeekly"),
+        bi_weekly: t("earnings.freqBiWeekly"),
+        monthly: t("earnings.freqMonthly"),
     };
 
     const rows = [
-        { label: "Pay Frequency", value: FREQUENCY_LABELS[frequency] ?? frequency },
-        { label: "Per Cup", value: info?.ratePerCup != null ? formatRupiah(info.ratePerCup) : "—" },
+        { label: t("earnings.payFrequency"), value: FREQUENCY_LABELS[frequency] ?? frequency },
+        { label: t("earnings.perCupLabel"), value: info?.ratePerCup != null ? formatRupiah(info.ratePerCup) : "—" },
     ];
 
     const slug = info?.commissionConfigSlug ?? null;
@@ -51,7 +51,7 @@ export function PayConfigCard() {
                     <CalendarClock size={24} className="text-brand" />
                 </div>
                 <div className="min-w-0">
-                    <p className="text-xs font-medium text-gray-500">Next Expected Payout</p>
+                    <p className="text-xs font-medium text-gray-500">{t("earnings.nextExpectedPayout")}</p>
                     <p className="text-lg font-bold text-gray-900">
                         {format(parseISO(expectedPayout), "EEE, d MMM yyyy")}
                     </p>
@@ -67,10 +67,10 @@ export function PayConfigCard() {
                     </div>
                 ))}
                 <div className="flex justify-between items-center">
-                    <span className="text-gray-500">Commission Config</span>
+                    <span className="text-gray-500">{t("earnings.commissionConfig")}</span>
                     <div className="flex items-center gap-1">
                         <span className="font-medium text-gray-800">{slug ?? "—"}</span>
-                        {slug && <CopyableField label="Commission Config" value={slug} />}
+                        {slug && <CopyableField label={t("earnings.commissionConfig")} value={slug} />}
                     </div>
                 </div>
             </div>

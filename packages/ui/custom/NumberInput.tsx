@@ -3,21 +3,30 @@
 import { useState, useEffect, useRef } from "react";
 
 interface NumberInputProps {
-    value: number;
-    onChange: (value: number) => void;
+    /**
+     * `null` is the empty field. 0 is a real value and stays distinct from it —
+     * a field can legitimately be zero (no tea left, no cups used), and callers
+     * that need "required" have to be able to tell the two apart.
+     */
+    value: number | null;
+    onChange: (value: number | null) => void;
     placeholder?: string;
     currency?: boolean;
     unit?: string;
     prefix?: string;
-    /** Skip thousand-separator formatting — for phone numbers, bank accounts, etc. */
+    /**
+     * Skip thousand-separator formatting, for digit runs that are not amounts.
+     *
+     * Still a number, so it cannot hold a leading zero and loses precision past
+     * Number.MAX_SAFE_INTEGER. Anything where those matter — account numbers,
+     * reference codes — wants TextInput with inputMode="numeric" instead.
+     */
     raw?: boolean;
 }
 
-const formatDisplay = (val: number) =>
-    val === 0 ? "" : val.toLocaleString("id-ID");
-
 export function NumberInput({ value, onChange, placeholder = "0", currency = false, unit, prefix, raw = false }: NumberInputProps) {
-    const display = (val: number) => raw ? (val === 0 ? "" : String(val)) : formatDisplay(val);
+    const display = (val: number | null) =>
+        val === null ? "" : raw ? String(val) : val.toLocaleString("id-ID");
     const [localValue, setLocalValue] = useState(display(value));
     const dirty = useRef(false);
 
@@ -30,8 +39,13 @@ export function NumberInput({ value, onChange, placeholder = "0", currency = fal
     const handleChange = (input: string) => {
         dirty.current = true;
         const digits = input.replace(/\D/g, "");
-        const num = parseInt(digits) || 0;
-        setLocalValue(digits === "" ? "" : raw ? digits : num.toLocaleString("id-ID"));
+        if (digits === "") {
+            setLocalValue("");
+            onChange(null);
+            return;
+        }
+        const num = parseInt(digits);
+        setLocalValue(raw ? digits : num.toLocaleString("id-ID"));
         onChange(num);
     };
 

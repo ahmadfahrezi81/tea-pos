@@ -1,31 +1,20 @@
 "use client";
-import type { LucideIcon } from "lucide-react";
-
-export interface Tab {
-    path: string;
-    label: string;
-    icon: LucideIcon;
-    matchPaths: string[];
-}
+import type { Tab } from "./routes";
 
 interface MobileFooterNavProps {
     tabs: Tab[];
     currentPath: string;
     onTabClick: (path: string) => void;
-    isIPhonePWA: boolean;
 }
 
 export function MobileFooterNav({
     tabs,
     currentPath,
     onTabClick,
-    isIPhonePWA,
 }: MobileFooterNavProps) {
-    const wrapperClass = `flex p-1 ${isIPhonePWA ? "pb-8" : ""}`;
-
     return (
-        <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
-            <div className={wrapperClass}>
+        <nav className="bg-white border-t border-gray-200">
+            <div className="flex p-1">
                 {tabs.map((tab) => {
                     const Icon = tab.icon;
                     const isActive = tab.matchPaths.includes(currentPath);
@@ -48,6 +37,6 @@ export function MobileFooterNav({
                     );
                 })}
             </div>
-        </footer>
+        </nav>
     );
 }

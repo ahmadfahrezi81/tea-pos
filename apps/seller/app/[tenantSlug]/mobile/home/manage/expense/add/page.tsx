@@ -92,7 +92,7 @@ export default function AddExpensePage() {
 
                 <div className="space-y-1.5">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("manage.amount")}</p>
-                    <NumberInput value={amount} onChange={setAmount} currency />
+                    <NumberInput value={amount || null} onChange={(v) => setAmount(v ?? 0)} currency />
                 </div>
             </div>
 

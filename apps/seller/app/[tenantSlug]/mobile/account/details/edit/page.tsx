@@ -65,8 +65,8 @@ function EditForm({ user, update }: { user: User; update: (input: UpdateUserInpu
                     <NumberInput
                         prefix="+62"
                         raw
-                        value={phoneDigits}
-                        onChange={setPhoneDigits}
+                        value={phoneDigits || null}
+                        onChange={(v) => setPhoneDigits(v ?? 0)}
                         placeholder="812 345 6789"
                     />
                 </div>

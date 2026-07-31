@@ -3,10 +3,20 @@
 /* app/globals.css */
 @import "leaflet/dist/leaflet.css";
 
+/* Tailwind's auto source detection is rooted at this app, so shared
+   components are never scanned and classes used only there are silently
+   dropped. Must be a glob — the bare directory form works in `next build`
+   but not under Turbopack dev. Add a line when importing from a new
+   @tea-pos/ui subdirectory. */
+@source "../../../packages/ui/custom/**/*.tsx";
+@source "../../../packages/shell/**/*.tsx";
+
 @custom-variant dark (&:is(.dark *));
 
+/* Inter is loaded in app/layout.tsx. The system stack stays as a fallback for
+   the first paint and for any glyph Inter's latin subset does not cover. */
 body {
-    font-family: system-ui, -apple-system, sans-serif;
+    font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .container {
@@ -48,6 +58,18 @@ body {
     background-color: #2563eb;
     border-radius: 9999px;
     animation: indeterminate 1.5s ease-in-out infinite;
+}
+
+/* Navigation progress. Shown only once a route is slow enough to notice, over
+   the outgoing page rather than in place of it. Colour comes from the class
+   alongside it so this stays purely positional. */
+.nav-pending-bar {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -100%;
+    width: 100%;
+    animation: indeterminate 1.2s ease-in-out infinite;
 }
 
 @theme inline {
@@ -198,15 +220,20 @@ input[type="date"]::-webkit-date-and-time-value {
 }
 
 
-/* PWA safe area fixes */
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-    .pb-safe {
-        padding-bottom: env(safe-area-inset-bottom);
-    }
+/* Stop Android Chrome's pull-to-refresh from reloading mid-flow */
+html,
+body {
+    overscroll-behavior-y: contain;
+}
 
-    .footer-safe {
-        padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem);
-    }
+/* Without this the browser holds every tap to see whether a second one is
+   coming and turns it into a double-tap zoom, which reads as lag on each
+   button press. Scoped to things you tap: panning and pinch-zoom elsewhere
+   are untouched, and so is the map, which does its own gesture handling. */
+button,
+a,
+[role="button"] {
+    touch-action: manipulation;
 }
 
 /* Toast Animation */

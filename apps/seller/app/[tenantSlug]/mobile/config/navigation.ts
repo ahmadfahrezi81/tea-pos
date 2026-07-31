@@ -10,309 +10,183 @@ import type { LucideIcon } from "lucide-react";
 
 // ─── Route Metadata ───────────────────────────────────────────────────────────
 
-export type RouteConfig = {
-    title: string;
-    titleKey?: string;
-    subPage: boolean;
-    inlineHeader: boolean;
-    isChart: boolean;
-    parent: string | null | "lastRootTab";
-    headerAction?: "add" | "edit";
-    hideStorePicker?: boolean;
-    footerCta?: string;
-    footerCtaKey?: string;
-    scrollPaddingBottom?: string;
-    preserveScroll?: boolean;
-};
+export type { RouteConfig } from "@tea-pos/shell/routes";
+import type { RouteConfig } from "@tea-pos/shell/routes";
 
 export const mobileRoutes = {
+    // ── Root tabs ─────────────────────────────────────────────────────────────
     "/mobile/home/pos": {
-        title: "POS",
         titleKey: "nav.pos",
-        subPage: false,
-        inlineHeader: false,
-        isChart: false,
         parent: null,
+        titleAccessory: true,
     },
     "/mobile/home/manage": {
-        title: "Manage",
         titleKey: "nav.manage",
-        subPage: false,
-        inlineHeader: false,
-        isChart: false,
+        parent: null,
+        titleAccessory: true,
+    },
+    "/mobile/orders": {
+        titleKey: "nav.orders",
+        parent: null,
+        titleAccessory: true,
+    },
+    "/mobile/analytics": {
+        titleKey: "nav.analytics",
+        parent: null,
+        titleAccessory: true,
+        preserveScroll: true,
+    },
+    "/mobile/chats": {
+        titleKey: "nav.chats",
         parent: null,
     },
+    "/mobile/more": {
+        titleKey: "nav.more",
+        parent: null,
+    },
+
+    // ── Home / manage ─────────────────────────────────────────────────────────
     "/mobile/home/manage/open": {
-        title: "Open Store",
         titleKey: "nav.openStore",
-        subPage: true,
-        inlineHeader: false,
-        isChart: false,
         parent: "/mobile/home/manage",
     },
     "/mobile/home/manage/close": {
-        title: "Close Day",
         titleKey: "nav.closeDay",
-        subPage: true,
-        inlineHeader: false,
-        isChart: false,
         parent: "/mobile/home/manage",
     },
     "/mobile/home/manage/expense": {
-        title: "Store Expenses",
         titleKey: "nav.storeExpenses",
-        subPage: true,
-        inlineHeader: true,
-        isChart: false,
         parent: "/mobile/home/manage",
+        inlineHeader: true,
         headerAction: "add",
-        footerCta: "New Store Expense",
         footerCtaKey: "nav.newStoreExpense",
     },
     "/mobile/home/manage/expense/add": {
-        title: "New Store Expense",
         titleKey: "nav.newStoreExpense",
-        subPage: true,
-        inlineHeader: false,
-        isChart: false,
         parent: "/mobile/home/manage/expense",
     },
-    "/mobile/orders": {
-        title: "Orders",
-        titleKey: "nav.orders",
-        subPage: false,
-        inlineHeader: false,
-        isChart: false,
-        parent: null,
+    "/mobile/home/manage/request": {
+        titleKey: "nav.storeRequests",
+        parent: "/mobile/home/manage",
+        inlineHeader: true,
+        headerAction: "add",
+        footerCtaKey: "nav.newStoreRequest",
     },
+    "/mobile/home/manage/request/add": {
+        titleKey: "nav.newStoreRequest",
+        parent: "/mobile/home/manage/request",
+    },
+    "/mobile/home/manage/report": {
+        titleKey: "nav.storeReports",
+        parent: "/mobile/home/manage",
+        inlineHeader: true,
+        headerAction: "add",
+        footerCtaKey: "nav.newStoreReport",
+    },
+    "/mobile/home/manage/report/add": {
+        titleKey: "nav.newStoreReport",
+        parent: "/mobile/home/manage/report",
+    },
+
+    // ── Orders ────────────────────────────────────────────────────────────────
     "/mobile/orders/chart": {
-        title: "Daily Chart",
         titleKey: "nav.dailyChart",
-        subPage: true,
-        inlineHeader: false,
-        isChart: true,
         parent: "/mobile/orders",
+        titleAccessory: true,
     },
-    "/mobile/analytics": {
-        title: "Analytics",
-        titleKey: "nav.analytics",
-        subPage: false,
-        inlineHeader: false,
-        isChart: false,
-        parent: null,
-        preserveScroll: true,
-    },
+
+    // ── Analytics ─────────────────────────────────────────────────────────────
     "/mobile/analytics/chart": {
-        title: "Monthly Chart",
         titleKey: "nav.monthlyChart",
-        subPage: true,
-        inlineHeader: false,
-        isChart: true,
+        parent: "/mobile/analytics",
+        titleAccessory: true,
+    },
+    "/mobile/analytics/daily/open": {
+        titleKey: "nav.openStore",
         parent: "/mobile/analytics",
     },
-    "/mobile/chats": {
-        title: "Chats",
-        titleKey: "nav.chats",
-        subPage: false,
-        inlineHeader: false,
-        isChart: false,
-        parent: null,
-        hideStorePicker: true,
+    "/mobile/analytics/daily/*": {
+        titleKey: "nav.daySummaryDetails",
+        parent: "/mobile/analytics",
     },
-    "/mobile/more": {
-        title: "More",
-        titleKey: "nav.more",
-        subPage: false,
-        inlineHeader: false,
-        isChart: false,
-        parent: null,
-        hideStorePicker: true,
+    "/mobile/analytics/daily/*/events": {
+        titleKey: "nav.dayActivity",
+        parent: "/mobile/analytics",
     },
+    "/mobile/analytics/daily/*/sessions": {
+        titleKey: "nav.daySessions",
+        parent: "/mobile/analytics",
+    },
+
+    // ── More ──────────────────────────────────────────────────────────────────
     "/mobile/more/stores": {
-        title: "My Stores",
         titleKey: "nav.myStores",
-        subPage: true,
-        inlineHeader: false,
-        isChart: false,
         parent: "/mobile/more",
     },
     "/mobile/more/map": {
-        title: "Location Feedback",
         titleKey: "nav.locationFeedback",
-        subPage: true,
-        inlineHeader: true,
-        isChart: false,
         parent: "/mobile/more",
+        inlineHeader: true,
         headerAction: "add",
         scrollPaddingBottom: "pb-0",
     },
     "/mobile/more/map/add": {
-        title: "New Location Feedback",
         titleKey: "nav.newLocationFeedback",
-        subPage: true,
-        inlineHeader: false,
-        isChart: false,
         parent: "/mobile/more/map",
     },
-    "/mobile/account": {
-        title: "Account",
-        titleKey: "nav.account",
-        subPage: true,
-        inlineHeader: true,
-        isChart: false,
-        parent: "lastRootTab",
-        scrollPaddingBottom: "pb-8",
-    },
-    "/mobile/account/details": {
-        title: "Personal Details",
-        titleKey: "nav.personalDetails",
-        subPage: true,
-        inlineHeader: true,
-        isChart: false,
-        parent: "/mobile/account",
-        headerAction: "edit",
-    },
-    "/mobile/account/details/edit": {
-        title: "Edit Personal Details",
-        titleKey: "nav.editPersonalDetails",
-        subPage: true,
-        inlineHeader: false,
-        isChart: false,
-        parent: "/mobile/account/details",
-    },
-
-    "/mobile/analytics/daily/open": {
-        title: "Open Store",
-        titleKey: "nav.openStore",
-        subPage: true,
-        inlineHeader: false,
-        isChart: false,
-        parent: "/mobile/analytics",
-    },
-    "/mobile/analytics/daily/*": {
-        title: "Day Summary Details",
-        titleKey: "nav.daySummaryDetails",
-        subPage: true,
-        inlineHeader: false,
-        isChart: false,
-        parent: "/mobile/analytics",
-    },
-    "/mobile/analytics/daily/*/events": {
-        title: "Day Activity",
-        titleKey: "nav.dayActivity",
-        subPage: true,
-        inlineHeader: false,
-        isChart: false,
-        parent: "/mobile/analytics",
-    },
-    "/mobile/analytics/daily/*/sessions": {
-        title: "Day Sessions",
-        titleKey: "nav.daySessions",
-        subPage: true,
-        inlineHeader: false,
-        isChart: false,
-        parent: "/mobile/analytics",
-    },
-    "/mobile/home/manage/request": {
-        title: "Store Requests",
-        titleKey: "nav.storeRequests",
-        subPage: true,
-        inlineHeader: true,
-        isChart: false,
-        parent: "/mobile/home/manage",
-        headerAction: "add",
-        footerCta: "New Store Request",
-        footerCtaKey: "nav.newStoreRequest",
-    },
-    "/mobile/home/manage/request/add": {
-        title: "New Store Request",
-        titleKey: "nav.newStoreRequest",
-        subPage: true,
-        inlineHeader: false,
-        isChart: false,
-        parent: "/mobile/home/manage/request",
-    },
-    "/mobile/home/manage/report": {
-        title: "Store Reports",
-        titleKey: "nav.storeReports",
-        subPage: true,
-        inlineHeader: true,
-        isChart: false,
-        parent: "/mobile/home/manage",
-        headerAction: "add",
-        footerCta: "New Store Report",
-        footerCtaKey: "nav.newStoreReport",
-    },
-    "/mobile/home/manage/report/add": {
-        title: "New Store Report",
-        titleKey: "nav.newStoreReport",
-        subPage: true,
-        inlineHeader: false,
-        isChart: false,
-        parent: "/mobile/home/manage/report",
-    },
     "/mobile/more/earnings": {
-        title: "My Pay",
         titleKey: "nav.myPay",
-        subPage: true,
-        inlineHeader: false,
-        isChart: false,
         parent: "/mobile/more",
     },
     "/mobile/more/earnings/*": {
-        title: "Pay Details",
         titleKey: "nav.payDetails",
-        subPage: true,
-        inlineHeader: false,
-        isChart: false,
         parent: "/mobile/more/earnings",
     },
     "/mobile/more/reimbursements": {
-        title: "My Claims",
         titleKey: "nav.myClaims",
-        subPage: true,
-        inlineHeader: true,
-        isChart: false,
         parent: "/mobile/more",
+        inlineHeader: true,
         headerAction: "add",
     },
     "/mobile/more/reimbursements/add": {
-        title: "New Claim",
         titleKey: "nav.newClaim",
-        subPage: true,
-        inlineHeader: false,
-        isChart: false,
         parent: "/mobile/more/reimbursements",
     },
+
+    // ── Account ───────────────────────────────────────────────────────────────
+    "/mobile/account": {
+        titleKey: "nav.account",
+        parent: "lastRootTab",
+        inlineHeader: true,
+    },
+    "/mobile/account/details": {
+        titleKey: "nav.personalDetails",
+        parent: "/mobile/account",
+        inlineHeader: true,
+        headerAction: "edit",
+    },
+    "/mobile/account/details/edit": {
+        titleKey: "nav.editPersonalDetails",
+        parent: "/mobile/account/details",
+    },
     "/mobile/account/language": {
-        title: "Language",
         titleKey: "language.title",
-        subPage: true,
-        inlineHeader: false,
-        isChart: false,
         parent: "/mobile/account",
     },
     "/mobile/account/payroll-info": {
-        title: "Payroll Info",
         titleKey: "nav.payrollInfo",
-        subPage: true,
-        inlineHeader: true,
-        isChart: false,
         parent: "/mobile/account",
+        inlineHeader: true,
         headerAction: "edit",
     },
     "/mobile/account/payroll-info/edit": {
-        title: "Edit Payroll Info",
         titleKey: "nav.editPayrollInfo",
-        subPage: true,
-        inlineHeader: false,
-        isChart: false,
         parent: "/mobile/account/payroll-info",
     },
 } satisfies Record<string, RouteConfig>;
 
 export const rootTabSuffixes = Object.entries(mobileRoutes)
-    .filter(([, c]) => !c.subPage && c.parent === null)
+    .filter(([, c]) => c.parent === null)
     .map(([path]) => path);
 
 export const resolveRoute = (path: string): RouteConfig | null => {
@@ -341,15 +215,13 @@ export const resolveRoute = (path: string): RouteConfig | null => {
 
 export type TabVariant = {
     pathContains: string;
-    label: string;
-    labelKey?: string;
+    labelKey: string;
     icon: LucideIcon;
 };
 
 export type TabDef = {
     pathSuffix: string;
-    label: string;
-    labelKey?: string;
+    labelKey: string;
     icon: LucideIcon;
     matchSuffixes: string[];
     variant?: TabVariant;
@@ -359,41 +231,35 @@ export const tabGroups: { global: TabDef[] } = {
     global: [
         {
             pathSuffix: "/mobile/home/pos",
-            label: "POS",
             labelKey: "nav.pos",
             icon: ShoppingCart,
             matchSuffixes: ["/mobile/home/pos", "/mobile/home/manage"],
             variant: {
                 pathContains: "/mobile/home/manage",
-                label: "Manage",
                 labelKey: "nav.manage",
                 icon: Layers,
             },
         },
         {
             pathSuffix: "/mobile/orders",
-            label: "Orders",
             labelKey: "nav.orders",
             icon: ReceiptText,
             matchSuffixes: ["/mobile/orders", "/mobile/orders/chart"],
         },
         {
             pathSuffix: "/mobile/analytics",
-            label: "Analytics",
             labelKey: "nav.analytics",
             icon: ChartNoAxesCombinedIcon,
             matchSuffixes: ["/mobile/analytics", "/mobile/analytics/chart"],
         },
         {
             pathSuffix: "/mobile/chats",
-            label: "Chats",
             labelKey: "nav.chats",
             icon: MessagesSquare,
             matchSuffixes: ["/mobile/chats"],
         },
         {
             pathSuffix: "/mobile/more",
-            label: "More",
             labelKey: "nav.more",
             icon: MoreHorizontal,
             matchSuffixes: ["/mobile/more"],

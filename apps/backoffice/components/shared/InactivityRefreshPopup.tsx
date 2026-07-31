@@ -1,31 +1,54 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { RefreshCw, X, Info } from "lucide-react";
 
 const INACTIVITY_LIMIT = 1000 * 60 * 15; // 15 minutes
 
+/**
+ * pointerdown covers mouse, touch and pen in one event, so a tap or the start
+ * of a scroll gesture counts as activity on a phone — mousemove and keydown
+ * alone never fire there, which meant the prompt appeared on a timer no matter
+ * how busy the user was. mousemove stays for desktop hovering without a click.
+ */
+const ACTIVITY_EVENTS = ["pointerdown", "mousemove", "keydown"] as const;
+
 export default function InactivityRefreshPopup() {
     const [showPrompt, setShowPrompt] = useState(false);
-    const [lastActivity, setLastActivity] = useState(Date.now());
     const [isRefreshing, setIsRefreshing] = useState(false);
+    // A ref, not state: activity fires constantly and none of it should
+    // re-render the tree. Only the interval below reads it. Seeded on mount
+    // rather than here, because reading the clock during render is impure.
+    const lastActivityRef = useRef(0);
 
     useEffect(() => {
-        const updateActivity = () => setLastActivity(Date.now());
-        window.addEventListener("mousemove", updateActivity);
-        window.addEventListener("keydown", updateActivity);
+        const markActive = () => {
+            lastActivityRef.current = Date.now();
+        };
+
+        // Mounting counts as activity: the clock has to start somewhere, and
+        // starting it at 0 would fire the prompt on the very first tick.
+        markActive();
+
+        ACTIVITY_EVENTS.forEach((event) =>
+            window.addEventListener(event, markActive, { passive: true }),
+        );
+
         return () => {
-            window.removeEventListener("mousemove", updateActivity);
-            window.removeEventListener("keydown", updateActivity);
+            ACTIVITY_EVENTS.forEach((event) =>
+                window.removeEventListener(event, markActive),
+            );
         };
     }, []);
 
     useEffect(() => {
         const interval = setInterval(() => {
-            if (Date.now() - lastActivity > INACTIVITY_LIMIT) setShowPrompt(true);
+            if (Date.now() - lastActivityRef.current > INACTIVITY_LIMIT) {
+                setShowPrompt(true);
+            }
         }, 1000);
         return () => clearInterval(interval);
-    }, [lastActivity]);
+    }, []);
 
     if (!showPrompt) return null;
 

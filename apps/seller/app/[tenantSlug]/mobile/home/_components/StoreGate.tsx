@@ -31,7 +31,7 @@ export function StoreGate({ gate, isPosInUse, onTransfer, sessionUserName, sessi
     const t = useT();
 
     return (
-        <div className="bg-white rounded-2xl w-full h-full flex flex-col items-center justify-center p-6">
+        <div className="bg-white rounded-2xl w-full min-h-full flex flex-col items-center justify-center p-6">
             {isPosInUse && onTransfer ? (
                 <div className="w-full">
                     <TakeOverCard

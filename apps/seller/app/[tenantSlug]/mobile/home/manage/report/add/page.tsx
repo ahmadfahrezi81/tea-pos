@@ -18,11 +18,6 @@ import { FormFooter } from "@/components/shared/FormFooter";
 import { useT } from "@/lib/hooks/useT";
 import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
 
-const TYPE_OPTIONS = INCIDENT_CATEGORIES.map((c) => ({
-    value: c,
-    label: c === "other" ? "Custom" : INCIDENT_CATEGORY_LABELS[c],
-}));
-
 export default function AddReportPage() {
     const router = useRouter();
     const { selectedStoreId } = useStore();
@@ -33,6 +28,16 @@ export default function AddReportPage() {
     const { showError } = useErrorSheet();
 
     const todayStr = useMemo(() => getTodayLocalStr(), []);
+
+    // Category names come from the shared schema and stay in English
+    const TYPE_OPTIONS = useMemo(
+        () =>
+            INCIDENT_CATEGORIES.map((category) => ({
+                value: category,
+                label: category === "other" ? t("manage.custom") : INCIDENT_CATEGORY_LABELS[category],
+            })),
+        [t],
+    );
 
     const [selectedType, setSelectedType] = useState("");
     const [customType, setCustomType] = useState("");
@@ -77,11 +82,11 @@ export default function AddReportPage() {
                         options={TYPE_OPTIONS}
                         value={selectedType}
                         onChange={(v) => { setSelectedType(v); setCustomType(""); }}
-                        placeholder="Select type..."
+                        placeholder={t("manage.selectType")}
                         otherTriggerValue="other"
                         otherValue={customType}
                         onOtherChange={setCustomType}
-                        otherPlaceholder="Describe the incident type..."
+                        otherPlaceholder={t("manage.incidentTypePlaceholder")}
                     />
                 </div>
 
@@ -92,7 +97,7 @@ export default function AddReportPage() {
                     <Textarea
                         value={notes}
                         onChange={setNotes}
-                        placeholder="Describe what happened"
+                        placeholder={t("manage.reportNotesPlaceholder")}
                         rows={4}
                         maxLength={1000}
                     />

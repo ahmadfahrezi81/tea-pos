@@ -12,7 +12,6 @@ import {
     Banknote,
     ReceiptText,
 } from "lucide-react";
-import { useStore } from "@/lib/context/StoreContext";
 import { useFastOrderMode } from "@/lib/context/FastOrderModeContext";
 import { useFlags } from "@/lib/context/FlagsContext";
 import { navigation } from "@tea-pos/utils/navigation";
@@ -91,7 +90,6 @@ function FastOrderToggle({ enabled }: { enabled: boolean }) {
 export default function MoreMenu() {
     const { url } = useTenantSlug();
     const { user } = useAuth();
-    const { assignedStores } = useStore();
     const { fastOrderMode, toggleFastOrderMode } = useFastOrderMode();
     const { flags: { isFastOrderEnabled } } = useFlags();
     const [isWeatherOpen, setIsWeatherOpen] = useState(false);

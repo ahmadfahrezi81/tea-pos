@@ -8,6 +8,7 @@ import useCreateCustomerFeedback from "@/lib/hooks/customer-feedbacks/useCreateC
 import { toast } from "sonner";
 import mapboxgl from "mapbox-gl";
 import { useT } from "@/lib/hooks/useT";
+import { randomId } from "@tea-pos/utils/uuid";
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN!;
 
@@ -110,7 +111,7 @@ export default function AddLocationFeedbackPage() {
     const { submit, isLoading, reset } = useCreateCustomerFeedback();
     const t = useT();
 
-    const sessionToken = useRef(crypto.randomUUID());
+    const sessionToken = useRef(randomId());
 
     const [query, setQuery] = useState("");
     const [suggestions, setSuggestions] = useState<MapboxSuggestion[]>([]);
@@ -146,7 +147,7 @@ export default function AddLocationFeedbackPage() {
             longitude: coords.lng,
         });
         // Rotate session token after retrieve as per Mapbox billing rules
-        sessionToken.current = crypto.randomUUID();
+        sessionToken.current = randomId();
     };
 
     const handleSubmit = useCallback(async () => {

@@ -74,7 +74,7 @@ export default function MobileHourlySales() {
         [brandColor],
     );
 
-    const { data: hourlySales = [], isLoading: salesLoading } = useHourlySales(
+    const { data: hourlySales = [] } = useHourlySales(
         selectedStoreId,
         selectedDate,
     );

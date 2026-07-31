@@ -96,7 +96,7 @@ export default function EditCommissionTypePage({ params }: { params: Promise<{ i
                 </div>
                 <div className="space-y-1.5">
                     <p className="text-sm font-medium text-gray-700">Rate per cup</p>
-                    <NumberInput value={ratePerCup} onChange={setRatePerCup} currency prefix="Rp" />
+                    <NumberInput value={ratePerCup || null} onChange={(v) => setRatePerCup(v ?? 0)} currency prefix="Rp" />
                 </div>
                 {error && <p className="text-sm text-red-500">{error}</p>}
             </div>

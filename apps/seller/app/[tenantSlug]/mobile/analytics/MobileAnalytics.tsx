@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
-import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { Drawer } from "vaul";
 import { useSummaries } from "@/lib/hooks/summaries/useDailySummaries";
@@ -30,7 +29,6 @@ import {
 } from "../analytics/utils/summariesHelpers";
 import { navigation } from "@tea-pos/utils/navigation";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
-import { useMobileScroll } from "../components/MobileScrollContext";
 import { useT } from "@/lib/hooks/useT";
 
 import dynamic from "next/dynamic";
@@ -109,9 +107,6 @@ function SummaryUsersRow({ summaryId }: { summaryId: string }) {
 export default function MobileAnalytics() {
     const { selectedStoreId } = useStore();
     const { url } = useTenantSlug();
-    const { scrollRef } = useMobileScroll();
-    const pathname = usePathname();
-    const scrollRestored = useRef(false);
 
     const [selectedMonth, setSelectedMonth] = useState<string>(
         getCurrentLocalMonth(),
@@ -133,17 +128,6 @@ export default function MobileAnalytics() {
         () => summariesData?.summaries.filter((s: DailySummaryResponse) => !s.closedAt) ?? [],
         [summariesData?.summaries],
     );
-
-    useEffect(() => {
-        if (summariesData && !scrollRestored.current && scrollRef.current) {
-            const saved = sessionStorage.getItem(`scroll:${pathname}`);
-            if (saved) {
-                scrollRef.current.scrollTop = parseInt(saved, 10);
-                sessionStorage.removeItem(`scroll:${pathname}`);
-            }
-            scrollRestored.current = true;
-        }
-    }, [summariesData, scrollRef, pathname]);
 
     if (summariesError) {
         return (

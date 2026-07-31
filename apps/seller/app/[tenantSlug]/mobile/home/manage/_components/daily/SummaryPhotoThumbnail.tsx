@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { X, ImageOff, Loader2, CircleMinus, CloudCheck } from "lucide-react";
 import { createPortal } from "react-dom";
+import { useT } from "@/lib/hooks/useT";
 
 interface SummaryPhotoThumbnailProps {
     url: string;
@@ -21,6 +22,7 @@ export function SummaryPhotoThumbnail({
     isSaved = true,
     compact = true,
 }: SummaryPhotoThumbnailProps) {
+    const t = useT();
     const [isOpen, setIsOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
@@ -55,7 +57,7 @@ export function SummaryPhotoThumbnail({
                     {hasError && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 gap-1">
                             <ImageOff size={20} className="text-gray-400" />
-                            <p className="text-[10px] text-gray-400">Failed</p>
+                            <p className="text-[10px] text-gray-400">{t("common.failed")}</p>
                         </div>
                     )}
                     {!hasError && (
@@ -80,7 +82,7 @@ export function SummaryPhotoThumbnail({
                         <CloudCheck size={16} className="text-white" />
                         {!compact && (
                             <p className="text-white text-xs font-semibold">
-                                Saved
+                                {t("common.saved")}
                             </p>
                         )}
                     </div>

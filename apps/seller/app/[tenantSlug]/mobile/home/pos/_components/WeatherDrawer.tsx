@@ -6,6 +6,7 @@ import { Cloud, X } from "lucide-react";
 import { getWeatherMeta, isNightHour } from "@tea-pos/utils/weatherCode";
 import useWeather from "@/lib/hooks/weather/useWeather";
 import { getCurrentLocalHour } from "@tea-pos/utils/time";
+import { useT } from "@/lib/hooks/useT";
 import type { WeatherHourlyRow } from "@tea-pos/features/weather/schema";
 import { Bebas_Neue } from "next/font/google";
 
@@ -60,6 +61,7 @@ interface WeatherDrawerProps {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function WeatherDrawer({ isOpen, onClose }: WeatherDrawerProps) {
+    const t = useT();
     const { data, isLoading } = useWeather();
 
     const currentLocalHour = getCurrentLocalHour();
@@ -118,7 +120,7 @@ export function WeatherDrawer({ isOpen, onClose }: WeatherDrawerProps) {
                                 {data?.city ?? "Ciomas"},{" "}
                                 {data?.region ?? "Bogor"}
                             </Drawer.Title>
-                            <Drawer.Description className="sr-only">Hourly weather forecast</Drawer.Description>
+                            <Drawer.Description className="sr-only">{t("home.weatherDesc")}</Drawer.Description>
                             <p className="font-bebas text-lg text-gray-500 -mt-2">
                                 As of{" "}
                                 {currentHourData?.fetchedAt
@@ -144,7 +146,7 @@ export function WeatherDrawer({ isOpen, onClose }: WeatherDrawerProps) {
                     {!isLoading && !data && (
                         <div className="flex flex-col items-center justify-center py-16 text-gray-400">
                             <Cloud className="w-10 h-10 mb-3" />
-                            <p className="text-sm">No weather data available</p>
+                            <p className="text-sm">{t("home.weatherNoData")}</p>
                         </div>
                     )}
 

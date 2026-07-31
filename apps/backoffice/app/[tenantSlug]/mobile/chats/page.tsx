@@ -1,7 +1,10 @@
+import { ComingSoon } from "@tea-pos/ui/custom/ComingSoon";
+
 export default function ChatsPage() {
     return (
-        <div className="bg-white rounded-xl p-4">
-            <p className="text-sm text-gray-400">Chats coming soon.</p>
-        </div>
+        <ComingSoon
+            title="Chats are coming soon"
+            subtitle="This feature is still in development"
+        />
     );
 }

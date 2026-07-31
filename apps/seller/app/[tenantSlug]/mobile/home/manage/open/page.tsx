@@ -92,9 +92,9 @@ export default function OpenStorePage() {
                     </div>
                     <NumberInput
                         currency
-                        value={openingBalance}
+                        value={openingBalance || null}
                         onChange={(val) => {
-                            setOpeningBalance(val);
+                            setOpeningBalance(val ?? 0);
                             setBalanceConfirmed(true);
                         }}
                     />

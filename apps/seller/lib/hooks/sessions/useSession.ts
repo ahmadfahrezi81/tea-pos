@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import useSWR from "swr";
 import { sessionsApi } from "@/lib/api/sessions";
 import { useRealtime } from "@/lib/context/RealtimeContext";
-import { mutationQueue, withTimeout, isOnline, useMutationSync } from "@tea-pos/utils/offline";
+import { mutationQueue, withTimeout, useMutationSync } from "@tea-pos/utils/offline";
 import type { OpenStoreInput, TransferSessionInput, GateStateResponse } from "@tea-pos/features/sessions/schema";
 
 export function useSession(storeId?: string) {

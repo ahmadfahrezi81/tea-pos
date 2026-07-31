@@ -15,11 +15,6 @@ import { FormFooter } from "@/components/shared/FormFooter";
 import { useT } from "@/lib/hooks/useT";
 import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
 
-const TYPE_OPTIONS = SUPPLY_REQUEST_TYPES.map((t) => ({
-    value: t,
-    label: t === "other" ? "Custom" : SUPPLY_REQUEST_TYPE_LABELS[t],
-}));
-
 export default function AddRequestPage() {
     const router = useRouter();
     const { selectedStoreId } = useStore();
@@ -30,6 +25,16 @@ export default function AddRequestPage() {
     const { showError } = useErrorSheet();
 
     const todayStr = useMemo(() => getTodayLocalStr(), []);
+
+    // Type names come from the shared schema and stay in English
+    const TYPE_OPTIONS = useMemo(
+        () =>
+            SUPPLY_REQUEST_TYPES.map((type) => ({
+                value: type,
+                label: type === "other" ? t("manage.custom") : SUPPLY_REQUEST_TYPE_LABELS[type],
+            })),
+        [t],
+    );
 
     const [selectedType, setSelectedType] = useState("");
     const [customTypeText, setCustomTypeText] = useState("");
@@ -69,7 +74,7 @@ export default function AddRequestPage() {
                         options={TYPE_OPTIONS}
                         value={selectedType}
                         onChange={(v) => { setSelectedType(v); setNotes(""); }}
-                        placeholder="Select type..."
+                        placeholder={t("manage.selectType")}
                         otherTriggerValue="other"
                         otherValue={customTypeText}
                         onOtherChange={setCustomTypeText}
@@ -82,7 +87,7 @@ export default function AddRequestPage() {
                     <Textarea
                         value={notes}
                         onChange={setNotes}
-                        placeholder="Any extra details? (optional)"
+                        placeholder={t("manage.requestNotesPlaceholder")}
                         rows={3}
                         maxLength={500}
                     />

@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePayrollUserInfo } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
 import { useBanks } from "@/lib/hooks/banks/useBanks";
-import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
 import { TextInput } from "@tea-pos/ui/custom/TextInput";
 import { Drawer } from "vaul";
 import { X, ChevronRight } from "lucide-react";
@@ -78,7 +77,10 @@ function EditForm({ info, update }: {
     const t = useT();
     const { showError } = useErrorSheet();
     const [bankName, setBankName] = useState(info?.bankName ?? "");
-    const [bankAccountNumber, setBankAccountNumber] = useState(Number(info?.bankAccountNumber?.replace(/\D/g, "") || 0));
+    // A string, not a number: e-wallets like DANA use the phone number as the
+    // account number, so "081234..." has to keep its leading zero, and long
+    // account numbers would lose precision past Number.MAX_SAFE_INTEGER.
+    const [bankAccountNumber, setBankAccountNumber] = useState(info?.bankAccountNumber ?? "");
     const [bankAccountHolder, setBankAccountHolder] = useState(info?.bankAccountHolder ?? "");
     const [isBankPickerOpen, setIsBankPickerOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -88,7 +90,7 @@ function EditForm({ info, update }: {
         try {
             await update({
                 bankName: bankName.trim() || undefined,
-                bankAccountNumber: bankAccountNumber ? String(bankAccountNumber) : undefined,
+                bankAccountNumber: bankAccountNumber.trim() || undefined,
                 bankAccountHolder: bankAccountHolder.trim() || undefined,
             });
             router.back();
@@ -117,10 +119,13 @@ function EditForm({ info, update }: {
                     </div>
                     <div className="space-y-1.5">
                         <p className="text-xs font-medium text-gray-500">{t("account.accountNumberLabel")}</p>
-                        <NumberInput
-                            raw
+                        <TextInput
+                            inputMode="numeric"
                             value={bankAccountNumber}
-                            onChange={setBankAccountNumber}
+                            // Digits only, so the value still matches the numeric
+                            // keypad, but capped at the 50 the schema accepts
+                            // rather than letting the save fail validation.
+                            onChange={(v) => setBankAccountNumber(v.replace(/\D/g, "").slice(0, 50))}
                             placeholder="1234567890"
                         />
                     </div>

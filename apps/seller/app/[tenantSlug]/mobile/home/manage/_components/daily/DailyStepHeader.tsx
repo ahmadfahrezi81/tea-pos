@@ -38,12 +38,12 @@ export function DailyStepHeader({
     }, [currentStep]);
 
     return (
-        <div className="sticky top-[-8px] z-10 bg-slate-100 w-full py-2">
+        <div className="w-full pb-3">
             <div
                 ref={scrollRef}
-                className="overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full"
+                className="overflow-x-auto [&::-webkit-scrollbar]:hidden"
             >
-                <div className="flex items-center min-w-max pb-2">
+                <div className="flex items-center min-w-max">
                     {steps.map((step, index) => {
                         const isCompleted = index < currentStep;
                         const isCurrent = index === currentStep;
@@ -58,13 +58,13 @@ export function DailyStepHeader({
                                 className="flex items-center"
                             >
                                 {/* Step circle + label */}
-                                <div className="flex flex-col items-center gap-1">
+                                <div className="flex flex-col items-center gap-0.5">
                                     <button
                                         onClick={() =>
                                             isClickable && onStepClick(index)
                                         }
                                         disabled={!isClickable}
-                                        className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
+                                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
                                             isCompleted
                                                 ? "bg-brand text-white active:scale-95"
                                                 : isCurrent
@@ -73,13 +73,13 @@ export function DailyStepHeader({
                                         } ${isClickable ? "cursor-pointer" : "cursor-default"}`}
                                     >
                                         {isCompleted ? (
-                                            <Check size={26} />
+                                            <Check size={18} />
                                         ) : (
                                             index + 1
                                         )}
                                     </button>
                                     <p
-                                        className={`text-sm font-medium whitespace-nowrap ${
+                                        className={`text-xs font-medium whitespace-nowrap ${
                                             isCurrent
                                                 ? "text-brand"
                                                 : isCompleted
@@ -94,7 +94,7 @@ export function DailyStepHeader({
                                 {/* Connector line */}
                                 {index < steps.length - 1 && (
                                     <div
-                                        className={`w-6 h-0.5 mx-2 mb-4 transition-colors shrink-0 ${
+                                        className={`w-5 h-0.5 mx-1.5 mb-4 transition-colors shrink-0 ${
                                             isCompleted
                                                 ? "bg-brand"
                                                 : "bg-gray-300"

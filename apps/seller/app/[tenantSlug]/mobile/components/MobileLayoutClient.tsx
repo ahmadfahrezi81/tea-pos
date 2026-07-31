@@ -1,25 +1,14 @@
 "use client";
-import React, {
-    useEffect,
-    ReactNode,
-    useMemo,
-    useState,
-    useRef,
-    useCallback,
-} from "react";
+import { ReactNode, useCallback, useMemo, useState } from "react";
 import Image from "next/image";
+import { ChevronsUpDown } from "lucide-react";
+import { MobileShell } from "@tea-pos/shell/MobileShell";
 import { useStores } from "@/lib/hooks/stores/useStores";
-import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { useStore } from "@/lib/context/StoreContext";
 import { StorePickerDrawer } from "./StorePickerDrawer";
 import { navigation } from "@tea-pos/utils/navigation";
-import { useIsIPhonePWA } from "@/lib/usePWA";
-import { MobileHeader } from "./MobileHeader";
-import { MobileFooterNav } from "./MobileFooterNav";
-import { MobileOverlayContext } from "./MobileOverlayContext";
-import { MobileFooterSlotContext } from "./MobileFooterSlotContext";
 import { resolveRoute, rootTabSuffixes, tabGroups } from "../config/navigation";
 import { useFlags } from "@/lib/context/FlagsContext";
 import { useT } from "@/lib/hooks/useT";
@@ -28,306 +17,186 @@ interface MobileLayoutClientProps {
     children: ReactNode;
 }
 
-export default function MobileLayoutClient({
-    children,
-}: MobileLayoutClientProps) {
-    const router = useRouter();
-    const pathname = usePathname();
+/** Warmed on mount so the common destinations commit without a loading state. */
+const PREFETCH_SUFFIXES = [
+    "/mobile/home/pos",
+    "/mobile/home/manage",
+    "/mobile/notifications",
+    "/mobile/account",
+    "/mobile/more/stores",
+    "/mobile/account/details",
+    "/mobile/more/map",
+];
+
+export default function MobileLayoutClient({ children }: MobileLayoutClientProps) {
     const { url } = useTenantSlug();
+    const t = useT();
 
     const [shellReady, setShellReady] = useState(false);
-    const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
-    const [isTransitioning, setIsTransitioning] = useState(false);
-    const [overlay, setOverlayNode] = useState<ReactNode>(null);
-    const setOverlay = useCallback((node: ReactNode) => setOverlayNode(node), []);
-    const [footerSlot, setFooterSlotNode] = useState<ReactNode>(null);
-    const setFooterSlot = useCallback((node: ReactNode) => setFooterSlotNode(node), []);
-    const scrollContainerRef = useRef<HTMLDivElement>(null);
-    const lastRootTabRef = useRef<string>(url("/mobile/more"));
-
     const { user, avatarUrl, mutate: refreshProfile } = useAuth();
-    const { flags: { isMaintenanceEnabled } } = useFlags();
-    const t = useT();
+    const {
+        flags: { isMaintenanceEnabled },
+    } = useFlags();
     const { data: storesData } = useStores();
-    const { selectedStore, setIsPickerOpen, isPickerOpen } = useStore();
-    const isIPhonePWA = useIsIPhonePWA();
+    const { selectedStore, setIsPickerOpen } = useStore();
 
-    useEffect(() => {
-        if (user && storesData !== undefined) {
-            setShellReady(true);
-        }
-    }, [user, storesData]);
+    // Latches on: once the shell has been ready it never reverts, so a later
+    // auth failure surfaces the auth overlay rather than the loading screen.
+    // Set during render rather than in an effect — the guard makes it converge
+    // in one pass and avoids a second commit on every boot.
+    if (!shellReady && user && storesData !== undefined) {
+        setShellReady(true);
+    }
 
     const rootTabPaths = useMemo(() => rootTabSuffixes.map(url), [url]);
+    const prefetchPaths = useMemo(() => PREFETCH_SUFFIXES.map(url), [url]);
 
-    const handleNavClick = useCallback(
-        (path: string) => {
-            if (path === pathname) return;
-            setOptimisticPath(path.split("?")[0]);
-            setIsTransitioning(true);
-            router.push(path);
-        },
-        [pathname, router],
-    );
-
-    useEffect(() => {
-        if (rootTabPaths.includes(pathname)) {
-            lastRootTabRef.current = pathname;
-        }
-    }, [pathname, rootTabPaths]);
-
-    useEffect(() => {
-        navigation.register(handleNavClick);
-    }, [handleNavClick]);
-
-    useEffect(() => {
-        if (optimisticPath && pathname === optimisticPath) {
-            setTimeout(() => {
-                setOptimisticPath(null);
-                setIsTransitioning(false);
-            }, 0);
-        }
-    }, [pathname, optimisticPath]);
-
-    useEffect(() => {
-        router.prefetch(url("/mobile/home/pos"));
-        router.prefetch(url("/mobile/home/manage"));
-        router.prefetch(url("/mobile/notifications"));
-        router.prefetch(url("/mobile/account"));
-        router.prefetch(url("/mobile/more/stores"));
-        router.prefetch(url("/mobile/account/details"));
-        router.prefetch(url("/mobile/more/map"));
-    }, []);
-
-    useEffect(() => {
-        const el = scrollContainerRef.current;
-        if (!el) return;
-        if (isPickerOpen) {
-            el.dataset.scrollY = String(el.scrollTop);
-        } else {
-            const saved = el.dataset.scrollY;
-            if (saved !== undefined) {
-                requestAnimationFrame(() => el.scrollTo(0, Number(saved)));
-            }
-        }
-    }, [isPickerOpen]);
-
-    const currentPath = optimisticPath || pathname;
-
+    // Labels are translated here; which variant applies is path-dependent and so
+    // is resolved by the shell, which knows where we are navigating to.
     const tabs = useMemo(
         () =>
-            tabGroups.global.map((tab) => {
-                const v =
-                    tab.variant && currentPath.includes(tab.variant.pathContains)
-                        ? tab.variant
-                        : null;
-                return {
-                    path: url(tab.pathSuffix),
-                    label: v?.label ?? tab.label,
-                    icon: v?.icon ?? tab.icon,
-                    matchPaths: tab.matchSuffixes.map(url),
-                };
-            }),
-        [currentPath, url],
+            tabGroups.global.map((tab) => ({
+                path: url(tab.pathSuffix),
+                label: t(tab.labelKey),
+                icon: tab.icon,
+                matchPaths: tab.matchSuffixes.map(url),
+                variant: tab.variant && {
+                    pathContains: tab.variant.pathContains,
+                    label: t(tab.variant.labelKey),
+                    icon: tab.variant.icon,
+                },
+            })),
+        [url, t],
     );
 
-    useEffect(() => {
-        tabs.forEach((tab) => router.prefetch(tab.path));
-    }, [tabs]);
+    const registerNavigate = useCallback((navigate: (path: string) => void) => {
+        navigation.register(navigate);
+    }, []);
 
-    const currentRoute = resolveRoute(currentPath);
-    const currentTitle = currentRoute?.title ?? "Mobile";
-    const currentIsSubPage = currentRoute?.subPage ?? false;
-    const isInlineHeader = currentRoute?.inlineHeader ?? false;
-    const hasHeaderAction = !!currentRoute?.headerAction;
-    const footerCtaLabel = currentRoute?.footerCtaKey ? t(currentRoute.footerCtaKey) : currentRoute?.footerCta;
-    const parentSuffix = currentRoute?.parent;
-    const parentPath = !parentSuffix
-        ? url("/mobile")
-        : parentSuffix === "lastRootTab"
-          ? lastRootTabRef.current
-          : url(parentSuffix);
-    const showAccountIcon = rootTabPaths.some((p) => currentPath === p);
-
-    const scrollPaddingTop = hasHeaderAction
-        ? "pt-30"
-        : isInlineHeader
-          ? "pt-16"
-          : currentIsSubPage
-            ? "pt-27"
-            : "pt-19";
-
-    const scrollPaddingBottom = currentRoute?.scrollPaddingBottom ?? (
-        (hasHeaderAction || !!footerCtaLabel) ? "pb-32" : "pb-28"
-    );
+    const onAccount = useCallback(() => {
+        navigation.push(url("/mobile/account"));
+    }, [url]);
 
     return (
-        <MobileFooterSlotContext.Provider value={{ setFooterSlot }}>
-        <MobileOverlayContext.Provider value={{ setOverlay }}>
-            {/* Shell — always rendered so header/footer are on screen from first paint */}
-            <div
-                className="h-dvh flex flex-col bg-gradient-to-b from-slate-100 to-slate-200 select-none overflow-hidden"
-                style={{ '--mobile-footer-h': isIPhonePWA ? '97px' : '65px' } as React.CSSProperties}
-            >
-                <MobileHeader
-                    currentPath={currentPath}
-                    currentTitle={currentTitle}
-                    isSubPage={currentIsSubPage}
-                    selectedStore={selectedStore}
-                    showAccountIcon={showAccountIcon}
-                    avatarUrl={avatarUrl}
-                    onBack={() => handleNavClick(parentPath)}
-                    onStorePicker={() => setIsPickerOpen(true)}
-                    onAccount={() => handleNavClick(url("/mobile/account"))}
-                />
-
-                <div className="flex-1 relative overflow-hidden">
-                    <div
-                        ref={scrollContainerRef}
-                        className={`absolute inset-0 overflow-y-auto p-4 ${scrollPaddingBottom} ${scrollPaddingTop}`}
+        <MobileShell
+            resolveRoute={resolveRoute}
+            rootTabPaths={rootTabPaths}
+            tabs={tabs}
+            homePath={url("/mobile")}
+            toPath={url}
+            t={t}
+            titleAccessory={
+                selectedStore ? (
+                    <button
+                        onClick={() => setIsPickerOpen(true)}
+                        className="flex items-center gap-0.5 active:scale-95"
                     >
-                        {shellReady && !isTransitioning && children}
-                    </div>
-                    {isTransitioning && (
-                        <div
-                            className={`absolute inset-x-0 top-0 z-10 px-4 pb-4 ${scrollPaddingTop}`}
-                            style={{ bottom: "var(--mobile-footer-h)" }}
-                        >
-                            <div className="animate-pulse space-y-3">
-                                <div className="h-20 bg-slate-200 rounded-2xl" />
-                                <div className="h-40 bg-slate-200 rounded-2xl" />
-                                <div className="h-44 bg-slate-200 rounded-2xl" />
-                                <div className="h-12 bg-slate-200 rounded-2xl" />
+                        <span className="text-[22px] font-semibold tracking-tight text-brand">
+                            {selectedStore.name}
+                        </span>
+                        <ChevronsUpDown size={18} strokeWidth={3} className="text-brand" />
+                    </button>
+                ) : null
+            }
+            avatarUrl={avatarUrl}
+            onAccount={onAccount}
+            ready={shellReady}
+            prefetchPaths={prefetchPaths}
+            onNavigate={registerNavigate}
+            extras={<StorePickerDrawer />}
+            overlay={
+                <>
+                    {/* Loader — covers the shell until bootstrap data arrives. */}
+                    {!shellReady && (
+                        <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center">
+                            <div className="text-center" role="status" aria-live="polite">
+                                <div className="mb-8">
+                                    <Image
+                                        src="/icons/icon-192x192.png"
+                                        alt="Logo"
+                                        width={70}
+                                        height={70}
+                                        priority
+                                        className="rounded-xl shadow-2xl mx-auto"
+                                    />
+                                </div>
+                                <div className="w-64 h-4 loading-track">
+                                    <div className="loading-bar">
+                                        <div className="absolute top-0 left-0 right-0 h-1/2 rounded-full bg-gradient-to-b from-white/20 to-transparent" />
+                                    </div>
+                                </div>
+                                <div className="mt-4 text-xs text-gray-600 text-center">
+                                    <span className="font-mono text-xs opacity-90">Loading ...</span>
+                                </div>
                             </div>
                         </div>
                     )}
-                    {overlay && (
-                        <div
-                            className={`absolute inset-x-0 top-0 z-10 ${scrollPaddingTop} pb-5 px-3`}
-                            style={{ bottom: 'var(--mobile-footer-h)' }}
-                        >
-                            {overlay}
+
+                    {isMaintenanceEnabled && (
+                        <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center p-4">
+                            <div className="text-center">
+                                <div className="mb-6">
+                                    <Image
+                                        src="/icons/icon-192x192.png"
+                                        alt="Logo"
+                                        width={70}
+                                        height={70}
+                                        priority
+                                        className="rounded-xl shadow-2xl mx-auto"
+                                    />
+                                </div>
+                                <h2 className="text-lg font-semibold text-gray-800 mb-2">
+                                    Under Maintenance
+                                </h2>
+                                <p className="text-gray-500 text-sm max-w-xs">
+                                    We&apos;re making some updates to improve your experience.
+                                    We&apos;ll be back shortly.
+                                </p>
+                            </div>
                         </div>
                     )}
-                    {(footerSlot || footerCtaLabel) && (
-                        <div className="absolute bottom-0 left-0 right-0 z-20">
-                            {footerSlot ?? (
-                                <div className="bg-white border-t border-gray-200 p-4 pb-8">
+
+                    {shellReady && !user && (
+                        <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center p-4">
+                            <div className="text-center">
+                                <div className="mb-6">
+                                    <Image
+                                        src="/icons/icon-192x192.png"
+                                        alt="Logo"
+                                        width={70}
+                                        height={70}
+                                        priority
+                                        className="rounded-xl shadow-2xl mx-auto"
+                                    />
+                                </div>
+                                <h2 className="text-lg font-semibold text-gray-800 mb-2">
+                                    Authentication Required
+                                </h2>
+                                <p className="text-gray-600 mb-6 text-sm">
+                                    Unable to load your profile. Please check your connection and
+                                    try again.
+                                </p>
+                                <div className="flex gap-3 justify-center">
                                     <button
-                                        onClick={() => handleNavClick(`${currentPath}/add`)}
-                                        className="w-full bg-brand text-white py-4 rounded-xl font-semibold text-base active:scale-[0.98] transition-transform"
+                                        onClick={() => window.location.reload()}
+                                        className="px-4 py-2 bg-brand text-white rounded-lg text-sm font-medium"
                                     >
-                                        {footerCtaLabel}
+                                        Refresh Page
+                                    </button>
+                                    <button
+                                        onClick={() => refreshProfile()}
+                                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium"
+                                    >
+                                        Retry
                                     </button>
                                 </div>
-                            )}
-                        </div>
-                    )}
-                </div>
-
-                {!currentIsSubPage && (
-                    <MobileFooterNav
-                        tabs={tabs}
-                        currentPath={currentPath}
-                        onTabClick={handleNavClick}
-                        isIPhonePWA={isIPhonePWA}
-                    />
-                )}
-
-                <StorePickerDrawer />
-            </div>
-
-            {/* Loader overlay — covers shell until shellReady; shell is already behind it */}
-            {!shellReady && (
-                <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center">
-                    <div className="text-center" role="status" aria-live="polite">
-                        <div className="mb-8">
-                            <Image
-                                src="/icons/icon-192x192.png"
-                                alt="Logo"
-                                width={70}
-                                height={70}
-                                priority
-                                className="rounded-xl shadow-2xl mx-auto"
-                            />
-                        </div>
-                        <div className="w-64 h-4 loading-track">
-                            <div className="loading-bar">
-                                <div className="absolute top-0 left-0 right-0 h-1/2 rounded-full bg-gradient-to-b from-white/20 to-transparent" />
                             </div>
                         </div>
-                        <div className="mt-4 text-xs text-gray-600 text-center">
-                            <span className="font-mono text-xs opacity-90">
-                                Loading ...
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Maintenance overlay — shown when ops-maintenance flag is on */}
-            {isMaintenanceEnabled && (
-                <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center p-4">
-                    <div className="text-center">
-                        <div className="mb-6">
-                            <Image
-                                src="/icons/icon-192x192.png"
-                                alt="Logo"
-                                width={70}
-                                height={70}
-                                priority
-                                className="rounded-xl shadow-2xl mx-auto"
-                            />
-                        </div>
-                        <h2 className="text-lg font-semibold text-gray-800 mb-2">
-                            Under Maintenance
-                        </h2>
-                        <p className="text-gray-500 text-sm max-w-xs">
-                            We&apos;re making some updates to improve your experience. We&apos;ll be back shortly.
-                        </p>
-                    </div>
-                </div>
-            )}
-
-            {/* Auth error overlay — shown when session is valid but user profile failed */}
-            {shellReady && !user && (
-                <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center p-4">
-                    <div className="text-center">
-                        <div className="mb-6">
-                            <Image
-                                src="/icons/icon-192x192.png"
-                                alt="Logo"
-                                width={70}
-                                height={70}
-                                priority
-                                className="rounded-xl shadow-2xl mx-auto"
-                            />
-                        </div>
-                        <h2 className="text-lg font-semibold text-gray-800 mb-2">
-                            Authentication Required
-                        </h2>
-                        <p className="text-gray-600 mb-6 text-sm">
-                            Unable to load your profile. Please check your
-                            connection and try again.
-                        </p>
-                        <div className="flex gap-3 justify-center">
-                            <button
-                                onClick={() => window.location.reload()}
-                                className="px-4 py-2 bg-brand text-white rounded-lg text-sm font-medium"
-                            >
-                                Refresh Page
-                            </button>
-                            <button
-                                onClick={() => refreshProfile()}
-                                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium"
-                            >
-                                Retry
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </MobileOverlayContext.Provider>
-        </MobileFooterSlotContext.Provider>
+                    )}
+                </>
+            }
+        >
+            {children}
+        </MobileShell>
     );
 }

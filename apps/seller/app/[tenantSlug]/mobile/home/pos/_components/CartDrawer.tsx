@@ -65,7 +65,7 @@ export const CartDrawer = memo(function CartDrawer({
                 `${cart.length} items · ${formatRupiah(total)}`,
             );
         }, 1500);
-    }, [onClose, onClearCart, showToast, total, t]);
+    }, [onClose, onClearCart, showToast, cart.length, total, t]);
 
     // ── QRIS hook ────────────────────────────────────────────────────────────
     const {
