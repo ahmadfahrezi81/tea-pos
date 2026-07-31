@@ -2,7 +2,7 @@
 
 import { use, useState } from "react";
 import { usePayslip } from "@/lib/hooks/payroll/usePayslip";
-import { useExpectedPayoutDate } from "@/lib/hooks/payroll/useExpectedPayoutDate";
+import { getExpectedPayoutDate } from "@tea-pos/utils/week";
 import CopyableField from "@/components/shared/CopyableField";
 import { parseISO, format, eachDayOfInterval, getISOWeek } from "date-fns";
 import { useT } from "@/lib/hooks/useT";
@@ -62,7 +62,7 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
     const weekEnd = getISOWeek(parseISO(payout.endDate));
     const sameWeek = weekStart === weekEnd;
     const totalCups = commissions.filter((c) => c.status === "approved").reduce((s, c) => s + c.totalCups, 0);
-    const expectedPayoutDate = useExpectedPayoutDate(payout.endDate);
+    const expectedPayoutDate = getExpectedPayoutDate(payout.endDate);
 
     const periodDays = eachDayOfInterval({
         start: parseISO(payout.startDate),

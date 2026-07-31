@@ -31,25 +31,28 @@ const BAD_COLOR = "#dc2626"; // red-600 — over target
 // ~Rp 1.000. TODO: make store-configurable alongside TARGET_LITERS.
 const COST_PER_LITER = 1000;
 
+// Declared at module scope, not inside the chart. A component created during
+// render gets a fresh identity every time, so React treats it as a different
+// type and remounts the tooltip on each parent render instead of updating it.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const CustomTooltip = ({ active, payload }: any) => {
+    if (!active || !payload?.length) return null;
+    const { date, liters } = payload[0].payload;
+    const over = liters > TARGET_LITERS;
+    return (
+        <div className="bg-white border border-gray-100 rounded-lg shadow-md px-3 py-2 text-xs">
+            <p className="font-semibold text-gray-700">{date}</p>
+            <p className="font-bold" style={{ color: over ? BAD_COLOR : GOOD_COLOR }}>
+                {liters} L
+            </p>
+        </div>
+    );
+};
+
 export default function TeaWasteChart({ storeId, month }: Props) {
     const { data: teaWaste = [], isLoading } = useTeaWaste(storeId, month);
     const scrollRef = useRef<HTMLDivElement>(null);
     const t = useT();
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const CustomTooltip = ({ active, payload }: any) => {
-        if (!active || !payload?.length) return null;
-        const { date, liters } = payload[0].payload;
-        const over = liters > TARGET_LITERS;
-        return (
-            <div className="bg-white border border-gray-100 rounded-lg shadow-md px-3 py-2 text-xs">
-                <p className="font-semibold text-gray-700">{date}</p>
-                <p className="font-bold" style={{ color: over ? BAD_COLOR : GOOD_COLOR }}>
-                    {liters} L
-                </p>
-            </div>
-        );
-    };
 
     const chartData = useMemo(() => {
         return teaWaste.map((item) => ({
