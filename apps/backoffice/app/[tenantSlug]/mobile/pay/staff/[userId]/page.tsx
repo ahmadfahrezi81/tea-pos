@@ -1,46 +1,28 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { use } from "react";
 import { usePayrollUserInfo } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
 import { usePayrollCommissionTypes } from "@/lib/hooks/payroll-commission-types/usePayrollCommissionTypes";
 import { useTenantUsers } from "@/lib/hooks/users/useTenantUsers";
-import { FormFooter } from "@/components/shared/FormFooter";
-import { Check, UserCircle } from "lucide-react";
+import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
+import { navigation } from "@tea-pos/utils/navigation";
+import { UserCircle, Pencil } from "lucide-react";
 import Image from "next/image";
-import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
 
+/**
+ * Read-only. Changing someone's commission type lives under Pay -> Config ->
+ * Staff Commissions: it is a payroll setting that decides what people are paid,
+ * not a detail of the record you are looking at, and it does not belong behind
+ * a screen an admin opens to check a bank account number.
+ */
 export default function StaffPayrollInfoPage({ params }: { params: Promise<{ userId: string }> }) {
     const { userId } = use(params);
-    const router = useRouter();
     const { users } = useTenantUsers();
-    const { info, isLoading: infoLoading, update } = usePayrollUserInfo(userId);
+    const { info, isLoading: infoLoading } = usePayrollUserInfo(userId);
     const { commissionTypes, isLoading: typesLoading } = usePayrollCommissionTypes();
-    const { showError } = useErrorSheet();
+    const { url } = useTenantSlug();
 
     const user = users.find((u) => u.id === userId);
-
-    const [selectedTypeId, setSelectedTypeId] = useState<string | null>(null);
-    const [saving, setSaving] = useState(false);
-
-    useEffect(() => {
-        if (info) {
-            setSelectedTypeId(info.commissionConfigId ?? null);
-        }
-    }, [info?.commissionConfigId]);
-
-    const handleSave = async () => {
-        setSaving(true);
-        try {
-            await update({ commissionConfigId: selectedTypeId ?? undefined });
-            router.back();
-        } catch (err) {
-            showError(err);
-        } finally {
-            setSaving(false);
-        }
-    };
-
     const isLoading = infoLoading || typesLoading;
 
     if (isLoading) {
@@ -54,71 +36,64 @@ export default function StaffPayrollInfoPage({ params }: { params: Promise<{ use
 
     if (!user) return <p className="p-4 text-sm text-gray-400">Staff member not found.</p>;
 
-    const enabledTypes = commissionTypes.filter((t) => t.isEnabled);
+    const commissionType = info?.commissionConfigId
+        ? commissionTypes.find((t) => t.id === info.commissionConfigId)
+        : null;
     const hasBankInfo = info?.bankName || info?.bankAccountNumber;
 
     return (
         <div className="space-y-4">
             {/* User card */}
-            {user && (
-                <div className="bg-white rounded-xl p-4 flex items-center gap-4">
-                    {user.avatarUrl ? (
-                        <Image
-                            src={user.avatarUrl}
-                            alt={user.fullName}
-                            width={56}
-                            height={56}
-                            className="w-14 h-14 rounded-2xl object-cover shrink-0"
-                        />
-                    ) : (
-                        <div className="w-14 h-14 rounded-2xl bg-brand/10 flex items-center justify-center shrink-0">
-                            <UserCircle size={32} className="text-brand" />
-                        </div>
-                    )}
-                    <div className="flex-1 min-w-0 space-y-0.5">
-                        <p className="text-lg font-semibold text-gray-900 truncate">{user.fullName}</p>
-                        <p className="text-sm text-gray-400 truncate">{user.email}</p>
-                    </div>
-                </div>
-            )}
-
-            {/* Commission type */}
-            <div className="space-y-2">
-                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide px-1">Commission Type</p>
-
-                <button
-                    onClick={() => setSelectedTypeId(null)}
-                    className="w-full bg-white rounded-xl px-4 py-3 flex items-center justify-between active:bg-gray-50"
-                >
-                    <div>
-                        <p className="text-base font-medium text-gray-900 text-left">None</p>
-                        <p className="text-sm text-gray-400 text-left">No commission assigned</p>
-                    </div>
-                    {selectedTypeId === null && <Check size={20} className="text-brand shrink-0" />}
-                </button>
-
-                {enabledTypes.length === 0 ? (
-                    <p className="text-sm text-gray-400 px-1">No commission types configured yet.</p>
+            <div className="bg-white rounded-xl p-4 flex items-center gap-4">
+                {user.avatarUrl ? (
+                    <Image
+                        src={user.avatarUrl}
+                        alt={user.fullName}
+                        width={56}
+                        height={56}
+                        className="w-14 h-14 rounded-2xl object-cover shrink-0"
+                    />
                 ) : (
-                    enabledTypes.map((type) => (
-                        <button
-                            key={type.id}
-                            onClick={() => setSelectedTypeId(type.id)}
-                            className="w-full bg-white rounded-xl px-4 py-3 flex items-center justify-between active:bg-gray-50"
-                        >
-                            <div>
-                                <p className="text-base font-medium text-gray-900 text-left">{type.name}</p>
-                                <p className="text-sm text-gray-400 text-left font-mono">
-                                    Rp {type.ratePerCup.toLocaleString("id-ID")} / cup
-                                </p>
-                            </div>
-                            {selectedTypeId === type.id && <Check size={20} className="text-brand shrink-0" />}
-                        </button>
-                    ))
+                    <div className="w-14 h-14 rounded-2xl bg-brand/10 flex items-center justify-center shrink-0">
+                        <UserCircle size={32} className="text-brand" />
+                    </div>
                 )}
+                <div className="flex-1 min-w-0 space-y-0.5">
+                    <p className="text-lg font-semibold text-gray-900 truncate">{user.fullName}</p>
+                    <p className="text-sm text-gray-400 truncate">{user.email}</p>
+                </div>
             </div>
 
-            {/* Bank details — read-only */}
+            {/* Commission type — display only, with a way through to where it is set */}
+            <div className="space-y-2">
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide px-1">Commission Type</p>
+                <div className="bg-white rounded-xl px-4 py-3.5 flex items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                        {commissionType ? (
+                            <>
+                                <p className="text-base font-medium text-gray-900 truncate">{commissionType.name}</p>
+                                <p className="text-sm text-gray-400 font-mono">
+                                    Rp {commissionType.ratePerCup.toLocaleString("id-ID")} / cup
+                                </p>
+                            </>
+                        ) : (
+                            <>
+                                <p className="text-base font-medium text-gray-900">None</p>
+                                <p className="text-sm text-gray-400">No commission assigned</p>
+                            </>
+                        )}
+                    </div>
+                    <button
+                        onClick={() => navigation.push(url(`/mobile/pay/staff-commissions/${userId}`))}
+                        className="flex items-center gap-1.5 text-sm font-medium text-brand px-2 py-1 rounded-lg active:bg-brand/10 shrink-0"
+                    >
+                        <Pencil size={14} />
+                        Change
+                    </button>
+                </div>
+            </div>
+
+            {/* Bank details — set by the staff member in the seller app */}
             <div className="space-y-2">
                 <p className="text-xs font-medium text-gray-400 uppercase tracking-wide px-1">Bank Details</p>
                 <div className="bg-white rounded-xl px-4">
@@ -148,15 +123,6 @@ export default function StaffPayrollInfoPage({ params }: { params: Promise<{ use
                     )}
                 </div>
             </div>
-
-            <FormFooter
-                label="Save Changes"
-                loadingLabel="Saving..."
-                onSubmit={handleSave}
-                isLoading={saving}
-                confirmTitle="Save pay settings?"
-                confirmMessage="This changes their commission type for future closed days."
-            />
         </div>
     );
 }

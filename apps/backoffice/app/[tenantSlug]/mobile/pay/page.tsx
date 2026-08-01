@@ -2,7 +2,7 @@
 
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
-import { ChevronRight, Users, Tag, Award, UserCog } from "lucide-react";
+import { ChevronRight, Users, Tag, Award, UserCog, Percent } from "lucide-react";
 
 function MenuRow({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
     return (
@@ -31,6 +31,7 @@ export default function PayOverviewPage() {
                 <p className="text-xs font-medium text-gray-400 uppercase tracking-wide px-1">Config</p>
                 <div className="bg-white rounded-xl px-4">
                     <MenuRow icon={<Award size={20} />} label="Commission Types" onClick={() => navigation.push(url("/mobile/pay/commission-types"))} />
+                    <MenuRow icon={<Percent size={20} />} label="Staff Commissions" onClick={() => navigation.push(url("/mobile/pay/staff-commissions"))} />
                     <MenuRow icon={<Tag size={20} />} label="Claim Types" onClick={() => navigation.push(url("/mobile/pay/claim-types"))} />
                 </div>
             </div>
