@@ -369,6 +369,40 @@ here so the connection isn't lost.
    `curl` ×2). Expect one 200 and one **409** — not a 500 — and the store still
    holding exactly one active session afterwards.
 
+### Result (staging, 2026-08-01)
+
+1, 2 — pass locally. **3 — passes.** Two takeovers, one `POST
+/api/sessions/transfer` → `200` each, no `403` chaser. The session chain
+alternates users on every hop (`3efe → 060a → 3efe → 060a`), so no row
+transferred to itself. 4 — nothing new. Those `200`s also confirm the RPC is
+live: the service no longer inserts anything itself, so a missing function
+would have been a 500.
+
+**5 — deliberately skipped.** The Supabase SQL editor serialises on one
+connection so the two-tab version can't overlap, and the curl version needs a
+pasted auth cookie. Not worth it: the thing that generated concurrent transfers
+was the replay loop, which is gone and verified, and `SELECT … FOR UPDATE` is
+stock Postgres. The one part that is genuinely new code — mapping `PTxxx` onto
+the HTTP status — is covered by entering a wrong claim code in the app and
+seeing a clean 403, since the 409 branch is the same path with a different
+`RAISE`. Revisit if a 500 ever reappears on this route.
+
+### Gotcha found while testing — the fix ships in the client bundle
+
+The first staging run still showed the `200` + `403` pair, and the cause was
+not the fix: both phones were serving the previous JS from the `next-pwa`
+service worker cache. The replay is fired by the browser, so a server deploy
+does not stop a device running cached code — and in a two-device test *either*
+stale device reproduces the pair on its own. Force-quitting both PWAs cleared
+it.
+
+Worth knowing for any future client-side fix: the fastest way to tell stale
+bundle from broken fix is the console. The deleted modules logged
+`[MutationQueue]`, `[MutationSync]` and `[withTimeout]`; those strings cannot
+be produced by the current code, so seeing them is proof of a stale bundle. A
+release-time update prompt would remove the guesswork — see the follow-ups
+below.
+
 ## What shipped
 
 `apps/seller/lib/hooks/sessions/useSession.ts` (240 → 130 lines),
@@ -410,5 +444,20 @@ environment that hasn't had the migration applied, **push it before deploying
 the app**, or every transfer 500s on a missing function. Phase 4 is closed — no
 work.
 
-Still to do by hand, on a real device: verification steps 3 and 5 (single
-transfer request, and two concurrent transfers expecting one 200 + one 409).
+Verified on staging (see Result above). Prod still needs the migration pushed
+before the app deploys.
+
+## Follow-ups this surfaced (not in scope here)
+
+- **Release-time update prompt.** `sw.js` already ships `skipWaiting` +
+  `clientsClaim`, so a new service worker takes control immediately — but a
+  page already open keeps running the JS it booted with, which for a POS open
+  all shift can be days. Listen for `controllerchange`, prompt via the existing
+  `ToastContext`, reload on tap. Guard the first install (no prior
+  `navigator.serviceWorker.controller`), and call `registration.update()` on
+  `visibilitychange` so long-lived installs actually check. Prompt rather than
+  auto-reload — a reload mid-order drops the cart. Don't key it off
+  `/api/version`: that compares `packageJson.version`, which is bumped per
+  release, not per deploy.
+- **`SessionContext` provider.** `useSession` is still mounted 7 times, each
+  opening its own realtime subscription. See "Worth refactoring?" above.
