@@ -28,7 +28,7 @@ export function FormFooter({
 }: FormFooterProps) {
     return (
         <FooterSlot>
-            <div className="bg-white border-t border-gray-200 p-4 pb-8">
+            <div className="bg-white border-t border-gray-200 p-4">
                 <button
                     type="button"
                     onClick={onSubmit}

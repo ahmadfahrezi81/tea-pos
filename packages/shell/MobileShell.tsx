@@ -273,8 +273,14 @@ export function MobileShell({
                     something: the tab nav, the route CTA, or an occupied slot all
                     make a non-empty child, while a subpage with no chrome leaves
                     only the empty slot div — where a white safe-area strip would
-                    read as an unexplained band above the home indicator. */}
-                <footer className="shrink-0 pb-[env(safe-area-inset-bottom)] [&:has(>:not(:empty))]:bg-white">
+                    read as an unexplained band above the home indicator.
+
+                    Two selectors, because :not(:empty) alone misses the slot: the
+                    portal target commits empty and fills later, and :has() does
+                    not reliably re-run on that. FooterSlot marks itself
+                    .is-occupied instead. The :not(:empty) arm still covers the
+                    nav and the CTA, which are non-empty from the first paint. */}
+                <footer className="shrink-0 pb-[env(safe-area-inset-bottom)] [&:has(>:not(:empty))]:bg-white [&:has(>.is-occupied)]:bg-white">
                     <div ref={setFooterSlotEl} />
                     {footerCtaLabel && (
                         <div className="bg-white border-t border-gray-200 p-4">
