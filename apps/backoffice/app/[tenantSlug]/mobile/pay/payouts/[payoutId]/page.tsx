@@ -199,8 +199,6 @@ export default function UserPayslipPage({
                     { label: "Payroll To", value: format(parseISO(payout.endDate), "EEE, d MMM yyyy") },
                     { label: "Per Cup", value: ratePerCup > 0 ? formatRupiah(ratePerCup) : "—" },
                     { label: "Expected payout", value: (() => { const d = getExpectedPayoutDate(payout.endDate); return d ? format(parseISO(d), "EEE, d MMM yyyy") : "—"; })() },
-                    { label: "Paid on", value: payout.paidAt ? format(new Date(payout.paidAt), "d MMM yyyy") : "—" },
-                    { label: "Paid by", value: paidByName ?? "—" },
                 ].map(({ label, value }) => (
                     <div key={label} className="flex justify-between items-center">
                         <span className="text-gray-500">{label}</span>
@@ -217,14 +215,33 @@ export default function UserPayslipPage({
                         {copiedId ? <Check size={13} className="text-green-500" /> : <Copy size={13} className="text-gray-400" />}
                     </button>
                 </div>
+                {/* Below the divider with the payslip ID: what the period was is
+                    one thing, what actually happened when it was paid is
+                    another. The proof and the note continue this group. */}
+                <div className="flex justify-between items-center">
+                    <span className="text-gray-500">Paid on</span>
+                    <span className="font-medium text-gray-800">
+                        {payout.paidAt ? format(new Date(payout.paidAt), "d MMM yyyy") : "—"}
+                    </span>
+                </div>
+                <div className="flex justify-between items-center">
+                    <span className="text-gray-500">Paid by</span>
+                    <span className="font-medium text-gray-800">{paidByName ?? "—"}</span>
+                </div>
                 {payout.paymentProofUrl && (
                     <>
-                        <button
-                            onClick={() => setShowProof(true)}
-                            className="w-full mt-1 py-2 rounded-xl bg-slate-100 text-sm font-medium text-gray-700 active:opacity-70"
-                        >
-                            View Transfer Proof
-                        </button>
+                        {/* A row like the ones above it — label on the left,
+                            action on the right — rather than a full-width bar
+                            that reads as the card's primary action. */}
+                        <div className="flex justify-between items-center">
+                            <span className="text-gray-500">Transfer receipt</span>
+                            <button
+                                onClick={() => setShowProof(true)}
+                                className="px-3 py-1 rounded-lg bg-blue-600 text-white text-xs font-semibold active:opacity-80"
+                            >
+                                View
+                            </button>
+                        </div>
                         {showProof && (
                             <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setShowProof(false)}>
                                 {/* eslint-disable-next-line @next/next/no-img-element */}

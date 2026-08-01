@@ -332,7 +332,8 @@ export const id: DeepPartial<typeof en> = {
         totalRow: "Total",
         statusWaitingLong: "MENUNGGU PEMBAYARAN",
         statusPaidLong: "DIBAYAR",
-        viewProof: "Lihat bukti transfer",
+        viewProof: "Lihat",
+        proofLabel: "Bukti transfer",
         addBankDetails:
             "Tambahkan info rekening di Info Penggajian agar admin bisa membayar Anda.",
         viewConfig: "Konfig Gaji",
