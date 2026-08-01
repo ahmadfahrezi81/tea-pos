@@ -52,7 +52,9 @@ a,
     bottom: 0;
     left: -100%;
     width: 100%;
-    background-color: #2563eb;
+    /* Follows the brand token rather than repeating a hex, which is how this
+       one stayed blue-600 while everything else was themed. */
+    background-color: var(--accent-primary);
     border-radius: 9999px;
     animation: indeterminate 1.5s ease-in-out infinite;
 }
@@ -85,7 +87,11 @@ a,
     --border: oklch(0.922 0 0);
     --input: oklch(0.922 0 0);
     --ring: oklch(0.708 0 0);
-    --accent-primary: oklch(0.546 0.245 262.881);
+    /* orange-600. Backoffice runs orange so it is obvious at a glance which app
+       is on screen — the two look near-identical otherwise, and acting on the
+       wrong one is a real mistake to make. Same value the seller app uses for
+       fast-order mode, so there is one orange in the codebase, not two. */
+    --accent-primary: oklch(0.646 0.222 41.116);
 }
 
 @layer base {

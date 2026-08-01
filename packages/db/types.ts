@@ -303,6 +303,7 @@ export type Database = {
           created_at: string
           end_date: string
           id: string
+          notes: string | null
           paid_at: string | null
           paid_by: string | null
           payment_proof_url: string | null
@@ -320,6 +321,7 @@ export type Database = {
           created_at?: string
           end_date: string
           id?: string
+          notes?: string | null
           paid_at?: string | null
           paid_by?: string | null
           payment_proof_url?: string | null
@@ -337,6 +339,7 @@ export type Database = {
           created_at?: string
           end_date?: string
           id?: string
+          notes?: string | null
           paid_at?: string | null
           paid_by?: string | null
           payment_proof_url?: string | null
@@ -1548,6 +1551,34 @@ export type Database = {
     }
     Functions: {
       payroll_claims_month_key: { Args: { d: string }; Returns: string }
+      transfer_store_session: {
+        Args: {
+          p_claim_code: string
+          p_new_claim_code: string
+          p_store_id: string
+          p_tenant_id: string
+          p_user_id: string
+        }
+        Returns: {
+          claim_code: string
+          created_at: string | null
+          daily_summary_id: string
+          ended_at: string | null
+          id: string
+          previous_session_id: string | null
+          started_at: string
+          status: string
+          store_id: string
+          tenant_id: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "store_sessions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       user_tenant_ids: { Args: never; Returns: string[] }
     }
     Enums: {

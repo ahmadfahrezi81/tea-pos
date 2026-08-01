@@ -7,9 +7,10 @@ import { useAllPayrollUserInfos } from "@/lib/hooks/payroll-user-info/usePayroll
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
 import { parseISO, format, getISOWeek, startOfMonth, endOfMonth } from "date-fns";
-import { UserCircle, ArrowUpRight, CalendarDays, Search, SlidersHorizontal, X, Check } from "lucide-react";
+import { UserCircle, CalendarDays, CalendarClock, Search, SlidersHorizontal, X, Check } from "lucide-react";
 import Image from "next/image";
-import { getCurrentLocalMonth } from "@tea-pos/utils/time";
+import { getCurrentLocalMonth, getTodayLocalStr } from "@tea-pos/utils/time";
+import { getPayWindowBounds, getExpectedPayoutDate } from "@tea-pos/utils/week";
 import type { PayoutResponse } from "@tea-pos/features/payroll/schema";
 
 const NON_SELLER_SLUG = "SELLER_0";
@@ -107,6 +108,30 @@ export default function StaffPayoutsPage() {
     const monthStart = startOfMonth(parseISO(`${selectedMonth}-01`));
     const monthEnd = endOfMonth(monthStart);
 
+    /* Staff are all paid on the same cadence, so the next pay date is a property
+       of the tenant, not of each row — it belongs once at the top rather than
+       repeated on every card.
+
+       Read from the staff records rather than hardcoded, so moving off
+       bi-weekly needs no edit here; the most common value wins so one record
+       configured differently can't change what the banner tells everyone. */
+    const payFrequency = useMemo(() => {
+        const counts = new Map<string, number>();
+        for (const info of infos) {
+            if (info.payFrequency) counts.set(info.payFrequency, (counts.get(info.payFrequency) ?? 0) + 1);
+        }
+        let mostCommon = "bi_weekly";
+        let highest = 0;
+        for (const [frequency, count] of counts) {
+            if (count > highest) { mostCommon = frequency; highest = count; }
+        }
+        return mostCommon;
+    }, [infos]);
+
+    const expectedPayoutDate = getExpectedPayoutDate(
+        getPayWindowBounds(getTodayLocalStr(), payFrequency).endDate,
+    );
+
     const isNonSeller = (userId: string) => {
         const info = infoByUserId[userId];
         return info?.commissionConfigSlug === NON_SELLER_SLUG || (info?.ratePerCup ?? 0) === 0;
@@ -146,15 +171,16 @@ export default function StaffPayoutsPage() {
         const weekEnd = getISOWeek(parseISO(payout.endDate));
         const sameWeek = weekStart === weekEnd;
         const needsReview = payout.status === "pending" && (payout.pendingCount ?? 0) > 0;
+        const reviewedCount = (payout.approvedCount ?? 0) + (payout.pendingCount ?? 0);
 
         return (
             <button
                 key={payout.id}
                 onClick={() => navigation.push(url(`/mobile/pay/payouts/${payout.id}?userId=${payout.userId}`))}
-                className="w-full bg-white rounded-2xl p-4 text-left active:bg-gray-50 space-y-3"
+                className="w-full bg-white rounded-2xl p-3 text-left active:bg-gray-50 space-y-3"
             >
-                <div className="flex items-start justify-between">
-                    <div className="space-y-1">
+                <div className="flex items-start justify-between gap-2">
+                    <div className="space-y-0.5">
                         <p className="text-lg font-bold text-gray-900">
                             {sameWeek ? `Week ${weekStart}` : `Week ${weekStart} · Week ${weekEnd}`}
                         </p>
@@ -162,11 +188,15 @@ export default function StaffPayoutsPage() {
                             {format(parseISO(payout.startDate), "EEE, d MMM")} – {format(parseISO(payout.endDate), "EEE, d MMM")}
                         </p>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                        <span className={`text-sm font-medium px-2.5 py-0.5 rounded-full ${needsReview ? STATUS_STYLE.needs_review : (STATUS_STYLE[payout.status] ?? STATUS_STYLE.pending)}`}>
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                        <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${needsReview ? STATUS_STYLE.needs_review : (STATUS_STYLE[payout.status] ?? STATUS_STYLE.pending)}`}>
                             {needsReview ? "Needs Review" : payout.status === "pending" ? "Ongoing" : `Paid${payout.paidAt ? ` · ${format(new Date(payout.paidAt), "d MMM")}` : ""}`}
                         </span>
-                        <ArrowUpRight size={18} className="text-gray-400" />
+                        {reviewedCount > 0 && (
+                            <span className="text-xs font-medium text-gray-500">
+                                {payout.approvedCount ?? 0} / {reviewedCount} approved
+                            </span>
+                        )}
                     </div>
                 </div>
 
@@ -182,28 +212,29 @@ export default function StaffPayoutsPage() {
                     <p className="text-base font-bold text-gray-900 truncate flex-1">{user?.fullName ?? "Unknown"}</p>
                 </div>
 
-                <div className="grid grid-cols-4 gap-2">
+                {/* Same tile grid as the seller earnings card, so a payout reads
+                    the same on both sides. Pending/approved are not tiles here —
+                    they are the num/denom line beside the date above. */}
+                <div className="bg-slate-50 rounded-xl p-2 grid grid-cols-4 gap-2">
                     <div className="bg-orange-100 p-2 rounded-lg">
-                        <p className="text-xs font-semibold text-gray-700">Orders</p>
-                        <p className="text-xl font-bold text-orange-900">{payout.totalOrders}</p>
+                        <p className="text-xs font-semibold text-gray-500">Orders</p>
+                        <p className="text-lg font-bold text-orange-600">{payout.totalOrders}</p>
                     </div>
                     <div className="bg-blue-100 p-2 rounded-lg">
-                        <p className="text-xs font-semibold text-gray-700">Cups</p>
-                        <p className="text-xl font-bold text-blue-900">{payout.totalCups}</p>
+                        <p className="text-xs font-semibold text-gray-500">Cups</p>
+                        <p className="text-lg font-bold text-blue-600">{payout.totalCups}</p>
+                    </div>
+                    <div className="bg-teal-100 p-2 rounded-lg col-span-2">
+                        <p className="text-xs font-semibold text-gray-500">Commission</p>
+                        <p className="text-lg font-bold text-teal-600">{`Rp ${payout.commissionsTotal.toLocaleString("id-ID")}`}</p>
+                    </div>
+                    <div className="bg-purple-100 p-2 rounded-lg col-span-2">
+                        <p className="text-xs font-semibold text-gray-500">Claims</p>
+                        <p className="text-lg font-bold text-purple-600">{`Rp ${payout.claimsTotal.toLocaleString("id-ID")}`}</p>
                     </div>
                     <div className="bg-green-100 p-2 rounded-lg col-span-2">
-                        <p className="text-xs font-semibold text-gray-700">Total Pay</p>
-                        <p className="text-xl font-bold text-green-900">Rp {payout.totalPay.toLocaleString("id-ID")}</p>
-                    </div>
-                    <div className="col-span-4 grid grid-cols-2 gap-2">
-                        <div className="bg-yellow-100 p-2 rounded-lg">
-                            <p className="text-xs font-semibold text-gray-700">Pending</p>
-                            <p className="text-xl font-bold text-yellow-900">{payout.pendingCount ?? 0}</p>
-                        </div>
-                        <div className="bg-purple-100 p-2 rounded-lg">
-                            <p className="text-xs font-semibold text-gray-700">Approved</p>
-                            <p className="text-xl font-bold text-purple-900">{payout.approvedCount ?? 0}</p>
-                        </div>
+                        <p className="text-xs font-semibold text-gray-500">Total</p>
+                        <p className="text-lg font-bold text-green-600">{`Rp ${payout.totalPay.toLocaleString("id-ID")}`}</p>
                     </div>
                 </div>
             </button>
@@ -212,6 +243,20 @@ export default function StaffPayoutsPage() {
 
     return (
         <div className="space-y-3">
+            {/* Next expected payout — mirrors the banner sellers see on their
+                earnings page, so both sides quote the same date. */}
+            <div className="bg-white p-3 rounded-2xl flex items-center gap-3">
+                <div className="w-11 h-11 rounded-xl bg-brand/10 flex items-center justify-center shrink-0">
+                    <CalendarClock size={24} className="text-brand" />
+                </div>
+                <div className="min-w-0">
+                    <p className="text-xs font-medium text-gray-500">Next expected payout</p>
+                    <p className="text-lg font-bold text-gray-900">
+                        {format(parseISO(expectedPayoutDate), "EEE, d MMM yyyy")}
+                    </p>
+                </div>
+            </div>
+
             {/* Month selector */}
             <div className="bg-white p-4 rounded-2xl">
                 <label className="block text-sm font-medium text-gray-700 mb-2">

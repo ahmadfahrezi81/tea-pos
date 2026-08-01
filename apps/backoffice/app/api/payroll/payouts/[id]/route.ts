@@ -22,6 +22,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             id, tenantId, actorId: user.id,
             status: body.data.status,
             paymentProofUrl: body.data.paymentProofUrl,
+            notes: body.data.notes,
         });
         return ok(result);
     } catch (error) { return handleError("PATCH /api/payroll/payouts/[id]", error); }

@@ -329,7 +329,8 @@ export const en = {
         totalRow: "Total",
         statusWaitingLong: "WAITING FOR PAYMENT",
         statusPaidLong: "PAID",
-        viewProof: "View transfer screenshot",
+        viewProof: "View",
+        proofLabel: "Transfer receipt",
         addBankDetails:
             "Add your bank details in Payroll Info so admin can pay you.",
         viewConfig: "Pay Config",
@@ -351,6 +352,7 @@ export const en = {
         perCupLabel: "Per Cup",
         paidOn: "Paid on",
         paidBy: "Paid by",
+        paymentNote: "Note from admin",
         transferProof: "Transfer proof",
         nextExpectedPayout: "Next Expected Payout",
         payFrequency: "Pay Frequency",

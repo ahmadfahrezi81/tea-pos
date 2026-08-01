@@ -36,7 +36,7 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
     }
 
     const ps = payslip as {
-        payout: { id: string; startDate: string; endDate: string; status: string; paidAt: string | null; paymentProofUrl: string | null };
+        payout: { id: string; startDate: string; endDate: string; status: string; paidAt: string | null; paymentProofUrl: string | null; notes: string | null };
         commissions: Array<{ id: string; date: string; totalCups: number; totalCommission: number; ratePerCup: number; storeName?: string | null; status: string }>;
         claims: Array<{
             id: string;
@@ -126,8 +126,6 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
                     { label: t("earnings.payrollTo"), value: format(parseISO(payout.endDate), "EEE, d MMM yyyy") },
                     { label: t("earnings.expectedPayout"), value: expectedPayoutDate ? format(parseISO(expectedPayoutDate), "EEE, d MMM yyyy") : "—", valueClass: "font-semibold text-blue-600" },
                     { label: t("earnings.perCupLabel"), value: ratePerCup > 0 ? formatRupiah(ratePerCup) : "—" },
-                    { label: t("earnings.paidOn"), value: payout.paidAt ? format(new Date(payout.paidAt), "d MMM yyyy") : "—" },
-                    { label: t("earnings.paidBy"), value: paidByName ?? "—" },
                 ].map(({ label, value, valueClass }) => (
                     <div key={label} className="flex justify-between items-center">
                         <span className="text-gray-500">{label}</span>
@@ -141,14 +139,33 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
                         <CopyableField label={t("earnings.payslipId")} value={payout.id} />
                     </div>
                 </div>
+                {/* Below the divider with the payslip ID: what the period was is
+                    one thing, what actually happened when it was paid is
+                    another. The proof and the note continue this group. */}
+                <div className="flex justify-between items-center">
+                    <span className="text-gray-500">{t("earnings.paidOn")}</span>
+                    <span className="font-medium text-gray-800">
+                        {payout.paidAt ? format(new Date(payout.paidAt), "d MMM yyyy") : "—"}
+                    </span>
+                </div>
+                <div className="flex justify-between items-center">
+                    <span className="text-gray-500">{t("earnings.paidBy")}</span>
+                    <span className="font-medium text-gray-800">{paidByName ?? "—"}</span>
+                </div>
                 {payout.paymentProofUrl && (
                     <>
-                        <button
-                            onClick={() => setShowProof(true)}
-                            className="w-full mt-1 py-2 rounded-xl bg-slate-100 text-sm font-medium text-gray-700 active:opacity-70"
-                        >
-                            {t("earnings.viewProof")}
-                        </button>
+                        {/* A row like the ones above it — label on the left,
+                            action on the right — rather than a full-width bar
+                            that reads as the card's primary action. */}
+                        <div className="flex justify-between items-center">
+                            <span className="text-gray-500">{t("earnings.proofLabel")}</span>
+                            <button
+                                onClick={() => setShowProof(true)}
+                                className="px-3 py-1 rounded-lg bg-blue-600 text-white text-xs font-semibold active:opacity-80"
+                            >
+                                {t("earnings.viewProof")}
+                            </button>
+                        </div>
                         {showProof && (
                             <div
                                 className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
@@ -159,6 +176,15 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
                             </div>
                         )}
                     </>
+                )}
+                {/* Note left by whoever confirmed the payment — kept with the
+                    payment details it explains, rather than floating as its own
+                    card away from the proof and the paid-on date. */}
+                {payout.notes && (
+                    <div className="mt-1 bg-slate-50 rounded-xl p-3 space-y-1">
+                        <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">{t("earnings.paymentNote")}</p>
+                        <p className="text-sm text-gray-800 whitespace-pre-wrap">{payout.notes}</p>
+                    </div>
                 )}
             </div>
 

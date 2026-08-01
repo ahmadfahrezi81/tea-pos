@@ -51,6 +51,10 @@ export const mobileRoutes = {
         titleKey: "New Commission Type",
         parent: "/mobile/pay/commission-types",
     },
+    "/mobile/pay/staff-commissions": {
+        titleKey: "Staff Commissions",
+        parent: "/mobile/pay",
+    },
     "/mobile/supply": {
         titleKey: "Supply",
         parent: null,
@@ -91,6 +95,16 @@ export const resolveRoute = (path: string): RouteConfig | null => {
         return {
             titleKey: "Payroll Info",
             parent: "/mobile/pay/staff",
+        };
+    }
+
+    // Checked separately from the rule above rather than folded into it: the
+    // paths only look alike. "/mobile/pay/staff-commissions/" does not contain
+    // "/mobile/pay/staff/", so neither rule can swallow the other.
+    if (path.includes("/mobile/pay/staff-commissions/")) {
+        return {
+            titleKey: "Set Commission",
+            parent: "/mobile/pay/staff-commissions",
         };
     }
 
