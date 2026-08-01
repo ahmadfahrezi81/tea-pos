@@ -7,9 +7,10 @@ import { useAllPayrollUserInfos } from "@/lib/hooks/payroll-user-info/usePayroll
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
 import { parseISO, format, getISOWeek, startOfMonth, endOfMonth } from "date-fns";
-import { UserCircle, CalendarDays, Search, SlidersHorizontal, X, Check } from "lucide-react";
+import { UserCircle, CalendarDays, CalendarClock, Search, SlidersHorizontal, X, Check } from "lucide-react";
 import Image from "next/image";
-import { getCurrentLocalMonth } from "@tea-pos/utils/time";
+import { getCurrentLocalMonth, getTodayLocalStr } from "@tea-pos/utils/time";
+import { getPayWindowBounds, getExpectedPayoutDate } from "@tea-pos/utils/week";
 import type { PayoutResponse } from "@tea-pos/features/payroll/schema";
 
 const NON_SELLER_SLUG = "SELLER_0";
@@ -106,6 +107,30 @@ export default function StaffPayoutsPage() {
     const infoByUserId = Object.fromEntries(infos.map((i) => [i.userId, i]));
     const monthStart = startOfMonth(parseISO(`${selectedMonth}-01`));
     const monthEnd = endOfMonth(monthStart);
+
+    /* Staff are all paid on the same cadence, so the next pay date is a property
+       of the tenant, not of each row — it belongs once at the top rather than
+       repeated on every card.
+
+       Read from the staff records rather than hardcoded, so moving off
+       bi-weekly needs no edit here; the most common value wins so one record
+       configured differently can't change what the banner tells everyone. */
+    const payFrequency = useMemo(() => {
+        const counts = new Map<string, number>();
+        for (const info of infos) {
+            if (info.payFrequency) counts.set(info.payFrequency, (counts.get(info.payFrequency) ?? 0) + 1);
+        }
+        let mostCommon = "bi_weekly";
+        let highest = 0;
+        for (const [frequency, count] of counts) {
+            if (count > highest) { mostCommon = frequency; highest = count; }
+        }
+        return mostCommon;
+    }, [infos]);
+
+    const expectedPayoutDate = getExpectedPayoutDate(
+        getPayWindowBounds(getTodayLocalStr(), payFrequency).endDate,
+    );
 
     const isNonSeller = (userId: string) => {
         const info = infoByUserId[userId];
@@ -218,6 +243,20 @@ export default function StaffPayoutsPage() {
 
     return (
         <div className="space-y-3">
+            {/* Next expected payout — mirrors the banner sellers see on their
+                earnings page, so both sides quote the same date. */}
+            <div className="bg-white p-3 rounded-2xl flex items-center gap-3">
+                <div className="w-11 h-11 rounded-xl bg-brand/10 flex items-center justify-center shrink-0">
+                    <CalendarClock size={24} className="text-brand" />
+                </div>
+                <div className="min-w-0">
+                    <p className="text-xs font-medium text-gray-500">Next expected payout</p>
+                    <p className="text-lg font-bold text-gray-900">
+                        {format(parseISO(expectedPayoutDate), "EEE, d MMM yyyy")}
+                    </p>
+                </div>
+            </div>
+
             {/* Month selector */}
             <div className="bg-white p-4 rounded-2xl">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
