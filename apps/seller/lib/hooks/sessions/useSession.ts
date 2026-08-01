@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import useSWR from "swr";
 import { sessionsApi } from "@/lib/api/sessions";
 import { useRealtime } from "@/lib/context/RealtimeContext";
-import { mutationQueue, withTimeout, useMutationSync } from "@tea-pos/utils/offline";
 import type { OpenStoreInput, TransferSessionInput, GateStateResponse } from "@tea-pos/features/sessions/schema";
 
 export function useSession(storeId?: string) {
@@ -59,36 +58,27 @@ export function useSession(storeId?: string) {
         }
     };
 
+    /**
+     * Tell the other devices, then reconcile our own cache — both in the
+     * background.
+     *
+     * The mutation has already landed on the server and the caller has already
+     * applied it optimistically, so neither of these needs to hold the caller's
+     * spinner open on a slow network. `mutate()` rejects when the revalidating
+     * fetch fails; swallow that, because a failed *refetch* must not surface as
+     * a failed *mutation* to the component that awaited it.
+     */
+    const syncAfterMutation = (update: GateStateResponse) => {
+        void broadcast(update);
+        void mutate().catch(() => {});
+    };
+
     const openStore = async (input: Omit<OpenStoreInput, "storeId">) => {
         const result = await sessionsApi.open({ storeId: storeId!, ...input });
         const update = { gate: "open" as const, session: result.session };
 
-        // 1. Instant UI update
         mutate(update, false);
-
-        // 2. Queue for offline sync
-        mutationQueue.add("openStore", input);
-
-        // 3. Try to broadcast with timeout (5s)
-        const broadcastResult = await withTimeout(
-            broadcast(update),
-            5000,
-            "broadcast openStore"
-        );
-
-        // 4. Try to refetch with timeout (10s)
-        const refetchResult = await withTimeout(
-            mutate(),
-            10000,
-            "refetch after openStore"
-        );
-
-        if (!broadcastResult.success || !refetchResult.success) {
-            console.warn("[useSession] openStore: slow network, relying on fallback", {
-                broadcastOk: broadcastResult.success,
-                refetchOk: refetchResult.success,
-            });
-        }
+        syncAfterMutation(update);
 
         return result;
     };
@@ -98,32 +88,8 @@ export function useSession(storeId?: string) {
         const result = await sessionsApi.resume({ storeId: storeId!, summaryId: data.summaryId });
         const update = { gate: "open" as const, session: result.session };
 
-        // 1. Instant UI update
         mutate(update, false);
-
-        // 2. Queue for offline sync
-        mutationQueue.add("resumeSession", { summaryId: data.summaryId });
-
-        // 3. Try to broadcast with timeout (5s)
-        const broadcastResult = await withTimeout(
-            broadcast(update),
-            5000,
-            "broadcast resumeSession"
-        );
-
-        // 4. Try to refetch with timeout (10s)
-        const refetchResult = await withTimeout(
-            mutate(),
-            10000,
-            "refetch after resumeSession"
-        );
-
-        if (!broadcastResult.success || !refetchResult.success) {
-            console.warn("[useSession] resumeSession: slow network, relying on fallback", {
-                broadcastOk: broadcastResult.success,
-                refetchOk: refetchResult.success,
-            });
-        }
+        syncAfterMutation(update);
 
         return result;
     };
@@ -132,32 +98,8 @@ export function useSession(storeId?: string) {
         const result = await sessionsApi.transfer({ storeId: storeId!, claimCode });
         const update = { gate: "open" as const, session: result };
 
-        // 1. Instant UI update
         mutate(update, false);
-
-        // 2. Queue for offline sync
-        mutationQueue.add("transferSession", { claimCode });
-
-        // 3. Try to broadcast with timeout (5s)
-        const broadcastResult = await withTimeout(
-            broadcast(update),
-            5000,
-            "broadcast transferSession"
-        );
-
-        // 4. Try to refetch with timeout (10s)
-        const refetchResult = await withTimeout(
-            mutate(),
-            10000,
-            "refetch after transferSession"
-        );
-
-        if (!broadcastResult.success || !refetchResult.success) {
-            console.warn("[useSession] transferSession: slow network, relying on fallback", {
-                broadcastOk: broadcastResult.success,
-                refetchOk: refetchResult.success,
-            });
-        }
+        syncAfterMutation(update);
 
         return result;
     };
@@ -165,63 +107,14 @@ export function useSession(storeId?: string) {
     const endSession = async (sessionId: string) => {
         const result = await sessionsApi.end(sessionId);
 
-        // 1. Queue for offline sync
-        mutationQueue.add("endSession", { sessionId });
-
-        // 2. Try to refetch with timeout (10s)
-        const refetchResult = await withTimeout(
-            mutate(),
-            10000,
-            "refetch after endSession"
-        );
-
-        // 3. Try to broadcast with timeout (5s)
-        const broadcastResult = await withTimeout(
-            broadcast({ gate: "closed" as const, summaryId: result.dailySummaryId, closedAt: result.endedAt ?? new Date().toISOString() }),
-            5000,
-            "broadcast endSession"
-        );
-
-        if (!refetchResult.success || !broadcastResult.success) {
-            console.warn("[useSession] endSession: slow network, relying on fallback", {
-                refetchOk: refetchResult.success,
-                broadcastOk: broadcastResult.success,
-            });
-        }
+        syncAfterMutation({
+            gate: "closed" as const,
+            summaryId: result.dailySummaryId,
+            closedAt: result.endedAt ?? new Date().toISOString(),
+        });
 
         return result;
     };
-
-    // Setup offline sync for queued mutations
-    useMutationSync([
-        {
-            type: "openStore",
-            handler: async (payload: any) => {
-                if (!storeId) throw new Error("Store ID required for openStore sync");
-                await sessionsApi.open({ storeId, ...payload });
-            },
-        },
-        {
-            type: "resumeSession",
-            handler: async (payload: any) => {
-                if (!storeId) throw new Error("Store ID required for resumeSession sync");
-                await sessionsApi.resume({ storeId, summaryId: payload.summaryId });
-            },
-        },
-        {
-            type: "transferSession",
-            handler: async (payload: any) => {
-                if (!storeId) throw new Error("Store ID required for transferSession sync");
-                await sessionsApi.transfer({ storeId, claimCode: payload.claimCode });
-            },
-        },
-        {
-            type: "endSession",
-            handler: async (payload: any) => {
-                await sessionsApi.end(payload.sessionId);
-            },
-        },
-    ]);
 
     return {
         gate: data?.gate ?? null,
