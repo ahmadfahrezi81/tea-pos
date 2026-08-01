@@ -94,6 +94,12 @@ export async function resumeSession(supabase: SupabaseClient, params: ResumeSess
         .select()
         .single();
 
+    // This insert is unconditional, so two resumes landing together race the
+    // one_active_session_per_store index. Report the loser as a conflict rather
+    // than an unexplained 500 — the store does have a session, just not this one.
+    if (sessionError?.code === "23505")
+        throw Object.assign(new Error("Store already has an active session"), { status: 409 });
+
     if (sessionError || !sessionData) throw new Error(sessionError?.message ?? "Failed to create session");
 
     const log = createLogger(supabase, { tenantId, userId, storeId });
@@ -222,49 +228,38 @@ export interface TransferSessionParams {
 export async function transferSession(supabase: SupabaseClient, params: TransferSessionParams) {
     const { tenantId, storeId, userId, claimCode } = params;
 
-    const { data: activeSession, error: fetchError } = await supabase
-        .from("store_sessions")
-        .select("*")
-        .eq("store_id", storeId)
-        .eq("tenant_id", tenantId)
-        .eq("status", "active")
-        .single();
+    // Read the active session, verify the code, end it and open the next one —
+    // all inside one transaction, with the session row locked (see
+    // supabase/migrations/20260801155136_atomic_transfer_store_session.sql).
+    // Done step by step from here, two devices submitting the same code both
+    // read the same row, both passed the code check, and the loser died on
+    // one_active_session_per_store; a failure between the end and the insert
+    // also left the store with no active session at all.
+    const { data: newSession, error } = await supabase.rpc("transfer_store_session", {
+        p_tenant_id: tenantId,
+        p_store_id: storeId,
+        p_user_id: userId,
+        p_claim_code: claimCode,
+        p_new_claim_code: generateClaimCode(),
+    });
 
-    if (fetchError || !activeSession)
-        throw Object.assign(new Error("No active session found"), { status: 404 });
-
-    const session = activeSession as { id: string; claim_code: string; daily_summary_id: string };
-    if (session.claim_code !== claimCode)
-        throw Object.assign(new Error("Invalid claim code"), { status: 403 });
-
-    const { error: endError } = await supabase
-        .from("store_sessions")
-        .update({ ended_at: new Date().toISOString(), status: "ended" })
-        .eq("id", session.id)
-        .eq("tenant_id", tenantId);
-
-    if (endError) throw endError;
-
-    const { data: newSession, error: newError } = await supabase
-        .from("store_sessions")
-        .insert({
-            tenant_id: tenantId,
-            store_id: storeId,
-            daily_summary_id: session.daily_summary_id,
-            user_id: userId,
-            claim_code: generateClaimCode(),
-            previous_session_id: session.id,
-        })
-        .select()
-        .single();
-
-    if (newError || !newSession) throw new Error(newError?.message ?? "Failed to create new session");
+    // The function raises PT404 / PT403 / PT409; PostgREST already turned those
+    // into the HTTP status, so read it back off the code rather than re-deriving
+    // the meaning from the message. Anything else is a genuine 500.
+    if (error) {
+        const status = /^PT\d{3}$/.test(error.code ?? "") ? Number(error.code.slice(2)) : 500;
+        throw Object.assign(new Error(error.message), { status });
+    }
+    if (!newSession) throw new Error("Failed to create new session");
 
     const log = createLogger(supabase, { tenantId, userId, storeId });
     log("session_transferred", {
-        refId: (newSession as { id: string }).id,
+        refId: newSession.id,
         refTable: "store_sessions",
-        metadata: { previous_session_id: session.id, daily_summary_id: session.daily_summary_id },
+        metadata: {
+            previous_session_id: newSession.previous_session_id,
+            daily_summary_id: newSession.daily_summary_id,
+        },
     });
 
     return toCamelKeys(newSession);
