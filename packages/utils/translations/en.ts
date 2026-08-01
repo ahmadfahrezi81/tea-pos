@@ -351,6 +351,7 @@ export const en = {
         perCupLabel: "Per Cup",
         paidOn: "Paid on",
         paidBy: "Paid by",
+        paymentNote: "Note from admin",
         transferProof: "Transfer proof",
         nextExpectedPayout: "Next Expected Payout",
         payFrequency: "Pay Frequency",

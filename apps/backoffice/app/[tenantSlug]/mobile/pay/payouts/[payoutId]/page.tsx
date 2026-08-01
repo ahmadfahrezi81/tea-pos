@@ -95,7 +95,7 @@ export default function UserPayslipPage({
     }
 
     const ps = payslip as {
-        payout: { id: string; startDate: string; endDate: string; status: string; paidAt: string | null; paymentProofUrl: string | null };
+        payout: { id: string; startDate: string; endDate: string; status: string; paidAt: string | null; paymentProofUrl: string | null; notes: string | null };
         commissions: Commission[];
         claims: Claim[];
         commissionsTotal: number;
@@ -232,6 +232,15 @@ export default function UserPayslipPage({
                             </div>
                         )}
                     </>
+                )}
+                {/* Note recorded at payment — kept with the payment details it
+                    explains, and matching where the staff member sees it on
+                    their own payslip. */}
+                {payout.notes && (
+                    <div className="mt-1 bg-slate-50 rounded-xl p-3 space-y-1">
+                        <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Note for staff</p>
+                        <p className="text-sm text-gray-800 whitespace-pre-wrap">{payout.notes}</p>
+                    </div>
                 )}
             </div>
 

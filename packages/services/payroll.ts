@@ -386,12 +386,14 @@ export async function updatePayoutStatus(
         actorId,
         status,
         paymentProofUrl,
+        notes,
     }: {
         id: string;
         tenantId: string;
         actorId: string;
         status: "paid";
         paymentProofUrl?: string;
+        notes?: string;
     },
 ) {
     const { data: payout, error: payoutError } = await supabase
@@ -428,6 +430,7 @@ export async function updatePayoutStatus(
         paid_by: actorId,
     };
     if (paymentProofUrl) updates.payment_proof_url = paymentProofUrl;
+    if (notes) updates.notes = notes;
 
     const { data, error } = await supabase
         .from("payroll_payouts")

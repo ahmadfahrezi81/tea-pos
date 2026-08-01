@@ -36,7 +36,7 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
     }
 
     const ps = payslip as {
-        payout: { id: string; startDate: string; endDate: string; status: string; paidAt: string | null; paymentProofUrl: string | null };
+        payout: { id: string; startDate: string; endDate: string; status: string; paidAt: string | null; paymentProofUrl: string | null; notes: string | null };
         commissions: Array<{ id: string; date: string; totalCups: number; totalCommission: number; ratePerCup: number; storeName?: string | null; status: string }>;
         claims: Array<{
             id: string;
@@ -159,6 +159,15 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
                             </div>
                         )}
                     </>
+                )}
+                {/* Note left by whoever confirmed the payment — kept with the
+                    payment details it explains, rather than floating as its own
+                    card away from the proof and the paid-on date. */}
+                {payout.notes && (
+                    <div className="mt-1 bg-slate-50 rounded-xl p-3 space-y-1">
+                        <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">{t("earnings.paymentNote")}</p>
+                        <p className="text-sm text-gray-800 whitespace-pre-wrap">{payout.notes}</p>
+                    </div>
                 )}
             </div>
 

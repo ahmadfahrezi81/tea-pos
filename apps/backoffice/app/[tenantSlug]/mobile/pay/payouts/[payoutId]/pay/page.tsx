@@ -39,6 +39,7 @@ export default function PayConfirmPage({
     const { users } = useTenantUsers();
     const [proofFile, setProofFile] = useState<File | null>(null);
     const [proofPreview, setProofPreview] = useState<string | null>(null);
+    const [notes, setNotes] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -54,7 +55,13 @@ export default function PayConfirmPage({
             form.append("file", proofFile);
             form.append("bucket", "payroll-proofs");
             const { url: proofUrl } = await apiFetch<{ url: string }>("/api/upload", { method: "POST", body: form });
-            await payrollApi.updatePayout(payoutId, { status: "paid", paymentProofUrl: proofUrl });
+            await payrollApi.updatePayout(payoutId, {
+                status: "paid",
+                paymentProofUrl: proofUrl,
+                // Omitted rather than sent as "" when left blank — the column
+                // stays null, which is how "no note" is stored.
+                notes: notes.trim() || undefined,
+            });
             navigation.push(url(`/mobile/pay/payouts/${payoutId}${userParam}`));
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to confirm payment");
@@ -113,6 +120,26 @@ export default function PayConfirmPage({
                     onError={(msg) => setError(msg)}
                     allowGallery
                 />
+            </div>
+
+            {/* Note to the staff member — they see this on their payslip, so it
+                is addressed to them rather than kept as an internal reference. */}
+            <div className="bg-white rounded-xl p-4 space-y-2">
+                <div className="flex items-baseline justify-between">
+                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Note for staff</p>
+                    <span className="text-xs text-gray-400">Optional</span>
+                </div>
+                <textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    maxLength={500}
+                    rows={3}
+                    placeholder="e.g. Paid early for the holiday, includes W30 shortfall"
+                    className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-3 text-base text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand/90 resize-none"
+                />
+                <p className="text-xs text-gray-400">
+                    Shown to {targetUser?.fullName ?? "the staff member"} on their payslip. Can&apos;t be edited after payment.
+                </p>
             </div>
 
             {error && (

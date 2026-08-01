@@ -46,6 +46,10 @@ export const UpdatePayoutInput = z
     .object({
         status: z.literal("paid"),
         paymentProofUrl: z.string().url().optional(),
+        // Written once, when payment is confirmed, and shown to the staff
+        // member on their payslip. Capped so it stays a note rather than a
+        // document; empty is expressed by omitting it, not by "".
+        notes: z.string().trim().min(1).max(500).optional(),
     })
     .openapi({ title: "UpdatePayoutInput" });
 
@@ -90,6 +94,10 @@ export const PayoutResponse = z
         paymentProofUrl: z.string().nullable(),
         paidAt: z.string().nullable(),
         paidBy: UUIDSchema.nullable(),
+        // Nullish rather than nullable: payouts read back through paths that
+        // select an explicit column list, so an older query that doesn't ask
+        // for notes should not fail the parse.
+        notes: z.string().nullish(),
         createdAt: z.string(),
     })
     .openapi({ title: "PayoutResponse" });

@@ -354,6 +354,7 @@ export const id: DeepPartial<typeof en> = {
         perCupLabel: "Per Cup",
         paidOn: "Dibayar pada",
         paidBy: "Dibayar oleh",
+        paymentNote: "Catatan dari admin",
         transferProof: "Bukti transfer",
         nextExpectedPayout: "Perkiraan Pembayaran Berikutnya",
         payFrequency: "Frekuensi Gaji",

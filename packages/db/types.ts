@@ -303,6 +303,7 @@ export type Database = {
           created_at: string
           end_date: string
           id: string
+          notes: string | null
           paid_at: string | null
           paid_by: string | null
           payment_proof_url: string | null
@@ -320,6 +321,7 @@ export type Database = {
           created_at?: string
           end_date: string
           id?: string
+          notes?: string | null
           paid_at?: string | null
           paid_by?: string | null
           payment_proof_url?: string | null
@@ -337,6 +339,7 @@ export type Database = {
           created_at?: string
           end_date?: string
           id?: string
+          notes?: string | null
           paid_at?: string | null
           paid_by?: string | null
           payment_proof_url?: string | null
