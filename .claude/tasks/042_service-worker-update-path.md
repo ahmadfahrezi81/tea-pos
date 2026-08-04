@@ -23,34 +23,48 @@ There is no service worker in production. Reproduced locally: delete
 
 Next 16 builds with Turbopack by default. `@ducanh2912/next-pwa@10.2.9` is a
 **webpack** plugin — it hooks `config.webpack`, which Turbopack never calls.
-`withPWA` in `apps/seller/next.config.ts:107` wraps the config exactly as
+`withPWA` in `apps/seller/next.config.ts:109` wraps the config exactly as
 before and then no-ops. No error, no warning, no `sw.js`. The
 `sw.js` / `workbox-*.js` / `swe-worker-*.js` files still sitting in
 `apps/seller/public/` are leftovers from a pre-upgrade webpack build (all
 gitignored — `.gitignore:50-55`).
 
+**Backoffice has the identical bug.** `apps/backoffice` also depends on
+`@ducanh2912/next-pwa@^10.2.9`, wraps its config the same way
+(`next.config.ts:77`), and builds with plain `next build` — so it is also
+Turbopack, also no-ops, and its `public/` likewise contains no `sw.js`. Both
+apps need the fix. How exposed backoffice is to the *frozen device* half
+depends on whether it was ever deployed with a working worker before the Next
+16 upgrade; check its logs for `/sw.js` 404s the same way seller's were found.
+
 ## Why it matters — and what it doesn't
 
-**The real problem is the update path.** Nothing in the app registers a
-service worker itself (`grep` for `serviceWorker` across `app/`, `lib/` and
-`components/` returns only an unrelated `navigation.register`) — next-pwa
-injected that registration at build time. So the 404s are devices still
-holding a registration from a **pre-upgrade build**. That worker polls
-`/sw.js`, gets a 404, and keeps serving its cached bundle. It cannot update
-and it cannot be replaced.
+**The real problem is the update path.** Neither app registers a service
+worker itself (`grep` for `serviceWorker` across `app/`, `lib/` and
+`components/` in both returns only an unrelated `navigation.register`) —
+next-pwa injected that registration at build time. So the 404s are devices
+still holding a registration from a **pre-upgrade build**. That worker polls
+`/sw.js`, gets a 404, and keeps serving its cached bundle.
 
-Consequences:
+**Only devices that already had a worker are affected.** A device that never
+registered one, or has since cleared it, fetches fresh code on any reload and
+is fine. The stuck population is whoever installed before the Next 16 upgrade,
+and for them a reload does not help — the old worker intercepts it. Sizing
+that group is worth doing before choosing an option; the `/sw.js` 404 rate in
+the logs is a proxy for it.
 
-- **A client-side fix cannot reach an installed app.** Force-quitting is the
-  only path today, which is exactly what cost task 040 a staging cycle.
-- **Those devices are frozen indefinitely**, not until some expiry. A stuck
-  worker stays stuck until something valid is served at `/sw.js`.
+Consequences for that group:
+
+- **A client-side fix cannot reach them.** Force-quitting is the only path
+  today, which is exactly what cost task 040 a staging cycle.
+- **They are frozen indefinitely**, not until some expiry. A stuck worker
+  stays stuck until something valid is served at `/sw.js`.
 - Every update poll also renders `/_not-found` as a function — the minor CPU
   cost that surfaced this, now the least interesting part.
 
 **Offline support is *not* the regression.** Owner confirmed the app has no
 working offline behaviour today and none is expected. The `runtimeCaching`
-rules in `next.config.ts:15-45` were written but the app was never built to
+rules in `next.config.ts:15-51` were written but the app was never built to
 function offline — task 040 established the same thing from the other side
 when it deleted the offline mutation queue as structurally incapable of
 capturing an offline write. Treat restored read-caching as a **side effect**
@@ -69,41 +83,53 @@ of fixing the update path, not as the goal.
 | C | Ship a self-unregistering `sw.js` | restored by removal | **at risk on Android** | small | permanent |
 | D | Do nothing | none | — | — | devices stay frozen forever |
 
-**C is the tempting one and probably wrong.** A kill-switch worker
-(`self.registration.unregister()` + clear caches) frees every stuck device and
-means the browser always fetches fresh — genuinely the simplest way to
-guarantee an update path. But Chrome requires a service worker with a fetch
-handler for the Android install prompt; iOS standalone doesn't. The app ships
-`display: "standalone"` and Apple web-app metadata, so if any seller installs
-on Android, C degrades that. Worth considering only if the PWA install is
-confirmed unused on Android.
+**C is tempting and probably wrong, but the reason needs checking.** A
+kill-switch worker (`self.registration.unregister()` + clear caches) frees
+every stuck device and means the browser always fetches fresh — genuinely the
+simplest way to guarantee an update path.
+
+> ⚠️ **Unverified, and it is what rules C out.** Chrome has historically
+> required a service worker with a fetch handler before offering the Android
+> install prompt (iOS standalone does not — it keys off the manifest and Apple
+> web-app metadata). Whether that requirement still holds in current Chrome is
+> **not confirmed here** — the criteria have been relaxed more than once.
+> Check it against current Chrome installability docs before rejecting C on
+> those grounds. The app ships `display: "standalone"`, so this only matters
+> at all if sellers actually install on Android — worth answering first, since
+> a "no" makes C viable and much simpler than A or B.
 
 **Recommendation: A now, B when there's room.** A is one word, restores the
-worker immediately, and is verifiable in a single `curl`. B removes the
-dependency on a bundler Next is moving away from — the same author lineage as
-next-pwa, so the config shape is close, but it is a migration and shouldn't
-block the fix.
+worker in both apps immediately, and is verifiable in a single `curl`. B
+removes the dependency on a bundler Next is moving away from. Serwist is by
+the same author as `@ducanh2912/next-pwa`, but do not read that as a drop-in:
+serwist expects you to author your own service-worker entry (`sw.ts`) rather
+than generating one from a `workboxOptions` block, so the `runtimeCaching`
+rules would be ported by hand. It is a real migration, which is why it should
+not block the fix.
 
 ## Plan
 
 ### Phase 1 — Restore the service worker
 
-1. `apps/seller/package.json` — `"build": "next build --webpack"`.
+1. `"build": "next build --webpack"` in **both** `apps/seller/package.json`
+   and `apps/backoffice/package.json`.
 2. Rebuild and confirm `public/sw.js`, `workbox-*.js` and the register script
-   are emitted again.
-3. Check whether `dev` should follow. It runs `--turbopack` today and
-   `next-pwa` is disabled in development anyway
-   (`next.config.ts:7`), so dev can stay on Turbopack — but confirm the config
-   loads cleanly under both bundlers rather than assuming.
+   are emitted again in each app.
+3. Leave `dev` on `--turbopack`. `next-pwa` disables itself in development
+   (`next.config.ts:7`), so there is nothing to generate there — but confirm
+   the config loads cleanly under both bundlers rather than assuming.
 4. Watch the build time. Webpack is slower; if it is bad enough to hurt, that
    is an argument for doing B sooner rather than a reason to skip the fix.
 
 ### Phase 2 — Add the update prompt
 
 Task 040 flagged this as a follow-up and it was never done. **A working
-service worker alone does not solve the update path**: `skipWaiting` +
-`clientsClaim` mean a new worker takes control immediately, but a page already
-open keeps running the JS it booted with — and a POS stays open all shift.
+service worker alone does not solve the update path.** `next-pwa` defaults
+both `skipWaiting` and `clientsClaim` to `true` (verified in the plugin
+source, `dist/index.js:965` — neither app overrides them), so a new worker
+takes control as soon as it installs. That governs the *next* load; a page
+already open keeps running the JS it booted with, and a POS stays open all
+shift.
 
 1. Listen for `controllerchange` on `navigator.serviceWorker`.
 2. Prompt through the existing `ToastContext` rather than auto-reloading — a
@@ -112,8 +138,23 @@ open keeps running the JS it booted with — and a POS stays open all shift.
    was null to begin with.
 4. Call `registration.update()` on `visibilitychange` so an app that has been
    open for days actually checks.
-5. Do **not** key this off `/api/version` — that compares `packageJson.version`,
-   which is bumped per release, not per deploy.
+5. Do **not** key this off `/api/version`. Checked: it returns
+   `NEXT_PUBLIC_APP_VERSION || packageJson.version` for both fields, and
+   `next.config.ts` sets that env var from the same `package.json` — so it is
+   one release-level number, bumped by hand, not per deploy.
+
+> **There is already a refresh prompt — extend it, don't add a second.**
+> `components/shared/InactivityRefreshPopup.tsx` prompts a reload after 20
+> minutes of inactivity and is mounted in the mobile layout
+> (`app/[tenantSlug]/mobile/layout.tsx`). Two independent reload prompts
+> racing each other is a worse experience than either alone, and this one
+> already solves the hard part — deciding when a reload is safe to suggest.
+> Phase 2 should feed the `controllerchange` signal into that component as a
+> second trigger, not build a parallel one.
+>
+> Worth knowing it does **not** currently rescue a stuck device: its reload
+> still goes through the old service worker, which serves the same cached
+> bundle back.
 
 ### Phase 3 — Unstick the existing devices
 
@@ -147,9 +188,18 @@ whether more is needed.
 5. `/_not-found` invocations should drop further in the route table once
    `/sw.js` stops 404ing (task 041 Phase 0 removed the other source).
 
+## Open questions to settle before starting
+
+1. **Do sellers install on Android?** If not, option C becomes viable and is
+   far simpler than A or B.
+2. **Does Chrome still require a service worker for the install prompt?** The
+   claim that rules out C is unverified here — see the warning above.
+3. **Was backoffice ever deployed with a working worker?** Decides whether it
+   has frozen devices or merely a missing feature.
+
 ## Rollout
 
-One PR for Phase 1 — it is a build-config change, so verify on a preview
-deploy before promoting. Phase 2 is a separate PR; it touches the shell and
-wants its own device pass. Phase 3 is verification, not code, unless it turns
-up a device that won't recover.
+One PR for Phase 1 covering both apps — it is a build-config change, so verify
+on a preview deploy before promoting. Phase 2 is a separate PR; it touches the
+shell and wants its own device pass. Phase 3 is verification, not code, unless
+it turns up a device that won't recover.
