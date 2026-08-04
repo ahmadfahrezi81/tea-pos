@@ -641,8 +641,8 @@ cursors, no extra routes, no extra hooks.
 > Also folded in, since the query was being rewritten anyway: the Phase 2
 > aliasing (`toCamelKeys` gone from this path too), `stores(name)` dropped
 > along with the store row in the detail block — the view is store-scoped and
-> `StoreContext` has the name — and the card collapsed to a native `<details>`,
-> so item lists render on tap rather than for every order on screen.
+> `StoreContext` has the name. The card was also collapsed to a native
+> `<details>` and then reverted at the owner's request — full view stays.
 >
 > `useHourlySales` is wired up in place of the client-side re-derivation.
 > Lint held at baseline after fixing one warning this introduced (`?? []`
@@ -658,8 +658,12 @@ cursors, no extra routes, no extra hooks.
      interaction being added.
    - Keep a real ceiling (1000, not "all"). "Load everything" is how the
      current unbounded query got here.
-5. **Collapse the order card.** Header (number, time, total, cups) stays; ID,
-   store, seller, full timestamp and line items move behind a tap.
+5. ~~**Collapse the order card.**~~ **Built, then reverted at owner's request
+   — full view stays.** It costs no server CPU either way, and the cap already
+   bounds how many cards exist, so the DOM argument for it is much weaker once
+   the list is 25 rather than 300. Revisit only if the tab feels heavy after
+   the cap ships. The store row is still gone from the detail block, since
+   `stores(name)` left the query.
 6. **Mini chart: reuse `useHourlySales`.** 037's good discovery, lost in the
    revert — `getHourlySales` already selects only
    `id, created_at, store_order_items(quantity)` and buckets server-side.

@@ -2,7 +2,7 @@
 import { useState, useMemo } from "react";
 import useStoreOrders from "@/lib/hooks/orders/useStoreOrders";
 import useHourlySales from "@/lib/hooks/analytics/useHourlySales";
-import { Calendar, CalendarDays, Receipt, ChevronDown } from "lucide-react";
+import { Calendar, CalendarDays, Receipt } from "lucide-react";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 import CopyableField from "@/components/shared/CopyableField";
 import { SkeletonValue } from "@/components/shared/SkeletonValue";
@@ -192,11 +192,11 @@ export default function MobileOrders() {
                     </div>
 
                     {ordersWithNumbers.map((order) => (
-                        <details
+                        <div
                             key={order.id}
-                            className="bg-white rounded-2xl overflow-hidden group"
+                            className="bg-white rounded-2xl overflow-hidden"
                         >
-                            <summary className="p-3.5 bg-white list-none cursor-pointer [&::-webkit-details-marker]:hidden">
+                            <div className="p-3.5 bg-white">
                                 <div className="flex justify-between items-start">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2">
@@ -228,12 +228,8 @@ export default function MobileOrders() {
                                             {t("orders.cups")}
                                         </p>
                                     </div>
-                                    <ChevronDown
-                                        size={18}
-                                        className="text-gray-400 mt-1 shrink-0 transition-transform group-open:rotate-180"
-                                    />
                                 </div>
-                            </summary>
+                            </div>
 
                             <div className="border-t border-gray-100 p-3 bg-slate-100">
                                 <div className="space-y-3">
@@ -312,7 +308,7 @@ export default function MobileOrders() {
                                     </div>
                                 </div>
                             </div>
-                        </details>
+                        </div>
                     ))}
 
                     {hasMore && (
