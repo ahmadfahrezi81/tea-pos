@@ -5,7 +5,8 @@
   "exports": {
     "./*": "./*.tsx",
     "./routes": "./routes.ts",
-    "./useScrollRestoration": "./useScrollRestoration.ts"
+    "./useScrollRestoration": "./useScrollRestoration.ts",
+    "./useServiceWorkerUpdate": "./useServiceWorkerUpdate.ts"
   },
   "dependencies": {
     "lucide-react": "^0.539.0"

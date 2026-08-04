@@ -2,8 +2,25 @@
 
 import { useEffect, useRef, useState } from "react";
 import { RefreshCw, X, Info } from "lucide-react";
+import { useServiceWorkerUpdate } from "@tea-pos/shell/useServiceWorkerUpdate";
 
 const INACTIVITY_LIMIT = 1000 * 60 * 15; // 15 minutes
+
+/**
+ * Two reasons to suggest a reload, one prompt. A second, independent popup
+ * racing this one would be worse than either alone, and this component already
+ * solves the hard part — deciding when interrupting is acceptable.
+ */
+const COPY = {
+    update: {
+        title: "Update Available",
+        body: "A new version is ready. Refresh to load it.",
+    },
+    inactivity: {
+        title: "Refresh Required",
+        body: "You've been inactive — refresh to avoid stale data.",
+    },
+} as const;
 
 /**
  * pointerdown covers mouse, touch and pen in one event, so a tap or the start
@@ -14,8 +31,10 @@ const INACTIVITY_LIMIT = 1000 * 60 * 15; // 15 minutes
 const ACTIVITY_EVENTS = ["pointerdown", "mousemove", "keydown"] as const;
 
 export default function InactivityRefreshPopup() {
-    const [showPrompt, setShowPrompt] = useState(false);
+    const [showInactivityPrompt, setShowInactivityPrompt] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const hasUpdate = useServiceWorkerUpdate();
+    const [updateDismissed, setUpdateDismissed] = useState(false);
     // A ref, not state: activity fires constantly and none of it should
     // re-render the tree. Only the interval below reads it. Seeded on mount
     // rather than here, because reading the clock during render is impure.
@@ -44,27 +63,45 @@ export default function InactivityRefreshPopup() {
     useEffect(() => {
         const interval = setInterval(() => {
             if (Date.now() - lastActivityRef.current > INACTIVITY_LIMIT) {
-                setShowPrompt(true);
+                setShowInactivityPrompt(true);
             }
         }, 1000);
         return () => clearInterval(interval);
     }, []);
 
-    if (!showPrompt) return null;
+    // A pending update is the more actionable of the two, so it wins the copy
+    // when both are true.
+    const reason =
+        hasUpdate && !updateDismissed ? "update"
+        : showInactivityPrompt ? "inactivity"
+        : null;
+
+    // Dismissing the inactivity prompt works because the tap itself bubbles to
+    // the window `pointerdown` listener above and counts as activity, so the
+    // interval does not immediately re-raise it. An update has no such natural
+    // reset — it stays pending until the user reloads — so it is latched off
+    // explicitly.
+    const handleDismiss = () => {
+        if (reason === "update") setUpdateDismissed(true);
+        else setShowInactivityPrompt(false);
+    };
+
+    if (!reason) return null;
+    const { title, body } = COPY[reason];
 
     return (
         <>
-            <div className="fixed inset-0 z-40" onClick={() => setShowPrompt(false)} />
+            <div className="fixed inset-0 z-40" onClick={handleDismiss} />
             <div className="fixed bottom-8 right-4 z-50">
                 <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-lg relative w-[280px] sm:w-[320px]" onClick={(e) => e.stopPropagation()}>
-                    <button onClick={() => setShowPrompt(false)} className="absolute top-1.5 right-1.5 p-1 rounded hover:bg-gray-100">
+                    <button onClick={handleDismiss} className="absolute top-1.5 right-1.5 p-1 rounded hover:bg-gray-100">
                         <X size={18} />
                     </button>
                     <div className="flex items-start space-x-2">
                         <Info className="text-blue-500 mt-0.5" size={18} />
                         <div>
-                            <h3 className="font-semibold text-gray-900 text-sm">Refresh Required</h3>
-                            <p className="text-xs text-gray-600">You&apos;ve been inactive — refresh to avoid stale data.</p>
+                            <h3 className="font-semibold text-gray-900 text-sm">{title}</h3>
+                            <p className="text-xs text-gray-600">{body}</p>
                             <button
                                 onClick={() => { setIsRefreshing(true); window.location.reload(); }}
                                 disabled={isRefreshing}

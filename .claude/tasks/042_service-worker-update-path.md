@@ -166,6 +166,30 @@ shift. Task 040 flagged this and it was never done.
    `next.config.ts` sets that env var from the same `package.json` — one
    release-level number, bumped by hand, not per deploy.
 
+> **Applied 2026-08-04.** `useServiceWorkerUpdate` added to `packages/shell`,
+> alongside the browser-machinery hooks already there
+> (`useScrollRestoration`, `useStandaloneViewportHeight`) — **both** apps have
+> their own copy of the popup and both needed the trigger, so the logic is
+> shared and the markup is not.
+>
+> Each popup now derives a `reason` (`"update"` | `"inactivity"` | none) and
+> swaps title/body from a `COPY` map; an update outranks inactivity when both
+> are true. Dismissal differs by reason on purpose: the inactivity prompt
+> self-resets because the dismissing tap bubbles to the window `pointerdown`
+> listener and counts as activity, whereas an update stays pending forever and
+> has to be latched off explicitly.
+>
+> Two subtleties in the hook worth not "simplifying" away later: the
+> first-install guard is a mutable local rather than a value read once at
+> mount, because a page that loads *before* the very first worker installs
+> would otherwise treat every later update as a first install and never prompt;
+> and it returns a flag instead of reloading, because a reload mid-order drops
+> the cart.
+>
+> Typecheck clean on both apps, lint unchanged from baseline (seller 23,
+> backoffice 5), `pnpm build` green with both service workers emitted.
+> **Untested against a real deploy** — see verification 4.
+
 ### Parked — actual offline support
 
 Not in scope. If it is ever wanted it is a product question before an
