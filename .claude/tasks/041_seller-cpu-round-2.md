@@ -606,6 +606,23 @@ one thing — whether the current user has `isDefault` on some store
 full per-store assignment map to compute it. Worth a `defaultStoreId` field,
 but the deletion above has no behavioural risk and this does.
 
+> **Applied 2026-08-04, ahead of Phase 2.** Taken first on purpose: it deletes
+> the `/api/stores` user query outright, so Phase 2 does not narrow a select
+> that was about to shrink anyway — the same argument that pulled
+> `/api/orders` out of Phase 2.
+>
+> `listUserStores` loses the `user_tenant_assignments → users(...)` query, the
+> `UserRow` mapping and sort, and the `users` key. The `Promise.all` goes with
+> it, since only one query is left to run. `UserResponse` and the `users` field
+> are gone from `packages/features/stores/schema.ts`.
+>
+> Re-confirmed nothing reads the removed field: all three `useStores`
+> consumers touch only `stores` and `assignments`, and `assignments` — which
+> the default-store lookup depends on — is untouched. Typecheck clean on both
+> apps, lint at baseline (23 / 5), `pnpm build` green.
+>
+> `defaultStoreId` deliberately not done. Still worth doing later.
+
 ### Phase 6 — `day-activity`: give the log table its missing column
 
 Per Finding 5 the time-range shortcut is unsafe. Fix the schema gap:
