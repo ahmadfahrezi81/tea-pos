@@ -358,8 +358,21 @@ with the auth or i18n work and should not wait behind it.
    Checked: every `supabase.auth.*` call in the app goes through it, never
    through the service client (`app/api/auth/signout`, `app/auth/callback`,
    `AuthContext`), so `persistSession: false` on the service client is safe.
-4. Mirror both into `apps/backoffice` (same two files exist there).
+4. Mirror the Supabase client into `apps/backoffice` — **only that one.**
+   Backoffice has no `lib/flags.ts`; it still uses the legacy env-var flags
+   (`isEnabled()` from `packages/features/shared/features.ts`) and never
+   constructs a PostHog server client.
 5. **Then measure**, before sizing Phases 2–6 against each other.
+
+> **Applied 2026-08-04.** Both `service.ts` files memoized with
+> `persistSession: false` / `autoRefreshToken: false`; `lib/flags.ts` hoisted
+> to a module-scope PostHog singleton with `flushAt: 20`,
+> `flushInterval: 10000`, and the per-request `shutdown()` replaced by an
+> `after()`-scheduled `flush()`. Typecheck and lint counts are identical to
+> HEAD on both apps (seller 23, backoffice 5 — the pre-existing baseline from
+> task 038; every remaining `tsc` error is in Next's stale
+> `.next/dev/types/validator.ts`). **Not yet measured** — step 5 is the gate
+> before sizing the rest.
 
 > **The singleton is shared across concurrent requests.** Fluid runs several
 > invocations in one process, so this client is now genuinely shared state.
