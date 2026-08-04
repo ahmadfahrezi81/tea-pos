@@ -117,6 +117,24 @@ own `sw.ts` rather than generating one from `workboxOptions`, so the
 4. Watch the build time. Webpack is slower; if it hurts, that is an argument
    for doing B sooner, not for skipping the fix.
 
+> **Applied 2026-08-04.** Both build scripts switched. Banner now reads
+> `▲ Next.js 16.2.4 (webpack)` and the plugin runs — `○ (pwa) Service worker:
+> …/public/sw.js`, `Custom runtimeCaching array found, using it instead of the
+> default one`. Both apps exit 0 with TypeScript still running in-build.
+>
+> Verified beyond the file existing: seller's `sw.js` is ~18KB and contains
+> `skipWaiting`, `clientsClaim` and the Supabase runtime-caching rule, and
+> `serviceWorker.register` is present in the client bundle
+> (`.next/static/chunks/main-*.js`) — so registration is injected again, which
+> is what actually unsticks a device.
+>
+> Build-time cost: seller compile 10.7s → 18.5s (38s wall), backoffice 9.5s
+> (25s wall). Slower but not painful — not yet an argument for B.
+>
+> **Still unverified: production.** Local emission is necessary, not
+> sufficient — verification 1 and 3 below are the real tests and need a
+> deploy.
+
 ### Phase 2 — Make an open app notice the update
 
 **A working service worker alone does not solve this.** `next-pwa` defaults
