@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
         if (!query.success) return badRequest("Invalid query parameters");
 
         const data = await listOrders(supabase, { tenantId, ...query.data });
-        const parsed = OrderListResponse.safeParse({ orders: data });
+        const parsed = OrderListResponse.safeParse(data);
         if (!parsed.success) return err("Invalid response shape");
 
         return ok(parsed.data);

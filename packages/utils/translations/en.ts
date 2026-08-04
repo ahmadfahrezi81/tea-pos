@@ -222,6 +222,7 @@ export const en = {
         cameraStep4: "Come back and try again",
     },
     orders: {
+        showAll: "Show all orders",
         title: "Orders",
         noOrders: "No orders found",
         dailySummary: "Daily Summary",

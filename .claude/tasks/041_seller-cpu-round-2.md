@@ -614,7 +614,42 @@ cursors, no extra routes, no extra hooks.
    nullable rule, `stores` is `.nullable()` and therefore a *required key* —
    removing it from the select without removing it from the schema fails the
    parse. Then check `MobileOrders.tsx:~250`, which renders `order.stores?.name`.
-4. **"Show more" bumps the limit** (50 → 200 → 1000) on the same SWR key.
+> **Applied 2026-08-04 — and the sizing above was wrong.** Owner input
+> reshaped two things before implementation:
+>
+> **The ladder was over-engineered for the real data.** Sellers look at roughly
+> the last ten orders, and a day almost never passes ~200. A 50 → 200 → 1000
+> ladder is three states for a range the second one already covers. Shipped
+> instead: **default 25, then one "show all" fetch** capped at 500 as a safety
+> net. Two states, and the common day never reaches the second.
+>
+> **Why the previous attempt actually failed.** 037 is recorded here as
+> "reverted for complexity", which was only half of it — it also got the
+> ordering wrong. The list is reverse-chronological, newest at top, scrolling
+> back through the day. Any cap has to take from the *newest* end, and
+> `Order #N` has to be numbered against the **day**, not the loaded slice, or
+> the numbers shift as more loads. Both are now explicit: the query keeps
+> `created_at DESC` with a plain `.limit()`, and numbering is
+> `totals.totalOrders - index`.
+>
+> That is what `totals` is for. The summary card and the row numbers both
+> describe the whole day, so both read the `store_daily_summaries` row —
+> already maintained incrementally by `createOrder` — instead of reducing over
+> a truncated array. Reducing over the array is precisely what would
+> under-report once the cap exists.
+>
+> Also folded in, since the query was being rewritten anyway: the Phase 2
+> aliasing (`toCamelKeys` gone from this path too), `stores(name)` dropped
+> along with the store row in the detail block — the view is store-scoped and
+> `StoreContext` has the name — and the card collapsed to a native `<details>`,
+> so item lists render on tap rather than for every order on screen.
+>
+> `useHourlySales` is wired up in place of the client-side re-derivation.
+> Lint held at baseline after fixing one warning this introduced (`?? []`
+> handing a fresh array identity to a memo each render).
+
+4. ~~**"Show more" bumps the limit** (50 → 200 → 1000) on the same SWR key.~~
+   **Superseded — see the note above.**
    With `ORDER BY created_at DESC` and a re-fetch from the top, a larger limit
    is a strict superset of the smaller — no skips, no duplicates, which is the
    entire reason cursors were needed and now aren't. Two UX requirements:

@@ -8,8 +8,50 @@ export interface ListOrdersParams {
     tenantId: string;
     storeId?: string;
     date?: string;
+    limit?: number;
     tzOffset?: number;
 }
+
+/**
+ * The list is newest-first and sellers look at the most recent handful, so the
+ * first page only needs to cover a scroll or two. A day rarely passes ~200
+ * orders, which is why "show all" is a single follow-up fetch rather than a
+ * ladder of page sizes — one more request gets the whole day.
+ */
+const DEFAULT_LIMIT = 25;
+
+/** Safety net for the "show all" fetch, not an expected size. */
+const MAX_LIMIT = 500;
+
+/**
+ * Aliased to camelCase in the query so rows arrive as `OrderResponse` with no
+ * key-conversion pass. Must stay in step with that schema: its fields are
+ * `.nullable()`, not `.optional()`, so a dropped column fails the parse.
+ *
+ * `stores(name)` is deliberately absent — it repeated one string on every row
+ * and `StoreContext` already holds the store. `users(fullName)` stays: the
+ * seller genuinely varies per order.
+ */
+const ORDER_COLUMNS = `
+    id,
+    storeId:store_id,
+    userId:user_id,
+    totalAmount:total_amount,
+    paymentMethod:payment_method,
+    tenantId:tenant_id,
+    createdAt:created_at,
+    users(fullName:full_name),
+    storeOrderItems:store_order_items(
+        id, quantity,
+        orderId:order_id,
+        productId:product_id,
+        unitPrice:unit_price,
+        totalPrice:total_price,
+        tenantId:tenant_id,
+        createdAt:created_at,
+        tenantProducts:tenant_products(name)
+    )
+`;
 
 export interface CreateOrderItem {
     productId: string;
@@ -32,14 +74,16 @@ export async function listOrders(
 ) {
     const { tenantId, storeId, date } = params;
     const TZ = params.tzOffset ?? Number(process.env.TIMEZONE_OFFSET ?? 7);
+    const limit = Math.min(params.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
 
     let query = supabase
         .from("store_orders")
-        .select(
-            `*, stores(name), users(full_name), store_order_items(*, tenant_products(name))`,
-        )
+        .select(ORDER_COLUMNS)
         .eq("tenant_id", tenantId)
-        .order("created_at", { ascending: false });
+        // Newest first — the UI shows the most recent at the top and scrolls
+        // back through the day, so a plain `limit` takes the right end.
+        .order("created_at", { ascending: false })
+        .limit(limit);
 
     if (storeId) query = query.eq("store_id", storeId);
 
@@ -50,9 +94,41 @@ export async function listOrders(
         query = query.gte("created_at", start).lte("created_at", end);
     }
 
-    const { data, error } = await query;
+    const [{ data, error }, totals] = await Promise.all([
+        query,
+        getDayTotals(supabase, { tenantId, storeId, date }),
+    ]);
+
     if (error) throw error;
-    return toCamelKeys(data ?? []);
+    return { orders: data ?? [], totals };
+}
+
+/**
+ * The day's running totals, read from the summary row rather than summed from
+ * the orders array.
+ *
+ * This is what makes the limit safe. The card above the list, and the
+ * `Order #N` label on each row, both describe the *whole day* — deriving
+ * either from a truncated array would quietly under-report, which is the trap
+ * the previous attempt at this fell into. `createOrder` already maintains
+ * these totals incrementally, so this is a single indexed row read.
+ */
+async function getDayTotals(
+    supabase: SupabaseClient,
+    { tenantId, storeId, date }: { tenantId: string; storeId?: string; date?: string },
+) {
+    const empty = { totalOrders: 0, totalSales: 0, totalCups: 0 };
+    if (!storeId || !date) return empty;
+
+    const { data } = await supabase
+        .from("store_daily_summaries")
+        .select("totalOrders:total_orders, totalSales:total_sales, totalCups:total_cups")
+        .eq("tenant_id", tenantId)
+        .eq("store_id", storeId)
+        .eq("date", date)
+        .maybeSingle();
+
+    return (data as unknown as typeof empty | null) ?? empty;
 }
 
 export async function createOrder(
