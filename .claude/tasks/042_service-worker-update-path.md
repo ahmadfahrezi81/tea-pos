@@ -1,15 +1,21 @@
 # Task 042 — No service worker in production (installed apps can't update)
 
-**Status: both phases written and building; nothing verified against a real
-deploy.** Split out of task 041's Phase 0, which found it while chasing
-`/_not-found` invocations. It is not a CPU problem and does not belong in that
-task.
+**Status: Phase 1 shipped and verified on staging. Phase 2 shipped but cannot
+be exercised until a second deploy.** Split out of task 041's Phase 0, which
+found it while chasing `/_not-found` invocations. It is not a CPU problem and
+does not belong in that task.
 
-**What is left:** deploy, then work the Verification section — every check
-there needs a real origin, and check 3 (a currently-stuck device recovering
-without a force-quit) is the one that decides whether this task actually
-worked. Option B (the serwist migration) stays open; `--webpack` is a stopgap
-with a shelf life.
+**What is left**, in the order it can be done:
+
+1. **Deploy again.** Phase 2's prompt only fires when a *replacement* worker
+   takes over. This deploy installed the first one, which the first-install
+   guard correctly keeps silent — so the prompt is untested by construction,
+   not by oversight.
+2. **Check a stuck device** (verification 3). Needs a phone that had the app
+   installed before the Next 16 upgrade. This is the check that decides
+   whether the task worked; everything verified so far is a proxy for it.
+3. **Option B**, the serwist migration. `--webpack` is a stopgap with a shelf
+   life.
 
 ## The problem
 
@@ -218,25 +224,53 @@ deciding whether more is needed.
 
 ## Verification
 
-**Phase 1**
+**Phase 1 — verified on staging 2026-08-04** (`tea-pos-staging.vercel.app`)
 
-1. `curl -I https://<deploy>/sw.js` → **200**, `content-type: application/javascript`.
-   That is the whole test.
-2. DevTools → Application → Service Workers shows an activated worker.
-3. On a device that is currently stuck, confirm it picks up the new worker
+1. ✅ `curl -I /sw.js` → **200**, `content-type: application/javascript`,
+   18,136 bytes. Was `404` + `x-matched-path: /_not-found`.
+2. ✅ It is a real worker, not an HTML body under a JS content-type:
+   `skipWaiting`, `clientsClaim`, `importScripts`, `precache` all present, and
+   the `workbox-9568f90e.js` it depends on also serves 200.
+3. ✅ The `runtimeCaching` array survived the bundler swap, version-stamped as
+   designed: `next-data-5.1.2`, `product-images-5.1.2`, `supabase-api-5.1.2`.
+   `/api/version` confirms `5.1.2` is deployed.
+4. ✅ **The load-bearing one — registration is in the served bundle.** A worker
+   nothing registers fixes nothing. `_next/static/chunks/536-f3a8b08df1cf48ca.js`
+   contains `window.workbox = new f(window.location.origin + "/sw.js", {scope: "/"})`
+   plus workbox's own `controllerchange` listener. Same chunk hash as the local
+   build, so what was tested is what shipped.
+
+> **Grep trap, recorded because it produced a false alarm.** The caching rules
+> looked absent on first check: `grep "supabase\.co"` finds nothing, because a
+> serialized regex contains `supabase\.co` — a literal backslash before the
+> dot. Grep for the bare word.
+
+**Phase 1 — still outstanding**
+
+5. On a device that is currently stuck, confirm it picks up the new worker
    without a force-quit. **This is the actual goal of the task** — everything
-   else is a proxy for it. If a device won't recover on its own, that is the
-   case for shipping a kill-switch worker for one release before the real one.
+   above is a proxy for it. Read the version badge on the Account screen:
+   `5.1.1` means still stuck, `5.1.2` means recovered. If a device won't
+   recover on its own, that is the case for shipping a kill-switch worker for
+   one release before the real one.
 
-**Phase 2**
+**Phase 2 — cannot be tested yet, by construction**
 
-4. Deploy twice with a visible change; confirm an already-open installed app
-   surfaces the prompt rather than silently serving stale JS.
+6. The prompt fires on `controllerchange` only when a worker is *replaced*.
+   The staging deploy installed the first one, and the first-install guard
+   deliberately stays silent for that — so a silent first deploy is the
+   correct behaviour, not a failure. It needs a **second** deploy on top to
+   exercise: ship a visible change, then confirm an already-open installed app
+   surfaces the prompt rather than quietly serving stale JS.
 
-**Either**
+**Both sources of `/_not-found` are now closed**
 
-5. `/_not-found` invocations drop further in the route table once `/sw.js`
-   stops 404ing (task 041 Phase 0 removed the other source).
+7. Task 041 Phase 0 removed the dead `/mobile/notifications` prefetch — owner
+   confirmed it is gone from the production logs. This task stopped `/sw.js`
+   from 404ing, which takes effect for every device immediately rather than
+   waiting on anyone adopting the new worker. `/_not-found` should therefore
+   fall out of the route table on the next window; that is the observable
+   confirmation both fixes landed.
 
 ## Rollout
 

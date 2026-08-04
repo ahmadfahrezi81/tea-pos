@@ -1,8 +1,15 @@
 # Task 041 — Seller Active CPU, Round 2
 
-**Status: explored, not implemented.** Successor to task 037, which closed
-item #1 (middleware), reverted item #2 (`/api/orders`), and never started
-item #3 (`/api/sessions/gate`).
+**Status: Phases 0 and 1 shipped to staging; Phases 2–7 not started.**
+Successor to task 037, which closed item #1 (middleware), reverted item #2
+(`/api/orders`), and never started item #3 (`/api/sessions/gate`).
+
+- **Phase 0 — done and verified.** Dead prefetch removed, confirmed gone from
+  the logs. The second `/_not-found` source went with task 042.
+- **Phase 1 — shipped, never measured.** The singleton clients are live on
+  staging, but the reading that was supposed to size Phases 2–6 has not been
+  taken. See the note under Phase 1 before assuming its win.
+- **Phases 2–7 — not started.**
 
 Since July, call volume dropped ~3× while per-call CPU roughly doubled on
 eight of nine routes — so this round targets per-call cost, not traffic. Two
@@ -355,11 +362,18 @@ Consequences well past this task's CPU budget:
   040's lost staging cycle, and it means the force-quit advice in this task's
   Rollout section is currently the *only* way a client fix reaches a device.
 
-**Deliberately not fixed here.** The options — build with `next build
---webpack`, or move to a Turbopack-compatible PWA plugin such as
-`@serwist/next` — are a build-tooling decision with a possible dependency
-swap, and this is a CPU task. Worth its own task, and it outranks most of
-what is left in this one.
+**Split out to task 042, and since fixed there.** The options were a
+build-tooling decision with a possible dependency swap, which does not belong
+in a CPU task. 042 took `next build --webpack`; `/sw.js` now returns 200 on
+staging, so this source of `/_not-found` renders is closed for every device
+immediately — it does not wait on anything picking up the new worker.
+
+**Phase 0 verified 2026-08-04.** Owner confirmed
+`/tealicious/mobile/notifications` no longer appears in the production logs
+after the prefetch removal, and `/sw.js` returns 200 on staging. Both sources
+are gone; `/_not-found` should fall out of the route table on the next window.
+That is the last item in this task's Verification list, and the only one that
+can be checked without a fresh CPU reading.
 
 ### Phase 1 — Singleton clients
 
