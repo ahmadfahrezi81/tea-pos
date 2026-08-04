@@ -481,9 +481,54 @@ the schema too.
 Then drop `toCamelKeys` on that path. **Keep the `safeParse`.**
 
 Scope: `/api/summaries`, `/api/activity-logs/day-activity`, `/api/stores`,
-`/api/summaries/[summaryId]/users`, `/api/products`. `/api/orders` is
-excluded — Phase 3 rewrites that query anyway, so narrowing it here would
-mean editing the same select twice and re-capturing the baseline in between.
+`/api/products`. `/api/orders` is excluded — Phase 3 rewrites that query
+anyway, so narrowing it here would mean editing the same select twice and
+re-capturing the baseline in between.
+
+> **`/api/summaries/[summaryId]/users` removed from scope, 2026-08-04.** It
+> was folded in on the assumption it shared the list-endpoint shape. Reading
+> it, it doesn't: `fetchSessionUsersForSummaries`
+> (`packages/services/sessions.ts:285`) already selects a narrow column list
+> and **already returns camelCase**, assembling
+> `{userId, userName, userAvatarUrl, totalCups}` in JS — so there is no
+> `toCamelKeys` walk to remove and nothing to narrow.
+>
+> Its 35ms is a different problem: one order query **per summary**, each
+> pulling `store_order_items(quantity)` over a session-bounded time range,
+> then matching orders to sessions in JS. That is a query-count and
+> aggregation issue, closer to Finding 7 than Finding 2. It is also shared
+> with backoffice's payout day-summary page, so it needs its own look rather
+> than a mechanical edit. Left alone.
+>
+> **Status of the rest:** `/api/products` and `/api/stores` applied (see
+> below). `/api/summaries` and `day-activity` still to do.
+
+**Applied 2026-08-04 — `/api/products`.** Columns aliased to camelCase in the
+query, `toCamelKeys` dropped, service now returns rows straight from the
+driver.
+
+> **Found a live bug while narrowing it.** The old select embedded
+> `tenant_product_categories(id, name)`, but the transform destructured
+> `product_categories` — a name that never existed on the row, because
+> PostgREST keys an embed by the relationship name used in the select. So
+> `categoryName` has been **`null` on every response since it was written**,
+> and the join was fetched and discarded on every call.
+>
+> Traced the consumers before deciding: `categoryName` and `categoryId` have
+> zero readers, and the POS reads only `id`, `name`, `price`, `imageUrl`
+> (`MobilePOS.tsx:162` via `useProducts`). Dropped the embed and removed
+> `categoryName` from `ProductResponse` rather than repairing a field nobody
+> asked for. Remaining references are in `apps/admin`, which is archived and
+> out of the workspace.
+
+**Applied 2026-08-04 — `/api/stores`.** Store columns aliased; `toCamelKeys`
+gone from the service entirely. Note the second half: the `assignments` map is
+built in JS and only reached camelCase *because* `toCamelKeys` ran over the
+whole return value, so its source query is aliased too
+(`userId:user_id, storeId:store_id, isDefault:is_default`) and the map is
+assembled in camelCase directly. This is the same trap the `listSummaries`
+note below describes — worth expecting on any route where the service shapes
+data after the query.
 
 > **Aliasing doesn't cover fields assembled in JS.** `listSummaries`
 > (`packages/services/summaries.ts:126`) builds `expenses`, `sessions` and
