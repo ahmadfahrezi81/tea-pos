@@ -1,15 +1,22 @@
 # Task 041 — Seller Active CPU, Round 2
 
-**Status: Phases 0 and 1 shipped to staging; Phases 2–7 not started.**
-Successor to task 037, which closed item #1 (middleware), reverted item #2
-(`/api/orders`), and never started item #3 (`/api/sessions/gate`).
+**Status: Phases 0–5 written; 6 and 7 remain.** Successor to task 037, which
+closed item #1 (middleware), reverted item #2 (`/api/orders`), and never
+started item #3 (`/api/sessions/gate`).
 
-- **Phase 0 — done and verified.** Dead prefetch removed, confirmed gone from
-  the logs. The second `/_not-found` source went with task 042.
-- **Phase 1 — shipped, never measured.** The singleton clients are live on
-  staging, but the reading that was supposed to size Phases 2–6 has not been
-  taken. See the note under Phase 1 before assuming its win.
-- **Phases 2–7 — not started.**
+| Phase | State |
+|---|---|
+| 0 — dead prefetch | **done**, confirmed gone from the logs. The other `/_not-found` source went to task 042 |
+| 1 — singleton clients | **done**, deliberately unmeasured (see "How to measure") |
+| 2 — narrow selects | **done at three routes**, two descoped with reasons |
+| 3 — orders cap + totals | **done**, except the index migration, which needs `supabase migration list` first |
+| 4 — gate join | **done** |
+| 5 — delete `users` | **done** |
+| 6 — `daily_summary_id` on logs | **not started** — needs a migration and a manual push |
+| 7 — page navigations | **not started** — own branch, the only phase with real UX risk |
+
+Nothing past Phase 0 has been verified in production. The CPU result is one
+reading at the end of a cycle, not per phase — see "How to measure".
 
 Since July, call volume dropped ~3× while per-call CPU roughly doubled on
 eight of nine routes — so this round targets per-call cost, not traffic. Two
@@ -91,8 +98,8 @@ consistent with 037's 38% middleware measurement.
   endpoint where caching is unambiguously safe, and it has none.
 - **`/api/summaries/[summaryId]/users` — 91 calls, 35ms.** Not previously
   examined. Backed by `fetchSessionUsersForSummaries`
-  (`packages/services/sessions.ts:285`). Same list-endpoint shape as the
-  others; folded into Phase 2.
+  (`packages/services/sessions.ts:285`). Assumed to share the list-endpoint
+  shape and folded into Phase 2 — it doesn't, and was descoped there.
 
 ---
 
@@ -104,11 +111,11 @@ consistent with 037's 38% middleware measurement.
 |---|---|---|---|---|
 | `gate` | 12s | ~9.5s | 2.5s | 4 |
 | `orders` | 8s | ~2s | 6s | 3 |
-| `day-activity` | 8s | ~3s | 5s | 2+6 |
+| `day-activity` | 8s | ~3s | 5s | 6 |
 | `flags` | 5s | ~2s | 3s | 1 |
 | `summaries` | 5s | ~3.5s | 1.5s | 2 |
 | `stores` | 4.07s | ~1.5s | 2.6s | 2+5 |
-| `summaries/[id]/users` | 3.17s | ~2s | 1.2s | 2 |
+| ~~`summaries/[id]/users`~~ | 3.17s | — | — | descoped |
 | `products` | 2.68s | ~2s | 0.7s | 2 |
 | all API routes | — | — | ~2s | 1 |
 
