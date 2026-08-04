@@ -318,14 +318,48 @@ exist — pure waste, ~4% of the visible bill, and the only item here needing no
 code change at all if the cause is a dead link. 037 saw it at 189/12h and
 parked it as "a why question"; a month later it is still running.
 
-Check the Vercel logs for the referrer and requested path. Two likely causes:
-a stale route cached by `next-pwa` on installed devices (the service worker
-still requests a path that was renamed or deleted), or a dead link somewhere
-in the shell's route table.
+> **Resolved 2026-08-04 from the Vercel logs** (`route:/_not-found`,
+> `environment:production`). Two distinct causes, neither of them the missing
+> favicon an earlier draft guessed at. The first is fixed here; the second is
+> not a CPU problem at all and needs its own task.
 
-Ten minutes, no risk, no dependency on anything else in this task. It sat
-inside Phase 7 in an earlier draft, which was wrong — it has nothing to do
-with the auth or i18n work and should not wait behind it.
+**Cause 1 — a dead route in the prefetch list. Fixed.**
+`MobileLayoutClient.tsx:24` still listed `/mobile/notifications` in
+`PREFETCH_SUFFIXES`. Task 022 deleted the notifications feature; this entry
+survived it. The shell warms that list on **every mount**, and the path
+matches the proxy matcher (`/:tenantSlug/mobile/:path*`), so each app open
+burned a middleware invocation *and* a `/_not-found` render — the `m` + `f`
+badge pair visible on those log rows. One line deleted. Backoffice's list
+(`dashboard`, `pay`, `account`) is clean.
+
+**Cause 2 — there is no service worker in production. Not fixed; see below.**
+`GET /sw.js` returns 404 with `x-matched-path: /_not-found`, so every service
+worker update check also renders the 404 page as a function.
+
+The root cause is a silent build regression, reproduced locally: the build
+banner reads `▲ Next.js 16.2.4 (Turbopack)`. Next 16 builds with Turbopack by
+default, and `@ducanh2912/next-pwa` is a **webpack** plugin — it hooks
+`config.webpack`, which Turbopack never calls. `withPWA` no-ops with no error
+and no warning. Deleting `public/sw.js` and running `pnpm build` regenerates
+nothing; the `sw.js` / `workbox-*.js` / `swe-worker-*.js` files still sitting
+in `public/` locally are leftovers from a pre-upgrade webpack build.
+
+Consequences well past this task's CPU budget:
+
+- **No offline support.** None of the `runtimeCaching` rules in
+  `next.config.ts:15-45` are in effect for a POS that is meant to work on a
+  patchy connection.
+- **Installed PWAs can never update.** A device still holding a service worker
+  from a pre-upgrade build polls `/sw.js`, gets a 404, and keeps serving its
+  cached bundle indefinitely. This is very likely the mechanism behind task
+  040's lost staging cycle, and it means the force-quit advice in this task's
+  Rollout section is currently the *only* way a client fix reaches a device.
+
+**Deliberately not fixed here.** The options — build with `next build
+--webpack`, or move to a Turbopack-compatible PWA plugin such as
+`@serwist/next` — are a build-tooling decision with a possible dependency
+swap, and this is a CPU task. Worth its own task, and it outranks most of
+what is left in this one.
 
 ### Phase 1 — Singleton clients
 
@@ -770,7 +804,7 @@ out uglier than it's worth.
 
 | Phase | PR | Migration | Notes |
 |---|---|---|---|
-| 0 `/_not-found` | probably none | no | Investigation first; a dead link may be a one-line fix or none |
+| 0 `/_not-found` | one line, shipped | no | Dead prefetch removed. Cause 2 (no service worker) is split out — not this task |
 | 1 Singletons | one, both apps | no | Safe to ship alone; gates the rest |
 | 2 Narrow selects | one per route | no | Five small PRs, each diffable against a captured response. Each touches the service **and** its response schema — see the nullable rule |
 | 3 Orders | one, plus a separate one for 3.7/3.8 | **maybe** | Check `supabase migration list` before writing the index migration |
@@ -787,14 +821,18 @@ historical day.
 Per `CLAUDE.md`, migrations are pushed manually by the developer — write them,
 verify with `supabase migration list`, don't run `db push`.
 
-**Testing client-side changes: force-quit the PWA first.** Phases 3, 5 and 8
-change client code, and `next-pwa` serves the previously cached bundle to an
-already-installed app regardless of what was deployed. Task 040 lost a whole
-staging cycle to exactly this — a shipped fix looked broken because two phones
-were running last week's JS. The reliable tell is the console: if you see log
-strings that only exist in the old code, it is a stale bundle, not a failed
-fix. Force-quit the installed app on every test device before concluding
-anything.
+**Testing client-side changes: force-quit the PWA first.** Phases 3, 5 and 7
+change client code, and a device holding a cached bundle serves it regardless
+of what was deployed. Task 040 lost a whole staging cycle to exactly this — a
+shipped fix looked broken because two phones were running last week's JS. The
+reliable tell is the console: log strings that only exist in the old code mean
+a stale bundle, not a failed fix. Force-quit the installed app on every test
+device before concluding anything.
+
+Per Phase 0's cause 2, this is currently **mandatory rather than
+precautionary**: with no service worker being deployed, an installed app has
+no update path at all, so force-quitting is the only way a client change
+reaches one.
 
 ## Guiding principle
 
