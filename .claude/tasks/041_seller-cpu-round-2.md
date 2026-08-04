@@ -410,7 +410,8 @@ can be checked without a fresh CPU reading.
    Backoffice has no `lib/flags.ts`; it still uses the legacy env-var flags
    (`isEnabled()` from `packages/features/shared/features.ts`) and never
    constructs a PostHog server client.
-5. **Then measure**, before sizing Phases 2–6 against each other.
+5. ~~**Then measure**, before sizing Phases 2–6 against each other.~~
+   **Dropped as a gate (owner decision, 2026-08-04).** See "How to measure".
 
 > **Applied 2026-08-04.** Both `service.ts` files memoized with
 > `persistSession: false` / `autoRefreshToken: false`; `lib/flags.ts` hoisted
@@ -713,6 +714,30 @@ its own verification pass.
 
 ## How to measure
 
+> **Decision, 2026-08-04: batch the phases, measure once at the end of a
+> cycle.** An earlier draft made Phase 1 a gate — ship it, take a reading,
+> size the rest against it. That was wrong for the instrument available. The
+> dashboard's per-route CPU is rounded to whole seconds, so Phase 1's expected
+> single-digit-ms win is smaller than the measurement error; waiting on a
+> signal it cannot resolve would have blocked the phases that actually move
+> the number.
+>
+> Instead: ship Phases 0–6, let a full billing cycle run, and compare the
+> **cycle total** — the one number whose resolution is good enough to see a
+> ~20% change. Baseline to beat: **2h37m over ~29 days**, 3–5m/day with an
+> 8m56s peak, at 2026-08-04.
+>
+> **The tradeoff, stated so it isn't a surprise:** a single aggregate reading
+> cannot attribute the win to a phase. If the total doesn't move, you learn
+> the batch failed, not which part. Two things make that acceptable — each
+> phase is a separate commit, so a bisect is possible if it matters; and
+> *correctness* is verified per phase below regardless (payload diffs, gate
+> states, timeline completeness). Only the CPU number is measured in
+> aggregate.
+>
+> The local `performance.now()` method below stays available for any single
+> question worth answering on its own — it is no longer a required step.
+
 Several phases above are gated on "measure first", and the Vercel dashboard
 is the wrong instrument for that: its per-route CPU column is rounded to whole
 seconds (a route at 8s could be 7.5 or 8.4), it aggregates over a fixed
@@ -746,11 +771,9 @@ distinction actually matters — Finding 1's client construction, `/api/flags`
    `/_not-found` should fall out of the route table on the next 12h window.
    If it doesn't, the cause was misdiagnosed — re-check the referrer before
    moving on.
-3. **Phase 1 is a measurement gate.** Take a fresh reading before proceeding.
-   Expect single-digit ms per route — if the table barely moves that is the
-   *expected* result given the corrected Finding 1, not a reason to keep
-   digging. It rules out a shared fixed tax, which confirms Phases 2–6 are the
-   whole story.
+3. Phase 1: no per-phase reading — see the decision under "How to measure".
+   Correctness only: both apps build and the service-role paths still work,
+   which the rest of the suite covers.
 4. Phase 2: response payloads must be **identical** before and after — diff a
    captured response per route. An extra key means the select is still too
    wide; a missing key means an alias typo, which the retained `safeParse`
@@ -775,12 +798,19 @@ distinction actually matters — Finding 1's client construction, `/api/flags`
    every root tab, language switch, cold PWA start — network tab open,
    confirming page routes no longer invoke a function. Watch for the locale
    flash and for a stale `x-user-info` surviving a role change.
-10. **Scoreboard: the billing-cycle total.** Baseline **2h37m** over ~29 days
-   at 2026-08-04. Expected after Phases 1–6: **~2h05–2h10**. After Phase 7:
-   **under 1h50m**. If Phases 1–6 land and the total doesn't move ~18%, the
-   bucket split was wrong — re-pull Vercel's by-type breakdown before sizing
-   Phase 7, since that split is the one number here that is inferred rather
-   than observed.
+10. **Scoreboard: the billing-cycle total — and the only CPU measurement this
+   task takes.** Baseline **2h37m** over ~29 days at 2026-08-04. Expected
+   after Phases 1–6: **~2h05–2h10**. After Phase 7: **under 1h50m**.
+
+   Read it after a full cycle on the shipped batch, roughly 2026-09-04.
+   Traffic is not held constant between cycles, so compare min/day and the
+   per-route table alongside the total rather than treating the headline as
+   controlled — a busier month can eat the win and still mean the work landed.
+
+   If the total doesn't move ~18%, the bucket split was wrong. Re-pull
+   Vercel's by-type breakdown before sizing Phase 7: that split is the one
+   number here that is inferred rather than observed, and it is what the
+   estimate rests on.
 
 ## Assumptions not verified
 
