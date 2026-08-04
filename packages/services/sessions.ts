@@ -15,6 +15,37 @@ export interface GetStoreGateStateParams {
     date: string;
 }
 
+/**
+ * The active session plus the holder's name and avatar, in one round trip.
+ *
+ * Those two values used to be a second query keyed on `user_id`. Embedding
+ * them makes the gate two queries instead of three. Columns are aliased to
+ * camelCase so the row arrives as `StoreSessionResponse` and needs no
+ * key-conversion pass.
+ *
+ * Every field on that schema is required — `store_sessions` has exactly these
+ * eleven columns, so there is nothing to trim here, only to rename. (Task 037
+ * listed trimming this `select("*")` as a win; it isn't one.)
+ */
+const ACTIVE_SESSION_COLUMNS = `
+    id, status,
+    tenantId:tenant_id,
+    storeId:store_id,
+    dailySummaryId:daily_summary_id,
+    userId:user_id,
+    claimCode:claim_code,
+    startedAt:started_at,
+    endedAt:ended_at,
+    previousSessionId:previous_session_id,
+    createdAt:created_at,
+    users(fullName:full_name, avatarUrl:avatar_url)
+`;
+
+type ActiveSessionRow = {
+    users: { fullName: string | null; avatarUrl: string | null } | null;
+    [field: string]: unknown;
+};
+
 export async function getStoreGateState(supabase: SupabaseClient, params: GetStoreGateStateParams) {
     const { tenantId, storeId, date } = params;
 
@@ -32,7 +63,7 @@ export async function getStoreGateState(supabase: SupabaseClient, params: GetSto
 
     const { data: session, error: sessionError } = await supabase
         .from("store_sessions")
-        .select("*")
+        .select(ACTIVE_SESSION_COLUMNS)
         .eq("store_id", storeId)
         .eq("tenant_id", tenantId)
         .eq("status", "active")
@@ -41,18 +72,16 @@ export async function getStoreGateState(supabase: SupabaseClient, params: GetSto
     if (sessionError) throw sessionError;
     if (!session) return { gate: "no_session" as const, summaryId: summary.id };
 
-    const { data: userRow } = await supabase
-        .from("users")
-        .select("full_name, avatar_url")
-        .eq("id", session.user_id)
-        .single();
+    // `users` is the embed, not a response field — lift the two values out and
+    // drop it, so what is returned is exactly `StoreSessionResponse`.
+    const { users, ...sessionFields } = session as unknown as ActiveSessionRow;
 
     return {
         gate: "open" as const,
         session: {
-            ...toCamelKeys(session),
-            userName: userRow?.full_name ?? null,
-            userAvatarUrl: userRow?.avatar_url ?? null,
+            ...sessionFields,
+            userName: users?.fullName ?? null,
+            userAvatarUrl: users?.avatarUrl ?? null,
         },
     };
 }

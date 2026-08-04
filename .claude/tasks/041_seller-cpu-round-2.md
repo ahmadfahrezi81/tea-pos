@@ -664,6 +664,21 @@ cursors, no extra routes, no extra hooks.
    `useSession` polls every 30s only when it is, so a flaky connection would
    show up as invocation volume rather than per-call cost. Never measured.
 
+> **Applied 2026-08-04, taken before Phase 3** — it is the top route by CPU and
+> a contained service change, where Phase 3 touches UI.
+>
+> The `users` lookup is now an embed on the session query, so the gate is two
+> round trips instead of three. Columns are aliased to camelCase while the
+> query was being rewritten anyway, which also removes the `toCamelKeys` call
+> from this path — the embed is lifted off the row and dropped, so what returns
+> is exactly `StoreSessionResponse`.
+>
+> Single caller (`app/api/sessions/gate/route.ts`), typecheck clean both apps,
+> lint at baseline, build green.
+>
+> Step 3 (realtime disconnect rate) still not measured — it is an invocation-count
+> question, not a per-call one, and needs production data rather than code.
+
 ### Phase 5 — `/api/stores`: delete the `users` list
 
 Callers already traced (Finding 4). Smallest, safest item on the board:
