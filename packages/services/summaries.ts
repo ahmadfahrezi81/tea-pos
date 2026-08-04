@@ -123,6 +123,58 @@ export interface ListSummariesParams {
     month: string;
 }
 
+/**
+ * Aliased to camelCase in the query, so rows arrive in the response's shape and
+ * `toCamelKeys` has nothing to walk. Both column lists must stay in step with
+ * `DailySummaryResponse` / `ExpenseResponse` — their fields are `.nullable()`,
+ * not `.optional()`, so a dropped column fails the parse.
+ *
+ * Note the embeds are aliased too (`openedByUser:users!<fk>`): PostgREST names
+ * an embedded resource after the relationship, not the response field.
+ */
+const SUMMARY_COLUMNS = `
+    id, date, notes, variance,
+    storeId:store_id,
+    tenantId:tenant_id,
+    openedBy:opened_by,
+    closedBy:closed_by,
+    openingBalance:opening_balance,
+    openingCashBreakdown:opening_cash_breakdown,
+    closingCashBreakdown:closing_cash_breakdown,
+    totalSales:total_sales,
+    totalOrders:total_orders,
+    totalCups:total_cups,
+    totalExpenses:total_expenses,
+    expectedCash:expected_cash,
+    actualCash:actual_cash,
+    closedAt:closed_at,
+    createdAt:created_at,
+    stores(name),
+    openedByUser:users!daily_summaries_opened_by_fkey(fullName:full_name),
+    closedByUser:users!daily_summaries_closed_by_fkey(fullName:full_name)
+`;
+
+const EXPENSE_COLUMNS = `
+    id, type, amount, notes,
+    dailySummaryId:daily_summary_id,
+    storeId:store_id,
+    tenantId:tenant_id,
+    userId:user_id,
+    photoUrl:photo_url,
+    createdAt:created_at
+`;
+
+type SummaryListRow = {
+    id: string;
+    date: string;
+    totalSales: number | null;
+    totalOrders: number | null;
+    totalCups: number | null;
+    totalExpenses: number | null;
+};
+
+type ExpenseRow = { dailySummaryId: string };
+
 export async function listSummaries(supabase: SupabaseClient, params: ListSummariesParams) {
     const { tenantId, storeId, month } = params;
 
@@ -134,11 +186,7 @@ export async function listSummaries(supabase: SupabaseClient, params: ListSummar
 
     const { data: summaries, error: summariesError } = await supabase
         .from("store_daily_summaries")
-        .select(
-            `*, stores(name),
-            opened_by_user:users!daily_summaries_opened_by_fkey(full_name),
-            closed_by_user:users!daily_summaries_closed_by_fkey(full_name)`,
-        )
+        .select(SUMMARY_COLUMNS)
         .eq("store_id", storeId)
         .eq("tenant_id", tenantId)
         .gte("date", startDate)
@@ -147,30 +195,32 @@ export async function listSummaries(supabase: SupabaseClient, params: ListSummar
 
     if (summariesError) throw summariesError;
 
-    const summaryList = (summaries ?? []) as SummaryRow[];
+    const summaryList = (summaries ?? []) as unknown as SummaryListRow[];
     const summaryIds = summaryList.map((s) => s.id);
-    const expensesBySummaryId: Record<string, Array<{ daily_summary_id: string; amount: number; [key: string]: unknown }>> = {};
-    const expensesByDate: Record<string, unknown[]> = {};
+    const expensesBySummaryId: Record<string, ExpenseRow[]> = {};
+    const expensesByDate: Record<string, ExpenseRow[]> = {};
     const photoCountBySummaryId: Record<string, number> = {};
 
     if (summaryIds.length > 0) {
         const { data: expenses, error: expensesError } = await supabase
             .from("store_expenses")
-            .select("*")
+            .select(EXPENSE_COLUMNS)
             .in("daily_summary_id", summaryIds)
             .eq("tenant_id", tenantId);
 
         if (expensesError) throw expensesError;
 
-        (expenses ?? []).forEach((expense) => {
-            if (!expensesBySummaryId[expense.daily_summary_id]) expensesBySummaryId[expense.daily_summary_id] = [];
-            expensesBySummaryId[expense.daily_summary_id].push(expense);
+        // Indexed once instead of a linear scan per expense. The previous
+        // version called `summaryList.find()` inside this loop, which is
+        // quadratic in a month's worth of expenses.
+        const dateBySummaryId = new Map(summaryList.map((s) => [s.id, s.date]));
 
-            const summary = summaryList.find((s) => s.id === expense.daily_summary_id);
-            if (summary) {
-                if (!expensesByDate[summary.date]) expensesByDate[summary.date] = [];
-                expensesByDate[summary.date].push(expense);
-            }
+        ((expenses ?? []) as unknown as ExpenseRow[]).forEach((expense) => {
+            const id = expense.dailySummaryId;
+            (expensesBySummaryId[id] ??= []).push(expense);
+
+            const date = dateBySummaryId.get(id);
+            if (date) (expensesByDate[date] ??= []).push(expense);
         });
 
         const { data: photos, error: photosError } = await supabase
@@ -182,29 +232,29 @@ export async function listSummaries(supabase: SupabaseClient, params: ListSummar
         if (photosError) throw photosError;
 
         (photos ?? []).forEach((p) => {
+            if (!p.daily_summary_id) return;
             photoCountBySummaryId[p.daily_summary_id] = (photoCountBySummaryId[p.daily_summary_id] ?? 0) + 1;
         });
     }
 
-    const finalSummaries = summaryList.map((s) => ({
-        ...s,
-        expenses: expensesBySummaryId[s.id] ?? [],
-        sessions: [],
-        photo_count: photoCountBySummaryId[s.id] ?? 0,
-    }));
     const monthlyTotals = summaryList.reduce(
         (acc, s) => ({
-            totalSales: acc.totalSales + (s.total_sales ?? 0),
-            totalOrders: acc.totalOrders + (s.total_orders ?? 0),
-            totalCups: acc.totalCups + (s.total_cups ?? 0),
-            totalExpenses: acc.totalExpenses + (s.total_expenses ?? 0),
+            totalSales: acc.totalSales + (s.totalSales ?? 0),
+            totalOrders: acc.totalOrders + (s.totalOrders ?? 0),
+            totalCups: acc.totalCups + (s.totalCups ?? 0),
+            totalExpenses: acc.totalExpenses + (s.totalExpenses ?? 0),
         }),
         { totalSales: 0, totalOrders: 0, totalCups: 0, totalExpenses: 0 },
     );
 
     return {
-        summaries: toCamelKeys(finalSummaries),
-        expensesByDate: toCamelKeys(expensesByDate),
+        summaries: summaryList.map((s) => ({
+            ...s,
+            expenses: expensesBySummaryId[s.id] ?? [],
+            sessions: [],
+            photoCount: photoCountBySummaryId[s.id] ?? 0,
+        })),
+        expensesByDate,
         monthlyTotals,
     };
 }

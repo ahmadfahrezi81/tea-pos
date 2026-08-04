@@ -500,8 +500,19 @@ re-capturing the baseline in between.
 > with backoffice's payout day-summary page, so it needs its own look rather
 > than a mechanical edit. Left alone.
 >
-> **Status of the rest:** `/api/products` and `/api/stores` applied (see
-> below). `/api/summaries` and `day-activity` still to do.
+> **`/api/activity-logs/day-activity` also removed from scope, 2026-08-04** —
+> same reason, found the same way. `packages/services/activity-logs.ts` never
+> calls `toCamelKeys`; `getDayActivity` builds its `EventSegment` objects in
+> camelCase by hand, and every one of its selects is already a narrow explicit
+> column list. There is no walk to remove and nothing to narrow. Its 95ms is
+> the nine queries and the per-photo `createSignedUrl` — **entirely Phase 6's
+> problem**, and narrowing anything here first would only edit selects that
+> Phase 6 deletes.
+>
+> **Phase 2 is therefore complete at three routes**, not five. The scope was
+> written from the route table's cost ranking rather than from which services
+> actually carry the `toCamelKeys` pattern — worth checking that first next
+> time. `/api/orders` (the fourth) is in Phase 3 by design.
 
 **Applied 2026-08-04 — `/api/products`.** Columns aliased to camelCase in the
 query, `toCamelKeys` dropped, service now returns rows straight from the
@@ -529,6 +540,30 @@ whole return value, so its source query is aliased too
 assembled in camelCase directly. This is the same trap the `listSummaries`
 note below describes — worth expecting on any route where the service shapes
 data after the query.
+
+**Applied 2026-08-04 — `/api/summaries`.** Both selects aliased, including the
+embeds (`openedByUser:users!daily_summaries_opened_by_fkey(fullName:full_name)`
+— PostgREST names an embed after the *relationship*, so the alias is what makes
+it land on the response field). `toCamelKeys` is gone from `listSummaries`;
+other functions in that file still use it and are out of scope.
+
+Two cleanups taken while in there, since the code had to be touched anyway:
+
+- **Removed a quadratic loop.** Building `expensesByDate` called
+  `summaryList.find()` *inside* a `forEach` over every expense — a linear scan
+  per expense, over a month of them. Now a single `Map` of summary id → date,
+  built once.
+- **`photo_count` → `photoCount` at the source.** The old code emitted
+  snake_case and leaned on `toCamelKeys` to rename it; the schema has always
+  declared `photoCount`.
+
+Deliberately **not** taken, flagged instead: `expensesByDate` duplicates data
+already on each summary's `expenses`, and `useDailySummaries`' fallback
+(`summary.expenses ?? data.expensesByDate?.[date]`) is dead — `expenses` is
+always at least `[]`, so the right-hand side never runs. The field survives
+because `summariesHelpers.ts:79` reads it directly. Collapsing the two is an
+API change touching analytics, which does not belong in a select-narrowing
+pass.
 
 > **Aliasing doesn't cover fields assembled in JS.** `listSummaries`
 > (`packages/services/summaries.ts:126`) builds `expenses`, `sessions` and
