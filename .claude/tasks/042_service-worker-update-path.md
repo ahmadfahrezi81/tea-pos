@@ -1,8 +1,15 @@
 # Task 042 — No service worker in production (installed apps can't update)
 
-**Status: diagnosed, not implemented.** Split out of task 041's Phase 0,
-which found it while chasing `/_not-found` invocations. It is not a CPU
-problem and does not belong in that task.
+**Status: both phases written and building; nothing verified against a real
+deploy.** Split out of task 041's Phase 0, which found it while chasing
+`/_not-found` invocations. It is not a CPU problem and does not belong in that
+task.
+
+**What is left:** deploy, then work the Verification section — every check
+there needs a real origin, and check 3 (a currently-stuck device recovering
+without a force-quit) is the one that decides whether this task actually
+worked. Option B (the serwist migration) stays open; `--webpack` is a stopgap
+with a shelf life.
 
 ## The problem
 
@@ -62,21 +69,25 @@ offline write. Treat restored read-caching as a **side effect** of fixing the
 update path, not the goal. (040's closing argument assumed the service worker
 was already handling read caching; true when written, not now.)
 
-## Settle these first — they decide which option to take
+## Open questions
 
-1. **How many devices are actually stuck?** The `/sw.js` 404 rate in the
-   Vercel logs is a direct proxy. A handful and this is cosmetic; a real
-   population and it is urgent.
-2. **Do sellers install on Android?** If not, option C below becomes viable
-   and is far simpler than A or B.
-3. **Does Chrome still require a service worker for the install prompt?**
-   Historically yes, with a fetch handler; iOS standalone never did (it keys
-   off the manifest and Apple web-app metadata). **Not verified here** — those
-   criteria have been relaxed more than once, and this single fact is what
-   rules out option C. Check it against current Chrome installability docs
-   before discarding C.
-4. **Was backoffice ever deployed with a working worker?** Decides whether it
-   has frozen devices or merely a missing feature. Same log check as #1.
+> **Two of these are now moot.** Option A was taken without waiting on them,
+> on the grounds that it is correct whatever the answers — it restores the
+> worker and preserves installability either way. Q2 and Q3 only mattered for
+> choosing option C, so they are closed unanswered. Recorded rather than
+> deleted: if the webpack stopgap is ever revisited, C comes back with them.
+
+1. **How many devices are actually stuck?** *(still open, still matters)* The
+   `/sw.js` 404 rate in the Vercel logs is a direct proxy. A handful and this
+   was cosmetic; a real population and Phase 1 is urgent to deploy. It also
+   sizes how hard to chase verification 3.
+2. ~~Do sellers install on Android?~~ Moot — A preserves installability.
+3. ~~Does Chrome still require a service worker for the install prompt?~~
+   Moot — only gated option C. Still unverified; do not treat the claim
+   elsewhere in this file as established if C is ever reconsidered.
+4. **Was backoffice ever deployed with a working worker?** *(still open)*
+   Decides whether it has frozen devices or merely a missing feature. Same log
+   check as #1.
 
 ## Options
 
@@ -130,6 +141,11 @@ own `sw.ts` rather than generating one from `workboxOptions`, so the
 >
 > Build-time cost: seller compile 10.7s → 18.5s (38s wall), backoffice 9.5s
 > (25s wall). Slower but not painful — not yet an argument for B.
+>
+> Step 3 confirmed rather than assumed: `pnpm dev` still boots clean under
+> Turbopack (`▲ Next.js 16.2.4 (Turbopack)`, ready in 374ms). next-pwa takes
+> the non-`withPWA` branch in development, so the dev bundler never meets the
+> plugin.
 >
 > **Still unverified: production.** Local emission is necessary, not
 > sufficient — verification 1 and 3 below are the real tests and need a
