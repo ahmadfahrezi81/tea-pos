@@ -131,7 +131,7 @@ export async function resumeSession(supabase: SupabaseClient, params: ResumeSess
 
     if (sessionError || !sessionData) throw new Error(sessionError?.message ?? "Failed to create session");
 
-    const log = createLogger(supabase, { tenantId, userId, storeId });
+    const log = createLogger(supabase, { tenantId, userId, storeId, dailySummaryId: summaryId });
     log("store_opened", {
         refId: summaryId,
         refTable: "store_daily_summaries",
@@ -214,7 +214,7 @@ export async function openStore(supabase: SupabaseClient, params: OpenStoreParam
 
     if (sessionError || !sessionData) throw new Error(sessionError?.message ?? "Failed to create session");
 
-    const log = createLogger(supabase, { tenantId, userId, storeId });
+    const log = createLogger(supabase, { tenantId, userId, storeId, dailySummaryId });
     log("store_opened", {
         refId: dailySummaryId,
         refTable: "store_daily_summaries",
@@ -281,7 +281,12 @@ export async function transferSession(supabase: SupabaseClient, params: Transfer
     }
     if (!newSession) throw new Error("Failed to create new session");
 
-    const log = createLogger(supabase, { tenantId, userId, storeId });
+    const log = createLogger(supabase, {
+        tenantId,
+        userId,
+        storeId,
+        dailySummaryId: newSession.daily_summary_id as string,
+    });
     log("session_transferred", {
         refId: newSession.id,
         refTable: "store_sessions",
@@ -523,8 +528,13 @@ export async function endSession(
 
     if (error || !data) throw Object.assign(new Error(error?.message ?? "Session not found"), { status: 404 });
 
-    const raw = data as { store_id: string };
-    const log = createLogger(supabase, { tenantId, userId, storeId: raw.store_id });
+    const raw = data as { store_id: string; daily_summary_id: string };
+    const log = createLogger(supabase, {
+        tenantId,
+        userId,
+        storeId: raw.store_id,
+        dailySummaryId: raw.daily_summary_id,
+    });
     log("session_ended", { refId: sessionId, refTable: "store_sessions" });
 
     return toCamelKeys(data);

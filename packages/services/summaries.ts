@@ -353,7 +353,12 @@ export async function createSummary(supabase: SupabaseClient, params: CreateSumm
 
     if (summaryError || !summaryData) throw new Error(summaryError?.message ?? "Daily summary insert failed");
 
-    const log = createLogger(supabase, { tenantId: store.tenant_id, userId: openedBy, storeId });
+    const log = createLogger(supabase, {
+        tenantId: store.tenant_id,
+        userId: openedBy,
+        storeId,
+        dailySummaryId: (summaryData as { id: string }).id,
+    });
     log("store_opened", {
         refId: (summaryData as { id: string }).id,
         refTable: "store_daily_summaries",
@@ -463,7 +468,7 @@ export async function updateSummary(supabase: SupabaseClient, params: UpdateSumm
     if (updateError || !summaryData) throw new Error(updateError?.message ?? "Daily summary not found");
 
     const raw = summaryData as { store_id: string; total_sales: number; variance: number | null };
-    const log = createLogger(supabase, { tenantId, userId, storeId: raw.store_id });
+    const log = createLogger(supabase, { tenantId, userId, storeId: raw.store_id, dailySummaryId: id });
 
     if (closedAt && !current.closed_at) {
         log("store_closed", {
@@ -613,7 +618,7 @@ export async function uploadSummaryPhoto(supabase: SupabaseClient, params: Uploa
         throw new Error("Failed to save photo record");
     }
 
-    const log = createLogger(supabase, { tenantId, userId, storeId });
+    const log = createLogger(supabase, { tenantId, userId, storeId, dailySummaryId });
     log("summary_photo_uploaded", {
         refId: (photoData as { id: string }).id,
         refTable: "store_daily_summary_photos",
@@ -646,8 +651,13 @@ export async function updateSummaryPhoto(
 
     if (updateError || !updated) throw new Error("Failed to update photo");
 
-    const raw = updated as { id: string; store_id: string; type: string };
-    createLogger(supabase, { tenantId, userId, storeId: raw.store_id })("summary_photo_updated", {
+    const raw = updated as { id: string; store_id: string; type: string; daily_summary_id: string | null };
+    createLogger(supabase, {
+        tenantId,
+        userId,
+        storeId: raw.store_id,
+        dailySummaryId: raw.daily_summary_id ?? undefined,
+    })("summary_photo_updated", {
         refId: raw.id,
         refTable: "store_daily_summary_photos",
         metadata: { slot: raw.type, quantity: quantity ?? null },
@@ -682,8 +692,16 @@ export async function deleteSummaryPhoto(
 
     if (deleteError) throw new Error(deleteError.message);
 
-    const raw = photo as { store_id: string; url: string; type: string };
-    createLogger(supabase, { tenantId, userId, storeId: raw.store_id })("summary_photo_deleted", {
+    // The photo row is gone by now, so nothing can recover its summary after
+    // the fact — read it off the copy fetched above, or this event never
+    // appears on the timeline.
+    const raw = photo as { store_id: string; url: string; type: string; daily_summary_id: string | null };
+    createLogger(supabase, {
+        tenantId,
+        userId,
+        storeId: raw.store_id,
+        dailySummaryId: raw.daily_summary_id ?? undefined,
+    })("summary_photo_deleted", {
         refId: id,
         refTable: "store_daily_summary_photos",
         metadata: { photo_url: raw.url, slot: raw.type },

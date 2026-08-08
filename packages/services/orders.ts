@@ -245,7 +245,12 @@ export async function createOrder(
             .eq("tenant_id", tenantId);
     }
 
-    const log = createLogger(supabase, { tenantId: store.tenant_id, userId, storeId });
+    const log = createLogger(supabase, {
+        tenantId: store.tenant_id,
+        userId,
+        storeId,
+        dailySummaryId: activeSummary?.id,
+    });
     log("order_created", {
         refId: orderData.id as string,
         refTable: "store_orders",

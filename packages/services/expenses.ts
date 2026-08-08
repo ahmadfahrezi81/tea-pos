@@ -111,7 +111,7 @@ export async function createExpense(supabase: SupabaseClient, params: CreateExpe
         .eq("id", dailySummaryId)
         .eq("tenant_id", tenantId);
 
-    const log = createLogger(supabase, { tenantId, userId, storeId });
+    const log = createLogger(supabase, { tenantId, userId, storeId, dailySummaryId });
     log("expense_created", {
         refId: (expenseData as { id: string }).id,
         refTable: "store_expenses",
@@ -154,7 +154,12 @@ export async function updateExpense(supabase: SupabaseClient, params: UpdateExpe
     }
 
     const raw = expenseData as { id: string; store_id: string; amount: number; type: string };
-    createLogger(supabase, { tenantId, userId, storeId: raw.store_id })("expense_updated", {
+    createLogger(supabase, {
+        tenantId,
+        userId,
+        storeId: raw.store_id,
+        dailySummaryId: oldExpense.daily_summary_id as string,
+    })("expense_updated", {
         refId: raw.id,
         refTable: "store_expenses",
         metadata: { amount: raw.amount, type: raw.type },
@@ -183,8 +188,15 @@ export async function deleteExpense(supabase: SupabaseClient, { tenantId, userId
 
     await adjustSummaryExpenses(supabase, expense.daily_summary_id as string, tenantId, -(expense.amount as number));
 
-    const raw = expense as { id: string; store_id: string; amount: number; type: string };
-    createLogger(supabase, { tenantId, userId, storeId: raw.store_id })("expense_deleted", {
+    // Same as summary_photo_deleted: the row is already gone, so the summary
+    // has to come off the copy fetched above or the event never appears.
+    const raw = expense as { id: string; store_id: string; amount: number; type: string; daily_summary_id: string };
+    createLogger(supabase, {
+        tenantId,
+        userId,
+        storeId: raw.store_id,
+        dailySummaryId: raw.daily_summary_id,
+    })("expense_deleted", {
         refId: raw.id,
         refTable: "store_expenses",
         metadata: { amount: raw.amount, type: raw.type },
