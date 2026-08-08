@@ -8,6 +8,7 @@ import type {
     QrisPaymentStatus,
 } from "@tea-pos/features/payments/schema";
 import { mutate } from "swr";
+import { matchStoreOrders } from "@/lib/hooks/orders/useStoreOrders";
 
 interface UseQrisPaymentProps {
     selectedStoreId: string | null;
@@ -71,11 +72,7 @@ export function useQrisPayment({
                     if (paymentStatus === "succeeded") {
                         cleanup();
                         setStatus("succeeded");
-                        mutate(
-                            `orders-${storeId}-${new Date()
-                                .toISOString()
-                                .slice(0, 10)}`,
-                        );
+                        mutate(matchStoreOrders(storeId));
                         onSuccessRef.current();
                     } else if (paymentStatus === "expired" || paymentStatus === "failed") {
                         cleanup();
