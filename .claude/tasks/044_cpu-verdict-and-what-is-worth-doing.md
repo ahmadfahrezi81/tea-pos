@@ -2,29 +2,30 @@
 
 **Status, 2026-08-09.** All three items written. Nothing on production yet.
 
-| Item | State |
-|---|---|
-| **1** · `daily_summary_id` on logs | code done. Migration applied to **staging only** |
-| **2** · `store_orders` index | migration written, **not pushed** — `20260808184644` |
-| **3** · `/api/products` 6h cache | code done |
+| Item | Staging | Production |
+|---|---|---|
+| **1** · `daily_summary_id` on logs | ✅ migrated, deployed, timeline verified | ❌ nothing pushed |
+| **2** · `store_orders` index | ✅ migrated, verified | ❌ not pushed |
+| **3** · `/api/products` 6h cache | ✅ deployed, cache confirmed | ❌ not deployed |
 
 Item 1 in detail — steps 1–4 done, step 5 (lazy photo signing) skipped as
-optional and not in the way.
+optional and not in the way. Shipped as `e43f94b`…`7d5ab92` on `staging`.
 
-**Outstanding:**
+**How Item 3 was verified**, since it is the one that is invisible from
+outside: `unstable_cache` sits between the route and Supabase, so a hit and a
+miss return byte-identical responses and `x-vercel-cache` reports only the CDN.
+The signal is query count on the Postgres side —
+`select calls from pg_stat_statements where query ilike '%tenant_products%'`,
+then hammer the endpoint and re-read. Six requests moved it **28 → 28**. Zero
+Postgres queries, cache already warm.
 
-1. **Staging visual check on Item 1.** Open a day-activity screen and confirm
-   the timeline still renders — ideally on a close-day that ran past midnight,
-   the case the old `ref_id` approach handled correctly.
-2. **Push Item 2's migration.** No app change; verify with the `EXPLAIN` in the
-   migration's trailing comment.
-3. **Production deploy of Item 1.** See *Deploying Item 1 to production*. The
-   numbers measured on staging **do not transfer** — different database,
-   different history.
-4. **Confirm Item 3 is actually caching.** Repeated calls should produce one
-   Supabase query, not one per request. Do this before trusting the TTL.
+**Everything remaining is the production rollout**, and it has an ordering
+requirement: `0db6630` reads `daily_summary_id`, so deploying the app before
+pushing the migration empties the day-activity timeline for every historical
+day. See *Deploying Item 1 to production*. **The staging numbers do not
+transfer** — different database, ~11× the history.
 
-Verified so far: 0 typecheck errors both apps, lint at baseline (seller 23 /
+Verified on staging: 0 typecheck errors both apps, lint at baseline (seller 23 /
 backoffice 5, checked against a stashed HEAD), `pnpm build` green.
 
 Successor to 041. Decides what happens to 043 — short version, most of it does
