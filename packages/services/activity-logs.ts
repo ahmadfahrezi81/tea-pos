@@ -1,46 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ActivityLogMetadataMap, ActivityLogType, DayActivityResponse, EventSegment } from "@tea-pos/features/activity-logs/schema";
 
-// ─── Timeline event types — curated subset shown in AtAGlance ─────────────────
-
-const TIMELINE_EVENT_TYPES: ActivityLogType[] = [
-    "store_opened",
-    "session_transferred",
-    "session_ended",
-    "expense_created",
-    "store_closed",
-    "supply_request_created",
-    "incident_report_created",
-];
-
-export async function listStoreActivityLogs(
-    supabase: SupabaseClient,
-    { tenantId, storeId, date }: { tenantId: string; storeId: string; date: string },
-) {
-    const tz = parseInt(process.env.TIMEZONE_OFFSET ?? "7", 10);
-    const [year, month, day] = date.split("-").map(Number);
-    const dayStartMs = Date.UTC(year, month - 1, day) - tz * 3600 * 1000;
-    const dayStart = new Date(dayStartMs).toISOString();
-    const dayEnd = new Date(dayStartMs + 24 * 3600 * 1000 - 1).toISOString();
-
-    const { data, error } = await supabase
-        .from("tenant_activity_logs")
-        .select("id, type, created_at")
-        .eq("tenant_id", tenantId)
-        .eq("store_id", storeId)
-        .in("type", TIMELINE_EVENT_TYPES)
-        .gte("created_at", dayStart)
-        .lte("created_at", dayEnd)
-        .order("created_at", { ascending: true });
-
-    if (error) throw error;
-    return (data ?? []).map((row) => ({
-        id: row.id,
-        type: row.type as ActivityLogType,
-        createdAt: row.created_at,
-    }));
-}
-
 // All event types including order_created — full audit log for the day
 const DAY_ACTIVITY_EVENT_TYPES: ActivityLogType[] = [
     "order_created",
@@ -63,54 +23,21 @@ export async function getDayActivity(
     supabase: SupabaseClient,
     { tenantId, summaryId }: { tenantId: string; summaryId: string },
 ): Promise<DayActivityResponse> {
-    // Fetch the summary to derive store_id, date, and context fields
+    // The summary, with the store name embedded rather than fetched separately.
     const { data: summary, error: summaryError } = await supabase
         .from("store_daily_summaries")
-        .select("id, store_id, date, total_sales, total_orders, total_cups, opening_balance, variance, closed_at")
+        .select("id, store_id, date, total_sales, total_orders, total_cups, opening_balance, variance, closed_at, stores(name)")
         .eq("id", summaryId)
         .eq("tenant_id", tenantId)
         .single();
 
     if (summaryError || !summary) throw Object.assign(new Error("Summary not found"), { status: 404 });
 
-    // Derive order date range from the summary date + timezone
-    const tz = parseInt(process.env.TIMEZONE_OFFSET ?? "7", 10);
-    const [year, month, day] = (summary.date as string).split("-").map(Number);
-    const dayStartMs = Date.UTC(year, month - 1, day) - tz * 3600 * 1000;
-    const dayStart = new Date(dayStartMs).toISOString();
-    const dayEnd = new Date(dayStartMs + 24 * 3600 * 1000 - 1).toISOString();
-
-    // Batch-fetch store name + all child entity IDs in parallel
-    const [
-        storeResult,
-        photoResult,
-        expenseResult,
-        sessionResult,
-        requestResult,
-        reportResult,
-        orderResult,
-    ] = await Promise.all([
-        supabase.from("stores").select("name").eq("id", summary.store_id).single(),
-        supabase.from("store_daily_summary_photos").select("id").eq("daily_summary_id", summaryId),
-        supabase.from("store_expenses").select("id").eq("daily_summary_id", summaryId),
-        supabase.from("store_sessions").select("id").eq("daily_summary_id", summaryId),
-        supabase.from("store_requests").select("id").eq("daily_summary_id", summaryId),
-        supabase.from("store_reports").select("id").eq("daily_summary_id", summaryId),
-        supabase.from("store_orders").select("id").eq("store_id", summary.store_id).eq("tenant_id", tenantId).gte("created_at", dayStart).lte("created_at", dayEnd),
-    ]);
-
-    const storeName = (storeResult.data as { name: string } | null)?.name ?? "Store";
-    const childIds = [
-        ...(photoResult.data ?? []).map((r) => r.id),
-        ...(expenseResult.data ?? []).map((r) => r.id),
-        ...(sessionResult.data ?? []).map((r) => r.id),
-        ...(requestResult.data ?? []).map((r) => r.id),
-        ...(reportResult.data ?? []).map((r) => r.id),
-        ...(orderResult.data ?? []).map((r) => r.id),
-    ];
-
-    // The summary itself is the ref for store_opened / store_closed / opening_balance_updated
-    const allRefIds = [summaryId, ...childIds];
+    // PostgREST returns a to-one embed as an object, but the generated types
+    // widen it to an array — accept either rather than casting through unknown
+    // and being silently wrong if that ever changes.
+    const storeEmbed = summary.stores as { name: string } | { name: string }[] | null;
+    const storeName = (Array.isArray(storeEmbed) ? storeEmbed[0]?.name : storeEmbed?.name) ?? "Store";
 
     const summaryContext = {
         date: summary.date as string,
@@ -123,14 +50,18 @@ export async function getDayActivity(
         closedAt: summary.closed_at as string | null,
     };
 
-    if (allRefIds.length === 0) return { summary: summaryContext, segments: [] };
-
+    // Events come straight off the column now. This used to be seven parallel
+    // queries collecting child row ids, then `.in("ref_id", <every id>)` — an
+    // IN list holding every order id for the day, sent in the query string, so
+    // its size grew with orders per day until it would eventually blow the URL
+    // limit. `daily_summary_id` is the relationship those queries were
+    // reconstructing on every request.
     const { data: eventRows, error: eventError } = await supabase
         .from("tenant_activity_logs")
         .select("id, type, created_at, metadata, ref_id, ref_table, user_id")
         .eq("tenant_id", tenantId)
+        .eq("daily_summary_id", summaryId)
         .in("type", DAY_ACTIVITY_EVENT_TYPES)
-        .in("ref_id", allRefIds)
         .order("created_at", { ascending: true });
 
     if (eventError) throw eventError;
@@ -188,12 +119,21 @@ interface LogContext {
     tenantId: string;
     userId: string;
     storeId?: string;
+    /**
+     * The daily summary this event belongs to. Optional because payroll and
+     * customer-feedback events genuinely have no summary — but set it wherever
+     * one is in scope: `getDayActivity` keys the timeline on this column, and
+     * an event logged without it will not appear there.
+     */
+    dailySummaryId?: string;
 }
 
 interface LogOpts<T extends ActivityLogType> {
     refId?: string;
     refTable?: string;
     metadata?: ActivityLogMetadataMap[T];
+    /** Overrides the logger's context, for the rare event that belongs to a different day. */
+    dailySummaryId?: string;
 }
 
 async function logActivity<T extends ActivityLogType>(
@@ -210,6 +150,7 @@ async function logActivity<T extends ActivityLogType>(
             type,
             ref_id: opts?.refId ?? null,
             ref_table: opts?.refTable ?? null,
+            daily_summary_id: opts?.dailySummaryId ?? context.dailySummaryId ?? null,
             metadata: (opts?.metadata ?? {}) as Record<string, unknown>,
         });
     } catch {
