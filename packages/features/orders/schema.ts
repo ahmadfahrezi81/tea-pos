@@ -70,6 +70,10 @@ export const ListOrdersQuery = z
                 description: "Filter orders by date (YYYY-MM-DD format)",
                 example: "2025-10-01",
             }),
+        limit: z.coerce.number().int().min(1).max(500).optional().openapi({
+            description: "How many orders to return, newest first. Defaults to 25.",
+            example: 25,
+        }),
         // tenantId is NOT a query param - it's from the session
     })
     .openapi({ title: "ListOrdersQuery" });
@@ -104,11 +108,6 @@ export const OrderResponse = z
         totalAmount: z.number(),
         createdAt: z.string().nullable(),
         tenantId: UUIDSchema.nullable(), // ← Added for response
-        stores: z
-            .object({
-                name: z.string(),
-            })
-            .nullable(),
         users: z
             .object({
                 fullName: z.string(),
@@ -122,9 +121,23 @@ export const OrderResponse = z
     })
     .openapi({ title: "OrderResponse" });
 
+/**
+ * Whole-day figures, independent of how many orders were returned. The list is
+ * capped, so anything describing the day — the summary card, the `Order #N`
+ * label — must read these rather than reduce over `orders`.
+ */
+export const OrderDayTotals = z
+    .object({
+        totalOrders: z.number(),
+        totalSales: z.number(),
+        totalCups: z.number(),
+    })
+    .openapi({ title: "OrderDayTotals" });
+
 export const OrderListResponse = z
     .object({
         orders: z.array(OrderResponse),
+        totals: OrderDayTotals,
     })
     .openapi({ title: "OrderListResponse" });
 

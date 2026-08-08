@@ -21,7 +21,6 @@ interface MobileLayoutClientProps {
 const PREFETCH_SUFFIXES = [
     "/mobile/home/pos",
     "/mobile/home/manage",
-    "/mobile/notifications",
     "/mobile/account",
     "/mobile/more/stores",
     "/mobile/account/details",

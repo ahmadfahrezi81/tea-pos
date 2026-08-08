@@ -19,12 +19,26 @@ type FlagKey =
     | (typeof FLAGS.FEATURE)[keyof typeof FLAGS.FEATURE]
     | (typeof FLAGS.OPS)[keyof typeof FLAGS.OPS];
 
+/**
+ * One client per instance, not one per request. `posthog-node` is built to be
+ * long-lived: constructing it per request repeats setup work every time, and
+ * `shutdown()` destroys the client, which on a shared instance would tear it
+ * out from under any concurrent request still using it. Only ever `flush()`.
+ *
+ * Batching is on (`flushAt` / `flushInterval`) because the previous
+ * `flushAt: 1, flushInterval: 0` forced a send per event. Anything queued is
+ * drained by the `after()` flush below, which runs once the response is
+ * already sent and no-ops when the queue is empty.
+ */
+let flagClient: PostHog | null = null;
+
 function getFlagClient(): PostHog {
-    return new PostHog(process.env.POSTHOG_API_KEY!, {
+    flagClient ??= new PostHog(process.env.POSTHOG_API_KEY!, {
         host: process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com",
-        flushAt: 1,
-        flushInterval: 0,
+        flushAt: 20,
+        flushInterval: 10000,
     });
+    return flagClient;
 }
 
 type FlagEvaluations = { isEnabled: (flag: string) => boolean };
@@ -40,10 +54,11 @@ export async function getAllFlags(
         const flags = await client.evaluateFlags(userId, {
             personProperties: properties,
         });
-        after(() => client.shutdown());
+        // Drain after the response — a serverless instance can freeze between
+        // invocations, so the flush timer alone isn't a reliable delivery path.
+        after(() => client.flush());
         return flags;
     } catch {
-        await client.shutdown();
         return DISABLED;
     }
 }

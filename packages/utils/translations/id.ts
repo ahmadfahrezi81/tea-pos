@@ -224,6 +224,7 @@ export const id: DeepPartial<typeof en> = {
         cameraStep4: "Kembali dan coba lagi",
     },
     orders: {
+        showAll: "Tampilkan semua pesanan",
         title: "Pesanan",
         noOrders: "Tidak ada pesanan",
         dailySummary: "Ringkasan Harian",

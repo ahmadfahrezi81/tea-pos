@@ -1168,6 +1168,7 @@ export type Database = {
       tenant_activity_logs: {
         Row: {
           created_at: string
+          daily_summary_id: string | null
           id: string
           metadata: Json
           ref_id: string | null
@@ -1179,6 +1180,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          daily_summary_id?: string | null
           id?: string
           metadata?: Json
           ref_id?: string | null
@@ -1190,6 +1192,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          daily_summary_id?: string | null
           id?: string
           metadata?: Json
           ref_id?: string | null
@@ -1212,6 +1215,13 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_activity_logs_daily_summary_id_fkey"
+            columns: ["daily_summary_id"]
+            isOneToOne: false
+            referencedRelation: "store_daily_summaries"
             referencedColumns: ["id"]
           },
         ]

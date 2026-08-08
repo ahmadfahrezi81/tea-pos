@@ -1,6 +1,7 @@
 "use client";
 import { useState, useMemo } from "react";
 import useStoreOrders from "@/lib/hooks/orders/useStoreOrders";
+import useHourlySales from "@/lib/hooks/analytics/useHourlySales";
 import { Calendar, CalendarDays, Receipt } from "lucide-react";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 import CopyableField from "@/components/shared/CopyableField";
@@ -45,69 +46,47 @@ const formatFullTimestamp = (dateString: string) => {
     });
 };
 
-const TZ_OFFSET = Number(process.env.NEXT_PUBLIC_TIMEZONE_OFFSET ?? 7);
-
 export default function MobileOrders() {
     const { selectedStoreId } = useStore();
     const t = useT();
 
     const [selectedDate, setSelectedDate] = useState(getTodayLocalStr);
 
-    const { data: orders = [], isLoading: ordersLoading } = useStoreOrders(
+    // Two states, not a ladder of page sizes: a day rarely passes ~200 orders,
+    // so "show all" is one more fetch and done.
+    const [showAll, setShowAll] = useState(false);
+
+    const { data, isLoading: ordersLoading } = useStoreOrders(
         selectedStoreId,
         selectedDate,
+        showAll ? 500 : undefined,
     );
 
-    const hourlySales = useMemo(() => {
-        if (orders.length === 0) return [];
+    // Memoised because `?? []` would hand `ordersWithNumbers` a fresh array
+    // identity on every render, defeating its memo.
+    const orders = useMemo(() => data?.orders ?? [], [data]);
+    // Whole-day figures from the summary row. Reducing over `orders` would
+    // under-report the moment the list is capped — the bug that sank the
+    // previous attempt at this.
+    const totals = data?.totals ?? { totalOrders: 0, totalSales: 0, totalCups: 0 };
 
-        const hourlyData: Record<string, number> = {};
-        for (const order of orders) {
-            if (!order.createdAt) continue;
-            const localHour = new Date(
-                new Date(order.createdAt + "Z").getTime() + TZ_OFFSET * 3_600_000,
-            ).getUTCHours();
-            const key = `${localHour.toString().padStart(2, "0")}:00`;
-            hourlyData[key] = (hourlyData[key] ?? 0) +
-                order.storeOrderItems.reduce((s, item) => s + item.quantity, 0);
-        }
+    // Bucketed server-side by /api/analytics/hourly-sales, which selects only
+    // created_at and item quantities. The chart used to be re-derived here from
+    // the full order payload, which is exactly what the cap removes.
+    const { data: hourlySales = [] } = useHourlySales(selectedStoreId, selectedDate);
 
-        const slots = Array.from({ length: 24 }, (_, h) => ({
-            hour: `${h.toString().padStart(2, "0")}:00`,
-            cups: hourlyData[`${h.toString().padStart(2, "0")}:00`] ?? 0,
-        }));
-
-        const first = slots.findIndex((d) => d.cups > 0);
-        const last = slots.findLastIndex((d) => d.cups > 0);
-        return first === -1 ? [] : slots.slice(Math.max(0, first - 1), Math.min(23, last + 1) + 1);
-    }, [orders]);
-
+    // Numbered against the day, not the loaded slice, so #N stays stable
+    // whether 25 or every order is on screen. Newest is highest.
     const ordersWithNumbers = useMemo(
         () =>
             orders.map((order, index) => ({
                 ...order,
-                orderNumber: orders.length - index,
+                orderNumber: totals.totalOrders - index,
             })),
-        [orders],
+        [orders, totals.totalOrders],
     );
 
-    const summaryStats = useMemo(() => {
-        const totalOrders = orders.length;
-        const totalSales = orders.reduce(
-            (sum, order) => sum + order.totalAmount,
-            0,
-        );
-        const totalCups = orders.reduce(
-            (sum, order) =>
-                sum +
-                order.storeOrderItems.reduce(
-                    (itemSum, item) => itemSum + item.quantity,
-                    0,
-                ),
-            0,
-        );
-        return { totalOrders, totalSales, totalCups };
-    }, [orders]);
+    const hasMore = totals.totalOrders > orders.length;
 
     return (
         <div className="flex flex-col gap-4">
@@ -125,20 +104,20 @@ export default function MobileOrders() {
                 <div className="grid grid-cols-4 gap-2">
                     <div className="text-center">
                         <p className="text-xl font-bold text-blue-600">
-                            <SkeletonValue loading={ordersLoading} className="h-7 w-8">{summaryStats.totalOrders}</SkeletonValue>
+                            <SkeletonValue loading={ordersLoading} className="h-7 w-8">{totals.totalOrders}</SkeletonValue>
                         </p>
                         <p className="text-sm text-gray-600">{t("analytics.orders")}</p>
                     </div>
                     <div className="text-center">
                         <p className="text-xl font-bold text-orange-600">
-                            <SkeletonValue loading={ordersLoading} className="h-7 w-8">{summaryStats.totalCups}</SkeletonValue>
+                            <SkeletonValue loading={ordersLoading} className="h-7 w-8">{totals.totalCups}</SkeletonValue>
                         </p>
                         <p className="text-sm text-gray-600">{t("analytics.cups")}</p>
                     </div>
                     <div className="text-center col-span-2 border-l-2 border-gray-300">
                         <p className="text-sm text-gray-600">{t("analytics.totalSales")}</p>
                         <p className="text-xl font-bold text-green-600">
-                            <SkeletonValue loading={ordersLoading} className="h-7 w-24">{formatRupiah(summaryStats.totalSales)}</SkeletonValue>
+                            <SkeletonValue loading={ordersLoading} className="h-7 w-24">{formatRupiah(totals.totalSales)}</SkeletonValue>
                         </p>
                     </div>
                 </div>
@@ -206,8 +185,9 @@ export default function MobileOrders() {
                             {formatMobileDate(selectedDate, t)}
                         </h3>
                         <span className="text-sm text-gray-500">
-                            {ordersWithNumbers.length} order
-                            {ordersWithNumbers.length > 1 ? "s" : ""}
+                            {hasMore
+                                ? `${ordersWithNumbers.length} of ${totals.totalOrders}`
+                                : `${totals.totalOrders} order${totals.totalOrders === 1 ? "" : "s"}`}
                         </span>
                     </div>
 
@@ -273,12 +253,6 @@ export default function MobileOrders() {
                                             </div>
                                             <p>
                                                 <span className="font-medium">
-                                                    {t("orders.store")}:
-                                                </span>{" "}
-                                                {order.stores?.name}
-                                            </p>
-                                            <p>
-                                                <span className="font-medium">
                                                     {t("orders.seller")}:
                                                 </span>{" "}
                                                 {order.users?.fullName}
@@ -336,6 +310,15 @@ export default function MobileOrders() {
                             </div>
                         </div>
                     ))}
+
+                    {hasMore && (
+                        <button
+                            onClick={() => setShowAll(true)}
+                            className="w-full py-3 rounded-2xl bg-white text-sm font-medium text-gray-700 active:bg-gray-50"
+                        >
+                            {t("orders.showAll")}
+                        </button>
+                    )}
                 </div>
             )}
         </div>

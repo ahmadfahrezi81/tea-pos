@@ -103,7 +103,6 @@ export const ProductResponse = z
         imageUrl: z.string().nullable(),
         imagePath: z.string().nullable(), // NEW: Storage path for deletion
         categoryId: UUIDSchema.nullable(),
-        categoryName: z.string().nullable(), // NEW: Added for joined data
         status: z.string().nullable(),
         isActive: z.boolean().nullable(),
         popularityRank: z.number().int().nullable(),

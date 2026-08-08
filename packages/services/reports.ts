@@ -34,7 +34,7 @@ export async function createIncidentReport(
 
     if (error) throw error;
 
-    const log = createLogger(supabase, { tenantId, userId, storeId });
+    const log = createLogger(supabase, { tenantId, userId, storeId, dailySummaryId: dailySummaryId ?? undefined });
     log("incident_report_created", { refId: data.id, refTable: "store_reports", metadata: { type } });
 
     return toCamelKeys(data);

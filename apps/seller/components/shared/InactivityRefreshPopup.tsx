@@ -2,8 +2,25 @@
 
 import { useEffect, useRef, useState } from "react";
 import { RefreshCw, Info } from "lucide-react";
+import { useServiceWorkerUpdate } from "@tea-pos/shell/useServiceWorkerUpdate";
 
 const INACTIVITY_LIMIT = 1000 * 60 * 20; // 20 minutes
+
+/**
+ * Two reasons to suggest a reload, one prompt. A second, independent popup
+ * racing this one would be worse than either alone, and this component already
+ * solves the hard part — deciding when interrupting is acceptable.
+ */
+const COPY = {
+    update: {
+        title: "Update Available",
+        body: "A new version is ready. Refresh to load it.",
+    },
+    inactivity: {
+        title: "Refresh Required",
+        body: "You've been inactive — refresh to avoid stale data.",
+    },
+} as const;
 
 /**
  * pointerdown covers mouse, touch and pen in one event, so a tap or the start
@@ -14,8 +31,10 @@ const INACTIVITY_LIMIT = 1000 * 60 * 20; // 20 minutes
 const ACTIVITY_EVENTS = ["pointerdown", "mousemove", "keydown"] as const;
 
 export default function RefreshOnStaleData() {
-    const [showPrompt, setShowPrompt] = useState(false);
+    const [showInactivityPrompt, setShowInactivityPrompt] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const hasUpdate = useServiceWorkerUpdate();
+    const [updateDismissed, setUpdateDismissed] = useState(false);
     // A ref, not state: activity fires constantly and none of it should
     // re-render the tree. Only the interval below reads it. Seeded on mount
     // rather than here, because reading the clock during render is impure.
@@ -44,21 +63,37 @@ export default function RefreshOnStaleData() {
     useEffect(() => {
         const interval = setInterval(() => {
             if (Date.now() - lastActivityRef.current > INACTIVITY_LIMIT) {
-                setShowPrompt(true);
+                setShowInactivityPrompt(true);
             }
         }, 1000);
 
         return () => clearInterval(interval);
     }, []);
 
+    // A pending update is the more actionable of the two, so it wins the copy
+    // when both are true.
+    const reason =
+        hasUpdate && !updateDismissed ? "update"
+        : showInactivityPrompt ? "inactivity"
+        : null;
+
     const handleRefresh = () => {
         setIsRefreshing(true);
         window.location.reload();
     };
 
-    const handleDismiss = () => setShowPrompt(false);
+    // Dismissing the inactivity prompt works because the tap itself bubbles to
+    // the window `pointerdown` listener above and counts as activity, so the
+    // interval does not immediately re-raise it. An update has no such natural
+    // reset — it stays pending until the user reloads — so it is latched off
+    // explicitly.
+    const handleDismiss = () => {
+        if (reason === "update") setUpdateDismissed(true);
+        else setShowInactivityPrompt(false);
+    };
 
-    if (!showPrompt) return null;
+    if (!reason) return null;
+    const { title, body } = COPY[reason];
 
     return (
         <div className="fixed inset-0 z-50 flex items-end bg-black/40" onClick={handleDismiss}>
@@ -72,10 +107,8 @@ export default function RefreshOnStaleData() {
                         <Info size={20} className="text-blue-500" />
                     </div>
                     <div className="space-y-1">
-                        <p className="text-lg font-bold text-gray-900">Refresh Required</p>
-                        <p className="text-sm text-gray-600">
-                            You&apos;ve been inactive — refresh to avoid stale data.
-                        </p>
+                        <p className="text-lg font-bold text-gray-900">{title}</p>
+                        <p className="text-sm text-gray-600">{body}</p>
                     </div>
                 </div>
 

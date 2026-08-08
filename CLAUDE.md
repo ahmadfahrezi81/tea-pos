@@ -18,7 +18,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - `pnpm dev` — Start all dev servers (Turbo manages seller and backoffice apps)
 - `pnpm dev:seller` — Start seller app only
-- `pnpm dev:admin` — Start admin app only (admin is archived — see note below)
+- `pnpm dev:backoffice` — Start backoffice app only
+- `pnpm dev:admin` — Admin is archived and out of the workspace; this script will not work
 - `pnpm build` — Build all apps and packages
 - `pnpm lint` — Lint all workspaces with ESLint 9 + TypeScript 5
 
@@ -32,9 +33,13 @@ Copy `.env` from project root. Key variables:
 
 - `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase client auth
 - `SUPABASE_SERVICE_ROLE_KEY` — Backend-only, privileged operations
-- `NEXT_PUBLIC_FEATURES` — Feature flags (e.g., `"qris"` for payments)
+- `POSTHOG_API_KEY` / `NEXT_PUBLIC_POSTHOG_KEY` / `NEXT_PUBLIC_POSTHOG_HOST` — Analytics **and** the seller app's feature flags
 - `TIMEZONE_OFFSET` / `NEXT_PUBLIC_TIMEZONE_OFFSET` — App timezone (+7 for Indonesia)
-- `TOMORROW_IO_API_KEY` / `XENDIT_API_KEY` — Weather and payment APIs
+- `TOMORROW_IO_API_KEY` — Weather forecasts
+- `XENDIT_API_KEY` / `XENDIT_WEBHOOK_TOKEN` — QRIS payments and webhook verification
+- `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` — Map screens
+- `CRON_SECRET` — Guards `/api/cron/*` routes
+- `NEXT_PUBLIC_FEATURES` — Legacy env feature flags; **backoffice only** (see Feature Flags below)
 
 Node 18+, pnpm 9.0.0 required.
 
@@ -46,32 +51,37 @@ Node 18+, pnpm 9.0.0 required.
 
 Monorepo for a **multi-tenant POS system** for tea shops:
 
-- **Framework:** Next.js 15 (App Router, Server Components)
+- **Framework:** Next.js 16 (App Router, Server Components, React Compiler enabled)
+- **React:** 19.2
 - **Package Manager:** pnpm workspaces + Turbo
 - **Auth & Database:** Supabase (JWT auth + PostgreSQL)
 - **UI:** Radix UI primitives + Tailwind CSS 4
-- **Forms:** React Hook Form + Zod
+- **Forms:** React Hook Form + Zod 4
 - **State:** SWR + React Context
-- **PWA:** next-pwa (offline support)
+- **Analytics & Flags:** PostHog (`posthog-js` client, `posthog-node` server) + Vercel Analytics
+- **PWA:** `@ducanh2912/next-pwa` (production builds only — disabled in dev)
 
 ### Workspace Layout
 
 ```
 ├── apps/
-│   ├── seller/          # Seller-facing mobile PWA (POS, orders, analytics)
-│   ├── backoffice/      # Backoffice dashboard — active development
+│   ├── seller/          # Seller-facing mobile PWA (POS, orders, analytics, payroll claims)
+│   ├── backoffice/      # Backoffice mobile app (payroll admin, supply, dashboard) — active development
 │   ├── admin/           # ARCHIVED — broken, excluded from workspace. Do not use as reference.
 │
 ├── packages/
 │   ├── db/              # Supabase auto-gen types (types.ts) — read-only
-│   ├── features/        # Zod schemas by domain
+│   ├── features/        # Zod schemas + OpenAPI annotations by domain
+│   ├── shell/           # Shared mobile app shell (header, footer nav, scroll, route table)
 │   ├── ui/              # Shared Radix UI components
 │   ├── services/        # Business logic — DB + external APIs (no React, no HTTP)
-│   ├── utils/           # Shared utilities
+│   ├── utils/           # Shared utilities (translations, realtime, server-config, formatters)
 │
 ├── supabase/
 │   └── migrations/      # SQL migration files
 ```
+
+Apps consume workspace packages as source — each app lists them in `transpilePackages` in `next.config.ts`. A new package must be added there.
 
 ---
 
@@ -120,15 +130,20 @@ Then update Zod schemas in `packages/features` to match.
 **Tenant Resolution:**
 
 - Routes: `/:tenantSlug/*` — slug resolved to tenant ID via DB
-- Middleware validates tenant + user access before rendering
-- `x-tenant-id` cookie (HTTP-only, 24h) cached for fast lookups
+- **`proxy.ts`** (not `middleware.ts`) is the Next 16 request interceptor. Both `apps/seller/proxy.ts` and `apps/backoffice/proxy.ts` exist and are separate — update both if changing auth logic.
+- Proxy validates session, role, and tenant access before rendering, then writes cookies:
+  - `x-tenant-id` — `"<slug>:<uuid>"`, HTTP-only, 24h
+  - `x-tenant-access` — cached access grant, HTTP-only, 1h
+  - `x-user-info` — JSON `{ id, role, fullName, email, avatarUrl, preferredLanguage }`, **readable by JS**, 7 days
+- Server code reads the tenant via `getCurrentTenantId()` from `@tea-pos/utils/server-config/tenant`, and the caller via `getRequestUser()` from `lib/auth/get-request-user.ts` (which parses `x-user-info`).
 
 **Authorization:**
 
 - `users.role`: `ADMIN` / `USER` / `DRIVER` / `SUPPLIER`
+- The seller app admits only `USER` and `ADMIN`; `DRIVER` and `SUPPLIER` have their own apps
 - Super admins (`ADMIN`) can access any tenant
 - Regular users checked against `user_tenant_assignments`
-- Store-level roles in `user_store_assignments`
+- Store assignments (with a default store) in `user_store_assignments`
 
 ---
 
@@ -151,14 +166,37 @@ component    apps/seller/app/**/page.tsx or _components/
 | Layer          | Job                                | May use                                             | Must NOT use                        |
 | -------------- | ---------------------------------- | --------------------------------------------------- | ----------------------------------- |
 | **service**    | DB queries, business logic         | `SupabaseClient`, `process.env`, external `fetch()` | React, `next/headers`, `apiFetch`   |
-| **api route**  | Auth, validate input, call service | service functions, Zod, `NextResponse`              | Raw Supabase, business logic        |
+| **api route**  | Auth, validate input, call service | service functions, Zod, response helpers            | Raw Supabase, business logic        |
 | **api client** | Typed wrapper for each API route   | `apiFetch()`, `buildParams()`, Zod `.parse()`       | SWR, React                          |
 | **hook**       | UI state + data lifecycle          | api clients, SWR                                    | `fetch()`, Supabase, business logic |
 | **component**  | Render UI                          | hooks, context                                      | api clients, Supabase, `fetch()`    |
 
 **Exception:** Server components (`page.tsx`, layouts without `"use client"`) may call Supabase directly for SSR data fetching — this is correct.
 
-**Opening a store:** Use `openStore()` from `packages/services/sessions.ts` — this is the single entry point that creates `daily_summary` first, then `store_session` with the returned ID. Never create them separately or in parallel. The old `POST /api/summaries` still works for legacy compatibility but new UI should use `POST /api/sessions`.
+**API route shape.** Routes use the helpers in `apps/seller/lib/api/response.ts` — `ok`, `err`, `badRequest`, `unauthorized`, `forbidden`, `handleError` — rather than raw `NextResponse.json`. The canonical body:
+
+```ts
+export async function GET(request: NextRequest) {
+    try {
+        const user = await getRequestUser();
+        if (!user) return unauthorized();
+        const supabase = getServiceClient();
+        const tenantId = await getCurrentTenantId();
+        const query = ListThingQuery.safeParse(Object.fromEntries(new URL(request.url).searchParams));
+        if (!query.success) return badRequest("Invalid query parameters");
+
+        const data = await listThings(supabase, { tenantId, ...query.data });
+        const parsed = ThingListResponse.safeParse(data);
+        if (!parsed.success) return err("Invalid response shape");
+
+        return ok(parsed.data);
+    } catch (error) { return handleError("GET /api/things", error); }
+}
+```
+
+**Service-role client:** most seller API routes use `getServiceClient()` (`lib/supabase/service.ts`), which **bypasses RLS**. Tenant scoping in those routes is therefore manual and mandatory — every query must filter on the `tenantId` resolved from the cookie. Never derive a tenant or store id from the request body.
+
+**Opening a store:** Use `openStore()` from `packages/services/sessions.ts` — the single entry point that creates the `store_daily_summaries` row first (seeding totals from any orders already on that date), then the `store_sessions` row with the returned id and a generated `claim_code`. Never create them separately or in parallel. `POST /api/summaries` still exists for legacy compatibility; new UI should use `POST /api/sessions`.
 
 **Activity logging in services:** Use `createLogger` from `packages/services/activity-logs.ts` — never call `logActivity` directly. Create once per function with shared context, then call the returned `log()` for each event. It is fire-and-forget; failures are swallowed and never propagate.
 
@@ -179,6 +217,53 @@ Any API route that calls a mutating service must call `getRequestUser()` and pas
 
 ---
 
+## Mobile Shell (`packages/shell`)
+
+Both mobile apps render inside the shared `MobileShell` — header, scrollable content region, and bottom chrome as three real flex children, so no height is ever measured or guessed.
+
+- `MobileShell.tsx` — the shell itself. Route data, chrome, and i18n are **props**, never inferred inside the package.
+- `routes.ts` — `RouteConfig` type. Every field describes a *layout capability* (`inlineHeader`, `headerAction`, `titleAccessory`, `footerCtaKey`, `preserveScroll`, `scrollPaddingBottom`), never a specific screen. `parent: null` marks a root tab; `"lastRootTab"` returns to whichever tab the user came from.
+- `MobileHeader.tsx`, `MobileFooterNav.tsx`, `FooterSlotContext.tsx`, `ScrollContext.tsx`, `useScrollRestoration.ts`, `useStandaloneViewportHeight.ts`.
+
+Each app owns its own route table and wiring:
+
+- Seller: `app/[tenantSlug]/mobile/config/navigation.ts` + `app/[tenantSlug]/mobile/components/MobileLayoutClient.tsx`
+- Backoffice: the same pair under `apps/backoffice`
+
+When adding a screen, add its entry to that app's route table — the shell derives title, back target, and header/footer chrome from it.
+
+**Seller provider order** (`app/[tenantSlug]/mobile/layout.tsx`): `RealtimeProvider → StoreProvider → FlagsProvider → FastOrderModeProvider → ToastProvider → ErrorSheetProvider → MobileLayoutClient`. `AuthProvider` and `LanguageProvider` sit above, in the root `app/layout.tsx`, hydrated from the `x-user-info` and `locale` cookies.
+
+---
+
+## Internationalization
+
+- Messages live in `packages/utils/translations/{en,id}.ts`; `t(locale, key)` resolves dotted keys and falls back to English.
+- Client code calls `useT()` (`lib/hooks/useT.ts`) → `LanguageContext`.
+- The chosen locale is stored on `users.preferred_language` and mirrored into a `locale` cookie so the server render starts in the right language.
+- The root layout sets `google: "notranslate"` — browser auto-translate rewrites text nodes under React and can crash reconciliation.
+
+---
+
+## Feature Flags
+
+**Seller — PostHog, evaluated server-side.** `apps/seller/lib/flags.ts` defines the flag keys:
+
+- `FLAGS.FEATURE`: `feature-qris`, `feature-report`, `feature-request`, `feature-reimbursement`, `feature-fast-order`
+- `FLAGS.OPS`: `ops-skip-manage-photos`, `ops-maintenance`
+
+`GET /api/flags` evaluates them all in one call with person properties `{ role, tenantId, storeId }` and returns a camelCase booleans object; `FlagsContext` fetches it via SWR (60s dedupe) and components read `useFlags()`. Individual API routes hard-gate with `isFlagEnabled(flag, userId, props)`. Evaluation failures fail **closed** (everything disabled).
+
+**Backoffice — legacy env flags.** `isEnabled()` from `packages/features/shared/features.ts`, driven by the comma-separated `NEXT_PUBLIC_FEATURES`. Flags there: `qris`, `export-pdf`, `skip-photos`. The seller app no longer uses this helper.
+
+---
+
+## Realtime
+
+`packages/utils/realtime` exposes a transport-agnostic `RealtimeManager` interface (`subscribe`, `broadcast`, `isConnected`, `onConnectionChange`, `reconnect`) with `SupabaseRealtimeAdapter` as the implementation. Seller wires it up in `lib/context/RealtimeContext.tsx`; consume it with `useRealtime()`, never by touching a Supabase channel directly in a component.
+
+---
+
 ## Schema & Types
 
 **`packages/db/types.ts`** — auto-generated from Supabase. Read this at session start. Never edit manually. Regenerate with `pnpm types:db`.
@@ -189,67 +274,82 @@ Any API route that calls a mutating service must call `getRequestUser()` and pas
 - `List{Entity}Query`, `Get{Entity}Query` — GET params
 - `{Entity}Response`, `{Entity}ListResponse` — API responses
 
+Several domains also carry an `openapi.ts` alongside the schema.
+
 **Conventions:**
 
 - camelCase in schemas; convert from DB snake_case with `toCamelKeys()`
 - OpenAPI annotations via `z.object().openapi({ description, example })`
+
+**Naming caveat:** the DB tables were renamed but their foreign-key constraint names were not, so `packages/db/types.ts` still shows keys like `payroll_claim_types_tenant_id_fkey` on `payroll_claim_configs`. Trust the table and column names, not the constraint names.
 
 ---
 
 ## Key Tables
 
 - `tenants` — Workspaces
-- `users` — User metadata (role, name, email, phone)
-- `user_tenant_assignments` — Role per user per tenant
-- `user_store_assignments` — Role per user per store
-- `stores` — Tea shop locations
+- `users` — User metadata (`role`, `full_name`, `email`, `phone_number`, `avatar_url`, `status`, `preferred_language`)
+- `user_tenant_assignments` — Which tenants a user may access
+- `user_store_assignments` — Store assignment per user, with `is_default`
+- `stores` — Tea shop locations (`open_time`, `close_time`, lat/lng, `status`)
 - `tenant_products` + `tenant_product_categories` — Inventory
 - `store_orders` + `store_order_items` — Transactions
-- `store_order_payments` — QRIS/Xendit payment records
-- `store_daily_summaries` + `store_daily_summary_photos` — Cash reconciliation. Uses `opened_by` + `closed_by` (user IDs); `seller_id`/`manager_id` no longer exist
-- `store_sessions` — POS ownership windows. One active session per store enforced by partial unique index. Sessions chain via `previous_session_id`. Created by `openStore()` immediately after `store_daily_summaries`
+- `store_order_payments` — QRIS/Xendit payment records (`xendit_qr_id`, `qr_string`, `pending_items`, `expires_at`)
+- `store_daily_summaries` + `store_daily_summary_photos` — Cash reconciliation. Uses `opened_by` + `closed_by` (user IDs); `seller_id`/`manager_id` no longer exist. Photos carry a `type` and an optional `quantity` JSON.
+- `store_sessions` — POS ownership windows. One active session per store enforced by a partial unique index. Sessions chain via `previous_session_id` and are handed over with a `claim_code`. Created by `openStore()` immediately after `store_daily_summaries`.
 - `store_expenses` — Cost tracking per daily summary
 - `store_requests` — Supply requests submitted by staff
 - `store_reports` — Incident reports submitted by staff
-- `payroll_periods` — Weekly pay cycles (Monday–Sunday) per tenant
-- `payroll_commission_types` — Tenant-defined commission categories (e.g. "Seller Standard"). Admin-managed.
-- `payroll_claim_types` — Tenant-defined claim categories (e.g. "Lunch Allowance") with `frequency`: `weekly`/`monthly`/`one_time`. Admin-managed.
-- `payroll_claim_eligibility` — Per-user per-type eligibility. Soft-deleted with `removed_at`. `setUserClaimEligibility` handles full replacement per user.
-- `payroll_user_info` — Per-user payroll settings: `rate_per_cup`, `commission_type_id`, bank details. Replaces `tenant_commission_configs`.
-- `payroll_commissions` — (was `payroll_entries`) One row per user per daily summary on close. `rate_per_unit` snapshotted at creation. Auto-created by `createPayrollCommissions()` on close-day.
-- `payroll_claims` — (was `payroll_reimbursements`) Staff submits, admin reviews. `status`: `pending → approved/rejected → paid`. `payroll_period_id` assigned at submit time from claim date. Weekly claims require a session on the claim date (UTC+7).
-- `payroll_payouts` — One per user per period. `commissions_total` + `claims_total` = `total_pay`. Created/updated by `upsertPayout()`.
+- `payroll_commission_configs` — (was `payroll_commission_types`) Tenant-defined commission categories with `rate_per_cup`, `slug`, `is_enabled`. Admin-managed.
+- `payroll_claim_configs` — (was `payroll_claim_types`) Tenant-defined claim categories with `amount`, `frequency` (`weekly`/`monthly`/`one_time`), `claim_source`, `auto_threshold_hours`, `is_enabled`. Admin-managed.
+- `payroll_user_claim_assignments` — (was `payroll_claim_eligibility`) Per-user per-config eligibility. Hard rows, no soft-delete column — `setUserClaimEligibility` replaces the full set for a user.
+- `payroll_user_info` — Per-user payroll settings: `commission_config_id`, `pay_frequency`, bank details. The rate itself lives on the commission config, not here.
+- `payroll_commissions` — (was `payroll_entries`) One row per user per daily summary on close. `rate_per_cup` snapshotted at creation, plus `total_cups` / `total_orders` / `total_commission`. Auto-created by `createPayrollCommissions()` on close-day; linked to a payout via `payout_id`.
+- `payroll_claims` — (was `payroll_reimbursements`) Staff submits, admin reviews. `status`: `pending → approved/rejected → paid`. References `claim_config_id`, optionally `daily_summary_id` / `store_id`, and is linked to a payout via `payout_id`. `createAutoClaimsForDailySummary()` generates threshold-based claims on close using `hours_worked`.
+- `payroll_payouts` — One per user per date range. **Owns its own `start_date` / `end_date`** — there is no periods table. `commissions_total` + `claims_total` = `total_pay`; carries `paid_at`, `paid_by`, `payment_proof_url`, `notes`. Created/updated by `upsertPayout()`.
 - `tenant_customer_feedbacks` — Geotagged feedback
-- `notification_events` + `notification_reads` — Notifications
 - `weather_hourly` — Cached weather forecasts
-- `tenant_activity_logs` — Audit trail of user actions. Known types: `order_created`, `store_open`, `daily_summary_closed`, `balance_updated`, `photo_uploaded`, `photo_deleted`, `photo_quantity_updated`, `expense_created`, `expense_updated`, `expense_deleted`, `customer_feedback_submitted`, `session_transferred`, `session_ended`, `commission_config_updated`, `payroll_commission_updated`, `payroll_period_updated`, `claim_submitted`, `claim_status_updated`
+- `tenant_activity_logs` — Audit trail. The authoritative type list is the `ActivityLogType` enum in `packages/features/activity-logs/schema.ts`: `order_created`, `store_opened`, `store_closed`, `opening_balance_updated`, `summary_photo_uploaded`, `summary_photo_deleted`, `summary_photo_updated`, `expense_created`, `expense_updated`, `expense_deleted`, `customer_feedback_submitted`, `session_transferred`, `session_ended`, `commission_config_updated`, `payroll_entry_updated`, `payroll_commission_updated`, `payroll_period_updated`, `supply_request_created`, `incident_report_created`, `reimbursement_submitted`, `reimbursement_status_updated`, `claim_submitted`, `claim_status_updated`, `payroll_payout_updated`
+
+**Removed — do not reintroduce:**
+
+- `payroll_periods` — gone. Payouts own their date range; `/api/payroll/periods` and `/api/payroll/periods/current` return **410**.
+- `notification_events` / `notification_reads` — never shipped; there are no notification tables.
+
+**DB functions:** `transfer_store_session(p_claim_code, p_new_claim_code, p_store_id, p_tenant_id, p_user_id)` (atomic session handover), `payroll_claims_month_key(d)`, `user_tenant_ids()`.
 
 ---
 
 ## Common Patterns & Gotchas
 
-**Tenant isolation:** Always include `tenant_id` in queries (RLS enforces, but be explicit).
+**Tenant isolation:** Always include `tenant_id` in queries. RLS backs this up for anon-key clients, but most seller API routes run on the service-role key where RLS does **not** apply — the filter is the only protection.
 
 **Schema validation:** `fetch from Supabase → toCamelKeys() → Zod.parse()` — always in that order.
 
-**Feature flags:** `isEnabled('qris')` from `packages/features/shared/features.ts`. Flags: `qris`, `new-dashboard`, `export-pdf`.
+**Timezone:** All DB timestamps are UTC. Day boundaries are computed against `TIMEZONE_OFFSET` (server) / `NEXT_PUBLIC_TIMEZONE_OFFSET` (client), default +7. Use `formatDate()` from `packages/utils` for display.
 
-**Timezone:** All DB timestamps are UTC. Use `formatDate()` from utils for display.
-
-**Image uploads:** Compress with `browser-image-compression` before upload. Stored in Supabase Storage or ibb.co CDN.
+**Image uploads:** Compress with `browser-image-compression` (`lib/compressPhoto.ts`) before upload. Stored in Supabase Storage or the ibb.co CDN; both `i.ibb.co` and `i.ibb.co.com` are allowed image hosts.
 
 **SWR config:** `dedupingInterval: 5000, revalidateOnFocus: false`. Use `mutate()` after mutations.
 
 **Next.js caching:** Use `revalidatePath()` in route handlers after mutations.
 
+**Errors:** Throw from services; `handleError()` in the route converts via `toApiError()` and only logs 5xx. Client-side, `apiFetch` throws `ApiError`, surfaced through `ErrorSheetContext`.
+
 ---
 
 ## Important Files
 
-- `apps/seller/middleware.ts` — Auth + tenant routing
+- `apps/seller/proxy.ts` — Auth + tenant routing (Next 16 replacement for `middleware.ts`)
 - `apps/seller/lib/api/client.ts` — `apiFetch()` and `buildParams()`
+- `apps/seller/lib/api/response.ts` — `ok` / `err` / `badRequest` / `unauthorized` / `forbidden` / `handleError`
+- `apps/seller/lib/auth/get-request-user.ts` — `getRequestUser()`
+- `apps/seller/lib/flags.ts` — PostHog flag keys and evaluation
+- `apps/seller/app/[tenantSlug]/mobile/config/navigation.ts` — Seller route table for the shell
+- `packages/shell/routes.ts` — `RouteConfig` contract
+- `packages/utils/server-config/tenant.ts` — `getCurrentTenantId()`
+- `packages/utils/translations/` — en/id messages
 - `packages/features/shared/common-schema.ts` — Base Zod schemas
-- `packages/features/shared/features.ts` — `isEnabled()` feature flags
 - `packages/db/types.ts` — Auto-gen Supabase types (**read at session start**)
 - `turbo.json` — Build config
 - `pnpm-workspace.yaml` — Workspace config
@@ -259,6 +359,8 @@ Any API route that calls a mutating service must call `getRequestUser()` and pas
 ## Notes
 
 - **`pnpm install` first** if dependencies changed. Use `turbo build --no-cache` if build seems stale.
-- **Middleware is per-app.** `apps/seller/middleware.ts` and `apps/admin` are separate — update both if changing auth logic.
+- **The request interceptor is per-app and is named `proxy.ts`.** `apps/seller/proxy.ts` and `apps/backoffice/proxy.ts` are separate — update both if changing auth logic.
 - **Tenant slug is immutable.** Renaming requires a data migration.
-- **Admin app is archived.** Excluded from pnpm workspace and builds. Code preserved in `apps/admin/` but broken and unmaintained for 6+ months. Do not reference or modify it.
+- **React Compiler is on** in the seller app. Don't hand-add `useMemo`/`useCallback` purely for referential stability; do keep them where a value is semantically expensive.
+- **PWA is production-only.** Service worker caching is disabled in dev, so offline behavior can only be tested against a production build.
+- **Admin app is archived.** Excluded from pnpm workspace and builds. Code preserved in `apps/admin/` but broken and unmaintained. Do not reference or modify it.

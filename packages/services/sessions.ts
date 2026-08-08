@@ -15,6 +15,37 @@ export interface GetStoreGateStateParams {
     date: string;
 }
 
+/**
+ * The active session plus the holder's name and avatar, in one round trip.
+ *
+ * Those two values used to be a second query keyed on `user_id`. Embedding
+ * them makes the gate two queries instead of three. Columns are aliased to
+ * camelCase so the row arrives as `StoreSessionResponse` and needs no
+ * key-conversion pass.
+ *
+ * Every field on that schema is required — `store_sessions` has exactly these
+ * eleven columns, so there is nothing to trim here, only to rename. (Task 037
+ * listed trimming this `select("*")` as a win; it isn't one.)
+ */
+const ACTIVE_SESSION_COLUMNS = `
+    id, status,
+    tenantId:tenant_id,
+    storeId:store_id,
+    dailySummaryId:daily_summary_id,
+    userId:user_id,
+    claimCode:claim_code,
+    startedAt:started_at,
+    endedAt:ended_at,
+    previousSessionId:previous_session_id,
+    createdAt:created_at,
+    users(fullName:full_name, avatarUrl:avatar_url)
+`;
+
+type ActiveSessionRow = {
+    users: { fullName: string | null; avatarUrl: string | null } | null;
+    [field: string]: unknown;
+};
+
 export async function getStoreGateState(supabase: SupabaseClient, params: GetStoreGateStateParams) {
     const { tenantId, storeId, date } = params;
 
@@ -32,7 +63,7 @@ export async function getStoreGateState(supabase: SupabaseClient, params: GetSto
 
     const { data: session, error: sessionError } = await supabase
         .from("store_sessions")
-        .select("*")
+        .select(ACTIVE_SESSION_COLUMNS)
         .eq("store_id", storeId)
         .eq("tenant_id", tenantId)
         .eq("status", "active")
@@ -41,18 +72,16 @@ export async function getStoreGateState(supabase: SupabaseClient, params: GetSto
     if (sessionError) throw sessionError;
     if (!session) return { gate: "no_session" as const, summaryId: summary.id };
 
-    const { data: userRow } = await supabase
-        .from("users")
-        .select("full_name, avatar_url")
-        .eq("id", session.user_id)
-        .single();
+    // `users` is the embed, not a response field — lift the two values out and
+    // drop it, so what is returned is exactly `StoreSessionResponse`.
+    const { users, ...sessionFields } = session as unknown as ActiveSessionRow;
 
     return {
         gate: "open" as const,
         session: {
-            ...toCamelKeys(session),
-            userName: userRow?.full_name ?? null,
-            userAvatarUrl: userRow?.avatar_url ?? null,
+            ...sessionFields,
+            userName: users?.fullName ?? null,
+            userAvatarUrl: users?.avatarUrl ?? null,
         },
     };
 }
@@ -102,7 +131,7 @@ export async function resumeSession(supabase: SupabaseClient, params: ResumeSess
 
     if (sessionError || !sessionData) throw new Error(sessionError?.message ?? "Failed to create session");
 
-    const log = createLogger(supabase, { tenantId, userId, storeId });
+    const log = createLogger(supabase, { tenantId, userId, storeId, dailySummaryId: summaryId });
     log("store_opened", {
         refId: summaryId,
         refTable: "store_daily_summaries",
@@ -185,7 +214,7 @@ export async function openStore(supabase: SupabaseClient, params: OpenStoreParam
 
     if (sessionError || !sessionData) throw new Error(sessionError?.message ?? "Failed to create session");
 
-    const log = createLogger(supabase, { tenantId, userId, storeId });
+    const log = createLogger(supabase, { tenantId, userId, storeId, dailySummaryId });
     log("store_opened", {
         refId: dailySummaryId,
         refTable: "store_daily_summaries",
@@ -252,7 +281,12 @@ export async function transferSession(supabase: SupabaseClient, params: Transfer
     }
     if (!newSession) throw new Error("Failed to create new session");
 
-    const log = createLogger(supabase, { tenantId, userId, storeId });
+    const log = createLogger(supabase, {
+        tenantId,
+        userId,
+        storeId,
+        dailySummaryId: newSession.daily_summary_id as string,
+    });
     log("session_transferred", {
         refId: newSession.id,
         refTable: "store_sessions",
@@ -494,8 +528,13 @@ export async function endSession(
 
     if (error || !data) throw Object.assign(new Error(error?.message ?? "Session not found"), { status: 404 });
 
-    const raw = data as { store_id: string };
-    const log = createLogger(supabase, { tenantId, userId, storeId: raw.store_id });
+    const raw = data as { store_id: string; daily_summary_id: string };
+    const log = createLogger(supabase, {
+        tenantId,
+        userId,
+        storeId: raw.store_id,
+        dailySummaryId: raw.daily_summary_id,
+    });
     log("session_ended", { refId: sessionId, refTable: "store_sessions" });
 
     return toCamelKeys(data);

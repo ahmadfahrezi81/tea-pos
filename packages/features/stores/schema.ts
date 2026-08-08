@@ -95,14 +95,6 @@ export const StoreAssignmentResponse = z
     })
     .openapi({ title: "StoreAssignmentResponse" });
 
-export const UserResponse = z
-    .object({
-        id: UUIDSchema,
-        fullName: z.string(),
-        email: z.string().email(),
-    })
-    .openapi({ title: "UserResponse" });
-
 export const StoreResponse = z
     .object({
         id: UUIDSchema,
@@ -122,7 +114,6 @@ export const StoreResponse = z
 export const StoreListResponse = z
     .object({
         stores: z.array(StoreResponse),
-        users: z.array(UserResponse),
         assignments: z
             .record(z.string(), z.array(StoreAssignmentResponse))
             .openapi({
@@ -153,7 +144,6 @@ export type CreateStoreInput = z.infer<typeof CreateStoreInput>;
 export type UpdateStoreInput = z.infer<typeof UpdateStoreInput>;
 export type ListStoresQuery = z.infer<typeof ListStoresQuery>;
 export type StoreAssignmentResponse = z.infer<typeof StoreAssignmentResponse>;
-export type UserResponse = z.infer<typeof UserResponse>;
 export type StoreResponse = z.infer<typeof StoreResponse>;
 export type StoreListResponse = z.infer<typeof StoreListResponse>;
 export type CreateStoreResponse = z.infer<typeof CreateStoreResponse>;

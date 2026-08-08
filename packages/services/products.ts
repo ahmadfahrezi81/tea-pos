@@ -1,5 +1,4 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { toCamelKeys } from "@tea-pos/utils/schemas";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -10,6 +9,27 @@ export interface ListProductsParams {
     status?: string;
 }
 
+/**
+ * Aliased to camelCase in the query rather than walked afterwards, so rows come
+ * back already in the response's shape and there is nothing for `toCamelKeys`
+ * to do.
+ *
+ * This list must stay in step with `ProductResponse`: its fields are
+ * `.nullable()`, not `.optional()`, so a column dropped here fails the parse
+ * rather than shrinking the payload.
+ */
+const PRODUCT_COLUMNS = `
+    id, name, price, status,
+    imageUrl:image_url,
+    imagePath:image_path,
+    categoryId:category_id,
+    isActive:is_active,
+    popularityRank:popularity_rank,
+    tenantId:tenant_id,
+    createdAt:created_at,
+    updatedAt:updated_at
+`;
+
 // ─── Public functions ─────────────────────────────────────────────────────────
 
 export async function listProducts(supabase: SupabaseClient, params: ListProductsParams) {
@@ -17,7 +37,7 @@ export async function listProducts(supabase: SupabaseClient, params: ListProduct
 
     let query = supabase
         .from("tenant_products")
-        .select(`*, tenant_product_categories(id, name)`)
+        .select(PRODUCT_COLUMNS)
         .eq("tenant_id", tenantId)
         .order("popularity_rank", { ascending: true, nullsFirst: false })
         .order("price", { ascending: true });
@@ -33,10 +53,5 @@ export async function listProducts(supabase: SupabaseClient, params: ListProduct
     const { data, error } = await query;
     if (error) throw error;
 
-    const transformed = (data ?? []).map((product) => {
-        const { product_categories, ...rest } = product;
-        return { ...rest, category_name: product_categories?.name ?? null };
-    });
-
-    return toCamelKeys(transformed);
+    return data ?? [];
 }
