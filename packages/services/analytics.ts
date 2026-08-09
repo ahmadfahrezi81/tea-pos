@@ -133,9 +133,11 @@ export async function getTeaWaste(supabase: SupabaseClient, params: MonthSalesPa
         litersByDate[date] = (litersByDate[date] ?? 0) + value;
     }
 
+    // A 0 L reading is a real (good) result, not a missing one — keep it so the
+    // chart and the per-day average both count the day. Days with no
+    // closing:tea photo at all are still absent, since nothing was measured.
     return Object.entries(litersByDate)
         .map(([date, liters]) => ({ date, liters }))
-        .filter((d) => d.liters > 0)
         .sort((a, b) => a.date.localeCompare(b.date));
 }
 

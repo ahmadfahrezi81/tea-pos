@@ -65,13 +65,11 @@ function SummaryUsersRow({ summaryId }: { summaryId: string }) {
         <div ref={ref}>
             {shouldFetch && isLoading ? (
                 <div className="flex flex-col gap-1.5 animate-pulse">
-                    {[0, 1].map((i) => (
-                        <div key={i} className="flex items-center gap-2 bg-slate-100 rounded-xl p-1.5 w-full">
-                            <div className="w-7 h-7 rounded-lg bg-gray-200 shrink-0" />
-                            <div className="h-4 bg-gray-200 rounded flex-1" />
-                            <div className="h-5 w-16 bg-gray-200 rounded-lg shrink-0" />
-                        </div>
-                    ))}
+                    <div className="flex items-center gap-2 bg-slate-100 rounded-xl p-1.5 w-full">
+                        <div className="w-7 h-7 rounded-lg bg-gray-200 shrink-0" />
+                        <div className="h-4 bg-gray-200 rounded flex-1" />
+                        <div className="h-5 w-16 bg-gray-200 rounded-lg shrink-0" />
+                    </div>
                 </div>
             ) : users.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">

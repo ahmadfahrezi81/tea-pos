@@ -73,8 +73,8 @@ export default function TeaWasteChart({ storeId, month }: Props) {
         return Math.round(sum * 10) / 10;
     }, [teaWaste]);
 
-    // Rp wasted for the month, plus a per-day average over the days that
-    // actually have a closing reading (not the full calendar month).
+    // Rp wasted for the month, plus a per-day average over every day with a
+    // closing reading — 0 L days included — not the full calendar month.
     const { totalCost, avgCostPerDay } = useMemo(() => {
         const cost = totalLiters * COST_PER_LITER;
         return {
@@ -108,7 +108,8 @@ export default function TeaWasteChart({ storeId, month }: Props) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const CustomBarLabel = (props: any) => {
         const { x, y, width, value, index } = props;
-        if (!value || value === 0) return null;
+        // 0 is a valid reading and must stay labelled — only skip missing ones.
+        if (value === null || value === undefined) return null;
         const isPeak = index === peakIndex;
         return (
             <text
@@ -224,7 +225,14 @@ export default function TeaWasteChart({ storeId, month }: Props) {
                                 strokeDasharray="4 4"
                                 strokeWidth={1.5}
                             />
-                            <Bar dataKey="liters" radius={[4, 4, 0, 0]} maxBarSize={36}>
+                            {/* minPointSize keeps a 0 L day as a visible sliver
+                                on the axis instead of nothing at all. */}
+                            <Bar
+                                dataKey="liters"
+                                radius={[4, 4, 0, 0]}
+                                maxBarSize={36}
+                                minPointSize={2}
+                            >
                                 {chartData.map((entry) => (
                                     <Cell
                                         key={entry.dateRaw}
