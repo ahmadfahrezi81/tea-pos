@@ -18,37 +18,73 @@ export interface HourlySalesParams {
 
 // ─── Internal helpers ─────────────────────────────────────────────────────────
 
-function parseMonthRange(month: string) {
-    const [year, monthNum] = month.split("-");
-    const y = parseInt(year, 10);
-    const m = parseInt(monthNum, 10);
+/**
+ * The month's boundaries as UTC instants, derived from app-local midnight.
+ *
+ * The previous version built these with `Date.UTC`, which is app time only at
+ * offset 0: at +7 it dropped the first seven hours of the 1st and pulled in the
+ * first seven of the next month.
+ */
+function monthRangeIso(month: string, tz: number) {
+    const [year, monthNum] = month.split("-").map((v) => parseInt(v, 10));
+    const pad = String(tz).padStart(2, "0");
+    const nextMonth =
+        monthNum === 12
+            ? `${year + 1}-01-01`
+            : `${year}-${String(monthNum + 1).padStart(2, "0")}-01`;
+
     return {
-        startDate: new Date(Date.UTC(y, m - 1, 1)),
-        endDate: new Date(Date.UTC(y, m, 0, 23, 59, 59)),
+        start: new Date(`${month}-01T00:00:00+${pad}:00`).toISOString(),
+        end: new Date(`${nextMonth}T00:00:00+${pad}:00`).toISOString(),
     };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function fetchAllOrderItems(supabase: SupabaseClient, storeId: string, tenantId: string, start: string, end: string): Promise<any[]> {
-    const pageSize = 1000;
-    let from = 0;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let all: any[] = [];
+interface MonthOrderRow {
+    store_order_items: Array<{ product_id: string | null; quantity: number }> | null;
+}
 
-    while (true) {
+/**
+ * The month's orders with their items embedded.
+ *
+ * Reads down from `store_orders`, never up from `store_order_items`. The old
+ * helper did the reverse — it selected from `store_order_items` and filtered on
+ * an embedded `store_orders!inner`, so the planner had to reach every item row
+ * before it could apply the store and date filters. `store_order_items.order_id`
+ * carries a foreign key but no index (Postgres does not create one for the
+ * referencing side), so that path got slower every day of the month until it
+ * started timing out. This direction is covered by the
+ * `store_orders (store_id, created_at)` index instead, and is the same shape
+ * `getHourlySales` and `getSummaryUsers` already use.
+ *
+ * The loop also stops on a short page rather than only on an empty one, so it
+ * no longer issues a final request with an offset past the end.
+ */
+async function fetchMonthOrders(
+    supabase: SupabaseClient,
+    tenantId: string,
+    storeId: string,
+    start: string,
+    end: string,
+): Promise<MonthOrderRow[]> {
+    const pageSize = 1000;
+    const all: MonthOrderRow[] = [];
+
+    for (let from = 0; ; from += pageSize) {
         const { data, error } = await supabase
-            .from("store_order_items")
-            .select(`id, quantity, product_id, tenant_products(name), order_id, store_orders!inner(store_id, created_at)`)
+            .from("store_orders")
+            .select("id, store_order_items(product_id, quantity)")
             .eq("tenant_id", tenantId)
-            .eq("store_orders.store_id", storeId)
-            .gte("store_orders.created_at", start)
-            .lte("store_orders.created_at", end)
+            .eq("store_id", storeId)
+            .gte("created_at", start)
+            .lt("created_at", end)
+            .order("created_at", { ascending: true })
             .range(from, from + pageSize - 1);
 
         if (error) throw error;
         if (!data || data.length === 0) break;
-        all = all.concat(data);
-        from += pageSize;
+
+        all.push(...(data as unknown as MonthOrderRow[]));
+        if (data.length < pageSize) break;
     }
 
     return all;
@@ -176,69 +212,119 @@ export async function getHourlySales(supabase: SupabaseClient, params: HourlySal
     return first === -1 ? [] : allSlots.slice(Math.max(0, first - 1), Math.min(23, last + 1) + 1);
 }
 
+/**
+ * Per-product quantities for the month.
+ *
+ * The one breakdown here that genuinely needs item-level rows — no summary
+ * column carries a per-product split — so it still walks the month's orders.
+ * Names come from a single follow-up read keyed on the products that actually
+ * sold, rather than an embed repeated on every item row.
+ */
 export async function getProductSales(supabase: SupabaseClient, params: MonthSalesParams) {
     const { tenantId, storeId, month } = params;
-    const { startDate, endDate } = parseMonthRange(month);
+    const tz = params.tzOffset ?? Number(process.env.TIMEZONE_OFFSET ?? 7);
+    const { start, end } = monthRangeIso(month, tz);
 
-    const items = await fetchAllOrderItems(supabase, storeId, tenantId, startDate.toISOString(), endDate.toISOString());
+    const orders = await fetchMonthOrders(supabase, tenantId, storeId, start, end);
 
-    const productData: Record<string, { name: string; quantity: number }> = {};
-    for (const item of items) {
-        if (!item.product_id || !item.tenant_products?.name) continue;
-        if (!productData[item.product_id]) productData[item.product_id] = { name: item.tenant_products.name, quantity: 0 };
-        productData[item.product_id].quantity += item.quantity || 0;
+    const quantityByProduct = new Map<string, number>();
+    for (const order of orders) {
+        for (const item of order.store_order_items ?? []) {
+            if (!item.product_id) continue;
+            quantityByProduct.set(
+                item.product_id,
+                (quantityByProduct.get(item.product_id) ?? 0) + (item.quantity || 0),
+            );
+        }
     }
 
-    const totalQuantity = Object.values(productData).reduce((sum, p) => sum + p.quantity, 0);
+    if (quantityByProduct.size === 0) return { data: [], totalQuantity: 0 };
+
+    const { data: products, error } = await supabase
+        .from("tenant_products")
+        .select("id, name")
+        .eq("tenant_id", tenantId)
+        .in("id", [...quantityByProduct.keys()]);
+
+    if (error) throw error;
+
+    // A product the tenant no longer owns is dropped rather than shown
+    // unnamed, which is what the old `tenant_products(name)` embed did too —
+    // so `totalQuantity` is summed after the filter to keep the percentages
+    // adding up to 100.
+    const nameById = new Map((products ?? []).map((p) => [p.id, p.name]));
+    const rows = [...quantityByProduct.entries()]
+        .filter(([productId, quantity]) => quantity > 0 && nameById.has(productId))
+        .map(([productId, quantity]) => ({
+            productId,
+            productName: nameById.get(productId)!,
+            quantity,
+        }));
+
+    const totalQuantity = rows.reduce((sum, r) => sum + r.quantity, 0);
 
     return {
-        data: Object.entries(productData)
-            .map(([productId, { name, quantity }]) => ({
-                productId,
-                productName: name,
-                quantity,
-                percentage: totalQuantity > 0 ? Math.round((quantity / totalQuantity) * 1000) / 10 : 0,
+        data: rows
+            .map((r) => ({
+                ...r,
+                percentage: totalQuantity > 0 ? Math.round((r.quantity / totalQuantity) * 1000) / 10 : 0,
             }))
-            .filter((item) => item.quantity > 0)
             .sort((a, b) => b.quantity - a.quantity),
         totalQuantity,
     };
 }
 
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+/**
+ * Average cups per weekday, read from the daily summaries (≤31 rows).
+ *
+ * Order items were never needed for this: `store_daily_summaries` already
+ * carries one `total_cups` per store per day, which is the same source
+ * `getDailySales` reads. The summary `date` is the business date, so bucketing
+ * by weekday needs no offset arithmetic either — the old version shifted every
+ * order timestamp by the tenant offset and ran its range a day long, which put
+ * the 1st of the next month into this month's Sunday/Monday.
+ *
+ * `occurrences` counts days that actually sold, matching the old behaviour of
+ * only counting dates that produced an order — a day the store opened and sold
+ * nothing does not drag the average down.
+ */
 export async function getDayOfWeekSales(supabase: SupabaseClient, params: MonthSalesParams) {
     const { tenantId, storeId, month } = params;
-    const tz = params.tzOffset ?? 7;
 
-    const [year, monthNum] = month.split("-");
-    const y = parseInt(year, 10);
-    const m = parseInt(monthNum, 10);
-    const startDate = new Date(Date.UTC(y, m - 1, 1));
-    const endDate = new Date(Date.UTC(y, m, 1, 16, 59, 59));
+    const [year, monthNum] = month.split("-").map((v) => parseInt(v, 10));
+    const startStr = `${month}-01`;
+    const nextMonthStr =
+        monthNum === 12
+            ? `${year + 1}-01-01`
+            : `${year}-${String(monthNum + 1).padStart(2, "0")}-01`;
 
-    const items = await fetchAllOrderItems(supabase, storeId, tenantId, startDate.toISOString(), endDate.toISOString());
+    const { data, error } = await supabase
+        .from("store_daily_summaries")
+        .select("date, total_cups")
+        .eq("tenant_id", tenantId)
+        .eq("store_id", storeId)
+        .gte("date", startStr)
+        .lt("date", nextMonthStr)
+        .gt("total_cups", 0);
 
-    const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    const dayData: Record<number, { totalCups: number; dates: Set<string> }> = {};
-    for (let i = 0; i < 7; i++) dayData[i] = { totalCups: 0, dates: new Set() };
+    if (error) throw error;
 
-    for (const item of items) {
-        if (!item.store_orders?.created_at) continue;
-        const local = new Date(new Date(item.store_orders.created_at).getTime() + tz * 3600000);
-        dayData[local.getUTCDay()].totalCups += item.quantity || 0;
-        dayData[local.getUTCDay()].dates.add(local.toISOString().split("T")[0]);
+    const buckets = Array.from({ length: 7 }, () => ({ totalCups: 0, occurrences: 0 }));
+    for (const row of data ?? []) {
+        // Parsed as UTC so the weekday comes from the date string itself and
+        // never drifts with the server's own zone.
+        const index = new Date(`${row.date}T00:00:00Z`).getUTCDay();
+        buckets[index].totalCups += row.total_cups ?? 0;
+        buckets[index].occurrences += 1;
     }
 
-    return Object.entries(dayData)
-        .map(([i, d]) => {
-            const index = parseInt(i, 10);
-            const occurrences = d.dates.size;
-            return {
-                dayOfWeek: DAY_NAMES[index],
-                dayIndex: index,
-                averageCups: occurrences > 0 ? Math.round((d.totalCups / occurrences) * 10) / 10 : 0,
-                totalCups: d.totalCups,
-                occurrences,
-            };
-        })
-        .sort((a, b) => a.dayIndex - b.dayIndex);
+    return buckets.map((b, index) => ({
+        dayOfWeek: DAY_NAMES[index],
+        dayIndex: index,
+        averageCups: b.occurrences > 0 ? Math.round((b.totalCups / b.occurrences) * 10) / 10 : 0,
+        totalCups: b.totalCups,
+        occurrences: b.occurrences,
+    }));
 }
