@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { RefreshCw, Info } from "lucide-react";
+import { Icon } from "@iconify/react";
 import { useServiceWorkerUpdate } from "@tea-pos/shell/useServiceWorkerUpdate";
+import "@/lib/icons/bundled-emoji";
 
 const INACTIVITY_LIMIT = 1000 * 60 * 20; // 20 minutes
 
@@ -13,14 +15,40 @@ const INACTIVITY_LIMIT = 1000 * 60 * 20; // 20 minutes
  */
 const COPY = {
     update: {
+        icon: "fluent-emoji:sparkles",
         title: "Update Available",
         body: "A new version is ready. Refresh to load it.",
+        info: [
+            {
+                title: "What you get",
+                body: "The latest improvements and fixes. Refreshing takes a moment and keeps your work.",
+            },
+        ],
     },
     inactivity: {
+        icon: "fluent-emoji:counterclockwise-arrows-button",
         title: "Refresh Required",
         body: "You've been inactive — refresh to avoid stale data.",
+        info: [
+            {
+                title: "Why this appears",
+                body: "The app has been idle for a while, so what's on screen may no longer match the server.",
+            },
+        ],
     },
 } as const;
+
+/**
+ * A dot grid painted with one repeating radial-gradient — no image to request
+ * and no element per dot. The mask fades it out toward the edges so it reads as
+ * texture behind the art rather than a panel with a hard border.
+ */
+const DOT_GRID: React.CSSProperties = {
+    backgroundImage: "radial-gradient(rgba(0,0,0,0.12) 1px, transparent 1px)",
+    backgroundSize: "14px 14px",
+    WebkitMaskImage: "radial-gradient(ellipse at center, black 20%, transparent 72%)",
+    maskImage: "radial-gradient(ellipse at center, black 20%, transparent 72%)",
+};
 
 /**
  * pointerdown covers mouse, touch and pen in one event, so a tap or the start
@@ -93,7 +121,7 @@ export default function RefreshOnStaleData() {
     };
 
     if (!reason) return null;
-    const { title, body } = COPY[reason];
+    const { icon, title, body, info } = COPY[reason];
 
     return (
         <div className="fixed inset-0 z-50 flex items-end bg-black/40" onClick={handleDismiss}>
@@ -102,32 +130,41 @@ export default function RefreshOnStaleData() {
                     <div className="w-8 h-1 rounded-full bg-gray-300" />
                 </div>
 
-                <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
-                        <Info size={20} className="text-blue-500" />
-                    </div>
-                    <div className="space-y-1">
-                        <p className="text-lg font-bold text-gray-900">{title}</p>
-                        <p className="text-sm text-gray-600">{body}</p>
-                    </div>
+                <div className="relative -mx-5 flex justify-center py-3">
+                    <div aria-hidden className="pointer-events-none absolute inset-0" style={DOT_GRID} />
+                    <Icon icon={icon} width={88} height={88} className="relative" />
+                </div>
+
+                <div className="space-y-1 text-center">
+                    <p className="text-xl font-bold text-gray-900">{title}</p>
+                    <p className="text-sm text-gray-600">{body}</p>
                 </div>
 
                 <div className="space-y-2">
-                    <button
-                        onClick={handleRefresh}
-                        disabled={isRefreshing}
-                        className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-brand text-white font-semibold text-base active:scale-[0.98] transition-transform disabled:opacity-60"
-                    >
-                        <RefreshCw size={18} className={isRefreshing ? "animate-spin" : ""} />
-                        {isRefreshing ? "Refreshing..." : "Refresh Now"}
-                    </button>
-                    <button
-                        onClick={handleDismiss}
-                        className="w-full py-3 rounded-xl text-gray-500 text-sm font-medium active:bg-gray-50"
-                    >
-                        Dismiss
-                    </button>
+                    {info.map((item) => (
+                        <div
+                            key={item.title}
+                            className="flex items-start gap-3 rounded-xl bg-gray-50 p-4 text-left"
+                        >
+                            <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+                                <Info size={18} className="text-blue-500" />
+                            </div>
+                            <div className="space-y-0.5">
+                                <p className="text-sm font-semibold text-gray-900">{item.title}</p>
+                                <p className="text-sm text-gray-500">{item.body}</p>
+                            </div>
+                        </div>
+                    ))}
                 </div>
+
+                <button
+                    onClick={handleRefresh}
+                    disabled={isRefreshing}
+                    className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-brand text-white font-semibold text-base active:scale-[0.98] transition-transform disabled:opacity-60"
+                >
+                    <RefreshCw size={18} className={isRefreshing ? "animate-spin" : ""} />
+                    {isRefreshing ? "Refreshing..." : "Refresh Now"}
+                </button>
             </div>
         </div>
     );
