@@ -26,9 +26,19 @@ interface StoreGateProps {
     onTransfer?: (code: string) => Promise<unknown>;
     sessionUserName?: string | null;
     sessionUserAvatarUrl?: string | null;
+    sessionUserId?: string | null;
+    summaryId?: string | null;
 }
 
-export function StoreGate({ gate, isPosInUse, onTransfer, sessionUserName, sessionUserAvatarUrl }: StoreGateProps) {
+export function StoreGate({
+    gate,
+    isPosInUse,
+    onTransfer,
+    sessionUserName,
+    sessionUserAvatarUrl,
+    sessionUserId,
+    summaryId,
+}: StoreGateProps) {
     const { url } = useTenantSlug();
     const t = useT();
 
@@ -40,6 +50,8 @@ export function StoreGate({ gate, isPosInUse, onTransfer, sessionUserName, sessi
                         onTransfer={onTransfer}
                         userName={sessionUserName}
                         userAvatarUrl={sessionUserAvatarUrl}
+                        userId={sessionUserId}
+                        summaryId={summaryId}
                     />
                 </div>
             ) : gate === "closed" ? (

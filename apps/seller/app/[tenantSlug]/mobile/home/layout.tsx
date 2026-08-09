@@ -43,6 +43,8 @@ export default function HomeLayout({
                         onTransfer={transferSession}
                         sessionUserName={session?.userName ?? null}
                         sessionUserAvatarUrl={session?.userAvatarUrl ?? null}
+                        sessionUserId={session?.userId ?? null}
+                        summaryId={summaryId}
                     />
                 </div>
             </div>

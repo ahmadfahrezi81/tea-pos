@@ -5,6 +5,7 @@ import { Loader2, UserCircle } from "lucide-react";
 import { Icon } from "@iconify/react";
 import Image from "next/image";
 import { useT } from "@/lib/hooks/useT";
+import { useSummaryUsers } from "@/lib/hooks/summaries/useSummaryUsers";
 import { DOT_GRID } from "@/lib/styles/dot-grid";
 import "@/lib/icons/bundled-emoji";
 
@@ -12,15 +13,30 @@ export function TakeOverCard({
     onTransfer,
     userName,
     userAvatarUrl,
+    summaryId,
+    userId,
 }: {
     onTransfer: (code: string) => Promise<unknown>;
     userName?: string | null;
     userAvatarUrl?: string | null;
+    summaryId?: string | null;
+    userId?: string | null;
 }) {
     const [claimCode, setClaimCode] = useState("");
     const [transferError, setTransferError] = useState<string | null>(null);
     const [isTransferring, setIsTransferring] = useState(false);
     const t = useT();
+
+    // Cups sold so far by whoever holds the POS. Shares the SWR cache entry
+    // with the analytics card for the same day, so on most visits this costs
+    // nothing. Deliberately has no skeleton: the gate renders instantly from
+    // bundled art, and a placeholder here would undo that — the badge simply
+    // appears once the number arrives.
+    const { data: summaryUsers } = useSummaryUsers(summaryId ?? null);
+    const totalCups =
+        userId
+            ? (summaryUsers?.users?.find((u) => u.userId === userId)?.totalCups ?? null)
+            : null;
 
     const handleTakeOver = async () => {
         if (claimCode.length !== 2) return;
@@ -43,7 +59,11 @@ export function TakeOverCard({
             </div>
             <p className="font-bold text-gray-900 text-2xl tracking-tight">{t("home.takeover.takenBy")}</p>
             {userName && (
-                <div className="flex items-center gap-2 mt-1 justify-center bg-slate-100 rounded-xl px-2 py-2 pr-4 w-fit mx-auto">
+                <div
+                    className={`flex items-center gap-2 mt-1 justify-center bg-slate-100 rounded-xl px-2 py-2 w-fit mx-auto ${
+                        totalCups === null ? "pr-4" : "pr-2"
+                    }`}
+                >
                     {userAvatarUrl ? (
                         <Image
                             src={userAvatarUrl}
@@ -58,6 +78,11 @@ export function TakeOverCard({
                         </div>
                     )}
                     <p className="text-lg font-bold text-gray-900 truncate">{userName}</p>
+                    {totalCups !== null && (
+                        <span className="text-sm font-bold text-orange-700 bg-orange-100 px-2 py-0.5 rounded-lg shrink-0">
+                            {totalCups} {t("analytics.cups")}
+                        </span>
+                    )}
                 </div>
             )}
             <p className="text-sm text-gray-500 mt-2 mb-3 leading-tight">
