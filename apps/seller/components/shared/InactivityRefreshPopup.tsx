@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { RefreshCw, Info } from "lucide-react";
 import { Icon } from "@iconify/react";
 import { useServiceWorkerUpdate } from "@tea-pos/shell/useServiceWorkerUpdate";
+import { DOT_GRID } from "@/lib/styles/dot-grid";
 import "@/lib/icons/bundled-emoji";
 
 const INACTIVITY_LIMIT = 1000 * 60 * 20; // 20 minutes
@@ -37,18 +38,6 @@ const COPY = {
         ],
     },
 } as const;
-
-/**
- * A dot grid painted with one repeating radial-gradient — no image to request
- * and no element per dot. The mask fades it out toward the edges so it reads as
- * texture behind the art rather than a panel with a hard border.
- */
-const DOT_GRID: React.CSSProperties = {
-    backgroundImage: "radial-gradient(rgba(0,0,0,0.12) 1px, transparent 1px)",
-    backgroundSize: "14px 14px",
-    WebkitMaskImage: "radial-gradient(ellipse at center, black 20%, transparent 72%)",
-    maskImage: "radial-gradient(ellipse at center, black 20%, transparent 72%)",
-};
 
 /**
  * pointerdown covers mouse, touch and pen in one event, so a tap or the start

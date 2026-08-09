@@ -5,6 +5,8 @@ import { Loader2, UserCircle } from "lucide-react";
 import { Icon } from "@iconify/react";
 import Image from "next/image";
 import { useT } from "@/lib/hooks/useT";
+import { DOT_GRID } from "@/lib/styles/dot-grid";
+import "@/lib/icons/bundled-emoji";
 
 export function TakeOverCard({
     onTransfer,
@@ -35,7 +37,10 @@ export function TakeOverCard({
 
     return (
         <div className="text-center w-full max-w-xs mx-auto">
-            <Icon icon="fluent-emoji:locked-with-key" width={70} height={70} className="mx-auto mb-3" />
+            <div className="relative -mx-6 mb-3 flex justify-center py-3">
+                <div aria-hidden className="pointer-events-none absolute inset-0" style={DOT_GRID} />
+                <Icon icon="fluent-emoji:locked-with-key" width={70} height={70} className="relative" />
+            </div>
             <p className="font-bold text-gray-900 text-2xl tracking-tight">{t("home.takeover.takenBy")}</p>
             {userName && (
                 <div className="flex items-center gap-2 mt-1 justify-center bg-slate-100 rounded-xl px-2 py-2 pr-4 w-fit mx-auto">
