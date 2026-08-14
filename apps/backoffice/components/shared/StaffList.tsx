@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { useTenantUsers } from "@/lib/hooks/users/useTenantUsers";
-import { ChevronRight, UserCircle, Search, X } from "lucide-react";
+import { UserCircle, Search, X } from "lucide-react";
 import Image from "next/image";
 import type { ReactNode } from "react";
+import { ListRow, ListCard, ListRowSkeleton } from "@tea-pos/ui/custom/ListRow";
 
 type StaffUser = ReturnType<typeof useTenantUsers>["users"][number];
 
@@ -50,47 +51,39 @@ export function StaffList({
                 )}
             </div>
 
-            <div className="bg-white rounded-xl px-4">
+            <ListCard>
                 {isLoading ? (
-                    [1, 2, 3].map((i) => (
-                        <div key={i} className="py-4 border-b border-gray-100 last:border-none flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl bg-gray-100 shrink-0 animate-pulse" />
-                            <div className="h-4 w-36 bg-gray-100 rounded animate-pulse" />
-                        </div>
-                    ))
+                    [1, 2, 3].map((i) => <ListRowSkeleton key={i} withLeading />)
                 ) : filtered.length === 0 ? (
                     <p className="py-4 text-sm text-gray-400">
                         {search ? "No staff match your search." : emptyLabel}
                     </p>
                 ) : (
                     filtered.map((user) => (
-                        <button
+                        <ListRow
                             key={user.id}
                             onClick={() => onSelect(user.id)}
-                            className="w-full flex items-center gap-3 py-4 border-b border-gray-100 last:border-none text-left active:bg-gray-50"
-                        >
-                            {user.avatarUrl ? (
-                                <Image
-                                    src={user.avatarUrl}
-                                    alt={user.fullName}
-                                    width={36}
-                                    height={36}
-                                    className="w-9 h-9 rounded-xl object-cover shrink-0"
-                                />
-                            ) : (
-                                <div className="w-9 h-9 rounded-xl bg-brand/10 flex items-center justify-center shrink-0">
-                                    <UserCircle size={20} className="text-brand" />
-                                </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                                <p className="text-base font-medium text-gray-900 truncate">{user.fullName}</p>
-                                <p className="text-sm text-gray-400 truncate">{subtitle(user)}</p>
-                            </div>
-                            <ChevronRight size={18} className="text-gray-400 shrink-0" />
-                        </button>
+                            leading={
+                                user.avatarUrl ? (
+                                    <Image
+                                        src={user.avatarUrl}
+                                        alt={user.fullName}
+                                        width={36}
+                                        height={36}
+                                        className="w-9 h-9 rounded-xl object-cover"
+                                    />
+                                ) : (
+                                    <span className="w-9 h-9 rounded-xl bg-brand/10 flex items-center justify-center">
+                                        <UserCircle size={20} className="text-brand" />
+                                    </span>
+                                )
+                            }
+                            title={user.fullName}
+                            subtitle={subtitle(user)}
+                        />
                     ))
                 )}
-            </div>
+            </ListCard>
         </div>
     );
 }
