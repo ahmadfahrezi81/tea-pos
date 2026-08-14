@@ -1,10 +1,5 @@
-import { ComingSoon } from "@tea-pos/ui/custom/ComingSoon";
+import MoreMenu from "./_components/MoreMenu";
 
 export default function MorePage() {
-    return (
-        <ComingSoon
-            title="More is coming soon"
-            subtitle="This feature is still in development"
-        />
-    );
+    return <MoreMenu />;
 }

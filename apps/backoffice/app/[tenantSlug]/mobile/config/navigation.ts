@@ -67,6 +67,15 @@ export const mobileRoutes = {
         titleKey: "More",
         parent: null,
     },
+    "/mobile/more/patch-notes": {
+        titleKey: "Patch Notes",
+        parent: "/mobile/more",
+    },
+    "/mobile/more/map": {
+        titleKey: "Location Feedback",
+        parent: "/mobile/more",
+        scrollPaddingBottom: "pb-0",
+    },
     "/mobile/account": {
         titleKey: "Account",
         inlineHeader: true,

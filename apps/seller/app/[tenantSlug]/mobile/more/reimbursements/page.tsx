@@ -4,8 +4,8 @@ import { useState } from "react";
 import {
     usePayrollClaims,
     useClaimableTypes,
-} from "@/lib/hooks/payroll-claims/usePayrollClaims";
-import { usePayrollUserInfo } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
+} from "@/lib/hooks/payroll/usePayrollClaims";
+import { usePayrollUserInfo } from "@/lib/hooks/payroll/usePayrollUserInfo";
 import { getPayWindowBounds } from "@tea-pos/utils/week";
 import { getCurrentLocalMonth, getTodayLocalStr } from "@tea-pos/utils/time";
 import { ReceiptText, CalendarDays } from "lucide-react";
@@ -33,7 +33,7 @@ export default function ReimbursementsPage() {
 
     const { types, isLoading: typesLoading } = useClaimableTypes(payWindow);
 
-    const filteredClaims = claims.filter((c: any) =>
+    const filteredClaims = claims.filter((c) =>
         c.date?.startsWith(selectedMonth),
     );
 
@@ -60,7 +60,7 @@ export default function ReimbursementsPage() {
                     </div>
                 ) : (
                     <div className="divide-y divide-gray-100">
-                        {types.map((type: any) => (
+                        {types.map((type) => (
                             <div key={type.id} className="flex items-center justify-between py-2.5">
                                 <div>
                                     <p className="text-sm font-medium text-gray-800">{type.name}</p>
@@ -106,7 +106,7 @@ export default function ReimbursementsPage() {
                     </div>
                 ) : (
                     <ul className="divide-y divide-gray-100">
-                        {filteredClaims.map((claim: any) => (
+                        {filteredClaims.map((claim) => (
                             <li
                                 key={claim.id}
                                 className="flex items-center justify-between px-4 py-3"

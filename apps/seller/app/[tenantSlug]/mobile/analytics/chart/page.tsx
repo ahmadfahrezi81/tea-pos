@@ -1,5 +1,5 @@
-import MobileDailySales from "./_components/MobileDailySales";
+import MonthlyChart from "./_components/MonthlyChart";
 
 export default function ChartPage() {
-    return <MobileDailySales />;
+    return <MonthlyChart />;
 }

@@ -1,12 +1,12 @@
 "use client";
 
-import { usePayrollCommissionTypes } from "@/lib/hooks/payroll-commission-types/usePayrollCommissionTypes";
+import { usePayrollCommissionConfigs } from "@/lib/hooks/payroll-commission-configs/usePayrollCommissionConfigs";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
 import { Pencil } from "lucide-react";
-import type { PayrollCommissionTypeResponse } from "@tea-pos/features/payroll-commission-types/schema";
+import type { PayrollCommissionConfigResponse } from "@tea-pos/features/payroll-commission-configs/schema";
 
-function CommissionTypeRow({ type }: { type: PayrollCommissionTypeResponse }) {
+function CommissionTypeRow({ type }: { type: PayrollCommissionConfigResponse }) {
     const { url } = useTenantSlug();
 
     return (
@@ -29,7 +29,7 @@ function CommissionTypeRow({ type }: { type: PayrollCommissionTypeResponse }) {
 }
 
 export default function CommissionTypesPage() {
-    const { commissionTypes, isLoading } = usePayrollCommissionTypes();
+    const { commissionTypes, isLoading } = usePayrollCommissionConfigs();
 
     return (
         <div className="space-y-3">

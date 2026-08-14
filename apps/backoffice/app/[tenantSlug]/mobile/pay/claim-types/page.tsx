@@ -1,10 +1,10 @@
 "use client";
 
-import { usePayrollClaimTypes } from "@/lib/hooks/payroll-claim-types/usePayrollClaimTypes";
+import { usePayrollClaimConfigs } from "@/lib/hooks/payroll-claim-configs/usePayrollClaimConfigs";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
 import { Pencil } from "lucide-react";
-import type { PayrollClaimTypeResponse } from "@tea-pos/features/payroll-claim-types/schema";
+import type { PayrollClaimConfigResponse } from "@tea-pos/features/payroll-claim-configs/schema";
 
 const FREQUENCY_LABEL: Record<string, string> = {
     daily: "Daily",
@@ -13,7 +13,7 @@ const FREQUENCY_LABEL: Record<string, string> = {
     one_time: "One-time",
 };
 
-function ClaimTypeRow({ type }: { type: PayrollClaimTypeResponse }) {
+function ClaimTypeRow({ type }: { type: PayrollClaimConfigResponse }) {
     const { url } = useTenantSlug();
 
     return (
@@ -40,7 +40,7 @@ function ClaimTypeRow({ type }: { type: PayrollClaimTypeResponse }) {
 }
 
 export default function ClaimTypesPage() {
-    const { claimTypes, isLoading } = usePayrollClaimTypes();
+    const { claimTypes, isLoading } = usePayrollClaimConfigs();
 
     return (
         <div className="space-y-3">

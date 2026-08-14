@@ -1,6 +1,6 @@
 "use client";
 
-import { usePayrollUserInfo } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
+import { usePayrollUserInfo } from "@/lib/hooks/payroll/usePayrollUserInfo";
 import { useT } from "@/lib/hooks/useT";
 import { SkeletonValue } from "@/components/shared/SkeletonValue";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";

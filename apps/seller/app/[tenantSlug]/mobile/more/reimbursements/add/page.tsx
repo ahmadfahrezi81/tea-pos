@@ -4,8 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useT } from "@/lib/hooks/useT";
-import { usePayrollClaims, useClaimableTypes, useClaimableDates } from "@/lib/hooks/payroll-claims/usePayrollClaims";
-import { usePayrollUserInfo } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
+import { usePayrollClaims, useClaimableTypes, useClaimableDates } from "@/lib/hooks/payroll/usePayrollClaims";
+import { usePayrollUserInfo } from "@/lib/hooks/payroll/usePayrollUserInfo";
 import { getPayWindowBounds } from "@tea-pos/utils/week";
 import { useUpload } from "@/lib/hooks/upload/useUpload";
 import { SelectInput } from "../../../home/manage/_components/shared/SelectInput";
@@ -43,7 +43,7 @@ export default function AddClaimPage() {
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const selectedType = types.find((type: any) => type.id === selectedTypeId);
+    const selectedType = types.find((type) => type.id === selectedTypeId);
     const isWeekly = selectedType?.frequency === "weekly";
     const amount = selectedType?.amount ?? 0;
 
@@ -52,8 +52,8 @@ export default function AddClaimPage() {
         : getLocalToday();
 
     const typeOptions = types
-        .filter((type: any) => type.claimable && type.claimSource === "manual")
-        .map((type: any) => ({ value: type.id, label: type.name }));
+        .filter((type) => type.claimable && type.claimSource === "manual")
+        .map((type) => ({ value: type.id, label: type.name }));
 
     const isValid = !!selectedTypeId && amount > 0 && (!isWeekly || claimableDates.includes(effectiveDate));
 
@@ -91,7 +91,7 @@ export default function AddClaimPage() {
                             value={selectedTypeId}
                             onChange={(v) => {
                                 setSelectedTypeId(v);
-                                const newType = types.find((type: any) => type.id === v);
+                                const newType = types.find((type) => type.id === v);
                                 if (newType?.frequency === "weekly" && claimableDates.length > 0) {
                                     const today = getLocalToday();
                                     setDate(claimableDates.includes(today) ? today : claimableDates[claimableDates.length - 1]);

@@ -1,14 +1,14 @@
 "use client";
 
 import { useAllPayrollUserInfos } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
-import { usePayrollCommissionTypes } from "@/lib/hooks/payroll-commission-types/usePayrollCommissionTypes";
+import { usePayrollCommissionConfigs } from "@/lib/hooks/payroll-commission-configs/usePayrollCommissionConfigs";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
 import { StaffList } from "@/components/shared/StaffList";
 
 export default function StaffCommissionsListPage() {
     const { infos } = useAllPayrollUserInfos();
-    const { commissionTypes } = usePayrollCommissionTypes();
+    const { commissionTypes } = usePayrollCommissionConfigs();
     const { url } = useTenantSlug();
 
     const infoByUserId = Object.fromEntries(infos.map((i) => [i.userId, i]));

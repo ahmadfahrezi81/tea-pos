@@ -61,7 +61,7 @@ export default function ProductSalesChart({ storeId, month }: Props) {
                 </p>
             </div>
             <div className="space-y-4 mb-4">
-                {productChartData.map((product: any) => (
+                {productChartData.map((product) => (
                     <div key={product.productId} className="space-y-1.5">
                         <div className="flex items-center justify-between text-sm">
                             <span className="font-medium text-gray-800">

@@ -152,6 +152,10 @@ export const mobileRoutes = {
         titleKey: "nav.newClaim",
         parent: "/mobile/more/reimbursements",
     },
+    "/mobile/more/patch-notes": {
+        titleKey: "nav.patchNotes",
+        parent: "/mobile/more",
+    },
 
     // ── Account ───────────────────────────────────────────────────────────────
     "/mobile/account": {

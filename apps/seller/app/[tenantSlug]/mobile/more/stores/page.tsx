@@ -1,5 +1,5 @@
-import MobileProfileStores from "./_components/MobileProfileStores";
+import MyStores from "./_components/MyStores";
 
 export default function StoresPage() {
-    return <MobileProfileStores />;
+    return <MyStores />;
 }

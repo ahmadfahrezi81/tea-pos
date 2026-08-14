@@ -6,8 +6,8 @@ import { navigation } from "@tea-pos/utils/navigation";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { getWeekInfo } from "@tea-pos/utils/week";
 import { useT } from "@/lib/hooks/useT";
-import { DOT_GRID } from "@/lib/styles/dot-grid";
-import "@/lib/icons/bundled-emoji";
+import { DOT_GRID } from "@tea-pos/ui/styles/dot-grid";
+import "@tea-pos/ui/icons/bundled-emoji";
 
 // No loading skeleton: these icons are bundled, so there is no moment where the
 // art has not arrived yet.

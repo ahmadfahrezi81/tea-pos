@@ -1,6 +1,6 @@
 import { ReactNode, Suspense } from "react";
 import MobileLayoutClient from "./components/MobileLayoutClient";
-import InactivityRefreshPopup from "@/components/shared/InactivityRefreshPopup";
+import InactivityRefreshPopup from "@tea-pos/shell/InactivityRefreshPopup";
 import { StoreProvider } from "@/lib/context/StoreContext";
 import { FastOrderModeProvider } from "@/lib/context/FastOrderModeContext";
 import { ToastProvider } from "@/lib/context/ToastContext";

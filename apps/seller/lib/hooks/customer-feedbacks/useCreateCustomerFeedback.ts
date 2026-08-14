@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { feedbacksApi } from "@/lib/api/customer-feedbacks";
+import { customerFeedbacksApi } from "@/lib/api/customer-feedbacks";
 import type { CreateCustomerFeedbackInput, CreateCustomerFeedbackResponse } from "@tea-pos/features/customer-feedbacks/schema";
 
 interface UseCreateCustomerFeedbackResult {
@@ -19,7 +19,7 @@ export default function useCreateCustomerFeedback(): UseCreateCustomerFeedbackRe
         setIsLoading(true);
         setError(null);
         try {
-            const result = await feedbacksApi.create(input);
+            const result = await customerFeedbacksApi.create(input);
             return result;
         } catch (err) {
             setError(err instanceof Error ? err.message : "Unknown error");

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { usePayrollUserInfo } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
+import { usePayrollUserInfo } from "@/lib/hooks/payroll/usePayrollUserInfo";
 import { useBanks } from "@/lib/hooks/banks/useBanks";
 import { TextInput } from "@tea-pos/ui/custom/TextInput";
 import { Drawer } from "vaul";

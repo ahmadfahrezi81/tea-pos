@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import MobileLayoutClient from "./components/MobileLayoutClient";
-import InactivityRefreshPopup from "@/components/shared/InactivityRefreshPopup";
+import InactivityRefreshPopup from "@tea-pos/shell/InactivityRefreshPopup";
 import { ToastProvider } from "@/lib/context/ToastContext";
 import { ErrorSheetProvider } from "@/lib/context/ErrorSheetContext";
 

@@ -1,5 +1,5 @@
 import useSWR from "swr";
-import { feedbacksApi } from "@/lib/api/customer-feedbacks";
+import { customerFeedbacksApi } from "@/lib/api/customer-feedbacks";
 import type { ListCustomerFeedbacksResponse } from "@tea-pos/features/customer-feedbacks/schema";
 
 interface UseCustomerFeedbacksParams {
@@ -15,7 +15,7 @@ export default function useCustomerFeedbacks(params: UseCustomerFeedbacksParams 
 
     return useSWR<ListCustomerFeedbacksResponse>(
         key,
-        () => feedbacksApi.list({ tenantId, userId, limit, offset }),
+        () => customerFeedbacksApi.list({ tenantId, userId, limit, offset }),
         { revalidateOnFocus: true, dedupingInterval: 10_000 },
     );
 }

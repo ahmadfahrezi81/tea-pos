@@ -3,7 +3,7 @@
 import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePayrollUserInfo } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
-import { usePayrollCommissionTypes } from "@/lib/hooks/payroll-commission-types/usePayrollCommissionTypes";
+import { usePayrollCommissionConfigs } from "@/lib/hooks/payroll-commission-configs/usePayrollCommissionConfigs";
 import { useTenantUsers } from "@/lib/hooks/users/useTenantUsers";
 import { FormFooter } from "@/components/shared/FormFooter";
 import { Check, UserCircle } from "lucide-react";
@@ -15,7 +15,7 @@ export default function StaffCommissionPage({ params }: { params: Promise<{ user
     const router = useRouter();
     const { users } = useTenantUsers();
     const { info, isLoading: infoLoading, update } = usePayrollUserInfo(userId);
-    const { commissionTypes, isLoading: typesLoading } = usePayrollCommissionTypes();
+    const { commissionTypes, isLoading: typesLoading } = usePayrollCommissionConfigs();
     const { showError } = useErrorSheet();
 
     const user = users.find((u) => u.id === userId);

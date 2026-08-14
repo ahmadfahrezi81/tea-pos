@@ -2,7 +2,7 @@
 
 import { use, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { usePayrollClaimTypes, useUserClaimEligibility } from "@/lib/hooks/payroll-claim-types/usePayrollClaimTypes";
+import { usePayrollClaimConfigs, useUserClaimEligibility } from "@/lib/hooks/payroll-claim-configs/usePayrollClaimConfigs";
 import { useTenantUsers } from "@/lib/hooks/users/useTenantUsers";
 import { apiFetch } from "@/lib/api/client";
 import { TextInput } from "@tea-pos/ui/custom/TextInput";
@@ -46,7 +46,7 @@ function EligibilityToggle({
 export default function EditClaimTypePage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
     const router = useRouter();
-    const { claimTypes, isLoading, update } = usePayrollClaimTypes();
+    const { claimTypes, isLoading, update } = usePayrollClaimConfigs();
     const { users } = useTenantUsers();
     const type = claimTypes.find((t) => t.id === id);
 

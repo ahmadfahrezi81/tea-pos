@@ -1,5 +1,5 @@
-import MobilePersonalDetails from "./_components/MobilePersonalDetails";
+import PersonalDetails from "./_components/PersonalDetails";
 
 export default function PersonalDetailsPage() {
-    return <MobilePersonalDetails />;
+    return <PersonalDetails />;
 }

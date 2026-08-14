@@ -2,8 +2,8 @@
 // app/mobile/chart/page.tsx
 import dynamic from "next/dynamic";
 
-const MobileHourlySales = dynamic(
-    () => import("./_components/MobileHourlySales"),
+const DailyChart = dynamic(
+    () => import("./_components/DailyChart"),
     {
         ssr: false,
         loading: () => (
@@ -13,5 +13,5 @@ const MobileHourlySales = dynamic(
 );
 
 export default function ChartPage() {
-    return <MobileHourlySales />;
+    return <DailyChart />;
 }
