@@ -12,8 +12,7 @@ import Image from "next/image";
 import { getCurrentLocalMonth, getTodayLocalStr } from "@tea-pos/utils/time";
 import { getPayWindowBounds, getExpectedPayoutDate } from "@tea-pos/utils/week";
 import type { PayoutResponse } from "@tea-pos/features/payroll/schema";
-
-const NON_SELLER_SLUG = "SELLER_0";
+import { NON_SELLER_SLUG, isNonSeller as isNonSellerInfo } from "@/lib/utils/non-sellers";
 
 const STATUS_STYLE: Record<string, string> = {
     pending: "bg-yellow-100 text-yellow-700",
@@ -132,10 +131,7 @@ export default function StaffPayoutsPage() {
         getPayWindowBounds(getTodayLocalStr(), payFrequency).endDate,
     );
 
-    const isNonSeller = (userId: string) => {
-        const info = infoByUserId[userId];
-        return info?.commissionConfigSlug === NON_SELLER_SLUG || (info?.ratePerCup ?? 0) === 0;
-    };
+    const isNonSeller = (userId: string) => isNonSellerInfo(infoByUserId[userId]);
 
     const filtered = useMemo(() => {
         const q = query.trim().toLowerCase();
