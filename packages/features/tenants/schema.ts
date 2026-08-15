@@ -106,10 +106,26 @@ export const UpdateTenantResponse = z
     })
     .openapi({ title: "UpdateTenantResponse" });
 
+// The cadence every staff member is paid on. All three are a whole number of
+// weeks running Monday to Sunday, which is what lets one hand over to another
+// on any Monday without a pay period overlapping or falling short.
+export const PayFrequencySchema = z.enum(["weekly", "bi_weekly", "four_weekly"]);
+
+export const UpdateTenantPayFrequencyInput = z
+    .object({ payFrequency: PayFrequencySchema })
+    .openapi({ title: "UpdateTenantPayFrequencyInput" });
+
+export const TenantPayFrequencyResponse = z
+    .object({ payFrequency: PayFrequencySchema })
+    .openapi({ title: "TenantPayFrequencyResponse" });
+
 // ============================================================================
 // TYPE EXPORTS
 // ============================================================================
 
+export type PayFrequencySchema = z.infer<typeof PayFrequencySchema>;
+export type UpdateTenantPayFrequencyInput = z.infer<typeof UpdateTenantPayFrequencyInput>;
+export type TenantPayFrequencyResponse = z.infer<typeof TenantPayFrequencyResponse>;
 export type CreateTenantInput = z.infer<typeof CreateTenantInput>;
 export type UpdateTenantInput = z.infer<typeof UpdateTenantInput>;
 export type ListTenantsQuery = z.infer<typeof ListTenantsQuery>;

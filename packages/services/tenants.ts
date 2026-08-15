@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { toCamelKeys } from "@tea-pos/utils/schemas";
 import { isPayFrequency, type PayFrequency } from "@tea-pos/utils/week";
 
 /* The pay cadence is a property of the tenant: every staff member is paid on the
@@ -23,4 +24,25 @@ export async function getTenantPayFrequency(
     }
 
     return frequency;
+}
+
+/* Changing this reshapes which window every future payout is written into, so
+   it is only ever safe on a day where the current period ends: run it after the
+   last close of a period and before the next one opens. The screen says so; the
+   service does not enforce it, because "which day is safe" is a property of the
+   pay calendar this app does not store yet. */
+export async function setTenantPayFrequency(
+    supabase: SupabaseClient,
+    tenantId: string,
+    frequency: PayFrequency,
+) {
+    const { data, error } = await supabase
+        .from("tenants")
+        .update({ pay_frequency: frequency })
+        .eq("id", tenantId)
+        .select("id, pay_frequency")
+        .single();
+
+    if (error) throw error;
+    return toCamelKeys(data);
 }

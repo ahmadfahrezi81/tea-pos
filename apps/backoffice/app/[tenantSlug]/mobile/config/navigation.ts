@@ -55,6 +55,10 @@ export const mobileRoutes = {
         titleKey: "Staff Commissions",
         parent: "/mobile/pay",
     },
+    "/mobile/pay/pay-schedule": {
+        titleKey: "Pay Schedule",
+        parent: "/mobile/pay",
+    },
     "/mobile/supply": {
         titleKey: "Supply",
         parent: null,

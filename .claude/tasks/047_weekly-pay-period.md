@@ -3,10 +3,17 @@
 **Status: step 1 written and building, migration applied. Step 2 pending.**
 Opened 2026-08-15.
 
-Step 1 deviation from the plan: **no `/api/tenant-config` endpoint was added.**
-The cadence is server-rendered into `PayFrequencyProvider` from each app's mobile
-layout, so no client screen fetches it. Add the endpoint when something needs the
-value outside that tree.
+Step 1 notes:
+
+- The cadence is server-rendered into `PayFrequencyProvider` from each app's
+  mobile layout, so no screen fetches it to display it.
+- **The backoffice screen shipped with step 1**, not deferred: Pay →
+  Configuration → Pay Schedule. It writes immediately (no `effective_from` until
+  step 3), so it carries the timing rule on the screen itself — a warning
+  whenever the current period still has days to run, and a confirmation naming
+  the window the choice produces. `PATCH /api/tenant-config/pay-frequency` is
+  ADMIN-only and refreshes the server tree so every screen picks the new
+  schedule up without a reload.
 
 | | What | When |
 |---|---|---|
@@ -151,6 +158,8 @@ says Mon 17 Aug. Nothing about the UI should change.
 ---
 
 ## Step 2 — Flip to weekly
+
+Backoffice → Pay → Configuration → **Pay Schedule** → Weekly. Equivalent to:
 
 ```sql
 UPDATE tenants SET pay_frequency = 'weekly' WHERE pay_frequency = 'bi_weekly';

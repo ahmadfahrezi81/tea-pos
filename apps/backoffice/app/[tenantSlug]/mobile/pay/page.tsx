@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
-import { HandCoins, IdCard, Coins, Percent, ReceiptText } from "lucide-react";
+import { HandCoins, IdCard, Coins, Percent, ReceiptText, CalendarClock } from "lucide-react";
 import { SettingsRow, SettingsGroup } from "@tea-pos/ui/custom/SettingsRow";
 import { parseISO, format, getISOWeek, differenceInCalendarDays } from "date-fns";
 import { getTodayLocalStr } from "@tea-pos/utils/time";
@@ -138,6 +138,11 @@ export default function PayOverviewPage() {
             </SettingsGroup>
 
             <SettingsGroup title="Configuration">
+                <SettingsRow
+                    icon={<CalendarClock size={22} strokeWidth={2} className="text-gray-900" />}
+                    label="Pay Schedule"
+                    onClick={() => navigation.push(url("/mobile/pay/pay-schedule"))}
+                />
                 <SettingsRow
                     icon={<Coins size={22} strokeWidth={2} className="text-gray-900" />}
                     label="Commission Types"
