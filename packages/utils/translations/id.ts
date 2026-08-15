@@ -365,10 +365,9 @@ export const id: DeepPartial<typeof en> = {
         nextExpectedPayout: "Perkiraan Pembayaran Berikutnya",
         payFrequency: "Frekuensi Gaji",
         commissionConfig: "Konfig Komisi",
-        freqDaily: "Harian",
         freqWeekly: "Mingguan",
         freqBiWeekly: "Dua Mingguan",
-        freqMonthly: "Bulanan",
+        freqFourWeekly: "Setiap 4 Minggu",
     },
     account: {
         personalDetails: "Data Pribadi",

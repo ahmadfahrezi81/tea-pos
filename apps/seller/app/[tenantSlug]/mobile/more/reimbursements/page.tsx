@@ -5,7 +5,7 @@ import {
     usePayrollClaims,
     useClaimableTypes,
 } from "@/lib/hooks/payroll/usePayrollClaims";
-import { usePayrollUserInfo } from "@/lib/hooks/payroll/usePayrollUserInfo";
+import { usePayFrequency } from "@/lib/context/PayFrequencyContext";
 import { getPayWindowBounds } from "@tea-pos/utils/week";
 import { getCurrentLocalMonth, getTodayLocalStr } from "@tea-pos/utils/time";
 import { ReceiptText, CalendarDays } from "lucide-react";
@@ -21,15 +21,13 @@ const STATUS_STYLE: Record<string, string> = {
 
 export default function ReimbursementsPage() {
     const { claims, isLoading: claimsLoading } = usePayrollClaims();
-    const { info, isLoading: infoLoading } = usePayrollUserInfo();
+    const payFrequency = usePayFrequency();
     const t = useT();
 
     const [selectedMonth, setSelectedMonth] = useState(getCurrentLocalMonth());
 
     const today = getTodayLocalStr();
-    const payWindow = info
-        ? getPayWindowBounds(today, info.payFrequency ?? "bi_weekly")
-        : null;
+    const payWindow = getPayWindowBounds(today, payFrequency);
 
     const { types, isLoading: typesLoading } = useClaimableTypes(payWindow);
 
@@ -44,7 +42,7 @@ export default function ReimbursementsPage() {
                 <p className="text-sm font-semibold text-gray-800">
                     {t("claims.entitlements")}
                 </p>
-                {infoLoading || typesLoading ? (
+                {typesLoading ? (
                     <div className="space-y-2">
                         {[1, 2].map((i) => (
                             <div

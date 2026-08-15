@@ -4,7 +4,7 @@ import { getPayWindowBounds } from "@tea-pos/utils/week";
 import { startOfDay, endOfDay, parseISO, subHours, subDays } from "date-fns";
 import { createLogger } from "./activity-logs";
 import { assertPayoutNotPaid, upsertPayout } from "./payroll";
-import { getPayrollUserInfo } from "./payroll-user-info";
+import { getTenantPayFrequency } from "./tenants";
 
 // ─── Create claim ─────────────────────────────────────────────────────────────
 
@@ -168,15 +168,15 @@ export async function createPayrollClaim(
         metadata: { claim_config_id: claimConfigId, amount, date },
     });
 
-    // Refresh the payout for the user's pay window (backfill stamps payout_id on the new claim)
-    const info = await getPayrollUserInfo(supabase, { tenantId, userId });
-    if (info) {
-        const payFrequency = (info.payFrequency as string | null) ?? "bi_weekly";
-        const { startDate, endDate } = getPayWindowBounds(date, payFrequency);
-        await upsertPayout(supabase, { tenantId, userId, startDate, endDate }).catch((err) =>
-            console.warn("[payroll] upsertPayout failed after claim create:", err),
-        );
-    }
+    // Refresh the payout for the pay window (backfill stamps payout_id on the new claim).
+    // The window comes from the tenant, so this no longer depends on the claimant
+    // having a payroll_user_info row — someone with no payroll record still has
+    // claims to be paid for.
+    const payFrequency = await getTenantPayFrequency(supabase, tenantId);
+    const { startDate, endDate } = getPayWindowBounds(date, payFrequency);
+    await upsertPayout(supabase, { tenantId, userId, startDate, endDate }).catch((err) =>
+        console.warn("[payroll] upsertPayout failed after claim create:", err),
+    );
 
     return toCamelKeys(data);
 }
@@ -210,6 +210,10 @@ export async function createAutoClaimsForDailySummary(
     const typedSessions = sessions as SessionRow[];
     const userIds = [...new Set(typedSessions.map((s) => s.user_id))];
     const created: unknown[] = [];
+
+    // Tenant-wide cadence, so one lookup covers every seller in this close.
+    const payFrequency = await getTenantPayFrequency(supabase, tenantId);
+    const { startDate, endDate } = getPayWindowBounds(date, payFrequency);
 
     for (const userId of userIds) {
         const userSessions = typedSessions.filter((s) => s.user_id === userId);
@@ -279,14 +283,9 @@ export async function createAutoClaimsForDailySummary(
         }
 
         // Refresh the payout after auto claims (backfill stamps payout_id on new claims)
-        const info = await getPayrollUserInfo(supabase, { tenantId, userId });
-        if (info) {
-            const payFrequency = (info.payFrequency as string | null) ?? "bi_weekly";
-            const { startDate, endDate } = getPayWindowBounds(date, payFrequency);
-            await upsertPayout(supabase, { tenantId, userId, startDate, endDate }).catch((err) =>
-                console.warn("[payroll] upsertPayout failed after auto claims:", err),
-            );
-        }
+        await upsertPayout(supabase, { tenantId, userId, startDate, endDate }).catch((err) =>
+            console.warn("[payroll] upsertPayout failed after auto claims:", err),
+        );
     }
 
     return created;

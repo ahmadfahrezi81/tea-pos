@@ -10,6 +10,7 @@ import { getTodayLocalStr } from "@tea-pos/utils/time";
 import { getPayWindowBounds } from "@tea-pos/utils/week";
 import { usePayouts } from "@/lib/hooks/payroll/usePayroll";
 import { useAllPayrollUserInfos } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
+import { usePayFrequency } from "@/lib/context/PayFrequencyContext";
 import { isNonSeller } from "@/lib/utils/non-sellers";
 
 /* The current pay window totalled across every selling staff member — the same
@@ -17,22 +18,7 @@ import { isNonSeller } from "@/lib/utils/non-sellers";
    overview opens on how much this period owes before any drill-down. */
 function CurrentPeriodTotals() {
     const { infos, isLoading: isLoadingInfos } = useAllPayrollUserInfos();
-
-    /* Staff share one cadence, so the window is a tenant property. Read the
-       most common value rather than hardcoding, so one oddly configured record
-       can't shift the window everyone is shown. */
-    const payFrequency = useMemo(() => {
-        const counts = new Map<string, number>();
-        for (const info of infos) {
-            if (info.payFrequency) counts.set(info.payFrequency, (counts.get(info.payFrequency) ?? 0) + 1);
-        }
-        let mostCommon = "bi_weekly";
-        let highest = 0;
-        for (const [frequency, count] of counts) {
-            if (count > highest) { mostCommon = frequency; highest = count; }
-        }
-        return mostCommon;
-    }, [infos]);
+    const payFrequency = usePayFrequency();
 
     const { startDate, endDate } = getPayWindowBounds(getTodayLocalStr(), payFrequency);
     const { payouts, isLoading: isLoadingPayouts } = usePayouts({ startDate, endDate });

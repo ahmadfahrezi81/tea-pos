@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useT } from "@/lib/hooks/useT";
 import { usePayrollClaims, useClaimableTypes, useClaimableDates } from "@/lib/hooks/payroll/usePayrollClaims";
-import { usePayrollUserInfo } from "@/lib/hooks/payroll/usePayrollUserInfo";
+import { usePayFrequency } from "@/lib/context/PayFrequencyContext";
 import { getPayWindowBounds } from "@tea-pos/utils/week";
 import { useUpload } from "@/lib/hooks/upload/useUpload";
 import { SelectInput } from "../../../home/manage/_components/shared/SelectInput";
@@ -26,12 +26,10 @@ export default function AddClaimPage() {
     const t = useT();
     const { create } = usePayrollClaims();
     const { upload } = useUpload();
-    const { info, isLoading: infoLoading } = usePayrollUserInfo();
+    const payFrequency = usePayFrequency();
     const { showError } = useErrorSheet();
 
-    const window = info
-        ? getPayWindowBounds(getLocalToday(), info.payFrequency ?? "bi_weekly")
-        : null;
+    const window = getPayWindowBounds(getLocalToday(), payFrequency);
 
     const { types, isLoading: typesLoading } = useClaimableTypes(window);
     const { dates: claimableDates, isLoading: datesLoading } = useClaimableDates(window);
@@ -79,7 +77,7 @@ export default function AddClaimPage() {
             <div className="bg-white rounded-xl p-4 space-y-4">
                 <div className="space-y-1.5">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("claims.typeLabel")}</p>
-                    {infoLoading || typesLoading ? (
+                    {typesLoading ? (
                         <div className="h-12 bg-gray-100 rounded-xl animate-pulse" />
                     ) : types.length === 0 ? (
                         <p className="text-sm text-gray-400 py-2">{t("claims.noClaimEntitlements")}</p>

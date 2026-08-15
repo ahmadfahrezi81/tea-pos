@@ -1,6 +1,7 @@
 "use client";
 
 import { usePayrollUserInfo } from "@/lib/hooks/payroll/usePayrollUserInfo";
+import { usePayFrequency } from "@/lib/context/PayFrequencyContext";
 import { useT } from "@/lib/hooks/useT";
 import { SkeletonValue } from "@/components/shared/SkeletonValue";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
@@ -12,6 +13,7 @@ import { CalendarClock } from "lucide-react";
 
 export function PayConfigCard() {
     const { info, isLoading } = usePayrollUserInfo();
+    const frequency = usePayFrequency();
     const t = useT();
 
     if (isLoading) {
@@ -24,16 +26,14 @@ export function PayConfigCard() {
         );
     }
 
-    const frequency = info?.payFrequency ?? "bi_weekly";
     const today = getTodayLocalStr();
     const { endDate } = getPayWindowBounds(today, frequency);
     const expectedPayout = getExpectedPayoutDate(endDate);
 
     const FREQUENCY_LABELS: Record<string, string> = {
-        daily: t("earnings.freqDaily"),
         weekly: t("earnings.freqWeekly"),
         bi_weekly: t("earnings.freqBiWeekly"),
-        monthly: t("earnings.freqMonthly"),
+        four_weekly: t("earnings.freqFourWeekly"),
     };
 
     const rows = [

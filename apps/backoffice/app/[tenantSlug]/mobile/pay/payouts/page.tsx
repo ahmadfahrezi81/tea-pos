@@ -13,6 +13,7 @@ import { getCurrentLocalMonth, getTodayLocalStr } from "@tea-pos/utils/time";
 import { getPayWindowBounds, getExpectedPayoutDate } from "@tea-pos/utils/week";
 import type { PayoutResponse } from "@tea-pos/features/payroll/schema";
 import { NON_SELLER_SLUG, isNonSeller as isNonSellerInfo } from "@/lib/utils/non-sellers";
+import { usePayFrequency } from "@/lib/context/PayFrequencyContext";
 
 const STATUS_STYLE: Record<string, string> = {
     pending: "bg-yellow-100 text-yellow-700",
@@ -109,23 +110,8 @@ export default function StaffPayoutsPage() {
 
     /* Staff are all paid on the same cadence, so the next pay date is a property
        of the tenant, not of each row — it belongs once at the top rather than
-       repeated on every card.
-
-       Read from the staff records rather than hardcoded, so moving off
-       bi-weekly needs no edit here; the most common value wins so one record
-       configured differently can't change what the banner tells everyone. */
-    const payFrequency = useMemo(() => {
-        const counts = new Map<string, number>();
-        for (const info of infos) {
-            if (info.payFrequency) counts.set(info.payFrequency, (counts.get(info.payFrequency) ?? 0) + 1);
-        }
-        let mostCommon = "bi_weekly";
-        let highest = 0;
-        for (const [frequency, count] of counts) {
-            if (count > highest) { mostCommon = frequency; highest = count; }
-        }
-        return mostCommon;
-    }, [infos]);
+       repeated on every card. */
+    const payFrequency = usePayFrequency();
 
     const expectedPayoutDate = getExpectedPayoutDate(
         getPayWindowBounds(getTodayLocalStr(), payFrequency).endDate,

@@ -362,10 +362,9 @@ export const en = {
         nextExpectedPayout: "Next Expected Payout",
         payFrequency: "Pay Frequency",
         commissionConfig: "Commission Config",
-        freqDaily: "Daily",
         freqWeekly: "Weekly",
         freqBiWeekly: "Bi-Weekly",
-        freqMonthly: "Monthly",
+        freqFourWeekly: "Every 4 Weeks",
     },
     account: {
         personalDetails: "Personal Details",
