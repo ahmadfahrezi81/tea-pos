@@ -22,8 +22,16 @@ export default async function MobileLayout({ children }: MobileLayoutProps) {
        the first paint. Service client rather than SSR: super admins reach a
        tenant without a user_tenant_assignments row, so the RLS read on `tenants`
        would come back empty for them. The tenant id comes from the signed cookie,
-       never from the request body. */
-    const payFrequency = await getTenantPayFrequency(getServiceClient(), await getCurrentTenantId());
+       never from the request body.
+
+       Swallowed on failure because this layout wraps the till. Payroll screens
+       degrade to "unavailable" without a cadence; taking orders must not depend
+       on a payroll setting being readable. */
+    const payFrequency = await getTenantPayFrequency(getServiceClient(), await getCurrentTenantId())
+        .catch((error) => {
+            console.error("[layout] pay frequency unavailable:", error);
+            return null;
+        });
 
     return (
         <PayFrequencyProvider value={payFrequency}>

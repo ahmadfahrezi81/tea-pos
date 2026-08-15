@@ -8,6 +8,7 @@ import { getPayWindowBounds, getExpectedPayoutDate, PAY_FREQUENCIES } from "@tea
 import type { PayFrequency } from "@tea-pos/utils/week";
 import { usePayFrequency } from "@/lib/context/PayFrequencyContext";
 import { usePayFrequencyConfig } from "@/lib/hooks/tenant-config/usePayFrequencyConfig";
+import { usePayouts } from "@/lib/hooks/payroll/usePayroll";
 import { ConfirmationPopup } from "@/components/shared/ConfirmationPopup";
 import { useToast } from "@/lib/context/ToastContext";
 import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
@@ -24,8 +25,7 @@ const DESCRIPTIONS: Record<PayFrequency, string> = {
     four_weekly: "4 weeks per period · 13 payouts a year",
 };
 
-function windowLabel(frequency: PayFrequency, today: string) {
-    const { startDate, endDate } = getPayWindowBounds(today, frequency);
+function rangeLabel(startDate: string, endDate: string) {
     const start = parseISO(startDate);
     const end = parseISO(endDate);
     const sameMonth = format(start, "MMM yyyy") === format(end, "MMM yyyy");
@@ -42,13 +42,44 @@ export default function PaySchedulePage() {
     const [pending, setPending] = useState<PayFrequency | null>(null);
 
     const today = getTodayLocalStr();
-    const { endDate } = getPayWindowBounds(today, current);
+    const window = current ? getPayWindowBounds(today, current) : null;
+    const { payouts } = usePayouts(window ?? undefined);
+
+    if (!current || !window) {
+        return (
+            <div className="bg-white rounded-2xl p-4 text-center space-y-1">
+                <p className="text-base font-semibold text-gray-900">Pay schedule unavailable</p>
+                <p className="text-sm text-gray-500">
+                    The tenant&apos;s pay frequency couldn&apos;t be read. Reload, and if it persists the
+                    value is missing or invalid in the database.
+                </p>
+            </div>
+        );
+    }
+
+    const { startDate: currentStart, endDate } = window;
     const daysLeft = differenceInCalendarDays(parseISO(endDate), parseISO(today));
 
-    /* A period is only safe to leave on the day it ends: the payout rows are
-       keyed by their start date, so switching mid-period rewrites the window
-       money has already been counted into. */
-    const isPeriodEnding = daysLeft === 0;
+    /* A change applies to the period after this one, so every option is priced
+       from the day the current period ends — showing the window each cadence
+       happens to be in *today* would quote a range the choice never produces. */
+    const nextStart = getExpectedPayoutDate(endDate);
+
+    const nextPeriod = (frequency: PayFrequency) => {
+        const bounds = getPayWindowBounds(nextStart, frequency);
+        // A cadence whose block is already running on that day would swallow days
+        // the current period has counted — the one case the warning below is about.
+        return { ...bounds, alignsWithHandover: bounds.startDate === nextStart };
+    };
+
+    /* Payout rows are keyed by their start date, so a switch rewrites the window
+       of any payout already open in this period. Two ways for that to be safe:
+       the period ends today, or nothing has been counted into it yet — which is
+       exactly the state on a Monday morning before the first store closes, the
+       moment a switch is most likely to be made. Asking the payouts is more
+       honest than asking the calendar. */
+    const nothingCountedYet = payouts.length === 0;
+    const isSafeToSwitch = daysLeft === 0 || nothingCountedYet;
 
     const confirm = async () => {
         if (!pending) return;
@@ -71,7 +102,7 @@ export default function PaySchedulePage() {
                 <div className="min-w-0">
                     <p className="text-xs font-medium text-gray-500">Current period · {LABELS[current]}</p>
                     <p className="font-mono text-sm font-semibold text-gray-600">
-                        {windowLabel(current, today)}{" "}
+                        {rangeLabel(currentStart, endDate)}{" "}
                         <span className="text-gray-900 font-bold">
                             ({daysLeft <= 0 ? "last day" : `${daysLeft}d left`})
                         </span>
@@ -84,16 +115,17 @@ export default function PaySchedulePage() {
 
             {/* The rule that keeps a switch safe, stated where the switch happens
                 rather than in a task file nobody reads at 11pm. */}
-            {!isPeriodEnding && (
+            {!isSafeToSwitch && (
                 <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 flex gap-2.5">
                     <AlertTriangle size={18} className="text-amber-600 shrink-0 mt-0.5" />
                     <div className="space-y-1">
                         <p className="text-sm font-semibold text-amber-900">Not the day to change this</p>
                         <p className="text-sm text-amber-800">
-                            The current period still has {daysLeft} {daysLeft === 1 ? "day" : "days"} to run.
-                            Changing now rewrites the window that this period&apos;s pay has already been
-                            counted into. Wait until {format(parseISO(endDate), "EEE, d MMM")}, pay everyone,
-                            let the last store close, then switch.
+                            {payouts.length} {payouts.length === 1 ? "payout has" : "payouts have"} already
+                            been counted into this period, and it still has {daysLeft}{" "}
+                            {daysLeft === 1 ? "day" : "days"} to run. Changing now rewrites the window that
+                            pay was counted into. Wait until {format(parseISO(endDate), "EEE, d MMM")}, pay
+                            everyone, let the last store close, then switch.
                         </p>
                     </div>
                 </div>
@@ -102,6 +134,7 @@ export default function PaySchedulePage() {
             <div className="bg-white rounded-2xl overflow-hidden">
                 {PAY_FREQUENCIES.map((frequency, index) => {
                     const isCurrent = frequency === current;
+                    const next = nextPeriod(frequency);
                     return (
                         <button
                             key={frequency}
@@ -115,7 +148,8 @@ export default function PaySchedulePage() {
                                 </p>
                                 <p className="text-xs text-gray-500">{DESCRIPTIONS[frequency]}</p>
                                 <p className="font-mono text-xs text-gray-400 mt-0.5">
-                                    {windowLabel(frequency, today)}
+                                    Next: {rangeLabel(next.startDate, next.endDate)}
+                                    {!next.alignsWithHandover && " ⚠"}
                                 </p>
                             </div>
                             {isCurrent && <Check size={18} className="text-brand shrink-0" />}
@@ -134,10 +168,15 @@ export default function PaySchedulePage() {
                 title={`Switch to ${pending ? LABELS[pending] : ""}?`}
                 message={
                     pending
-                        ? `From now on a pay period runs ${windowLabel(pending, today)}. ` +
-                          (isPeriodEnding
-                              ? "Today is the last day of the current period, so this is a clean handover — as long as everyone has been paid and every store has closed."
-                              : `The current ${LABELS[current].toLowerCase()} period does not end for ${daysLeft} more ${daysLeft === 1 ? "day" : "days"}. Switching now rewrites a window that pay has already been counted into.`)
+                        ? `The next pay period runs ${rangeLabel(nextPeriod(pending).startDate, nextPeriod(pending).endDate)}. ` +
+                          (nothingCountedYet
+                              ? "Nothing has been counted into the current period yet, so this is a clean handover."
+                              : daysLeft === 0
+                                ? "Today is the last day of the current period, so this is a clean handover — as long as everyone has been paid and every store has closed."
+                                : `The current ${LABELS[current].toLowerCase()} period does not end for ${daysLeft} more ${daysLeft === 1 ? "day" : "days"}, and ${payouts.length} ${payouts.length === 1 ? "payout has" : "payouts have"} already been counted into it. Switching now rewrites the window that pay was counted into.`) +
+                          (nextPeriod(pending).alignsWithHandover
+                              ? ""
+                              : ` Note: that period starts before ${format(parseISO(nextStart), "d MMM")}, so it covers days the current period already counted.`)
                         : ""
                 }
                 confirmText={isSaving ? "Saving..." : "Switch"}

@@ -29,7 +29,7 @@ export default function AddClaimPage() {
     const payFrequency = usePayFrequency();
     const { showError } = useErrorSheet();
 
-    const window = getPayWindowBounds(getLocalToday(), payFrequency);
+    const window = payFrequency ? getPayWindowBounds(getLocalToday(), payFrequency) : null;
 
     const { types, isLoading: typesLoading } = useClaimableTypes(window);
     const { dates: claimableDates, isLoading: datesLoading } = useClaimableDates(window);

@@ -13,14 +13,15 @@ export function PayFrequencyProvider({
     value,
     children,
 }: {
-    value: PayFrequency;
+    value: PayFrequency | null;
     children: ReactNode;
 }) {
     return <PayFrequencyContext.Provider value={value}>{children}</PayFrequencyContext.Provider>;
 }
 
-export function usePayFrequency(): PayFrequency {
-    const frequency = useContext(PayFrequencyContext);
-    if (!frequency) throw new Error("usePayFrequency must be used within PayFrequencyProvider");
-    return frequency;
+/* Null when the cadence couldn't be read. Callers must handle that by not
+   drawing a pay window — never by substituting a default, which would put a
+   window on screen that no payout was ever written against. */
+export function usePayFrequency(): PayFrequency | null {
+    return useContext(PayFrequencyContext);
 }

@@ -113,9 +113,9 @@ export default function StaffPayoutsPage() {
        repeated on every card. */
     const payFrequency = usePayFrequency();
 
-    const expectedPayoutDate = getExpectedPayoutDate(
-        getPayWindowBounds(getTodayLocalStr(), payFrequency).endDate,
-    );
+    const expectedPayoutDate = payFrequency
+        ? getExpectedPayoutDate(getPayWindowBounds(getTodayLocalStr(), payFrequency).endDate)
+        : null;
 
     const isNonSeller = (userId: string) => isNonSellerInfo(infoByUserId[userId]);
 
@@ -226,18 +226,21 @@ export default function StaffPayoutsPage() {
     return (
         <div className="space-y-3">
             {/* Next expected payout — mirrors the banner sellers see on their
-                earnings page, so both sides quote the same date. */}
-            <div className="bg-white p-3 rounded-2xl flex items-center gap-3">
-                <div className="w-11 h-11 rounded-xl bg-brand/10 flex items-center justify-center shrink-0">
-                    <CalendarClock size={24} className="text-brand" />
+                earnings page, so both sides quote the same date. Hidden rather
+                than guessed when the cadence couldn't be read. */}
+            {expectedPayoutDate && (
+                <div className="bg-white p-3 rounded-2xl flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-xl bg-brand/10 flex items-center justify-center shrink-0">
+                        <CalendarClock size={24} className="text-brand" />
+                    </div>
+                    <div className="min-w-0">
+                        <p className="text-xs font-medium text-gray-500">Next expected payout</p>
+                        <p className="text-lg font-bold text-gray-900">
+                            {format(parseISO(expectedPayoutDate), "EEE, d MMM yyyy")}
+                        </p>
+                    </div>
                 </div>
-                <div className="min-w-0">
-                    <p className="text-xs font-medium text-gray-500">Next expected payout</p>
-                    <p className="text-lg font-bold text-gray-900">
-                        {format(parseISO(expectedPayoutDate), "EEE, d MMM yyyy")}
-                    </p>
-                </div>
-            </div>
+            )}
 
             {/* Month selector */}
             <div className="bg-white p-4 rounded-2xl">

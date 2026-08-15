@@ -20,8 +20,8 @@ function CurrentPeriodTotals() {
     const { infos, isLoading: isLoadingInfos } = useAllPayrollUserInfos();
     const payFrequency = usePayFrequency();
 
-    const { startDate, endDate } = getPayWindowBounds(getTodayLocalStr(), payFrequency);
-    const { payouts, isLoading: isLoadingPayouts } = usePayouts({ startDate, endDate });
+    const window = payFrequency ? getPayWindowBounds(getTodayLocalStr(), payFrequency) : null;
+    const { payouts, isLoading: isLoadingPayouts } = usePayouts(window ?? undefined);
 
     const infoByUserId = useMemo(
         () => Object.fromEntries(infos.map((i) => [i.userId, i])),
@@ -42,10 +42,15 @@ function CurrentPeriodTotals() {
         return { ...summed, staff: seller.length };
     }, [payouts, infoByUserId]);
 
+    // No cadence, no period — a totals card with an invented window would be
+    // read as fact. The rest of the tab still works.
+    if (!window) return null;
+
     if (isLoadingInfos || isLoadingPayouts) {
         return <div className="rounded-xl h-32 animate-pulse bg-white/60" />;
     }
 
+    const { startDate, endDate } = window;
     const weekStart = getISOWeek(parseISO(startDate));
     const weekEnd = getISOWeek(parseISO(endDate));
 

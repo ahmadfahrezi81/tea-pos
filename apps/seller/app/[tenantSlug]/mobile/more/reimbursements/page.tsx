@@ -27,7 +27,7 @@ export default function ReimbursementsPage() {
     const [selectedMonth, setSelectedMonth] = useState(getCurrentLocalMonth());
 
     const today = getTodayLocalStr();
-    const payWindow = getPayWindowBounds(today, payFrequency);
+    const payWindow = payFrequency ? getPayWindowBounds(today, payFrequency) : null;
 
     const { types, isLoading: typesLoading } = useClaimableTypes(payWindow);
 
