@@ -3,11 +3,11 @@
 import { useMemo } from "react";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
-import { HandCoins, IdCard, Coins, Percent, ReceiptText, CalendarClock } from "lucide-react";
+import { HandCoins, IdCard, Coins, Percent, ReceiptText, CalendarClock, CalendarFold } from "lucide-react";
 import { SettingsRow, SettingsGroup } from "@tea-pos/ui/custom/SettingsRow";
 import { parseISO, format, getISOWeek, differenceInCalendarDays } from "date-fns";
 import { getTodayLocalStr } from "@tea-pos/utils/time";
-import { getPayWindowBounds } from "@tea-pos/utils/week";
+import { getPayWindowBounds, getExpectedPayoutDate } from "@tea-pos/utils/week";
 import { usePayouts } from "@/lib/hooks/payroll/usePayroll";
 import { useAllPayrollUserInfos } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
 import { usePayFrequency } from "@/lib/context/PayFrequencyContext";
@@ -28,19 +28,27 @@ function CurrentPeriodTotals() {
         [infos],
     );
 
-    const totals = useMemo(() => {
-        const seller = payouts.filter((p) => !isNonSeller(infoByUserId[p.userId]));
-        const summed = seller.reduce(
-            (acc, p) => ({
-                cups: acc.cups + p.totalCups,
-                totalPay: acc.totalPay + p.totalPay,
-                approved: acc.approved + (p.approvedCount ?? 0),
-                reviewed: acc.reviewed + (p.approvedCount ?? 0) + (p.pendingCount ?? 0),
-            }),
-            { cups: 0, totalPay: 0, approved: 0, reviewed: 0 },
-        );
-        return { ...summed, staff: seller.length };
-    }, [payouts, infoByUserId]);
+    /* Summed over selling staff only, tile for tile with the grid a single
+       payout card renders — the period is the same shape as one person's
+       payout, so it should read the same way. */
+    const totals = useMemo(
+        () =>
+            payouts
+                .filter((p) => !isNonSeller(infoByUserId[p.userId]))
+                .reduce(
+                    (acc, p) => ({
+                        orders: acc.orders + p.totalOrders,
+                        cups: acc.cups + p.totalCups,
+                        commissions: acc.commissions + p.commissionsTotal,
+                        claims: acc.claims + p.claimsTotal,
+                        totalPay: acc.totalPay + p.totalPay,
+                        approved: acc.approved + (p.approvedCount ?? 0),
+                        reviewed: acc.reviewed + (p.approvedCount ?? 0) + (p.pendingCount ?? 0),
+                    }),
+                    { orders: 0, cups: 0, commissions: 0, claims: 0, totalPay: 0, approved: 0, reviewed: 0 },
+                ),
+        [payouts, infoByUserId],
+    );
 
     // No cadence, no period — a totals card with an invented window would be
     // read as fact. The rest of the tab still works.
@@ -54,68 +62,79 @@ function CurrentPeriodTotals() {
     const weekStart = getISOWeek(parseISO(startDate));
     const weekEnd = getISOWeek(parseISO(endDate));
 
-    /* Counted in calendar days against the local today, so the closing date
-       reads as a countdown rather than as a date to work out. */
+    /* Counted in calendar days against the local today, so the pay date reads
+       as a countdown rather than as a date to work out. */
     const daysLeft = differenceInCalendarDays(parseISO(endDate), parseISO(getTodayLocalStr()));
     const daysLeftLabel = daysLeft <= 0 ? "last day" : `${daysLeft}d left`;
-
-    /* Weekdays and a repeated month cost a whole line on a phone and carry
-       nothing — a window inside one month collapses to "3–16 Aug". */
-    const start = parseISO(startDate);
-    const end = parseISO(endDate);
-    const sameMonth = format(start, "MMM yyyy") === format(end, "MMM yyyy");
-    const rangeLabel = sameMonth
-        ? `${format(start, "d")}–${format(end, "d MMM")}`
-        : `${format(start, "d MMM")} – ${format(end, "d MMM")}`;
 
     const allApproved = totals.reviewed > 0 && totals.approved === totals.reviewed;
     const missingApproval = totals.approved < totals.reviewed;
 
+    /* One card: which period, when it pays, and what it costs. Split apart,
+       these were two cards that only mean anything read together. */
     return (
-        <div className="space-y-2">
-            <div className="bg-white rounded-2xl p-3 flex items-start justify-between gap-2">
-                <div>
-                    <h1 className="text-xl font-bold text-gray-900">
-                        {weekStart === weekEnd ? `Week ${weekStart}` : `Week ${weekStart} · Week ${weekEnd}`}
-                    </h1>
-                    {/* Mono and bold: these two lines are the glanceable state of
-                        the period, and proportional text at label weight made
-                        them read as captions. */}
-                    <p className="font-mono text-sm font-semibold text-gray-600">
-                        {rangeLabel} <span className="text-gray-900 font-bold">({daysLeftLabel})</span>
-                    </p>
+        <div className="bg-white rounded-2xl p-2 space-y-2">
+            <div className="flex items-center justify-between gap-2 px-2 pt-1">
+                {/* "Week 32–35" rather than four spelled-out weeks: a four-weekly
+                    period would wrap the line, and the word only needs saying once. */}
+                <h1 className="flex items-center gap-1.5 text-xl font-bold text-gray-900">
+                    <CalendarFold size={22} strokeWidth={3} className="text-gray-900 shrink-0" />
+                    {weekStart === weekEnd ? `Week ${weekStart}` : `Week ${weekStart}–${weekEnd}`}
+                </h1>
+                {/* Kept even at 0 / 0, so an empty period reads as "nothing
+                    approved yet" rather than as a missing line. Colour carries
+                    the state — amber means someone still has to look at it. */}
+                <span
+                    className={`font-mono text-sm font-bold shrink-0 ${missingApproval ? "text-amber-600" : allApproved ? "text-green-600" : "text-brand"}`}
+                >
+                    {totals.approved}/{totals.reviewed} approved
+                </span>
+            </div>
+
+            <div className="flex items-center gap-2.5 bg-slate-50 rounded-xl p-2">
+                <div className="w-9 h-9 rounded-xl bg-brand/10 flex items-center justify-center shrink-0">
+                    <CalendarClock size={20} className="text-brand" />
                 </div>
-                <div className="flex flex-col items-end gap-1 shrink-0">
-                    <span className="text-sm font-medium px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">
-                        Ongoing
-                    </span>
-                    {/* Kept even at 0 / 0 — a fixed part of the header, so an
-                        empty period reads as "nothing approved yet" rather than
-                        as a missing line. The icon carries the state so the
-                        ratio doesn't have to be read to know it needs work. */}
-                    <span
-                        className={`font-mono text-sm font-bold ${missingApproval ? "text-amber-600" : allApproved ? "text-green-600" : "text-brand"}`}
-                    >
-                        {missingApproval ? "⚠️" : allApproved ? "✅" : "⏳"} {totals.approved}/{totals.reviewed} approved
-                    </span>
+                <div className="min-w-0">
+                    <p className="text-xs font-medium text-gray-500">Next expected payout</p>
+                    <p className="text-base font-bold text-gray-900">
+                        {format(parseISO(getExpectedPayoutDate(endDate)), "EEE, d MMM yyyy")}{" "}
+                        <span className="font-mono text-sm font-semibold text-gray-500">
+                            ({daysLeftLabel})
+                        </span>
+                    </p>
                 </div>
             </div>
 
-            {/* One row: the three numbers that answer "how big is this period".
-                Commission/claims split is a per-person question, so it lives on
-                the payout itself rather than here. */}
-            <div className="bg-white rounded-2xl p-2 grid grid-cols-4 gap-2">
+            {/* Same tile grid a single payout card renders, so the period reads
+                as one payout owed to everyone. */}
+            <div className="bg-slate-50 rounded-xl p-2 grid grid-cols-4 gap-2">
+                {/* Counts are neutral, money is warm, and the warmth deepens
+                    towards what is owed: amber and yellow are the two halves,
+                    red is the sum. Orders left orange would have read as a third
+                    amount rather than as a count. */}
+                <div className="bg-slate-200 p-2 rounded-lg">
+                    <p className="text-xs font-semibold text-gray-500">Orders</p>
+                    <p className="text-lg font-bold text-slate-700">{totals.orders}</p>
+                </div>
                 <div className="bg-blue-100 p-2 rounded-lg">
                     <p className="text-xs font-semibold text-gray-500">Cups</p>
                     <p className="text-lg font-bold text-blue-600">{totals.cups}</p>
                 </div>
-                <div className="bg-orange-100 p-2 rounded-lg">
-                    <p className="text-xs font-semibold text-gray-500">Staff</p>
-                    <p className="text-lg font-bold text-orange-600">{totals.staff}</p>
+                <div className="bg-amber-100 p-2 rounded-lg col-span-2">
+                    <p className="text-xs font-semibold text-gray-500">Commission Owed</p>
+                    <p className="text-lg font-bold text-amber-600">{`Rp ${totals.commissions.toLocaleString("id-ID")}`}</p>
                 </div>
-                <div className="bg-green-100 p-2 rounded-lg col-span-2">
+                <div className="bg-yellow-100 p-2 rounded-lg col-span-2">
+                    <p className="text-xs font-semibold text-gray-500">Claims Owed</p>
+                    <p className="text-lg font-bold text-yellow-700">{`Rp ${totals.claims.toLocaleString("id-ID")}`}</p>
+                </div>
+                {/* Red, not green: on a payout card the total is money a seller
+                    has earned; here it is money the tenant still owes, and it
+                    should not read as a win. */}
+                <div className="bg-red-100 p-2 rounded-lg col-span-2">
                     <p className="text-xs font-semibold text-gray-500">Total Owed</p>
-                    <p className="text-lg font-bold text-green-600">{`Rp ${totals.totalPay.toLocaleString("id-ID")}`}</p>
+                    <p className="text-lg font-bold text-red-600">{`Rp ${totals.totalPay.toLocaleString("id-ID")}`}</p>
                 </div>
             </div>
         </div>
