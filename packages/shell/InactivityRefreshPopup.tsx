@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { RefreshCw, Info } from "lucide-react";
+import { RefreshCw, Check, Info } from "lucide-react";
 import { Icon } from "@iconify/react";
 import { useServiceWorkerUpdate } from "./useServiceWorkerUpdate";
 import { DOT_GRID } from "@tea-pos/ui/styles/dot-grid";
@@ -10,11 +10,32 @@ import "@tea-pos/ui/icons/bundled-emoji";
 const INACTIVITY_LIMIT = 1000 * 60 * 20; // 20 minutes
 
 /**
- * Two reasons to suggest a reload, one prompt. A second, independent popup
+ * The threshold is twenty minutes, so second-by-second resolution buys nothing
+ * and this is the only thing in the app ticking continuously on every screen.
+ */
+const IDLE_CHECK_MS = 1000 * 10;
+
+/**
+ * Three reasons to open this sheet, one prompt. A second, independent popup
  * racing this one would be worse than either alone, and this component already
  * solves the hard part — deciding when interrupting is acceptable.
+ *
+ * `cta` says what the button does, because only one of the three has anything
+ * left to reload.
  */
 const COPY = {
+    updated: {
+        icon: "fluent-emoji:sparkles",
+        title: "App Updated",
+        body: "You're now on the latest version.",
+        info: [
+            {
+                title: "Nothing to do",
+                body: "The app picked up the new version on its own. This is just letting you know.",
+            },
+        ],
+        cta: "close",
+    },
     update: {
         icon: "fluent-emoji:sparkles",
         title: "Update Available",
@@ -25,6 +46,7 @@ const COPY = {
                 body: "The latest improvements and fixes. Refreshing takes a moment and keeps your work.",
             },
         ],
+        cta: "refresh",
     },
     inactivity: {
         icon: "fluent-emoji:counterclockwise-arrows-button",
@@ -36,6 +58,7 @@ const COPY = {
                 body: "The app has been idle for a while, so what's on screen may no longer match the server.",
             },
         ],
+        cta: "refresh",
     },
 } as const;
 
@@ -50,7 +73,7 @@ const ACTIVITY_EVENTS = ["pointerdown", "mousemove", "keydown"] as const;
 export default function InactivityRefreshPopup() {
     const [showInactivityPrompt, setShowInactivityPrompt] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
-    const hasUpdate = useServiceWorkerUpdate();
+    const updateReason = useServiceWorkerUpdate();
     const [updateDismissed, setUpdateDismissed] = useState(false);
     // A ref, not state: activity fires constantly and none of it should
     // re-render the tree. Only the interval below reads it. Seeded on mount
@@ -82,15 +105,16 @@ export default function InactivityRefreshPopup() {
             if (Date.now() - lastActivityRef.current > INACTIVITY_LIMIT) {
                 setShowInactivityPrompt(true);
             }
-        }, 1000);
+        }, IDLE_CHECK_MS);
 
         return () => clearInterval(interval);
     }, []);
 
-    // A pending update is the more actionable of the two, so it wins the copy
-    // when both are true.
+    // Anything to say about a new version outranks inactivity: engaging with
+    // that sheet is itself activity, so the idle state is stale the moment it
+    // appears.
     const reason =
-        hasUpdate && !updateDismissed ? "update"
+        updateReason && !updateDismissed ? updateReason
         : showInactivityPrompt ? "inactivity"
         : null;
 
@@ -99,18 +123,29 @@ export default function InactivityRefreshPopup() {
         window.location.reload();
     };
 
-    // Dismissing the inactivity prompt works because the tap itself bubbles to
-    // the window `pointerdown` listener above and counts as activity, so the
-    // interval does not immediately re-raise it. An update has no such natural
-    // reset — it stays pending until the user reloads — so it is latched off
-    // explicitly.
+    /**
+     * One tap closes whatever is on screen, whichever reason opened it.
+     *
+     * Clearing the idle flag unconditionally is the fix for a real bug: the
+     * interval only ever raised that flag, so twenty quiet minutes behind an
+     * update sheet left it set, and dismissing the update swapped the copy to
+     * the inactivity text instead of closing. Refreshing the activity stamp
+     * here as well keeps the interval from re-raising it on the next tick.
+     *
+     * Latching the update is guarded, though it need not be today — an update
+     * outranks inactivity, so a *visible* inactivity sheet already proves none
+     * is pending. That safety comes entirely from the ordering above; the guard
+     * survives someone changing it.
+     */
     const handleDismiss = () => {
-        if (reason === "update") setUpdateDismissed(true);
-        else setShowInactivityPrompt(false);
+        if (reason === "update" || reason === "updated") setUpdateDismissed(true);
+        setShowInactivityPrompt(false);
+        lastActivityRef.current = Date.now();
     };
 
     if (!reason) return null;
-    const { icon, title, body, info } = COPY[reason];
+    const { icon, title, body, info, cta } = COPY[reason];
+    const isCloseOnly = cta === "close";
 
     return (
         <div className="fixed inset-0 z-50 flex items-end bg-black/40" onClick={handleDismiss}>
@@ -146,13 +181,20 @@ export default function InactivityRefreshPopup() {
                     ))}
                 </div>
 
+                {/* The page is already on the new build in the "updated" case,
+                    so there is nothing left to reload — the button just
+                    acknowledges. */}
                 <button
-                    onClick={handleRefresh}
+                    onClick={isCloseOnly ? handleDismiss : handleRefresh}
                     disabled={isRefreshing}
                     className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-brand text-white font-semibold text-base active:scale-[0.98] transition-transform disabled:opacity-60"
                 >
-                    <RefreshCw size={18} className={isRefreshing ? "animate-spin" : ""} />
-                    {isRefreshing ? "Refreshing..." : "Refresh Now"}
+                    {isCloseOnly ? (
+                        <Check size={18} />
+                    ) : (
+                        <RefreshCw size={18} className={isRefreshing ? "animate-spin" : ""} />
+                    )}
+                    {isCloseOnly ? "Close" : isRefreshing ? "Refreshing..." : "Refresh Now"}
                 </button>
             </div>
         </div>
