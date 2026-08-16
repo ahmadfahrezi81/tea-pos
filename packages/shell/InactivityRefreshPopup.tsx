@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { RefreshCw, Check, Info } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { RefreshCw, Info } from "lucide-react";
 import { Icon } from "@iconify/react";
 import { useAppUpdate } from "./useAppUpdate";
 import { DOT_GRID } from "@tea-pos/ui/styles/dot-grid";
@@ -19,23 +20,8 @@ const IDLE_CHECK_MS = 1000 * 10;
  * Three reasons to open this sheet, one prompt. A second, independent popup
  * racing this one would be worse than either alone, and this component already
  * solves the hard part — deciding when interrupting is acceptable.
- *
- * `cta` says what the button does, because only one of the three has anything
- * left to reload.
  */
 const COPY = {
-    updated: {
-        icon: "fluent-emoji:sparkles",
-        title: "App Updated",
-        body: "You're now on the latest version.",
-        info: [
-            {
-                title: "Nothing to do",
-                body: "The app picked up the new version on its own. This is just letting you know.",
-            },
-        ],
-        cta: "close",
-    },
     update: {
         icon: "fluent-emoji:sparkles",
         title: "Update Available",
@@ -46,7 +32,6 @@ const COPY = {
                 body: "The latest improvements and fixes. Refreshing takes a moment and keeps your work.",
             },
         ],
-        cta: "refresh",
     },
     inactivity: {
         icon: "fluent-emoji:counterclockwise-arrows-button",
@@ -58,8 +43,23 @@ const COPY = {
                 body: "The app has been idle for a while, so what's on screen may no longer match the server.",
             },
         ],
-        cta: "refresh",
     },
+} as const;
+
+/**
+ * Two things to say, three reasons to say them: a page that is behind and a page
+ * that already picked the new build up get the identical sheet and the identical
+ * button.
+ *
+ * The distinction is real but it is ours, not the user's — being told "you're
+ * already current, nothing to do" is a worse reading than being asked to tap
+ * once. Whether that tap costs a full document load is decided in
+ * `handleRefresh`, out of sight.
+ */
+const COPY_FOR = {
+    updated: "update",
+    update: "update",
+    inactivity: "inactivity",
 } as const;
 
 /**
@@ -74,6 +74,7 @@ export default function InactivityRefreshPopup() {
     const [showInactivityPrompt, setShowInactivityPrompt] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const { reason: updateReason, markReloading, dismiss: dismissUpdate } = useAppUpdate();
+    const router = useRouter();
     // A ref, not state: activity fires constantly and none of it should
     // re-render the tree. Only the interval below reads it. Seeded on mount
     // rather than here, because reading the clock during render is impure.
@@ -114,8 +115,26 @@ export default function InactivityRefreshPopup() {
     // appears.
     const reason = updateReason ?? (showInactivityPrompt ? "inactivity" : null);
 
+    /**
+     * One button, two reloads. A page that is behind has to fetch a new
+     * document to run new code, which is `location.reload()` and costs a real
+     * round trip. A page that already *is* the new build has nothing to fetch —
+     * the JS in memory is current — so it only needs its server data
+     * re-rendered, which `router.refresh()` does without dropping the document.
+     *
+     * Both read as "it refreshed" from the outside, which is the point: the
+     * user should not have to know which case they are in to tap the button.
+     */
     const handleRefresh = () => {
         setIsRefreshing(true);
+
+        if (reason === "updated") {
+            dismissUpdate();
+            router.refresh();
+            setIsRefreshing(false);
+            return;
+        }
+
         // Records the build being reloaded into, so the fresh page recognises
         // itself as current and does not open a second sheet announcing the
         // update the user just asked for. A no-op for the inactivity reason,
@@ -146,8 +165,7 @@ export default function InactivityRefreshPopup() {
     };
 
     if (!reason) return null;
-    const { icon, title, body, info, cta } = COPY[reason];
-    const isCloseOnly = cta === "close";
+    const { icon, title, body, info } = COPY[COPY_FOR[reason]];
 
     return (
         <div className="fixed inset-0 z-50 flex items-end bg-black/40" onClick={handleDismiss}>
@@ -183,20 +201,13 @@ export default function InactivityRefreshPopup() {
                     ))}
                 </div>
 
-                {/* The page is already on the new build in the "updated" case,
-                    so there is nothing left to reload — the button just
-                    acknowledges. */}
                 <button
-                    onClick={isCloseOnly ? handleDismiss : handleRefresh}
+                    onClick={handleRefresh}
                     disabled={isRefreshing}
                     className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-brand text-white font-semibold text-base active:scale-[0.98] transition-transform disabled:opacity-60"
                 >
-                    {isCloseOnly ? (
-                        <Check size={18} />
-                    ) : (
-                        <RefreshCw size={18} className={isRefreshing ? "animate-spin" : ""} />
-                    )}
-                    {isCloseOnly ? "Close" : isRefreshing ? "Refreshing..." : "Refresh Now"}
+                    <RefreshCw size={18} className={isRefreshing ? "animate-spin" : ""} />
+                    {isRefreshing ? "Refreshing..." : "Refresh Now"}
                 </button>
             </div>
         </div>

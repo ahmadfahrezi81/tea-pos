@@ -10,8 +10,12 @@ const DECLINED_KEY = "tea-pos:declined-build-id";
 const CHECK_THROTTLE_MS = 60_000;
 
 /**
- * `"updated"` — the page is already on the new build and only needs telling.
- * `"update"`  — the page is behind and needs a reload.
+ * `"updated"` — the page is already running the new build; a data refresh is
+ *               all a reload could achieve.
+ * `"update"`  — the page is behind and needs a new document.
+ *
+ * Both surface the same sheet. The distinction only decides which kind of
+ * reload the button performs.
  */
 export type UpdateReason = "updated" | "update" | null;
 
