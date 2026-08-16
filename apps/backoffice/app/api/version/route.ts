@@ -15,8 +15,8 @@ import { ok } from "@/lib/api/response";
  */
 export async function GET() {
     return ok({
-        buildId: process.env.NEXT_PUBLIC_BUILD_ID || packageJson.version || "1.0.0",
-        frontendVersion: process.env.NEXT_PUBLIC_APP_VERSION || packageJson.version || "1.0.0",
-        backendVersion: packageJson.version || "1.0.0",
+        buildId: process.env.NEXT_PUBLIC_BUILD_ID || packageJson.version,
+        frontendVersion: process.env.NEXT_PUBLIC_APP_VERSION || packageJson.version,
+        backendVersion: packageJson.version,
     });
 }

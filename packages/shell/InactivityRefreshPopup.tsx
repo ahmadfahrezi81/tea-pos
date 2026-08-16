@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { RefreshCw, Check, Info } from "lucide-react";
 import { Icon } from "@iconify/react";
-import { useServiceWorkerUpdate } from "./useServiceWorkerUpdate";
+import { useAppUpdate } from "./useAppUpdate";
 import { DOT_GRID } from "@tea-pos/ui/styles/dot-grid";
 import "@tea-pos/ui/icons/bundled-emoji";
 
@@ -73,8 +73,7 @@ const ACTIVITY_EVENTS = ["pointerdown", "mousemove", "keydown"] as const;
 export default function InactivityRefreshPopup() {
     const [showInactivityPrompt, setShowInactivityPrompt] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
-    const updateReason = useServiceWorkerUpdate();
-    const [updateDismissed, setUpdateDismissed] = useState(false);
+    const { reason: updateReason, markReloading, dismiss: dismissUpdate } = useAppUpdate();
     // A ref, not state: activity fires constantly and none of it should
     // re-render the tree. Only the interval below reads it. Seeded on mount
     // rather than here, because reading the clock during render is impure.
@@ -113,13 +112,15 @@ export default function InactivityRefreshPopup() {
     // Anything to say about a new version outranks inactivity: engaging with
     // that sheet is itself activity, so the idle state is stale the moment it
     // appears.
-    const reason =
-        updateReason && !updateDismissed ? updateReason
-        : showInactivityPrompt ? "inactivity"
-        : null;
+    const reason = updateReason ?? (showInactivityPrompt ? "inactivity" : null);
 
     const handleRefresh = () => {
         setIsRefreshing(true);
+        // Records the build being reloaded into, so the fresh page recognises
+        // itself as current and does not open a second sheet announcing the
+        // update the user just asked for. A no-op for the inactivity reason,
+        // which reloads into the same build.
+        markReloading();
         window.location.reload();
     };
 
@@ -132,13 +133,14 @@ export default function InactivityRefreshPopup() {
      * the inactivity text instead of closing. Refreshing the activity stamp
      * here as well keeps the interval from re-raising it on the next tick.
      *
-     * Latching the update is guarded, though it need not be today — an update
+     * Clearing the update is guarded, though it need not be today — an update
      * outranks inactivity, so a *visible* inactivity sheet already proves none
      * is pending. That safety comes entirely from the ordering above; the guard
-     * survives someone changing it.
+     * survives someone changing it. The hook owns what dismissal means for each
+     * reason, because only it holds the build ids.
      */
     const handleDismiss = () => {
-        if (reason === "update" || reason === "updated") setUpdateDismissed(true);
+        if (reason === "update" || reason === "updated") dismissUpdate();
         setShowInactivityPrompt(false);
         lastActivityRef.current = Date.now();
     };

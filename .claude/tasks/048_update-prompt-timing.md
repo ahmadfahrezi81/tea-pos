@@ -1,7 +1,8 @@
 # Task 048 — Make the update prompt appear immediately
 
-**Status: Phases 1 and 4 applied 2026-08-16, not yet deployed. Phases 2 and 3
-outstanding. All decisions closed.**
+**Status: all four phases applied 2026-08-16. All decisions closed. Nothing
+deployed yet — verifications 3 to 6 need two consecutive deploys and are the
+only thing left.**
 
 Opened 2026-08-16. Follow-up to task 042 Phase 2, whose verification 6 said the
 prompt "cannot be tested yet, by construction" and needed a second deploy to
@@ -410,6 +411,16 @@ No endpoint, no server change, no service worker involvement.
 Changes no behaviour. It only publishes the value, so it can go out ahead of
 Phase 3 and be checked with a `curl` before anything depends on it.
 
+> **Applied 2026-08-16.** Both routes return
+> `{ buildId, frontendVersion, backendVersion }`. Backoffice's is new and
+> mirrors seller's, including staying unauthenticated and doing no I/O — the
+> client hits it on every foreground, so a check costing a database round trip
+> would be worse than the staleness it detects.
+>
+> Backoffice's runtime caches are `bo-next-data-1.0.0`, `bo-supabase-api-1.0.0`
+> and `start-url`; `/api/version` matches none, so the same reasoning verified
+> for seller holds there.
+
 ### Phase 3 — Case B, retire the service worker signal
 
 In the same hook:
@@ -424,6 +435,48 @@ In the same hook:
 5. Rename the hook; it no longer concerns service workers.
    `useAppUpdateAvailable` or similar. Only consumer is
    `InactivityRefreshPopup`, imported by both apps from `@tea-pos/shell`.
+
+> **Applied 2026-08-16.** `useServiceWorkerUpdate.ts` → `useAppUpdate.ts`, with
+> the export map in `packages/shell/package.json` updated. It now returns
+> `{ reason, markReloading, markDeclined }` rather than a bare reason, because
+> two of the storage writes belong to user actions rather than to detection:
+>
+> - `markReloading` runs before `window.location.reload()` and records the
+>   build being reloaded into. Without it the two cases collide — the fresh
+>   page would find its remembered id stale and open a second sheet on top of
+>   the refresh the user just asked for. A no-op for the inactivity reason,
+>   which reloads into the same build.
+> - `dismiss` writes `tea-pos:declined-build-id` and clears the pending state.
+>   Declining does not make the tab any less stale, so the foreground check
+>   would otherwise re-offer the same build on every resume, and a till that
+>   never reloads would be asked all shift.
+>
+> **Dismissal had to move into the hook**, found in a review pass before
+> pushing. The first cut left a `updateDismissed` boolean in the popup and
+> ordered `"updated"` above `"update"`, which stranded a page in two ways at
+> once: `justUpdated` never clears on its own, so a page that announced one
+> update and then sat open across the next could never surface the real one;
+> and one boolean meant closing the purely informational sheet silenced every
+> future update on that page too. Both are the parked-till population this
+> whole task exists for.
+>
+> The fix is to let the served id outrank — the two can never both be fresh,
+> since `servedBuildId` is only set when the server reports something this page
+> is *not* running — and to give the hook the dismissal, because clearing it
+> correctly needs the build ids that only the hook holds.
+>
+> The check also runs once at mount, not only on `visibilitychange`. A document
+> served from the worker's cache is the one way a page can boot already behind,
+> and the throttle stops that doubling with a resume moments later.
+>
+> Verified in the shipped bundles rather than assumed: the popup's chunk in
+> both apps contains `/api/version` and `declined-build-id`, and zero
+> occurrences of `controllerchange`. The hits that remain in `main-*.js` and
+> `536-*.js` are workbox's own registration listener, which task 042
+> verification 4 already recorded as living there.
+>
+> Typecheck clean, lint at baseline (seller 4/7, backoffice 2/3), `pnpm build`
+> green with both workers emitted (seller 18.0KB, backoffice 11.9KB).
 
 ### Phase 4 — the second sheet, and the timer
 
