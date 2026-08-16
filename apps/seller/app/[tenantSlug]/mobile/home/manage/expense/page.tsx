@@ -41,7 +41,7 @@ export default function ExpensePage() {
         </div>
     ) : (
         <div className="divide-y divide-gray-100">
-            {existingExpenses.map((e: any) => (
+            {existingExpenses.map((e) => (
                 <div key={e.id} className="flex justify-between px-4 py-3">
                     <span className="text-base text-gray-700">{e.type}</span>
                     <span className="text-base font-medium text-gray-900">{formatRupiah(e.amount)}</span>

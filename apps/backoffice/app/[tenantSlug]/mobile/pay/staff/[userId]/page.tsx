@@ -2,7 +2,7 @@
 
 import { use } from "react";
 import { usePayrollUserInfo } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
-import { usePayrollCommissionTypes } from "@/lib/hooks/payroll-commission-types/usePayrollCommissionTypes";
+import { usePayrollCommissionConfigs } from "@/lib/hooks/payroll-commission-configs/usePayrollCommissionConfigs";
 import { useTenantUsers } from "@/lib/hooks/users/useTenantUsers";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
@@ -19,7 +19,7 @@ export default function StaffPayrollInfoPage({ params }: { params: Promise<{ use
     const { userId } = use(params);
     const { users } = useTenantUsers();
     const { info, isLoading: infoLoading } = usePayrollUserInfo(userId);
-    const { commissionTypes, isLoading: typesLoading } = usePayrollCommissionTypes();
+    const { commissionTypes, isLoading: typesLoading } = usePayrollCommissionConfigs();
     const { url } = useTenantSlug();
 
     const user = users.find((u) => u.id === userId);

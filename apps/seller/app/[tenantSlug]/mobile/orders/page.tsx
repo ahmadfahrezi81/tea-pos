@@ -1,6 +1,6 @@
 // app/mobile/orders/page.tsx
-import MobileOrders from "./_components/MobileOrders";
+import Orders from "./_components/Orders";
 
 export default function OrdersPage() {
-    return <MobileOrders />;
+    return <Orders />;
 }

@@ -213,7 +213,7 @@ Any API route that calls a mutating service must call `getRequestUser()` and pas
 - `app/api/orders/route.ts` → validates `ListOrdersQuery`, calls `listOrders`
 - `lib/api/orders.ts` → `ordersApi.list(params)`
 - `lib/hooks/orders/useStoreOrders.ts` → SWR on `storeId+date`
-- `app/[tenantSlug]/mobile/orders/_components/MobileOrders.tsx` → calls `useStoreOrders`
+- `app/[tenantSlug]/mobile/orders/_components/Orders.tsx` → calls `useStoreOrders`
 
 ---
 

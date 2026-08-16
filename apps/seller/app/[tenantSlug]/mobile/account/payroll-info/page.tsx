@@ -1,6 +1,6 @@
 "use client";
 
-import { usePayrollUserInfo } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
+import { usePayrollUserInfo } from "@/lib/hooks/payroll/usePayrollUserInfo";
 import { Copy, Check } from "lucide-react";
 import { useState } from "react";
 import { useT } from "@/lib/hooks/useT";

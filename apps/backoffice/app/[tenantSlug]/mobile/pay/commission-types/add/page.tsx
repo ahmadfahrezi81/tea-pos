@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { usePayrollCommissionTypes } from "@/lib/hooks/payroll-commission-types/usePayrollCommissionTypes";
+import { usePayrollCommissionConfigs } from "@/lib/hooks/payroll-commission-configs/usePayrollCommissionConfigs";
 import { TextInput } from "@tea-pos/ui/custom/TextInput";
 import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
 import { FormFooter } from "@/components/shared/FormFooter";
@@ -10,7 +10,7 @@ import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
 
 export default function AddCommissionTypePage() {
     const router = useRouter();
-    const { create } = usePayrollCommissionTypes();
+    const { create } = usePayrollCommissionConfigs();
     const { showError } = useErrorSheet();
     const [name, setName] = useState("");
     const [slug, setSlug] = useState("");

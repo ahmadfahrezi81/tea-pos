@@ -78,6 +78,9 @@ a,
     --color-input: var(--input);
     --color-ring: var(--ring);
     --color-brand: var(--accent-primary);
+    /* The shared WeatherDrawer loads Bebas Neue itself and exposes it under
+       this variable; the theme entry is what turns it into `font-bebas`. */
+    --font-bebas: var(--font-bebas);
 }
 
 :root {
@@ -121,3 +124,7 @@ input[type="date"]::-webkit-date-and-time-value {
     .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
     .footer-safe { padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem); }
 }
+
+/* Required by the shared FeedbackHistory map — mapbox renders unstyled
+   without it. */
+@import 'mapbox-gl/dist/mapbox-gl.css';

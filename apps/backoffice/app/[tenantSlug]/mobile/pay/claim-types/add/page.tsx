@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { usePayrollClaimTypes } from "@/lib/hooks/payroll-claim-types/usePayrollClaimTypes";
+import { usePayrollClaimConfigs } from "@/lib/hooks/payroll-claim-configs/usePayrollClaimConfigs";
 import { TextInput } from "@tea-pos/ui/custom/TextInput";
 import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
 import { FormFooter } from "@/components/shared/FormFooter";
@@ -17,7 +17,7 @@ const FREQUENCY_LABEL: Record<string, string> = {
 
 export default function AddClaimTypePage() {
     const router = useRouter();
-    const { create } = usePayrollClaimTypes();
+    const { create } = usePayrollClaimConfigs();
     const { showError } = useErrorSheet();
     const [name, setName] = useState("");
     const [slug, setSlug] = useState("");

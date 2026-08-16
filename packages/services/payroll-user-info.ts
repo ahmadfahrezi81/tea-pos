@@ -57,7 +57,6 @@ export async function upsertPayrollUserInfo(
         tenantId,
         userId,
         commissionConfigId,
-        payFrequency,
         bankName,
         bankAccountNumber,
         bankAccountHolder,
@@ -65,7 +64,6 @@ export async function upsertPayrollUserInfo(
         tenantId: string;
         userId: string;
         commissionConfigId?: string | null;
-        payFrequency?: string | null;
         bankName?: string | null;
         bankAccountNumber?: string | null;
         bankAccountHolder?: string | null;
@@ -80,7 +78,6 @@ export async function upsertPayrollUserInfo(
 
     const row = existing as {
         commission_config_id: string | null;
-        pay_frequency: string | null;
         bank_name: string | null;
         bank_account_number: string | null;
         bank_account_holder: string | null;
@@ -90,7 +87,6 @@ export async function upsertPayrollUserInfo(
         tenant_id: tenantId,
         user_id: userId,
         commission_config_id: commissionConfigId !== undefined ? commissionConfigId : (row?.commission_config_id ?? null),
-        pay_frequency: payFrequency !== undefined ? payFrequency : (row?.pay_frequency ?? null),
         bank_name: bankName !== undefined ? bankName : (row?.bank_name ?? null),
         bank_account_number: bankAccountNumber !== undefined ? bankAccountNumber : (row?.bank_account_number ?? null),
         bank_account_holder: bankAccountHolder !== undefined ? bankAccountHolder : (row?.bank_account_holder ?? null),

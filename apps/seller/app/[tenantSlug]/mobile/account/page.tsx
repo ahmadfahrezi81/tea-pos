@@ -1,5 +1,5 @@
-import AccountProfile from "./_components/AccountProfile";
+import Account from "./_components/Account";
 
 export default function AccountPage() {
-    return <AccountProfile />;
+    return <Account />;
 }

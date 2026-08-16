@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { toCamelKeys } from "@tea-pos/utils/schemas";
 import { getPayWindowBounds } from "@tea-pos/utils/week";
 import { getPayrollUserInfo } from "./payroll-user-info";
+import { getTenantPayFrequency } from "./tenants";
 import { createLogger } from "./activity-logs";
 
 // ─── Create payroll commissions ───────────────────────────────────────────────
@@ -32,6 +33,11 @@ export async function createPayrollCommissions(
     type SessionRow = { id: string; user_id: string; started_at: string; ended_at: string | null };
     const typedSessions = sessions as SessionRow[];
     const userIds = [...new Set(typedSessions.map((s) => s.user_id))];
+
+    // One lookup for the whole close — the cadence is the tenant's, not each
+    // seller's, so reading it inside the loop would be a query per staff member.
+    const payFrequency = await getTenantPayFrequency(supabase, tenantId);
+    const { startDate, endDate } = getPayWindowBounds(date, payFrequency);
 
     const created: unknown[] = [];
 
@@ -108,8 +114,6 @@ export async function createPayrollCommissions(
         });
 
         // Auto-upsert payout and stamp payout_id on the commission
-        const frequency = (info?.payFrequency as string | null) ?? "bi_weekly";
-        const { startDate, endDate } = getPayWindowBounds(date, frequency);
         const payout = await upsertPayout(supabase, { tenantId, userId, startDate, endDate }).catch((err) => {
             console.warn("[payroll] upsertPayout failed after commission create:", err);
             return null;

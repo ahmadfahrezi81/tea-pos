@@ -6,9 +6,11 @@
     "./*": "./*.tsx",
     "./routes": "./routes.ts",
     "./useScrollRestoration": "./useScrollRestoration.ts",
-    "./useServiceWorkerUpdate": "./useServiceWorkerUpdate.ts"
+    "./useAppUpdate": "./useAppUpdate.ts"
   },
   "dependencies": {
+    "@iconify/react": "^6.0.2",
+    "@tea-pos/ui": "workspace:*",
     "lucide-react": "^0.539.0"
   },
   "peerDependencies": {

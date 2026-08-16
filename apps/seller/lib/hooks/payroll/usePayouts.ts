@@ -1,7 +1,7 @@
 "use client";
 
 import useSWR from "swr";
-import { payrollApi } from "@/lib/api/payroll";
+import { payoutsApi } from "@/lib/api/payouts";
 import type { ListPayoutsQuery, PayoutListResponse } from "@tea-pos/features/payroll/schema";
 
 export function usePayouts(params?: Partial<ListPayoutsQuery>) {
@@ -9,7 +9,7 @@ export function usePayouts(params?: Partial<ListPayoutsQuery>) {
 
     const { data, error, mutate, isLoading } = useSWR<PayoutListResponse>(
         key,
-        () => payrollApi.getPayouts(params),
+        () => payoutsApi.getPayouts(params),
         { revalidateOnFocus: false, dedupingInterval: 60000 },
     );
 

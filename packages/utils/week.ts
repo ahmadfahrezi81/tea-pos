@@ -62,34 +62,49 @@ export function getExpectedPayoutDate(endDate: string): string {
     return addDaysToStr(endDate, 1);
 }
 
+/* Every cadence is a whole number of weeks running Monday to Sunday. That is
+   what lets one cadence hand over to another on any Monday without a period
+   overlapping or falling short — a calendar month cannot end on a Sunday every
+   time, which is why "monthly" here means four weeks. */
+export const PAY_FREQUENCIES = ["weekly", "bi_weekly", "four_weekly"] as const;
+
+export type PayFrequency = (typeof PAY_FREQUENCIES)[number];
+
+const WEEKS_PER_PERIOD: Record<PayFrequency, number> = {
+    weekly: 1,
+    bi_weekly: 2,
+    four_weekly: 4,
+};
+
+export function isPayFrequency(value: unknown): value is PayFrequency {
+    return typeof value === "string" && (PAY_FREQUENCIES as readonly string[]).includes(value);
+}
+
+/* Epoch = Monday of ISO Week 2, 2025. Multi-week periods are fixed blocks
+   counted from this anchor — no ISO week parity, no year-boundary drift. */
+const EPOCH = "2025-01-06";
+
 export function getPayWindowBounds(
     dateStr: string,
     frequency: string,
 ): { startDate: string; endDate: string } {
-    switch (frequency) {
-        case "daily":
-            return { startDate: dateStr, endDate: dateStr };
-        case "weekly": {
-            const mon = isoMondayStr(dateStr);
-            return { startDate: mon, endDate: addDaysToStr(mon, 6) };
-        }
-        case "bi_weekly": {
-            // Epoch = Monday of ISO Week 2, 2025. All bi-weekly blocks are fixed
-            // 14-day windows from this anchor — no ISO week parity, no year-boundary drift.
-            const EPOCH = "2025-01-06";
-            const epochMs = new Date(EPOCH + "T12:00:00Z").getTime();
-            const dateMs = new Date(dateStr + "T12:00:00Z").getTime();
-            const blockIndex = Math.floor(Math.round((dateMs - epochMs) / 86_400_000) / 14);
-            const start = addDaysToStr(EPOCH, blockIndex * 14);
-            return { startDate: start, endDate: addDaysToStr(start, 13) };
-        }
-        case "monthly": {
-            const month = dateStr.slice(0, 7);
-            const lastDay = new Date(dateStr + "T12:00:00Z");
-            lastDay.setUTCMonth(lastDay.getUTCMonth() + 1, 0);
-            return { startDate: month + "-01", endDate: lastDay.toISOString().slice(0, 10) };
-        }
-        default:
-            return getPayWindowBounds(dateStr, "bi_weekly");
+    if (!isPayFrequency(frequency)) {
+        // The value is validated where it is read from the database, so reaching
+        // here means a cadence was added to the column's CHECK and not to this
+        // module. Falling back would silently pay on the wrong calendar.
+        throw new Error(`Unknown pay frequency: ${frequency}`);
     }
+
+    const weeks = WEEKS_PER_PERIOD[frequency];
+    if (weeks === 1) {
+        const mon = isoMondayStr(dateStr);
+        return { startDate: mon, endDate: addDaysToStr(mon, 6) };
+    }
+
+    const days = weeks * 7;
+    const epochMs = new Date(EPOCH + "T12:00:00Z").getTime();
+    const dateMs = new Date(dateStr + "T12:00:00Z").getTime();
+    const blockIndex = Math.floor(Math.round((dateMs - epochMs) / 86_400_000) / days);
+    const start = addDaysToStr(EPOCH, blockIndex * days);
+    return { startDate: start, endDate: addDaysToStr(start, days - 1) };
 }

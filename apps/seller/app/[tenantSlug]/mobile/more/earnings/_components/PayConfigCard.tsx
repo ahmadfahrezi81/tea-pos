@@ -1,6 +1,7 @@
 "use client";
 
-import { usePayrollUserInfo } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
+import { usePayrollUserInfo } from "@/lib/hooks/payroll/usePayrollUserInfo";
+import { usePayFrequency } from "@/lib/context/PayFrequencyContext";
 import { useT } from "@/lib/hooks/useT";
 import { SkeletonValue } from "@/components/shared/SkeletonValue";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
@@ -12,6 +13,7 @@ import { CalendarClock } from "lucide-react";
 
 export function PayConfigCard() {
     const { info, isLoading } = usePayrollUserInfo();
+    const frequency = usePayFrequency();
     const t = useT();
 
     if (isLoading) {
@@ -24,20 +26,20 @@ export function PayConfigCard() {
         );
     }
 
-    const frequency = info?.payFrequency ?? "bi_weekly";
     const today = getTodayLocalStr();
-    const { endDate } = getPayWindowBounds(today, frequency);
-    const expectedPayout = getExpectedPayoutDate(endDate);
+    // Without a cadence there is no pay window and no next payout date to quote.
+    const expectedPayout = frequency
+        ? getExpectedPayoutDate(getPayWindowBounds(today, frequency).endDate)
+        : null;
 
     const FREQUENCY_LABELS: Record<string, string> = {
-        daily: t("earnings.freqDaily"),
         weekly: t("earnings.freqWeekly"),
         bi_weekly: t("earnings.freqBiWeekly"),
-        monthly: t("earnings.freqMonthly"),
+        four_weekly: t("earnings.freqFourWeekly"),
     };
 
     const rows = [
-        { label: t("earnings.payFrequency"), value: FREQUENCY_LABELS[frequency] ?? frequency },
+        { label: t("earnings.payFrequency"), value: frequency ? (FREQUENCY_LABELS[frequency] ?? frequency) : "—" },
         { label: t("earnings.perCupLabel"), value: info?.ratePerCup != null ? formatRupiah(info.ratePerCup) : "—" },
     ];
 
@@ -46,17 +48,19 @@ export function PayConfigCard() {
     return (
         <div className="space-y-3">
             {/* Next expected payout — its own section so pay date is unmistakable */}
-            <div className="bg-white p-3 rounded-2xl flex items-center gap-3">
-                <div className="w-11 h-11 rounded-xl bg-brand/10 flex items-center justify-center shrink-0">
-                    <CalendarClock size={24} className="text-brand" />
+            {expectedPayout && (
+                <div className="bg-white p-3 rounded-2xl flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-xl bg-brand/10 flex items-center justify-center shrink-0">
+                        <CalendarClock size={24} className="text-brand" />
+                    </div>
+                    <div className="min-w-0">
+                        <p className="text-xs font-medium text-gray-500">{t("earnings.nextExpectedPayout")}</p>
+                        <p className="text-lg font-bold text-gray-900">
+                            {format(parseISO(expectedPayout), "EEE, d MMM yyyy")}
+                        </p>
+                    </div>
                 </div>
-                <div className="min-w-0">
-                    <p className="text-xs font-medium text-gray-500">{t("earnings.nextExpectedPayout")}</p>
-                    <p className="text-lg font-bold text-gray-900">
-                        {format(parseISO(expectedPayout), "EEE, d MMM yyyy")}
-                    </p>
-                </div>
-            </div>
+            )}
 
             {/* Pay config details */}
             <div className="bg-white p-4 rounded-2xl space-y-2 text-sm">

@@ -1,5 +1,5 @@
-import MobileManage from "./_components/MobileManage";
+import Manage from "./_components/Manage";
 
 export default function ManagePage() {
-    return <MobileManage />;
+    return <Manage />;
 }

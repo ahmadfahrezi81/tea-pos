@@ -1,14 +1,14 @@
 "use client";
 
 import useSWR from "swr";
-import { payrollApi } from "@/lib/api/payroll";
+import { payoutsApi } from "@/lib/api/payouts";
 
 export function usePayslip(payoutId: string | undefined) {
     const key = payoutId ? `payslip-${payoutId}` : null;
 
     const { data, error, mutate, isLoading } = useSWR(
         key,
-        () => payrollApi.getPayslip({ payoutId: payoutId! }),
+        () => payoutsApi.getPayslip({ payoutId: payoutId! }),
         { revalidateOnFocus: false, dedupingInterval: 60000 },
     );
 

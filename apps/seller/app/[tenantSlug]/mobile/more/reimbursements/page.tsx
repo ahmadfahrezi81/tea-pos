@@ -4,8 +4,8 @@ import { useState } from "react";
 import {
     usePayrollClaims,
     useClaimableTypes,
-} from "@/lib/hooks/payroll-claims/usePayrollClaims";
-import { usePayrollUserInfo } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
+} from "@/lib/hooks/payroll/usePayrollClaims";
+import { usePayFrequency } from "@/lib/context/PayFrequencyContext";
 import { getPayWindowBounds } from "@tea-pos/utils/week";
 import { getCurrentLocalMonth, getTodayLocalStr } from "@tea-pos/utils/time";
 import { ReceiptText, CalendarDays } from "lucide-react";
@@ -21,19 +21,17 @@ const STATUS_STYLE: Record<string, string> = {
 
 export default function ReimbursementsPage() {
     const { claims, isLoading: claimsLoading } = usePayrollClaims();
-    const { info, isLoading: infoLoading } = usePayrollUserInfo();
+    const payFrequency = usePayFrequency();
     const t = useT();
 
     const [selectedMonth, setSelectedMonth] = useState(getCurrentLocalMonth());
 
     const today = getTodayLocalStr();
-    const payWindow = info
-        ? getPayWindowBounds(today, info.payFrequency ?? "bi_weekly")
-        : null;
+    const payWindow = payFrequency ? getPayWindowBounds(today, payFrequency) : null;
 
     const { types, isLoading: typesLoading } = useClaimableTypes(payWindow);
 
-    const filteredClaims = claims.filter((c: any) =>
+    const filteredClaims = claims.filter((c) =>
         c.date?.startsWith(selectedMonth),
     );
 
@@ -44,7 +42,7 @@ export default function ReimbursementsPage() {
                 <p className="text-sm font-semibold text-gray-800">
                     {t("claims.entitlements")}
                 </p>
-                {infoLoading || typesLoading ? (
+                {typesLoading ? (
                     <div className="space-y-2">
                         {[1, 2].map((i) => (
                             <div
@@ -60,7 +58,7 @@ export default function ReimbursementsPage() {
                     </div>
                 ) : (
                     <div className="divide-y divide-gray-100">
-                        {types.map((type: any) => (
+                        {types.map((type) => (
                             <div key={type.id} className="flex items-center justify-between py-2.5">
                                 <div>
                                     <p className="text-sm font-medium text-gray-800">{type.name}</p>
@@ -106,7 +104,7 @@ export default function ReimbursementsPage() {
                     </div>
                 ) : (
                     <ul className="divide-y divide-gray-100">
-                        {filteredClaims.map((claim: any) => (
+                        {filteredClaims.map((claim) => (
                             <li
                                 key={claim.id}
                                 className="flex items-center justify-between px-4 py-3"

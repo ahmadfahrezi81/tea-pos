@@ -1,8 +1,8 @@
 import { getServiceClient } from "@/lib/supabase/service";
 import { getCurrentTenantId } from "@tea-pos/utils/server-config/tenant";
 import { NextRequest } from "next/server";
-import { SetClaimEligibilityInput, GetClaimEligibilityQuery } from "@tea-pos/features/payroll-claim-types/schema";
-import { listUserClaimEligibility, setUserClaimEligibility } from "@tea-pos/services/payroll-claim-types";
+import { SetClaimEligibilityInput, GetClaimEligibilityQuery } from "@tea-pos/features/payroll-claim-configs/schema";
+import { listUserClaimEligibility, setUserClaimEligibility } from "@tea-pos/services/payroll-claim-configs";
 import { ok, badRequest, unauthorized, forbidden, handleError } from "@/lib/api/response";
 import { getRequestUser } from "@/lib/auth/get-request-user";
 

@@ -2,7 +2,7 @@
 
 import { use, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { usePayrollCommissionTypes } from "@/lib/hooks/payroll-commission-types/usePayrollCommissionTypes";
+import { usePayrollCommissionConfigs } from "@/lib/hooks/payroll-commission-configs/usePayrollCommissionConfigs";
 import { TextInput } from "@tea-pos/ui/custom/TextInput";
 import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
 import { FormFooter } from "@/components/shared/FormFooter";
@@ -13,7 +13,7 @@ import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
 export default function EditCommissionTypePage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
     const router = useRouter();
-    const { commissionTypes, isLoading, update } = usePayrollCommissionTypes();
+    const { commissionTypes, isLoading, update } = usePayrollCommissionConfigs();
     const type = commissionTypes.find((t) => t.id === id);
     const { showToast } = useToast();
     const { showError } = useErrorSheet();

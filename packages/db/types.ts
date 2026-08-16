@@ -429,7 +429,7 @@ export type Database = {
           commission_config_id: string | null
           created_at: string | null
           id: string
-          pay_frequency: string
+          pay_frequency: string | null
           tenant_id: string
           updated_at: string | null
           user_id: string
@@ -441,7 +441,7 @@ export type Database = {
           commission_config_id?: string | null
           created_at?: string | null
           id?: string
-          pay_frequency?: string
+          pay_frequency?: string | null
           tenant_id: string
           updated_at?: string | null
           user_id: string
@@ -453,7 +453,7 @@ export type Database = {
           commission_config_id?: string | null
           created_at?: string | null
           id?: string
-          pay_frequency?: string
+          pay_frequency?: string | null
           tenant_id?: string
           updated_at?: string | null
           user_id?: string
@@ -1377,6 +1377,7 @@ export type Database = {
           created_at: string | null
           id: string
           name: string
+          pay_frequency: string
           slug: string
           updated_at: string | null
         }
@@ -1384,6 +1385,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           name: string
+          pay_frequency?: string
           slug: string
           updated_at?: string | null
         }
@@ -1391,6 +1393,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           name?: string
+          pay_frequency?: string
           slug?: string
           updated_at?: string | null
         }

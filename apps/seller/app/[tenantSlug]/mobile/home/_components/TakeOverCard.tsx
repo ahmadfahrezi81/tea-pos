@@ -6,8 +6,8 @@ import { Icon } from "@iconify/react";
 import Image from "next/image";
 import { useT } from "@/lib/hooks/useT";
 import { useSummaryUsers } from "@/lib/hooks/summaries/useSummaryUsers";
-import { DOT_GRID } from "@/lib/styles/dot-grid";
-import "@/lib/icons/bundled-emoji";
+import { DOT_GRID } from "@tea-pos/ui/styles/dot-grid";
+import "@tea-pos/ui/icons/bundled-emoji";
 
 export function TakeOverCard({
     onTransfer,

@@ -1,6 +1,6 @@
 {
     "name": "@tea-pos/backoffice",
-    "version": "1.0.0",
+    "version": "1.0.3",
     "private": true,
     "scripts": {
         "dev": "next dev --turbopack",
@@ -22,10 +22,12 @@
         "browser-image-compression": "^2.0.2",
         "date-fns": "^4.1.0",
         "lucide-react": "^0.539.0",
+        "mapbox-gl": "^3.22.0",
         "next": "16.2.4",
         "posthog-node": "^5.35.6",
         "react": "19.2.5",
         "react-dom": "19.2.5",
+        "recharts": "^2.15.4",
         "sonner": "^2.0.7",
         "swr": "^2.3.5",
         "zod": "^4.1.12"
