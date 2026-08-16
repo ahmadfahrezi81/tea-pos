@@ -35,6 +35,17 @@ export type RouteConfig = {
     scrollPaddingBottom?: string;
     /** Return to this route at the scroll offset it was left at. */
     preserveScroll?: boolean;
+    /**
+     * Warm this route once the app is up, so opening it commits without a
+     * loading state.
+     *
+     * Each one is a real RSC request that re-runs auth and re-renders the
+     * layout on the server, so this earns its keep only for somewhere the user
+     * goes constantly and reaches in one tap — the tab bar, and the odd screen
+     * a tab swaps to. A route two navigations deep is cheaper fetched when
+     * asked for.
+     */
+    prefetch?: boolean;
 };
 
 /** A route is a subpage exactly when it has somewhere to go back to. */

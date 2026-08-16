@@ -18,31 +18,37 @@ export const mobileRoutes = {
     "/mobile/home/pos": {
         titleKey: "nav.pos",
         parent: null,
+        prefetch: true,
         titleAccessory: true,
     },
     "/mobile/home/manage": {
         titleKey: "nav.manage",
         parent: null,
+        prefetch: true,
         titleAccessory: true,
     },
     "/mobile/orders": {
         titleKey: "nav.orders",
         parent: null,
+        prefetch: true,
         titleAccessory: true,
     },
     "/mobile/analytics": {
         titleKey: "nav.analytics",
         parent: null,
+        prefetch: true,
         titleAccessory: true,
         preserveScroll: true,
     },
     "/mobile/chats": {
         titleKey: "nav.chats",
         parent: null,
+        prefetch: true,
     },
     "/mobile/more": {
         titleKey: "nav.more",
         parent: null,
+        prefetch: true,
     },
 
     // ── Home / manage ─────────────────────────────────────────────────────────
@@ -191,6 +197,13 @@ export const mobileRoutes = {
 
 export const rootTabSuffixes = Object.entries(mobileRoutes)
     .filter(([, c]) => c.parent === null)
+    .map(([path]) => path);
+
+/* Derived from the table rather than kept as a second list, which is how the
+   old hand-written one came to hold routes two taps deep and one that had been
+   deleted. Marking the route is now the only way to warm it. */
+export const prefetchSuffixes = Object.entries(mobileRoutes)
+    .filter(([, c]) => "prefetch" in c && c.prefetch)
     .map(([path]) => path);
 
 export const resolveRoute = (path: string): RouteConfig | null => {

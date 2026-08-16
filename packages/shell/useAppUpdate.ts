@@ -10,6 +10,14 @@ const DECLINED_KEY = "tea-pos:declined-build-id";
 const CHECK_THROTTLE_MS = 60_000;
 
 /**
+ * The mount check competes with the app's own boot — its stores, flags, profile
+ * and socket — and it also triggers `registration.update()`, which sends the
+ * worker back for `sw.js`. None of that is worth a slower first paint for a
+ * sheet nobody can read in the first seconds anyway.
+ */
+const FIRST_CHECK_DELAY_MS = 5_000;
+
+/**
  * `"updated"` — the page is already running the new build; a data refresh is
  *               all a reload could achieve.
  * `"update"`  — the page is behind and needs a new document.
@@ -127,12 +135,14 @@ export function useAppUpdate(): AppUpdate {
         };
 
         // Run once for a document the worker may have served from cache, which
-        // is the one way a page can boot already behind.
-        void check();
+        // is the one way a page can boot already behind — but after the app has
+        // had the network to itself for a moment.
+        const firstCheck = setTimeout(() => void check(), FIRST_CHECK_DELAY_MS);
         document.addEventListener("visibilitychange", check);
 
         return () => {
             cancelled = true;
+            clearTimeout(firstCheck);
             document.removeEventListener("visibilitychange", check);
         };
     }, [current]);

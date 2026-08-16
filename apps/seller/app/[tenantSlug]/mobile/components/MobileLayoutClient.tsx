@@ -9,23 +9,13 @@ import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { useStore } from "@/lib/context/StoreContext";
 import { StorePickerDrawer } from "./StorePickerDrawer";
 import { navigation } from "@tea-pos/utils/navigation";
-import { resolveRoute, rootTabSuffixes, tabGroups } from "../config/navigation";
+import { prefetchSuffixes, resolveRoute, rootTabSuffixes, tabGroups } from "../config/navigation";
 import { useFlags } from "@/lib/context/FlagsContext";
 import { useT } from "@/lib/hooks/useT";
 
 interface MobileLayoutClientProps {
     children: ReactNode;
 }
-
-/** Warmed on mount so the common destinations commit without a loading state. */
-const PREFETCH_SUFFIXES = [
-    "/mobile/home/pos",
-    "/mobile/home/manage",
-    "/mobile/account",
-    "/mobile/more/stores",
-    "/mobile/account/details",
-    "/mobile/more/map",
-];
 
 export default function MobileLayoutClient({ children }: MobileLayoutClientProps) {
     const { url } = useTenantSlug();
@@ -48,7 +38,7 @@ export default function MobileLayoutClient({ children }: MobileLayoutClientProps
     }
 
     const rootTabPaths = useMemo(() => rootTabSuffixes.map(url), [url]);
-    const prefetchPaths = useMemo(() => PREFETCH_SUFFIXES.map(url), [url]);
+    const prefetchPaths = useMemo(() => prefetchSuffixes.map(url), [url]);
 
     // Labels are translated here; which variant applies is path-dependent and so
     // is resolved by the shell, which knows where we are navigating to.

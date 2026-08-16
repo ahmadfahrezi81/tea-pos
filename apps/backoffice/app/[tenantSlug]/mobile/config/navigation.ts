@@ -14,10 +14,12 @@ export const mobileRoutes = {
     "/mobile/dashboard": {
         titleKey: "Dashboard",
         parent: null,
+        prefetch: true,
     },
     "/mobile/pay": {
         titleKey: "Pay",
         parent: null,
+        prefetch: true,
     },
     "/mobile/pay/payouts": {
         titleKey: "Staff Payouts",
@@ -62,14 +64,17 @@ export const mobileRoutes = {
     "/mobile/supply": {
         titleKey: "Supply",
         parent: null,
+        prefetch: true,
     },
     "/mobile/chats": {
         titleKey: "Chats",
         parent: null,
+        prefetch: true,
     },
     "/mobile/more": {
         titleKey: "More",
         parent: null,
+        prefetch: true,
     },
     "/mobile/more/patch-notes": {
         titleKey: "Patch Notes",
@@ -89,6 +94,12 @@ export const mobileRoutes = {
 
 export const rootTabSuffixes = Object.entries(mobileRoutes)
     .filter(([, c]) => c.parent === null)
+    .map(([path]) => path);
+
+/* Derived from the table rather than kept as a second list, so marking the
+   route is the only way to warm it. */
+export const prefetchSuffixes = Object.entries(mobileRoutes)
+    .filter(([, c]) => "prefetch" in c && c.prefetch)
     .map(([path]) => path);
 
 export const resolveRoute = (path: string): RouteConfig | null => {

@@ -47,7 +47,7 @@ export interface MobileShellProps {
 
     /** False until the app's own bootstrap data has arrived; gates the content. */
     ready: boolean;
-    /** Prefetched once on mount. */
+    /** Routes the app's table marked `prefetch`. Warmed once the shell is up. */
     prefetchPaths?: string[];
     /** Called on every navigation, so apps can register a global navigate fn. */
     onNavigate?: (navigate: (path: string) => void) => void;
@@ -183,13 +183,33 @@ export function MobileShell({
         return () => clearTimeout(timer);
     }, [isPending]);
 
+    /**
+     * Only once the app is up.
+     *
+     * Every prefetch is a full RSC request that re-runs the proxy's auth check
+     * and re-renders this layout on the server. Firing them at mount put ten of
+     * those on the wire in the same instant the app was fetching the data it
+     * needs to render at all — buying the second navigation by taxing the first,
+     * which is exactly backwards.
+     *
+     * Waiting on `ready` is what makes it cheap, and an idle callback keeps it
+     * off the commit that finally reveals the app. What to warm is the app's
+     * call, declared per route in its table.
+     */
     useEffect(() => {
-        prefetchPaths?.forEach((path) => router.prefetch(path));
-        tabs.forEach((tab) => router.prefetch(tab.path));
-        // Prefetch targets are static; re-running on every tabs identity would
+        if (!ready || !prefetchPaths?.length) return;
+        const run = () => prefetchPaths.forEach((path) => router.prefetch(path));
+        // Safari has no requestIdleCallback. A timeout is not the same promise,
+        // but it clears the current frame, which is the part that matters.
+        const hasIdle = typeof window.requestIdleCallback === "function";
+        const handle = hasIdle
+            ? window.requestIdleCallback(run, { timeout: 2000 })
+            : window.setTimeout(run, 500);
+        return () => (hasIdle ? window.cancelIdleCallback(handle) : clearTimeout(handle));
+        // Targets are static; re-running on every `prefetchPaths` identity would
         // refetch the same routes on each render.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [ready]);
 
     // The header and content both follow `pathname`, the committed route, so the
     // title never jumps ahead of the page it labels. Only the tab bar runs ahead

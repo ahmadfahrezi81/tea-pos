@@ -5,14 +5,11 @@ import { MobileShell } from "@tea-pos/shell/MobileShell";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
-import { resolveRoute, rootTabSuffixes, tabGroups } from "../config/navigation";
+import { prefetchSuffixes, resolveRoute, rootTabSuffixes, tabGroups } from "../config/navigation";
 
 interface MobileLayoutClientProps {
     children: ReactNode;
 }
-
-/** Warmed on mount so the common destinations commit without a loading state. */
-const PREFETCH_SUFFIXES = ["/mobile/dashboard", "/mobile/pay", "/mobile/account"];
 
 /** Backoffice has no i18n, so route titles are already display text. */
 const identity = (key: string) => key;
@@ -29,7 +26,7 @@ export default function MobileLayoutClient({ children }: MobileLayoutClientProps
     }
 
     const rootTabPaths = useMemo(() => rootTabSuffixes.map(url), [url]);
-    const prefetchPaths = useMemo(() => PREFETCH_SUFFIXES.map(url), [url]);
+    const prefetchPaths = useMemo(() => prefetchSuffixes.map(url), [url]);
 
     const tabs = useMemo(
         () =>
