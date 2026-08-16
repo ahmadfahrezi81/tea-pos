@@ -127,6 +127,21 @@ export const UserSessionActivityResponse = z
     })
     .openapi({ title: "UserSessionActivityResponse" });
 
+// The tenant-wide sibling: which days any active store opened, for the
+// backoffice streak grid. Same payload shape as the per-user activity above, so
+// the two grids can be read the same way.
+export const TenantSessionActivityQuery = z
+    .object({
+        weeks: z.coerce.number().int().min(1).max(52).default(4),
+    })
+    .openapi({ title: "TenantSessionActivityQuery" });
+
+export const TenantSessionActivityResponse = z
+    .object({
+        dates: z.array(z.string()),
+    })
+    .openapi({ title: "TenantSessionActivityResponse" });
+
 export const SessionsByMonthResponse = z
     .object({
         sessionsBySummaryId: z.record(z.string(), z.array(SessionUserResponse)),
@@ -180,3 +195,5 @@ export type SessionsBySummaryResponse = z.infer<typeof SessionsBySummaryResponse
 export type SessionsByMonthResponse = z.infer<typeof SessionsByMonthResponse>;
 export type GetUserSessionActivityQuery = z.infer<typeof GetUserSessionActivityQuery>;
 export type UserSessionActivityResponse = z.infer<typeof UserSessionActivityResponse>;
+export type TenantSessionActivityQuery = z.infer<typeof TenantSessionActivityQuery>;
+export type TenantSessionActivityResponse = z.infer<typeof TenantSessionActivityResponse>;

@@ -354,8 +354,48 @@ export const AdminStoreBreakdownResponse = z
     .openapi({ title: "AdminStoreBreakdownResponse" });
 
 // ============================================================================
+// TENANT DAILY TOTALS (backoffice dashboard)
+// ============================================================================
+
+// A rolling window rather than a month: the dashboard wants a chart that is the
+// same size every day of the month, and 14 days fits a phone without scrolling.
+export const TenantDailyTotalsQuery = z
+    .object({
+        days: z.coerce.number().int().min(1).max(90).default(14).openapi({
+            description: "How many days back from today the window runs",
+            example: 14,
+        }),
+    })
+    .openapi({ title: "TenantDailyTotalsQuery" });
+
+export const TenantDailyTotalsPoint = z
+    .object({
+        date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        cups: z.number().int().min(0),
+        orders: z.number().int().min(0),
+        sales: z.number().min(0),
+    })
+    .openapi({ title: "TenantDailyTotalsPoint" });
+
+export const TenantDailyTotalsResponse = z
+    .object({
+        // One entry per day in the window, closed days included as zeros.
+        points: z.array(TenantDailyTotalsPoint),
+        totals: z.object({
+            cups: z.number().int().min(0),
+            orders: z.number().int().min(0),
+            sales: z.number().min(0),
+        }),
+    })
+    .openapi({ title: "TenantDailyTotalsResponse" });
+
+// ============================================================================
 // TYPE EXPORTS
 // ============================================================================
+
+export type TenantDailyTotalsQuery = z.infer<typeof TenantDailyTotalsQuery>;
+export type TenantDailyTotalsPoint = z.infer<typeof TenantDailyTotalsPoint>;
+export type TenantDailyTotalsResponse = z.infer<typeof TenantDailyTotalsResponse>;
 
 export type HourlySalesQuery = z.infer<typeof HourlySalesQuery>;
 export type HourlySalesDataPoint = z.infer<typeof HourlySalesDataPoint>;

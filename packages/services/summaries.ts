@@ -723,3 +723,63 @@ export async function getSummaryPhotoCount(
     if (error) throw error;
     return count ?? 0;
 }
+
+// ─── Tenant-wide daily totals (dashboard) ─────────────────────────────────────
+
+export interface TenantDailyTotal {
+    date: string;
+    cups: number;
+    orders: number;
+    sales: number;
+}
+
+/* Every active store's day, folded into one series.
+ *
+ * One round trip and one pass over the rows: `stores!inner` puts the status
+ * filter in the same query, so a summary belonging to a fake or retired store
+ * never leaves Postgres, and the window is bounded by date rather than by row
+ * count. A tenant with three stores over a fortnight is ~42 rows.
+ *
+ * Days where nothing opened come back as zeros rather than as gaps — a closed
+ * Sunday is a fact about the fortnight, and a chart that skipped it would space
+ * its points unevenly and imply trading that never happened.
+ */
+export async function getActiveStoreDailyTotals(
+    supabase: SupabaseClient,
+    { tenantId, fromDate, toDate }: { tenantId: string; fromDate: string; toDate: string },
+): Promise<TenantDailyTotal[]> {
+    const { data, error } = await supabase
+        .from("store_daily_summaries")
+        .select("date, total_cups, total_orders, total_sales, stores!inner(status)")
+        .eq("tenant_id", tenantId)
+        .eq("stores.status", "active")
+        .gte("date", fromDate)
+        .lte("date", toDate);
+
+    if (error) throw error;
+
+    const rows = (data ?? []) as unknown as Array<{
+        date: string;
+        total_cups: number | null;
+        total_orders: number | null;
+        total_sales: number | null;
+    }>;
+
+    const byDate = new Map<string, TenantDailyTotal>();
+    for (const row of rows) {
+        const day = byDate.get(row.date) ?? { date: row.date, cups: 0, orders: 0, sales: 0 };
+        day.cups += row.total_cups ?? 0;
+        day.orders += row.total_orders ?? 0;
+        day.sales += row.total_sales ?? 0;
+        byDate.set(row.date, day);
+    }
+
+    const series: TenantDailyTotal[] = [];
+    for (let day = new Date(`${fromDate}T00:00:00.000Z`); ; day.setUTCDate(day.getUTCDate() + 1)) {
+        const date = day.toISOString().slice(0, 10);
+        if (date > toDate) break;
+        series.push(byDate.get(date) ?? { date, cups: 0, orders: 0, sales: 0 });
+    }
+
+    return series;
+}

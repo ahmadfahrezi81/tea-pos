@@ -539,3 +539,39 @@ export async function endSession(
 
     return toCamelKeys(data);
 }
+
+// ─── Tenant-wide session days (dashboard) ────────────────────────────────────
+
+/* Which days the tenant traded at all — one active store opening is enough.
+ *
+ * The sibling of `listUserSessionDates`, asking coverage rather than
+ * attendance: the backoffice grid is expected to be solid, and a grey square is
+ * a day nobody opened. Only `started_at` is selected, so the payload is one
+ * timestamp per session and the set collapses them to at most one entry a day.
+ */
+export async function listTenantSessionDates(
+    supabase: SupabaseClient,
+    { tenantId, weeks = 4 }: { tenantId: string; weeks?: number },
+): Promise<string[]> {
+    const tz = parseInt(process.env.TIMEZONE_OFFSET ?? "7", 10);
+    const from = new Date();
+    from.setDate(from.getDate() - weeks * 7);
+    from.setUTCHours(0 - tz, 0, 0, 0);
+
+    const { data, error } = await supabase
+        .from("store_sessions")
+        .select("started_at, stores!inner(status)")
+        .eq("tenant_id", tenantId)
+        .eq("stores.status", "active")
+        .gte("started_at", from.toISOString());
+
+    if (error) throw error;
+
+    const dates = new Set<string>();
+    for (const row of (data ?? []) as unknown as Array<{ started_at: string }>) {
+        const local = new Date(new Date(row.started_at).getTime() + tz * 60 * 60 * 1000);
+        dates.add(local.toISOString().slice(0, 10));
+    }
+
+    return Array.from(dates).sort();
+}
