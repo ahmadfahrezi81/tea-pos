@@ -534,9 +534,44 @@ staleness check needs an old build and a new one by definition.
 
    > Worth knowing but out of scope: `version.ts` is now dead code for every
    > active app. If admin is ever deleted, it goes with it.
-3. **Should backoffice start bumping its `package.json` version?** It has been
-   `1.0.0` since creation. Not required once the build id lands, but the
-   Account screen badge is meaningless there today.
+3. ~~Should backoffice start bumping its `package.json` version?~~ **Started.**
+   Moved off `1.0.0` for the first time since the app was created, alongside
+   seller `5.4.1 → 5.4.2`. Not needed by the build id, but the Account badge
+   meant nothing there before.
+
+---
+
+## Deploying this — two Vercel traps, both hit on the first attempt
+
+Recorded because neither is in the code and both cost time.
+
+**1. A push to `staging` can produce no deployment at all.** `2f9c181` reached
+GitHub — `refs/heads/staging` matched local exactly — and Vercel never reacted:
+no deployment record, no commit status, for either project. This is an open
+Vercel bug where the GitHub webhook stops firing for **non-production
+branches** while production keeps working
+([vercel/vercel#14939](https://github.com/vercel/vercel/issues/14939)). The tell
+is `gh api repos/<owner>/<repo>/deployments` showing nothing for the sha, which
+distinguishes it from a slow or queued build.
+
+**2. An empty commit deploys seller but never backoffice.** The retrigger
+commit `614d320` built seller and came back on backoffice as
+`inactive — "Skipped - Not affected"`. That is Vercel's
+[automatic monorepo build skipping](https://vercel.com/changelog/automatically-skip-unnecessary-deployments-in-monorepos),
+which diffs the commit against `VERCEL_GIT_PREVIOUS_SHA`; an empty commit
+changes no files, so the skip is correct. The two projects behave differently
+because the feature became
+[the default only for newer projects](https://vercel.com/changelog/new-monorepo-projects-now-skip-builds-with-unchanged-code-by-default),
+and backoffice is the newer one.
+
+**So never retrigger this repo with an empty commit** — it dodges trap 1 and
+walks into trap 2. Push a real change, or turn the skip off under the
+backoffice project's Settings → Build and Deployment → *Skip unaffected
+projects*.
+
+**And do not use the Redeploy dialog to recover.** It rebuilds "the same source
+code as your current one", which is the last *successfully deployed* commit —
+the old one — not the branch head you are trying to ship.
 4. ~~How noisy is Case A at your deploy rate?~~ **Closed by the owner.**
    Staging takes the frequent deploys and only the owner uses it; production is
    an MR bundling a week's work, roughly once a week. So Case A fires about
