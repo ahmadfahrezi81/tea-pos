@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { format, parseISO, differenceInCalendarDays } from "date-fns";
-import { Check, CalendarClock, AlertTriangle } from "lucide-react";
+import { Check, CalendarClock } from "lucide-react";
+import { Callout } from "@tea-pos/ui/custom/Callout";
 import { getTodayLocalStr } from "@tea-pos/utils/time";
 import { getPayWindowBounds, getExpectedPayoutDate, PAY_FREQUENCIES } from "@tea-pos/utils/week";
 import type { PayFrequency } from "@tea-pos/utils/week";
@@ -116,19 +117,13 @@ export default function PaySchedulePage() {
             {/* The rule that keeps a switch safe, stated where the switch happens
                 rather than in a task file nobody reads at 11pm. */}
             {!isSafeToSwitch && (
-                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 flex gap-2.5">
-                    <AlertTriangle size={18} className="text-amber-600 shrink-0 mt-0.5" />
-                    <div className="space-y-1">
-                        <p className="text-sm font-semibold text-amber-900">Not the day to change this</p>
-                        <p className="text-sm text-amber-800">
-                            {payouts.length} {payouts.length === 1 ? "payout has" : "payouts have"} already
-                            been counted into this period, and it still has {daysLeft}{" "}
-                            {daysLeft === 1 ? "day" : "days"} to run. Changing now rewrites the window that
-                            pay was counted into. Wait until {format(parseISO(endDate), "EEE, d MMM")}, pay
-                            everyone, let the last store close, then switch.
-                        </p>
-                    </div>
-                </div>
+                <Callout title="Not the day to change this">
+                    {payouts.length} {payouts.length === 1 ? "payout has" : "payouts have"} already
+                    been counted into this period, and it still has {daysLeft}{" "}
+                    {daysLeft === 1 ? "day" : "days"} to run. Changing now rewrites the window that
+                    pay was counted into. Wait until {format(parseISO(endDate), "EEE, d MMM")}, pay
+                    everyone, let the last store close, then switch.
+                </Callout>
             )}
 
             <div className="bg-white rounded-2xl overflow-hidden">

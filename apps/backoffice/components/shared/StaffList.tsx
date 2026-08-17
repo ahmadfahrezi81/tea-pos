@@ -19,10 +19,13 @@ type StaffUser = ReturnType<typeof useTenantUsers>["users"][number];
 export function StaffList({
     onSelect,
     subtitle,
+    titleTag,
     emptyLabel = "No staff found.",
 }: {
     onSelect: (userId: string) => void;
     subtitle: (user: StaffUser) => ReactNode;
+    /** Badge beside the name — a screen that cares about account state says so. */
+    titleTag?: (user: StaffUser) => ReactNode;
     emptyLabel?: string;
 }) {
     const { users, isLoading } = useTenantUsers();
@@ -78,7 +81,16 @@ export function StaffList({
                                     </span>
                                 )
                             }
-                            title={user.fullName}
+                            title={
+                                titleTag ? (
+                                    <span className="flex items-center gap-1.5 min-w-0">
+                                        <span className="truncate">{user.fullName}</span>
+                                        {titleTag(user)}
+                                    </span>
+                                ) : (
+                                    user.fullName
+                                )
+                            }
                             subtitle={subtitle(user)}
                         />
                     ))
