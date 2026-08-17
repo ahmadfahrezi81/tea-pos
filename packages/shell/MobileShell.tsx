@@ -51,6 +51,8 @@ export interface MobileShellProps {
     prefetchPaths?: string[];
     /** Called on every navigation, so apps can register a global navigate fn. */
     onNavigate?: (navigate: (path: string) => void) => void;
+    /** The same, for the replacing variant — a spent screen leaving history. */
+    onReplace?: (replace: (path: string) => void) => void;
 }
 
 /**
@@ -76,6 +78,7 @@ export function MobileShell({
     ready,
     prefetchPaths,
     onNavigate,
+    onReplace,
 }: MobileShellProps) {
     const router = useRouter();
     const pathname = usePathname();
@@ -125,11 +128,34 @@ export function MobileShell({
     );
 
     /**
+     * Swaps the current history entry for another instead of stacking one on
+     * top. Used where returning to the outgoing screen would be wrong.
+     */
+    const replaceWith = useCallback(
+        (path: string) => {
+            if (path === pathname) return;
+            saveScroll();
+            setPendingPath(path.split("?")[0]);
+            startTransition(() => {
+                router.replace(path);
+            });
+        },
+        [pathname, router, saveScroll],
+    );
+
+    /**
      * Going back unwinds history rather than pushing another entry. Pushing the
      * parent instead would leave [More, Pay, More] behind, so the system back
-     * button would walk *into* the page the user just left. Falls back to a push
-     * when there is nothing of ours to unwind — a deep link or a hard reload
-     * straight onto a subpage.
+     * button would walk *into* the page the user just left.
+     *
+     * When there is nothing of ours to unwind, back *replaces* with the parent
+     * rather than pushing it. The depth counter lives in memory while history
+     * outlives the document, so any reload — the update sheet's, the idle
+     * sheet's, a manual one — leaves the counter at zero on a page with real
+     * entries behind it. Pushing there was the bug: each header-back added an
+     * entry, the system back button popped straight back to where it started,
+     * and the two took turns forever without ever reaching a root tab.
+     * Replacing walks up the route tree in place, so history can only shrink.
      */
     const goBackTo = useCallback(
         (fallbackPath: string) => {
@@ -140,9 +166,9 @@ export function MobileShell({
                 });
                 return;
             }
-            navigate(fallbackPath);
+            replaceWith(fallbackPath);
         },
-        [router, saveScroll, navigate],
+        [router, saveScroll, replaceWith],
     );
 
     // Every way back out of a page ends in a popstate — the system back button,
@@ -165,6 +191,10 @@ export function MobileShell({
     useEffect(() => {
         onNavigate?.(navigate);
     }, [onNavigate, navigate]);
+
+    useEffect(() => {
+        onReplace?.(replaceWith);
+    }, [onReplace, replaceWith]);
 
     useEffect(() => {
         setPendingPath(null);

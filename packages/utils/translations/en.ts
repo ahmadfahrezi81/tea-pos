@@ -349,6 +349,8 @@ export const en = {
         selectYear: "Select Year",
         week: "Week",
         statusOngoing: "Ongoing",
+        // A period closed with nothing owed — no transfer was made.
+        statusSkipped: "Skipped",
         statusDone: "Done",
         approvedSuffix: "approved",
         payrollFrom: "Payroll From",

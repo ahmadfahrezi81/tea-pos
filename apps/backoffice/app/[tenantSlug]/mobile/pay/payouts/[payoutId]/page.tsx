@@ -8,7 +8,7 @@ import { navigation } from "@tea-pos/utils/navigation";
 import { payrollApi } from "@/lib/api/payroll";
 import { apiFetch } from "@/lib/api/client";
 import { parseISO, format, eachDayOfInterval, getISOWeek } from "date-fns";
-import { getExpectedPayoutDate } from "@tea-pos/utils/week";
+import { getExpectedPayoutDate, getDaysUntilPayoutUnlock } from "@tea-pos/utils/week";
 import { Check, X, Info, Copy, AlertTriangle } from "lucide-react";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 
@@ -17,6 +17,13 @@ const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const STATUS_PILL: Record<string, string> = {
     pending: "bg-yellow-100 text-yellow-700",
     paid: "bg-green-100 text-green-700",
+    skipped: "bg-gray-200 text-gray-600",
+};
+
+const STATUS_LABEL: Record<string, string> = {
+    pending: "Ongoing",
+    paid: "Paid",
+    skipped: "Skipped",
 };
 
 type Commission = {
@@ -139,6 +146,17 @@ export default function UserPayslipPage({
 
     const userParam = userId ? `?userId=${userId}` : "";
 
+    /* Settling waits for the period's own last day. Before that the button
+       stays on screen and says how long is left — a button that vanishes until
+       Sunday teaches nobody why it was gone. Nothing to pay means the period is
+       closed rather than transferred, and that face of the same screen is
+       reached by the same button. */
+    const daysUntilUnlock = getDaysUntilPayoutUnlock(payout.endDate);
+    const isSkip = totalPay === 0;
+    const settleLabel = daysUntilUnlock > 0
+        ? `${daysUntilUnlock} day${daysUntilUnlock === 1 ? "" : "s"} left`
+        : isSkip ? "Skip" : "Pay";
+
     return (
         <div className="space-y-3 pb-32">
             {/* Pending days warning */}
@@ -172,7 +190,7 @@ export default function UserPayslipPage({
                         {sameWeek ? `Week ${weekStart}` : `Week ${weekStart} · Week ${weekEnd}`}
                     </h3>
                     <span className={`px-2 py-0.5 rounded-full text-sm font-medium ${STATUS_PILL[status] ?? STATUS_PILL.pending}`}>
-                        {status === "pending" ? "Ongoing" : status === "paid" ? "Paid" : status}
+                        {STATUS_LABEL[status] ?? status}
                     </span>
                 </div>
                 <div className="grid grid-cols-4 gap-2">
@@ -374,14 +392,15 @@ export default function UserPayslipPage({
                 })}
             </div>
 
-            {/* Pay button */}
+            {/* Settle button — pay, or close a period with nothing owed */}
             {status === "pending" && pendingCount === 0 && (
                 <div className="fixed bottom-0 left-0 right-0 p-4 pb-8 bg-white border-t border-gray-100">
                     <button
+                        disabled={daysUntilUnlock > 0}
                         onClick={() => navigation.push(url(`/mobile/pay/payouts/${payoutId}/pay${userParam}`))}
-                        className="w-full py-3.5 bg-green-600 text-white font-bold rounded-xl active:opacity-80"
+                        className={`w-full py-3.5 text-white font-bold rounded-xl active:opacity-80 disabled:opacity-40 ${isSkip ? "bg-gray-700" : "bg-green-600"}`}
                     >
-                        Pay
+                        {settleLabel}
                     </button>
                 </div>
             )}

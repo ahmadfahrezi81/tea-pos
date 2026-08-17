@@ -13,6 +13,7 @@ const WEEKDAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 const STATUS_PILL: Record<string, string> = {
     pending: "bg-yellow-100 text-yellow-700",
     paid: "bg-green-100 text-green-700",
+    skipped: "bg-gray-200 text-gray-600",
 };
 
 export default function PayslipPage({ params }: { params: Promise<{ payoutId: string }> }) {
@@ -100,7 +101,13 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
                             : `${t("earnings.week")} ${weekStart} · ${t("earnings.week")} ${weekEnd}`}
                     </h3>
                     <span className={`px-2 py-0.5 rounded-full text-sm font-medium ${STATUS_PILL[status] ?? STATUS_PILL.pending}`}>
-                        {status === "pending" ? t("earnings.statusOngoing") : status === "paid" ? t("earnings.statusPaid") : status}
+                        {status === "pending"
+                            ? t("earnings.statusOngoing")
+                            : status === "paid"
+                                ? t("earnings.statusPaid")
+                                : status === "skipped"
+                                    ? t("earnings.statusSkipped")
+                                    : status}
                     </span>
                 </div>
                 <div className="grid grid-cols-4 gap-2">

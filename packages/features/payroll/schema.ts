@@ -3,7 +3,10 @@ import { UUIDSchema } from "../shared/common-schema";
 import { PayrollClaimResponse } from "../payroll-claims/schema";
 
 const COMMISSION_CLAIM_STATUSES = ["pending", "approved", "rejected"] as const;
-const PAYOUT_STATUSES = ["pending", "paid"] as const;
+/* "skipped" closes a period with no transfer — every commission rejected, or
+   nothing earned in the window. Terminal in the same way "paid" is. */
+const PAYOUT_STATUSES = ["pending", "paid", "skipped"] as const;
+const PAYOUT_CLOSING_STATUSES = ["paid", "skipped"] as const;
 
 // ============================================================================
 // QUERY SCHEMAS
@@ -44,7 +47,10 @@ export const UpdatePayrollCommissionInput = z
 
 export const UpdatePayoutInput = z
     .object({
-        status: z.literal("paid"),
+        // Both values close the period. Whether a payout is allowed to be
+        // skipped is a judgement the person looking at the payslip makes — the
+        // zero-total rule that surfaces the option is in the UI, not here.
+        status: z.enum(PAYOUT_CLOSING_STATUSES),
         paymentProofUrl: z.string().url().optional(),
         // Written once, when payment is confirmed, and shown to the staff
         // member on their payslip. Capped so it stays a note rather than a

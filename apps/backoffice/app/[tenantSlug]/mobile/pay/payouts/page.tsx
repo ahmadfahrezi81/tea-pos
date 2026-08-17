@@ -18,6 +18,7 @@ import { usePayFrequency } from "@/lib/context/PayFrequencyContext";
 const STATUS_STYLE: Record<string, string> = {
     pending: "bg-yellow-100 text-yellow-700",
     paid: "bg-green-100 text-green-700",
+    skipped: "bg-gray-200 text-gray-600",
     needs_review: "bg-orange-100 text-orange-700",
 };
 
@@ -29,6 +30,11 @@ const STATUS_FILTER_LABELS: Record<StatusFilter, string> = {
     paid: "Paid",
     needs_review: "Needs Review",
 };
+
+/* A skipped period is finished, which is the question the "Paid" filter is
+   really asking. Its own chip would split one answer across two taps; the card's
+   pill still says which of the two happened. */
+const SETTLED_STATUSES = ["paid", "skipped"];
 
 function FilterDrawer({
     isOpen,
@@ -127,7 +133,7 @@ export default function StaffPayoutsPage() {
             if (!(start <= monthEnd && end >= monthStart)) return false;
 
             if (statusFilter === "ongoing" && p.status !== "pending") return false;
-            if (statusFilter === "paid" && p.status !== "paid") return false;
+            if (statusFilter === "paid" && !SETTLED_STATUSES.includes(p.status)) return false;
             if (statusFilter === "needs_review" && !((p.pendingCount ?? 0) > 0)) return false;
 
             if (!showNonSellers && isNonSeller(p.userId)) return false;
@@ -172,7 +178,11 @@ export default function StaffPayoutsPage() {
                     </div>
                     <div className="flex flex-col items-end gap-1 shrink-0">
                         <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${needsReview ? STATUS_STYLE.needs_review : (STATUS_STYLE[payout.status] ?? STATUS_STYLE.pending)}`}>
-                            {needsReview ? "Needs Review" : payout.status === "pending" ? "Ongoing" : `Paid${payout.paidAt ? ` · ${format(new Date(payout.paidAt), "d MMM")}` : ""}`}
+                            {needsReview
+                                ? "Needs Review"
+                                : payout.status === "pending"
+                                    ? "Ongoing"
+                                    : `${payout.status === "skipped" ? "Skipped" : "Paid"}${payout.paidAt ? ` · ${format(new Date(payout.paidAt), "d MMM")}` : ""}`}
                         </span>
                         {reviewedCount > 0 && (
                             <span className="text-xs font-medium text-gray-500">

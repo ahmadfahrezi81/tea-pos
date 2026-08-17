@@ -117,8 +117,10 @@ function CurrentPeriodTotals() {
                 </div>
                 {/* Kept even at 0 / 0, so an empty period reads as "nothing
                     approved yet" rather than as a missing line. Colour carries
-                    the state — amber means someone still has to look at it. */}
-                <div className="bg-slate-200 p-2 rounded-lg col-span-2">
+                    the state — amber means someone still has to look at it —
+                    and the plate carries it with the number, the way every
+                    other tile in this grid is coloured. */}
+                <div className={`p-2 rounded-lg col-span-2 ${missingApproval ? "bg-amber-100" : allApproved ? "bg-green-100" : "bg-slate-200"}`}>
                     <p className="text-xs font-semibold text-gray-500">Approved</p>
                     <p
                         className={`text-lg font-bold ${missingApproval ? "text-amber-600" : allApproved ? "text-green-600" : "text-slate-700"}`}

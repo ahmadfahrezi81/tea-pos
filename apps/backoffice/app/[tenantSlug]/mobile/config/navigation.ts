@@ -149,7 +149,9 @@ export const resolveRoute = (path: string): RouteConfig | null => {
             return { titleKey: "Payslip Details", parent: "/mobile/pay/payouts" };
         }
         if (segments.length === 2 && segments[1] === "pay") {
-            return { titleKey: "Confirm Payment", parent: `/mobile/pay/payouts/${payoutId}` };
+            // One screen, two outcomes — a transfer, or a period closed with
+            // nothing owed. The title has to fit both.
+            return { titleKey: "Confirm Payout", parent: `/mobile/pay/payouts/${payoutId}` };
         }
         if (segments.length === 4) {
             return { titleKey: "Summary Details", parent: `/mobile/pay/payouts/${payoutId}` };
