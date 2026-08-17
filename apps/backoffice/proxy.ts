@@ -137,12 +137,12 @@ export async function proxy(request: NextRequest) {
         if (!firstTenant?.slug)
             return redirectTo("/unauthorized?reason=invalid-tenant", request);
 
-        return redirectTo(`/${firstTenant.slug}/mobile/dashboard`, request);
+        return redirectTo(`/${firstTenant.slug}/mobile/home`, request);
     }
 
     if (pathname === `/${tenantSlug}/mobile`) {
         if (!user) return redirectTo("/login", request);
-        return redirectTo(`/${tenantSlug}/mobile/dashboard`, request);
+        return redirectTo(`/${tenantSlug}/mobile/home`, request);
     }
 
     const isProtected = pathname.startsWith(`/${tenantSlug}/mobile`);
@@ -190,7 +190,7 @@ export async function proxy(request: NextRequest) {
     if (!validTenant?.slug)
         return redirectTo("/unauthorized?reason=invalid-tenant", request);
 
-    return redirectTo(`/${validTenant.slug}/mobile/dashboard`, request);
+    return redirectTo(`/${validTenant.slug}/mobile/home`, request);
 }
 
 export const config = {

@@ -54,3 +54,26 @@ export async function listUserStores(supabase: SupabaseClient, { tenantId, userI
         assignments: assignmentsByStore,
     };
 }
+
+/**
+ * Every store in the tenant, regardless of who is asking or what state it is in.
+ *
+ * The backoffice sibling of `listUserStores`: an admin filtering a tenant-wide
+ * screen is not limited to the shops they are rostered at. Demo and retired
+ * stores come back too — the picker hides them behind a toggle rather than
+ * pretending they do not exist, which is the only way to look at one.
+ */
+export async function listTenantStores(
+    supabase: SupabaseClient,
+    { tenantId }: { tenantId: string },
+) {
+    const { data, error } = await supabase
+        .from("stores")
+        .select(STORE_COLUMNS)
+        .eq("tenant_id", tenantId)
+        .order("name");
+
+    if (error) throw error;
+
+    return { stores: data ?? [] };
+}

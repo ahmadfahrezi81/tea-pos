@@ -1,6 +1,6 @@
 {
     "name": "@tea-pos/backoffice",
-    "version": "1.0.3",
+    "version": "1.0.5",
     "private": true,
     "scripts": {
         "dev": "next dev --turbopack",
@@ -11,6 +11,8 @@
     "dependencies": {
         "@ducanh2912/next-pwa": "^10.2.9",
         "@hookform/resolvers": "^5.2.2",
+        "@iconify-json/fluent-emoji": "^1.2.7",
+        "@iconify/react": "^6.0.2",
         "@supabase/ssr": "^0.9.0",
         "@supabase/supabase-js": "^2.99.2",
         "@tea-pos/db": "workspace:*",

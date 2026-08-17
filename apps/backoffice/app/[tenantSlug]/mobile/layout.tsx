@@ -4,6 +4,7 @@ import InactivityRefreshPopup from "@tea-pos/shell/InactivityRefreshPopup";
 import { ToastProvider } from "@/lib/context/ToastContext";
 import { ErrorSheetProvider } from "@/lib/context/ErrorSheetContext";
 import { PayFrequencyProvider } from "@/lib/context/PayFrequencyContext";
+import { StoreFilterProvider } from "@/lib/context/StoreFilterContext";
 import { getServiceClient } from "@/lib/supabase/service";
 import { getCurrentTenantId } from "@tea-pos/utils/server-config/tenant";
 import { getTenantPayFrequency } from "@tea-pos/services/tenants";
@@ -27,10 +28,14 @@ export default async function MobileLayout({ children }: { children: ReactNode }
         <PayFrequencyProvider value={payFrequency}>
             <ToastProvider>
                 <ErrorSheetProvider>
-                    <MobileLayoutClient>
-                        {children}
-                        <InactivityRefreshPopup />
-                    </MobileLayoutClient>
+                    {/* Above the shell: the store filter drives the header's
+                        picker as well as the screens under it. */}
+                    <StoreFilterProvider>
+                        <MobileLayoutClient>
+                            {children}
+                            <InactivityRefreshPopup />
+                        </MobileLayoutClient>
+                    </StoreFilterProvider>
                 </ErrorSheetProvider>
             </ToastProvider>
         </PayFrequencyProvider>

@@ -133,6 +133,9 @@ export const UserSessionActivityResponse = z
 export const TenantSessionActivityQuery = z
     .object({
         weeks: z.coerce.number().int().min(1).max(52).default(4),
+        // Absent means every active store, which is what the grid shows by
+        // default; one store narrows it to that store's own days.
+        storeId: UUIDSchema.optional(),
     })
     .openapi({ title: "TenantSessionActivityQuery" });
 

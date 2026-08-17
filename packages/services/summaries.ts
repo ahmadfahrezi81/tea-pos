@@ -746,15 +746,27 @@ export interface TenantDailyTotal {
  */
 export async function getActiveStoreDailyTotals(
     supabase: SupabaseClient,
-    { tenantId, fromDate, toDate }: { tenantId: string; fromDate: string; toDate: string },
+    {
+        tenantId,
+        fromDate,
+        toDate,
+        storeId,
+    }: { tenantId: string; fromDate: string; toDate: string; storeId?: string },
 ): Promise<TenantDailyTotal[]> {
-    const { data, error } = await supabase
+    let query = supabase
         .from("store_daily_summaries")
         .select("date, total_cups, total_orders, total_sales, stores!inner(status)")
         .eq("tenant_id", tenantId)
-        .eq("stores.status", "active")
         .gte("date", fromDate)
         .lte("date", toDate);
+
+    /* The status filter is what "every store" means, not a rule about stores: a
+       tenant-wide total that counted demo shops would be fiction. Naming one
+       store is an explicit choice to look at that store, so the filter steps
+       aside — otherwise a retired shop could only ever report zeros. */
+    query = storeId ? query.eq("store_id", storeId) : query.eq("stores.status", "active");
+
+    const { data, error } = await query;
 
     if (error) throw error;
 

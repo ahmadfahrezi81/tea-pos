@@ -1,8 +1,11 @@
 "use client";
 import { ReactNode, useCallback, useMemo, useState } from "react";
 import Image from "next/image";
+import { ChevronsUpDown } from "lucide-react";
 import { MobileShell } from "@tea-pos/shell/MobileShell";
 import { useAuth } from "@/lib/context/AuthContext";
+import { useStoreFilter } from "@/lib/context/StoreFilterContext";
+import { StorePickerDrawer } from "./StorePickerDrawer";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
 import { prefetchSuffixes, resolveRoute, rootTabSuffixes, tabGroups } from "../config/navigation";
@@ -17,6 +20,7 @@ const identity = (key: string) => key;
 export default function MobileLayoutClient({ children }: MobileLayoutClientProps) {
     const { url } = useTenantSlug();
     const { user, avatarUrl, mutate: refreshProfile } = useAuth();
+    const { selectedStore, setIsPickerOpen } = useStoreFilter();
 
     const [shellReady, setShellReady] = useState(false);
     // Latches on: once the shell has been ready it never reverts, so a later
@@ -55,6 +59,18 @@ export default function MobileLayoutClient({ children }: MobileLayoutClientProps
             homePath={url("/mobile")}
             toPath={url}
             t={identity}
+            titleAccessory={
+                <button
+                    onClick={() => setIsPickerOpen(true)}
+                    className="flex items-center gap-0.5 active:scale-95"
+                >
+                    <span className="text-[22px] font-semibold tracking-tight text-brand">
+                        {selectedStore?.name ?? "All Stores"}
+                    </span>
+                    <ChevronsUpDown size={18} strokeWidth={3} className="text-brand" />
+                </button>
+            }
+            extras={<StorePickerDrawer />}
             avatarUrl={avatarUrl}
             onAccount={onAccount}
             ready={shellReady}

@@ -10,6 +10,7 @@ import { payrollApi } from "@/lib/api/payroll";
 import { apiFetch } from "@/lib/api/client";
 import { Copy, Check } from "lucide-react";
 import { PhotoPicker } from "@/components/shared/PhotoPicker";
+import { Callout } from "@tea-pos/ui/custom/Callout";
 
 function CopyableValue({ value, prefix, className }: { value: string; prefix?: string; className?: string }) {
     const [copied, setCopied] = useState(false);
@@ -137,9 +138,10 @@ export default function PayConfirmPage({
                     placeholder="e.g. Paid early for the holiday, includes W30 shortfall"
                     className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-3 text-base text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand/90 resize-none"
                 />
-                <p className="text-xs text-gray-400">
-                    Shown to {targetUser?.fullName ?? "the staff member"} on their payslip. Can&apos;t be edited after payment.
-                </p>
+                <Callout>
+                    Shown to {targetUser?.fullName ?? "the staff member"}{" "}
+                    on their payslip. Can&apos;t be edited after payment.
+                </Callout>
             </div>
 
             {error && (

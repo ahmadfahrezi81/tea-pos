@@ -122,6 +122,14 @@ export const StoreListResponse = z
     })
     .openapi({ title: "StoreListResponse" });
 
+// No assignments map: the backoffice picker asks which stores exist, not who is
+// rostered where, and a per-store roster it never reads is payload for nothing.
+export const TenantStoreListResponse = z
+    .object({
+        stores: z.array(StoreResponse),
+    })
+    .openapi({ title: "TenantStoreListResponse" });
+
 export const CreateStoreResponse = StoreResponse.openapi({
     title: "CreateStoreResponse",
 });
@@ -146,6 +154,7 @@ export type ListStoresQuery = z.infer<typeof ListStoresQuery>;
 export type StoreAssignmentResponse = z.infer<typeof StoreAssignmentResponse>;
 export type StoreResponse = z.infer<typeof StoreResponse>;
 export type StoreListResponse = z.infer<typeof StoreListResponse>;
+export type TenantStoreListResponse = z.infer<typeof TenantStoreListResponse>;
 export type CreateStoreResponse = z.infer<typeof CreateStoreResponse>;
 export type UpdateStoreResponse = z.infer<typeof UpdateStoreResponse>;
 export type DeleteStoreResponse = z.infer<typeof DeleteStoreResponse>;

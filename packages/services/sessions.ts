@@ -551,19 +551,25 @@ export async function endSession(
  */
 export async function listTenantSessionDates(
     supabase: SupabaseClient,
-    { tenantId, weeks = 4 }: { tenantId: string; weeks?: number },
+    { tenantId, weeks = 4, storeId }: { tenantId: string; weeks?: number; storeId?: string },
 ): Promise<string[]> {
     const tz = parseInt(process.env.TIMEZONE_OFFSET ?? "7", 10);
     const from = new Date();
     from.setDate(from.getDate() - weeks * 7);
     from.setUTCHours(0 - tz, 0, 0, 0);
 
-    const { data, error } = await supabase
+    let query = supabase
         .from("store_sessions")
         .select("started_at, stores!inner(status)")
         .eq("tenant_id", tenantId)
-        .eq("stores.status", "active")
         .gte("started_at", from.toISOString());
+
+    /* One store's own opening days rather than the tenant's coverage. Naming a
+       store drops the active filter, which exists to keep demo shops out of a
+       tenant-wide reading, not to hide a store somebody asked for. */
+    query = storeId ? query.eq("store_id", storeId) : query.eq("stores.status", "active");
+
+    const { data, error } = await query;
 
     if (error) throw error;
 
