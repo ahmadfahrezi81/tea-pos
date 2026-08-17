@@ -9,7 +9,7 @@ import { ok, badRequest, err, unauthorized, handleError } from "@/lib/api/respon
 
 /**
  * Cups, orders and takings per day across every active store, for the
- * dashboard's one chart. Read-only, tenant from the cookie — this runs on the
+ * home screen's one chart. Read-only, tenant from the cookie — this runs on the
  * service-role key, so the filter is the only isolation there is.
  */
 export async function GET(request: NextRequest) {
@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
             tenantId: await getCurrentTenantId(),
             fromDate,
             toDate,
+            storeId: query.data.storeId,
         });
 
         // Summed here rather than in the component: the series is already in
@@ -49,6 +50,6 @@ export async function GET(request: NextRequest) {
 
         return ok(parsed.data);
     } catch (error) {
-        return handleError("GET /api/dashboard/daily-sales", error);
+        return handleError("GET /api/home/daily-sales", error);
     }
 }

@@ -10,7 +10,7 @@ import {
 import { ok, badRequest, err, unauthorized, handleError } from "@/lib/api/response";
 
 /**
- * The days any active store opened, for the dashboard streak grid. A list of
+ * The days any active store opened, for the home streak grid. A list of
  * dates and nothing else — the grid draws the calendar itself.
  */
 export async function GET(request: NextRequest) {
@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
         const dates = await listTenantSessionDates(getServiceClient(), {
             tenantId: await getCurrentTenantId(),
             weeks: query.data.weeks,
+            storeId: query.data.storeId,
         });
 
         const parsed = TenantSessionActivityResponse.safeParse({ dates });
@@ -33,6 +34,6 @@ export async function GET(request: NextRequest) {
 
         return ok(parsed.data);
     } catch (error) {
-        return handleError("GET /api/dashboard/work-days", error);
+        return handleError("GET /api/home/work-days", error);
     }
 }

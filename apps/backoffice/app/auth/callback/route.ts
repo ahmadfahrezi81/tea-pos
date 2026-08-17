@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
             const firstTenant = Array.isArray(tenantsData) ? tenantsData[0] : tenantsData;
 
             if (firstTenant?.slug) {
-                return NextResponse.redirect(new URL(`/${firstTenant.slug}/mobile/dashboard`, origin));
+                return NextResponse.redirect(new URL(`/${firstTenant.slug}/mobile/home`, origin));
             }
         }
     }

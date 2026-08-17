@@ -365,6 +365,11 @@ export const TenantDailyTotalsQuery = z
             description: "How many days back from today the window runs",
             example: 14,
         }),
+        // Absent means every active store summed together; one store narrows
+        // the same window to that store.
+        storeId: UUIDSchema.optional().openapi({
+            description: "Limit the window to a single store",
+        }),
     })
     .openapi({ title: "TenantDailyTotalsQuery" });
 

@@ -3,10 +3,11 @@
 import { useMemo, useRef, useEffect } from "react";
 import { Area, AreaChart, XAxis, ReferenceLine, Tooltip, LabelList } from "recharts";
 import { ChartContainer, type ChartConfig } from "@tea-pos/ui/components/chart";
-import { useDailySales } from "@/lib/hooks/dashboard/useDashboard";
+import { useStoreFilter } from "@/lib/context/StoreFilterContext";
+import { useDailySales } from "@/lib/hooks/home/useHome";
 
 /* The seller's mini daily chart, asked tenant-wide: cups a day summed over
-   every active store. No drill-down and no month picker — the dashboard is a
+   every active store. No drill-down and no month picker — home is a
    glance, and anything deeper belongs on a screen of its own. */
 
 const DAYS = 14;
@@ -48,7 +49,8 @@ const CustomTooltip = ({ active, payload }: any) => {
 };
 
 export default function DailySalesChart() {
-    const { points, totals, isLoading } = useDailySales(DAYS);
+    const { selectedStoreId } = useStoreFilter();
+    const { points, totals, isLoading } = useDailySales(DAYS, selectedStoreId);
     const scrollRef = useRef<HTMLDivElement>(null);
 
     const chartData = useMemo(
@@ -107,7 +109,7 @@ export default function DailySalesChart() {
                             margin={{ top: 18, right: 12, bottom: 0, left: 12 }}
                         >
                             <defs>
-                                <linearGradient id="fillCupsDashboard" x1="0" y1="0" x2="0" y2="1">
+                                <linearGradient id="fillCupsHome" x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="5%" stopColor={BRAND} stopOpacity={0.5} />
                                     <stop offset="95%" stopColor={BRAND} stopOpacity={0} />
                                 </linearGradient>
@@ -136,7 +138,7 @@ export default function DailySalesChart() {
                             <Area
                                 dataKey="cups"
                                 type="step"
-                                fill="url(#fillCupsDashboard)"
+                                fill="url(#fillCupsHome)"
                                 fillOpacity={1}
                                 stroke={BRAND}
                                 strokeWidth={2.5}

@@ -11,10 +11,11 @@ export type { RouteConfig } from "@tea-pos/shell/routes";
 import type { RouteConfig } from "@tea-pos/shell/routes";
 
 export const mobileRoutes = {
-    "/mobile/dashboard": {
-        titleKey: "Dashboard",
+    "/mobile/home": {
+        titleKey: "Home",
         parent: null,
         prefetch: true,
+        titleAccessory: true,
     },
     "/mobile/pay": {
         titleKey: "Pay",
@@ -169,10 +170,10 @@ export type TabDef = {
 export const tabGroups: { global: TabDef[] } = {
     global: [
         {
-            pathSuffix: "/mobile/dashboard",
-            labelKey: "Dashboard",
+            pathSuffix: "/mobile/home",
+            labelKey: "Home",
             icon: LayoutDashboard,
-            matchSuffixes: ["/mobile/dashboard"],
+            matchSuffixes: ["/mobile/home"],
         },
         {
             pathSuffix: "/mobile/pay",
