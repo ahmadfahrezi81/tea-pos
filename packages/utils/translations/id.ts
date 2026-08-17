@@ -270,10 +270,6 @@ export const id: DeepPartial<typeof en> = {
         emptyTitle: "Chat segera hadir",
         emptySubtitle: "Fitur ini masih dalam pengembangan",
     },
-    patchNotes: {
-        emptyTitle: "Catatan rilis segera hadir",
-        emptySubtitle: "Fitur ini masih dalam pengembangan",
-    },
     notifications: {
         title: "Notifikasi",
         empty: "Belum ada notifikasi",

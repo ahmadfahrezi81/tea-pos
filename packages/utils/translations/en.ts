@@ -267,10 +267,6 @@ export const en = {
         emptyTitle: "Chats are coming soon",
         emptySubtitle: "This feature is still in development",
     },
-    patchNotes: {
-        emptyTitle: "Patch notes are coming soon",
-        emptySubtitle: "This feature is still in development",
-    },
     notifications: {
         title: "Notifications",
         empty: "No notifications yet",

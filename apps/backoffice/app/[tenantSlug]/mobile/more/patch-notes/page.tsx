@@ -1,10 +1,11 @@
-import { ComingSoon } from "@tea-pos/ui/custom/ComingSoon";
+import { PatchNotes } from "@tea-pos/ui/custom/PatchNotes";
+import { patchNotes } from "@/lib/patch-notes";
 
 export default function PatchNotesPage() {
     return (
-        <ComingSoon
-            title="Patch notes are coming soon"
-            subtitle="This feature is still in development"
+        <PatchNotes
+            notes={patchNotes}
+            currentVersion={process.env.NEXT_PUBLIC_APP_VERSION}
         />
     );
 }
