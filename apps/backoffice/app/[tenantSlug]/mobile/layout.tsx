@@ -1,6 +1,8 @@
 import { ReactNode } from "react";
 import MobileLayoutClient from "./components/MobileLayoutClient";
 import InactivityRefreshPopup from "@tea-pos/shell/InactivityRefreshPopup";
+import WhatsNew from "@tea-pos/shell/WhatsNew";
+import { patchNotes } from "@/lib/patch-notes";
 import { ToastProvider } from "@/lib/context/ToastContext";
 import { ErrorSheetProvider } from "@/lib/context/ErrorSheetContext";
 import { PayFrequencyProvider } from "@/lib/context/PayFrequencyContext";
@@ -34,6 +36,19 @@ export default async function MobileLayout({ children }: { children: ReactNode }
                         <MobileLayoutClient>
                             {children}
                             <InactivityRefreshPopup />
+                            {/* Literals, not `useT`: this app has no i18n
+                                layer. The seller passes translated copy into
+                                the same component. */}
+                            <WhatsNew
+                                notes={patchNotes}
+                                version={process.env.NEXT_PUBLIC_APP_VERSION}
+                                copy={{
+                                    title: "What's New",
+                                    scrollToContinue: "Scroll to continue",
+                                    gotIt: "Got it",
+                                    close: "Close",
+                                }}
+                            />
                         </MobileLayoutClient>
                     </StoreFilterProvider>
                 </ErrorSheetProvider>

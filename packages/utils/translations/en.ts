@@ -267,10 +267,6 @@ export const en = {
         emptyTitle: "Chats are coming soon",
         emptySubtitle: "This feature is still in development",
     },
-    patchNotes: {
-        emptyTitle: "Patch notes are coming soon",
-        emptySubtitle: "This feature is still in development",
-    },
     notifications: {
         title: "Notifications",
         empty: "No notifications yet",
@@ -410,6 +406,14 @@ export const en = {
         patchNotes: "Patch Notes",
         noStores: "No stores assigned yet.",
         default: "Default",
+    },
+    /* The full-page notes shown once after an update. `more.patchNotes` names
+       the archive under More; this is the announcement. */
+    whatsNew: {
+        title: "What's New",
+        scrollToContinue: "Scroll to continue",
+        gotIt: "Got it",
+        close: "Close",
     },
     map: {
         search: "Search feedback...",

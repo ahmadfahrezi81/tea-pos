@@ -270,10 +270,6 @@ export const id: DeepPartial<typeof en> = {
         emptyTitle: "Chat segera hadir",
         emptySubtitle: "Fitur ini masih dalam pengembangan",
     },
-    patchNotes: {
-        emptyTitle: "Catatan rilis segera hadir",
-        emptySubtitle: "Fitur ini masih dalam pengembangan",
-    },
     notifications: {
         title: "Notifikasi",
         empty: "Belum ada notifikasi",
@@ -413,6 +409,12 @@ export const id: DeepPartial<typeof en> = {
         patchNotes: "Catatan Rilis",
         noStores: "Belum ada toko yang ditugaskan.",
         default: "Utama",
+    },
+    whatsNew: {
+        title: "Yang Baru",
+        scrollToContinue: "Geser untuk lanjut",
+        gotIt: "Mengerti",
+        close: "Tutup",
     },
     map: {
         search: "Cari feedback...",

@@ -2,6 +2,7 @@ import { ReactNode, Suspense } from "react";
 import { unstable_cache } from "next/cache";
 import MobileLayoutClient from "./components/MobileLayoutClient";
 import InactivityRefreshPopup from "@tea-pos/shell/InactivityRefreshPopup";
+import WhatsNewMount from "./components/WhatsNewMount";
 import { StoreProvider } from "@/lib/context/StoreContext";
 import { FastOrderModeProvider } from "@/lib/context/FastOrderModeContext";
 import { ToastProvider } from "@/lib/context/ToastContext";
@@ -73,6 +74,7 @@ export default async function MobileLayout({ children }: MobileLayoutProps) {
                                     <MobileLayoutClient>
                                         {children}
                                         <InactivityRefreshPopup />
+                                        <WhatsNewMount />
                                     </MobileLayoutClient>
                                 </ErrorSheetProvider>
                             </ToastProvider>
