@@ -11,6 +11,7 @@ const VARIANT_CLASS = {
     brand: "bg-brand",
     green: "bg-green-600",
     orange: "bg-orange-500",
+    gray: "bg-gray-700",
 } as const;
 
 interface FormFooterProps {
@@ -23,12 +24,17 @@ interface FormFooterProps {
     /** When set, tapping the button opens a confirm bottom sheet instead of submitting directly. */
     confirmTitle?: string;
     confirmMessage?: string;
+    /** Replaces the configuration warning for footers that confirm something else. */
+    confirmNote?: { title: string; body: string };
+    /** Iconify name for the sheet's artwork. Must be registered in bundled-emoji. */
+    confirmIcon?: string;
 }
 
-/* Every screen behind this footer edits payroll configuration, and none of it
+/* Most screens behind this footer edit payroll configuration, and none of that
    is retroactive — the warning is the same sentence each time, so it is written
-   once here rather than passed in five times and drifting. */
-const CONFIRM_NOTE = {
+   once here rather than passed in five times and drifting. Screens that confirm
+   something else pass their own note. */
+const CONFIG_NOTE = {
     title: "What this changes",
     body: "Payroll already recorded stays as it is. This applies from here on, to days closed and claims submitted after you save.",
 };
@@ -37,6 +43,8 @@ export function FormFooter({
     label, loadingLabel, onSubmit,
     disabled = false, isLoading = false, variant = "brand",
     confirmTitle, confirmMessage,
+    confirmNote = CONFIG_NOTE,
+    confirmIcon = "fluent-emoji:floppy-disk",
 }: FormFooterProps) {
     const [confirmOpen, setConfirmOpen] = useState(false);
     const requiresConfirm = Boolean(confirmTitle || confirmMessage);
@@ -71,7 +79,7 @@ export function FormFooter({
 
                         <div className="relative -mx-5 flex justify-center py-3">
                             <div aria-hidden className="pointer-events-none absolute inset-0" style={DOT_GRID} />
-                            <Icon icon="fluent-emoji:floppy-disk" width={88} height={88} className="relative" />
+                            <Icon icon={confirmIcon} width={88} height={88} className="relative" />
                         </div>
 
                         <div className="space-y-1 text-center">
@@ -84,8 +92,8 @@ export function FormFooter({
                                 <Info size={18} className="text-blue-500" />
                             </div>
                             <div className="space-y-0.5">
-                                <p className="text-sm font-semibold text-gray-900">{CONFIRM_NOTE.title}</p>
-                                <p className="text-sm text-gray-500">{CONFIRM_NOTE.body}</p>
+                                <p className="text-sm font-semibold text-gray-900">{confirmNote.title}</p>
+                                <p className="text-sm text-gray-500">{confirmNote.body}</p>
                             </div>
                         </div>
 

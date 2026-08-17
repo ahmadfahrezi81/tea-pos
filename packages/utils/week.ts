@@ -1,3 +1,5 @@
+import { getTodayLocalStr } from "./time";
+
 const TZ_OFFSET = parseInt(process.env.NEXT_PUBLIC_TIMEZONE_OFFSET ?? "7");
 
 export interface WeekInfo {
@@ -60,6 +62,23 @@ function isoMondayStr(dateStr: string): string {
 
 export function getExpectedPayoutDate(endDate: string): string {
     return addDaysToStr(endDate, 1);
+}
+
+/* A payout may be settled from the last day of its own period — the Sunday —
+   not from the Monday that getExpectedPayoutDate names. Stores close around
+   23:00 on that Sunday and the transfer happens straight after; locking until
+   Monday would block the hour the work actually gets done. */
+export function getPayoutUnlockDate(endDate: string): string {
+    return endDate;
+}
+
+/* Whole days from today until the payout unlocks. 0 means it is open now. */
+export function getDaysUntilPayoutUnlock(endDate: string, today = getTodayLocalStr()): number {
+    const unlock = getPayoutUnlockDate(endDate);
+    if (today >= unlock) return 0;
+    const diffMs =
+        new Date(unlock + "T12:00:00Z").getTime() - new Date(today + "T12:00:00Z").getTime();
+    return Math.round(diffMs / 86_400_000);
 }
 
 /* Every cadence is a whole number of weeks running Monday to Sunday. That is

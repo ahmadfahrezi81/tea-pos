@@ -3,7 +3,7 @@ import { toCamelKeys } from "@tea-pos/utils/schemas";
 import { getPayWindowBounds } from "@tea-pos/utils/week";
 import { startOfDay, endOfDay, parseISO, subHours, subDays } from "date-fns";
 import { createLogger } from "./activity-logs";
-import { assertPayoutNotPaid, upsertPayout } from "./payroll";
+import { assertPayoutNotPaid, isPayoutSettled, upsertPayout } from "./payroll";
 import { getTenantPayFrequency } from "./tenants";
 
 // ─── Create claim ─────────────────────────────────────────────────────────────
@@ -30,7 +30,7 @@ export async function createPayrollClaim(
         throw Object.assign(new Error("Claim date is too far in the past"), { status: 422 });
     }
 
-    // Reject if a paid payout already covers this date
+    // Reject if a settled payout — paid or skipped — already covers this date
     const { data: coveringPayout } = await supabase
         .from("payroll_payouts")
         .select("status")
@@ -40,8 +40,12 @@ export async function createPayrollClaim(
         .gte("end_date", date)
         .maybeSingle();
 
-    if ((coveringPayout as { status: string } | null)?.status === "paid") {
-        throw Object.assign(new Error("This pay period is already paid"), { status: 422 });
+    const coveringStatus = (coveringPayout as { status: string } | null)?.status;
+    if (isPayoutSettled(coveringStatus)) {
+        throw Object.assign(
+            new Error(coveringStatus === "skipped" ? "This pay period is already closed" : "This pay period is already paid"),
+            { status: 422 },
+        );
     }
 
     const { data: claimConfig, error: typeError } = await supabase

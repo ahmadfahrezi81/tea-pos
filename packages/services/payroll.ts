@@ -5,6 +5,13 @@ import { getPayrollUserInfo } from "./payroll-user-info";
 import { getTenantPayFrequency } from "./tenants";
 import { createLogger } from "./activity-logs";
 
+/* A payout is settled once it is paid or skipped. Both mean the period is over
+   and its numbers are history: totals stop recomputing, and the commissions and
+   claims underneath stop accepting decisions. */
+export function isPayoutSettled(status: string | null | undefined): boolean {
+    return status === "paid" || status === "skipped";
+}
+
 // ─── Create payroll commissions ───────────────────────────────────────────────
 
 export interface CreatePayrollCommissionsParams {
@@ -276,7 +283,7 @@ export async function upsertPayout(
         .eq("start_date", startDate)
         .maybeSingle();
 
-    if (existing && (existing as { status: string }).status === "paid") {
+    if (existing && isPayoutSettled((existing as { status: string }).status)) {
         return toCamelKeys(existing);
     }
 
@@ -395,19 +402,31 @@ export async function updatePayoutStatus(
         id: string;
         tenantId: string;
         actorId: string;
-        status: "paid";
+        status: "paid" | "skipped";
         paymentProofUrl?: string;
         notes?: string;
     },
 ) {
     const { data: payout, error: payoutError } = await supabase
         .from("payroll_payouts")
-        .select("id")
+        .select("id, status")
         .eq("id", id)
         .eq("tenant_id", tenantId)
         .single();
 
     if (payoutError || !payout) throw Object.assign(new Error(payoutError?.message ?? "Payout not found"), { status: 404 });
+
+    /* Settling twice is not an update, it is a rewrite: paid_at, paid_by and
+       the transfer proof would all be replaced by the second attempt's. The
+       screen guards against it too, but a stale tab or a retried request would
+       arrive here regardless. */
+    const currentStatus = (payout as { status: string }).status;
+    if (isPayoutSettled(currentStatus)) {
+        throw Object.assign(
+            new Error(currentStatus === "skipped" ? "This payout was already skipped" : "This payout was already paid"),
+            { status: 422 },
+        );
+    }
 
     const [{ count: pendingCommissions }, { count: pendingClaims }] = await Promise.all([
         supabase
@@ -425,11 +444,14 @@ export async function updatePayoutStatus(
     ]);
 
     if ((pendingCommissions ?? 0) > 0 || (pendingClaims ?? 0) > 0) {
-        throw Object.assign(new Error("Cannot mark paid while items are still pending review"), { status: 422 });
+        throw Object.assign(new Error(`Cannot mark ${status} while items are still pending review`), { status: 422 });
     }
 
+    /* paid_at and paid_by are written for a skip too. No money moved, but who
+       closed the period and when is the same question, and answering it from
+       two different columns depending on the outcome would be worse. */
     const updates: Record<string, unknown> = {
-        status: "paid",
+        status,
         paid_at: new Date().toISOString(),
         paid_by: actorId,
     };
@@ -588,7 +610,7 @@ export async function updatePayrollCommission(
     return toCamelKeys(data);
 }
 
-// ─── Guard: leaf rows are locked once their payout is paid ───────────────────
+// ─── Guard: leaf rows are locked once their payout is settled ────────────────
 
 export async function assertPayoutNotPaid(
     supabase: SupabaseClient,
@@ -603,8 +625,16 @@ export async function assertPayoutNotPaid(
         .gte("end_date", date)
         .maybeSingle();
 
-    if ((payout as { status: string } | null)?.status === "paid") {
-        throw Object.assign(new Error("Cannot change a decision after the payout has been paid"), { status: 422 });
+    const settledStatus = (payout as { status: string } | null)?.status;
+    if (isPayoutSettled(settledStatus)) {
+        throw Object.assign(
+            new Error(
+                settledStatus === "skipped"
+                    ? "Cannot change a decision after the payout has been skipped"
+                    : "Cannot change a decision after the payout has been paid",
+            ),
+            { status: 422 },
+        );
     }
 
     if (!payout) return null;

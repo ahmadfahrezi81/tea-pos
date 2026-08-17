@@ -352,6 +352,8 @@ export const id: DeepPartial<typeof en> = {
         selectYear: "Pilih Tahun",
         week: "Minggu",
         statusOngoing: "Berjalan",
+        // A period closed with nothing owed — no transfer was made.
+        statusSkipped: "Dilewati",
         statusDone: "Selesai",
         approvedSuffix: "disetujui",
         payrollFrom: "Penggajian Dari",

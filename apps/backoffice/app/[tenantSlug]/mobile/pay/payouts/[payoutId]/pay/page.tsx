@@ -8,8 +8,11 @@ import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
 import { payrollApi } from "@/lib/api/payroll";
 import { apiFetch } from "@/lib/api/client";
+import { getDaysUntilPayoutUnlock } from "@tea-pos/utils/week";
+import { parseISO, format } from "date-fns";
 import { Copy, Check } from "lucide-react";
 import { PhotoPicker } from "@/components/shared/PhotoPicker";
+import { FormFooter } from "@/components/shared/FormFooter";
 import { Callout } from "@tea-pos/ui/custom/Callout";
 
 function CopyableValue({ value, prefix, className }: { value: string; prefix?: string; className?: string }) {
@@ -47,23 +50,29 @@ export default function PayConfirmPage({
     const targetUser = users.find((u) => u.id === userId);
     const userParam = userId ? `?userId=${userId}` : "";
 
-    const handleConfirm = async () => {
-        if (!proofFile) { setError("Please attach a transfer screenshot."); return; }
+    const handleConfirm = async (skip: boolean) => {
+        if (!skip && !proofFile) { setError("Please attach a transfer screenshot."); return; }
         setSubmitting(true);
         setError(null);
         try {
-            const form = new FormData();
-            form.append("file", proofFile);
-            form.append("bucket", "payroll-proofs");
-            const { url: proofUrl } = await apiFetch<{ url: string }>("/api/upload", { method: "POST", body: form });
+            let proofUrl: string | undefined;
+            if (proofFile) {
+                const form = new FormData();
+                form.append("file", proofFile);
+                form.append("bucket", "payroll-proofs");
+                ({ url: proofUrl } = await apiFetch<{ url: string }>("/api/upload", { method: "POST", body: form }));
+            }
             await payrollApi.updatePayout(payoutId, {
-                status: "paid",
+                status: skip ? "skipped" : "paid",
                 paymentProofUrl: proofUrl,
                 // Omitted rather than sent as "" when left blank — the column
                 // stays null, which is how "no note" is stored.
                 notes: notes.trim() || undefined,
             });
-            navigation.push(url(`/mobile/pay/payouts/${payoutId}${userParam}`));
+            // Replace, not push: this screen has done its job, and leaving it
+            // in history let the back button walk into a confirm form for a
+            // payout that was already settled.
+            navigation.replace(url(`/mobile/pay/payouts/${payoutId}${userParam}`));
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to confirm payment");
             setSubmitting(false);
@@ -78,50 +87,113 @@ export default function PayConfirmPage({
         );
     }
 
-    const ps = payslip as { payout: { totalPay: number } } | null;
-    const totalPay = ps?.payout?.totalPay ?? 0;
+    const ps = payslip as { payout: { startDate: string; endDate: string; status: string }; totalPay: number } | null;
+    const totalPay = ps?.totalPay ?? 0;
+    const endDate = ps?.payout?.endDate;
+    const settled = ps?.payout?.status === "paid" || ps?.payout?.status === "skipped";
+
+    /* Reachable by back button, by a stale tab, or by typing the URL. The form
+       would otherwise offer to settle a payout that is already settled, and
+       doing so would overwrite who paid it, when, and the proof they filed. */
+    if (settled) {
+        return (
+            <div className="space-y-4">
+                <div className="bg-white rounded-xl p-6 space-y-2 text-center">
+                    <p className="text-lg font-bold text-gray-900">
+                        {ps?.payout.status === "skipped" ? "Period already closed" : "Already paid"}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                        Nothing left to confirm here. The payslip has the details.
+                    </p>
+                </div>
+                <button
+                    onClick={() => navigation.replace(url(`/mobile/pay/payouts/${payoutId}${userParam}`))}
+                    className="w-full py-3.5 bg-brand text-white font-bold rounded-xl active:opacity-80"
+                >
+                    View payslip
+                </button>
+            </div>
+        );
+    }
+
+    /* Nothing owed means there is nothing to transfer, so this screen closes the
+       period instead of paying it. The rule lives here rather than in the API:
+       what a zero total means is a judgement about the period, not a fact the
+       server should enforce on an amount. */
+    const isSkip = totalPay === 0;
+    const daysUntilUnlock = endDate ? getDaysUntilPayoutUnlock(endDate) : 0;
+    const locked = daysUntilUnlock > 0;
+    const staffName = targetUser?.fullName ?? "the staff member";
 
     return (
-        <div className="space-y-4 pb-32">
+        <div className="space-y-4">
             {/* Amount */}
             <div className="bg-white rounded-xl p-4 space-y-1">
-                <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Amount to Pay</p>
-                <CopyableValue value={totalPay.toLocaleString("id-ID")} prefix="Rp " className="text-3xl font-bold text-gray-900" />
+                <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">
+                    {isSkip ? "Amount owed" : "Amount to Pay"}
+                </p>
+                {isSkip ? (
+                    <p className="text-3xl font-bold text-gray-900">Rp 0</p>
+                ) : (
+                    <CopyableValue value={totalPay.toLocaleString("id-ID")} prefix="Rp " className="text-3xl font-bold text-gray-900" />
+                )}
+                {ps?.payout && (
+                    <p className="text-sm text-gray-500">
+                        {format(parseISO(ps.payout.startDate), "d MMM")} – {format(parseISO(ps.payout.endDate), "d MMM yyyy")}
+                    </p>
+                )}
             </div>
 
-            {/* Bank details */}
-            <div className="bg-white rounded-xl p-4 space-y-2 text-sm">
-                <div className="flex justify-between items-center">
-                    <span className="text-gray-500">Staff</span>
-                    <span className="font-medium text-gray-800">{targetUser?.fullName ?? "—"}</span>
+            {/* Bank details — only the transfer needs them */}
+            {!isSkip && (
+                <div className="bg-white rounded-xl p-4 space-y-2 text-sm">
+                    <div className="flex justify-between items-center">
+                        <span className="text-gray-500">Staff</span>
+                        <span className="font-medium text-gray-800">{targetUser?.fullName ?? "—"}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-gray-500">Bank</span>
+                        <span className="font-medium text-gray-800">{payrollUserInfo?.bankName ?? "—"}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-gray-500">Account No.</span>
+                        {payrollUserInfo?.bankAccountNumber
+                            ? <CopyableValue value={payrollUserInfo.bankAccountNumber} />
+                            : <span className="font-medium text-amber-600">Not set</span>}
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-gray-500">Account Name</span>
+                        <span className="font-medium text-gray-800">{payrollUserInfo?.bankAccountHolder ?? "—"}</span>
+                    </div>
                 </div>
-                <div className="flex justify-between items-center">
-                    <span className="text-gray-500">Bank</span>
-                    <span className="font-medium text-gray-800">{payrollUserInfo?.bankName ?? "—"}</span>
+            )}
+
+            {isSkip && (
+                <div className="bg-white rounded-xl p-4 space-y-2 text-sm">
+                    <div className="flex justify-between items-center">
+                        <span className="text-gray-500">Staff</span>
+                        <span className="font-medium text-gray-800">{targetUser?.fullName ?? "—"}</span>
+                    </div>
+                    <Callout>
+                        Nothing was approved for this period, so no transfer is made. Closing it
+                        locks its commissions and claims the same way paying would.
+                    </Callout>
                 </div>
-                <div className="flex justify-between items-center">
-                    <span className="text-gray-500">Account No.</span>
-                    {payrollUserInfo?.bankAccountNumber
-                        ? <CopyableValue value={payrollUserInfo.bankAccountNumber} />
-                        : <span className="font-medium text-amber-600">Not set</span>}
-                </div>
-                <div className="flex justify-between items-center">
-                    <span className="text-gray-500">Account Name</span>
-                    <span className="font-medium text-gray-800">{payrollUserInfo?.bankAccountHolder ?? "—"}</span>
-                </div>
-            </div>
+            )}
 
             {/* Proof upload */}
-            <div className="bg-white rounded-xl p-4 space-y-3">
-                <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Transfer Screenshot</p>
-                <PhotoPicker
-                    previewUrl={proofPreview}
-                    onCapture={(file, previewUrl) => { setProofFile(file); setProofPreview(previewUrl); }}
-                    onRemove={() => { setProofFile(null); setProofPreview(null); }}
-                    onError={(msg) => setError(msg)}
-                    allowGallery
-                />
-            </div>
+            {!isSkip && (
+                <div className="bg-white rounded-xl p-4 space-y-3">
+                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Transfer Screenshot</p>
+                    <PhotoPicker
+                        previewUrl={proofPreview}
+                        onCapture={(file, previewUrl) => { setProofFile(file); setProofPreview(previewUrl); }}
+                        onRemove={() => { setProofFile(null); setProofPreview(null); }}
+                        onError={(msg) => setError(msg)}
+                        allowGallery
+                    />
+                </div>
+            )}
 
             {/* Note to the staff member — they see this on their payslip, so it
                 is addressed to them rather than kept as an internal reference. */}
@@ -135,14 +207,24 @@ export default function PayConfirmPage({
                     onChange={(e) => setNotes(e.target.value)}
                     maxLength={500}
                     rows={3}
-                    placeholder="e.g. Paid early for the holiday, includes W30 shortfall"
+                    placeholder={isSkip
+                        ? "e.g. No shifts worked this fortnight"
+                        : "e.g. Paid early for the holiday, includes W30 shortfall"}
                     className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-3 text-base text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand/90 resize-none"
                 />
                 <Callout>
-                    Shown to {targetUser?.fullName ?? "the staff member"}{" "}
-                    on their payslip. Can&apos;t be edited after payment.
+                    Shown to {staffName} on their payslip. Can&apos;t be edited after
+                    {isSkip ? " the period is closed." : " payment."}
                 </Callout>
             </div>
+
+            {locked && (
+                <Callout>
+                    This period runs until {endDate ? format(parseISO(endDate), "EEE, d MMM") : "its last day"}.
+                    {" "}It can be {isSkip ? "closed" : "paid"} from that day, {daysUntilUnlock} day
+                    {daysUntilUnlock === 1 ? "" : "s"} from now.
+                </Callout>
+            )}
 
             {error && (
                 <div className="bg-red-50 rounded-xl px-4 py-3">
@@ -150,15 +232,30 @@ export default function PayConfirmPage({
                 </div>
             )}
 
-            <div className="fixed bottom-0 left-0 right-0 p-4 pb-8 bg-white border-t border-gray-100">
-                <button
-                    onClick={handleConfirm}
-                    disabled={submitting || !proofFile}
-                    className="w-full py-3.5 bg-green-600 text-white font-bold rounded-xl active:opacity-80 disabled:opacity-40"
-                >
-                    {submitting ? "Confirming..." : "Confirm Payment"}
-                </button>
-            </div>
+            <FormFooter
+                label={locked
+                    ? `${daysUntilUnlock} day${daysUntilUnlock === 1 ? "" : "s"} left`
+                    : isSkip ? "Mark as Skipped" : "Confirm Payment"}
+                loadingLabel={isSkip ? "Closing..." : "Confirming..."}
+                onSubmit={() => handleConfirm(isSkip)}
+                disabled={locked || (!isSkip && !proofFile)}
+                isLoading={submitting}
+                variant={isSkip ? "gray" : "green"}
+                confirmTitle={isSkip ? "Skip this payout?" : "Confirm payment?"}
+                confirmMessage={isSkip
+                    ? `${staffName} is owed nothing for this period.`
+                    : `Rp ${totalPay.toLocaleString("id-ID")} to ${staffName}.`}
+                confirmIcon={isSkip ? "fluent-emoji:receipt" : "fluent-emoji:money-with-wings"}
+                confirmNote={isSkip
+                    ? {
+                        title: "What this records",
+                        body: "The period closes with no transfer, against your name and today's date. Its commissions and claims can no longer be approved or rejected.",
+                    }
+                    : {
+                        title: "What this records",
+                        body: "The transfer screenshot, your name and today's date are saved to the payslip. The note cannot be edited afterwards.",
+                    }}
+            />
         </div>
     );
 }

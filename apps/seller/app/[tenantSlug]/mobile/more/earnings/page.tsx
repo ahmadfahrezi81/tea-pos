@@ -16,6 +16,7 @@ import { toIndonesiaMonthYear } from "@tea-pos/utils/server-config/timezone";
 const STATUS_STYLE: Record<string, string> = {
     pending: "bg-yellow-100 text-yellow-700",
     paid: "bg-green-100 text-green-700",
+    skipped: "bg-gray-200 text-gray-600",
 };
 
 export default function EarningsPage() {
@@ -77,8 +78,14 @@ export default function EarningsPage() {
                     </div>
                     <div className="flex flex-col items-end gap-1 shrink-0">
                         <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${STATUS_STYLE[status] ?? STATUS_STYLE.pending}`}>
-                            {status === "pending" ? t("earnings.statusOngoing") : status === "paid" ? t("earnings.statusPaid") : status}
-                            {status === "paid" && payout.paidAt ? ` · ${format(new Date(payout.paidAt), "d MMM")}` : ""}
+                            {status === "pending"
+                                ? t("earnings.statusOngoing")
+                                : status === "paid"
+                                    ? t("earnings.statusPaid")
+                                    : status === "skipped"
+                                        ? t("earnings.statusSkipped")
+                                        : status}
+                            {status !== "pending" && payout.paidAt ? ` · ${format(new Date(payout.paidAt), "d MMM")}` : ""}
                         </span>
                         {reviewedCount > 0 && (
                             <span className="text-xs font-medium text-gray-500">
