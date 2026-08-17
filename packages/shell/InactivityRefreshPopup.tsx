@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { RefreshCw, Info } from "lucide-react";
 import { Icon } from "@iconify/react";
 import { useAppUpdate } from "./useAppUpdate";
@@ -17,7 +16,7 @@ const INACTIVITY_LIMIT = 1000 * 60 * 20; // 20 minutes
 const IDLE_CHECK_MS = 1000 * 10;
 
 /**
- * Three reasons to open this sheet, one prompt. A second, independent popup
+ * Two reasons to open this sheet, one prompt. A second, independent popup
  * racing this one would be worse than either alone, and this component already
  * solves the hard part — deciding when interrupting is acceptable.
  */
@@ -47,22 +46,6 @@ const COPY = {
 } as const;
 
 /**
- * Two things to say, three reasons to say them: a page that is behind and a page
- * that already picked the new build up get the identical sheet and the identical
- * button.
- *
- * The distinction is real but it is ours, not the user's — being told "you're
- * already current, nothing to do" is a worse reading than being asked to tap
- * once. Whether that tap costs a full document load is decided in
- * `handleRefresh`, out of sight.
- */
-const COPY_FOR = {
-    updated: "update",
-    update: "update",
-    inactivity: "inactivity",
-} as const;
-
-/**
  * pointerdown covers mouse, touch and pen in one event, so a tap or the start
  * of a scroll gesture counts as activity on a phone — mousemove and keydown
  * alone never fire there, which meant the prompt appeared on a timer no matter
@@ -73,8 +56,7 @@ const ACTIVITY_EVENTS = ["pointerdown", "mousemove", "keydown"] as const;
 export default function InactivityRefreshPopup() {
     const [showInactivityPrompt, setShowInactivityPrompt] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
-    const { reason: updateReason, markReloading, dismiss: dismissUpdate } = useAppUpdate();
-    const router = useRouter();
+    const { reason: updateReason, dismiss: dismissUpdate } = useAppUpdate();
     // A ref, not state: activity fires constantly and none of it should
     // re-render the tree. Only the interval below reads it. Seeded on mount
     // rather than here, because reading the clock during render is impure.
@@ -116,30 +98,17 @@ export default function InactivityRefreshPopup() {
     const reason = updateReason ?? (showInactivityPrompt ? "inactivity" : null);
 
     /**
-     * One button, two reloads. A page that is behind has to fetch a new
-     * document to run new code, which is `location.reload()` and costs a real
-     * round trip. A page that already *is* the new build has nothing to fetch —
-     * the JS in memory is current — so it only needs its server data
-     * re-rendered, which `router.refresh()` does without dropping the document.
+     * One reload for both reasons. A stale page has to fetch a new document to
+     * run new code; an idle page has to fetch one to see current data. Same
+     * call.
      *
-     * Both read as "it refreshed" from the outside, which is the point: the
-     * user should not have to know which case they are in to tap the button.
+     * There used to be a second branch here, a `router.refresh()` for a page
+     * that already *was* the new build and only needed its data re-rendered.
+     * That case no longer reaches this sheet — `WhatsNew` has it, and spends
+     * the tap on the release notes instead of on an invisible refetch.
      */
     const handleRefresh = () => {
         setIsRefreshing(true);
-
-        if (reason === "updated") {
-            dismissUpdate();
-            router.refresh();
-            setIsRefreshing(false);
-            return;
-        }
-
-        // Records the build being reloaded into, so the fresh page recognises
-        // itself as current and does not open a second sheet announcing the
-        // update the user just asked for. A no-op for the inactivity reason,
-        // which reloads into the same build.
-        markReloading();
         window.location.reload();
     };
 
@@ -155,17 +124,17 @@ export default function InactivityRefreshPopup() {
      * Clearing the update is guarded, though it need not be today — an update
      * outranks inactivity, so a *visible* inactivity sheet already proves none
      * is pending. That safety comes entirely from the ordering above; the guard
-     * survives someone changing it. The hook owns what dismissal means for each
-     * reason, because only it holds the build ids.
+     * survives someone changing it. The hook owns what dismissal means, because
+     * only it holds the build id.
      */
     const handleDismiss = () => {
-        if (reason === "update" || reason === "updated") dismissUpdate();
+        if (reason === "update") dismissUpdate();
         setShowInactivityPrompt(false);
         lastActivityRef.current = Date.now();
     };
 
     if (!reason) return null;
-    const { icon, title, body, info } = COPY[COPY_FOR[reason]];
+    const { icon, title, body, info } = COPY[reason];
 
     return (
         <div className="fixed inset-0 z-50 flex items-end bg-black/40" onClick={handleDismiss}>

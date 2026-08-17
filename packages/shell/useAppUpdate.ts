@@ -1,8 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
 
-/** The build this device last *ran*. */
-const BUILD_ID_KEY = "tea-pos:build-id";
 /** The build the user was offered and said no to. */
 const DECLINED_KEY = "tea-pos:declined-build-id";
 
@@ -17,23 +15,14 @@ const CHECK_THROTTLE_MS = 60_000;
  */
 const FIRST_CHECK_DELAY_MS = 5_000;
 
-/**
- * `"updated"` — the page is already running the new build; a data refresh is
- *               all a reload could achieve.
- * `"update"`  — the page is behind and needs a new document.
- *
- * Both surface the same sheet. The distinction only decides which kind of
- * reload the button performs.
- */
-export type UpdateReason = "updated" | "update" | null;
+/** `"update"` — the page is behind and needs a new document. */
+export type UpdateReason = "update" | null;
 
 export interface AppUpdate {
     reason: UpdateReason;
-    /** Call before reloading, so the fresh page does not also announce itself. */
-    markReloading: () => void;
     /**
      * Call when the user closes the sheet. Owned here rather than by the caller
-     * because clearing it correctly needs the build ids, and a plain "dismissed"
+     * because clearing it correctly needs the build id, and a plain "dismissed"
      * boolean outside would silence every later update too.
      */
     dismiss: () => void;
@@ -57,26 +46,17 @@ function write(key: string, value: string) {
 }
 
 /**
- * Whether a new version is worth mentioning, and which of the two things to say.
+ * Whether this page is running code the server has already replaced.
  *
- * Both answers come from comparing build identities. `NEXT_PUBLIC_BUILD_ID` is
- * a **build-time string substitution**, so the bundle in an open tab carries
- * the literal from the deployment that served it, while `/api/version` is code
- * belonging to whatever deployment is current. Different strings prove the tab
- * predates the deployment — the actual question, asked directly.
+ * `NEXT_PUBLIC_BUILD_ID` is a **build-time string substitution**, so the bundle
+ * in an open tab carries the literal from the deployment that served it, while
+ * `/api/version` is code belonging to whatever deployment is current. Different
+ * strings prove the tab predates the deployment — the actual question, asked
+ * directly.
  *
- * **`"updated"` — a document that loaded fresh after a deploy.** It already
- * shows the new UI; all that is missing is saying so. A synchronous read at
- * mount answers it, so the sheet arrives *with* the new screen.
- *
- * Deliberately agnostic about *why* it loaded fresh — a cold start of an
- * installed app, Next's build-skew hard navigation, and next-pwa's
- * `reloadOnOnline` all land here identically. Do not "simplify" this by tying
- * it to one of them.
- *
- * **`"update"` — a page that never reloads.** A till parked on the POS screen
- * all shift keeps running the JS it booted with. Checked on foreground, which
- * is both cheap and the only moment a sheet can be read.
+ * **A page that never reloads.** A till parked on the POS screen all shift keeps
+ * running the JS it booted with. Checked on foreground, which is both cheap and
+ * the only moment a sheet can be read.
  *
  * This replaced a `controllerchange` listener, and the reason is worth keeping:
  * that event reports the *worker* swapping, not this page's JS going stale. The
@@ -86,21 +66,18 @@ function write(key: string, value: string) {
  *
  * Returns a reason rather than reloading: a reload mid-order drops the cart, so
  * the choice belongs to the user.
+ *
+ * **This hook used to have a second reason, `"updated"`**, for a page that had
+ * already loaded the new build and only needed its server data re-rendered. It
+ * asked for a tap to perform a `router.refresh()` the reader could not see the
+ * result of. `WhatsNew` now owns that moment and spends it on something the
+ * reader gets to read. Removing it took the whole `tea-pos:build-id` mechanism
+ * with it: a reload cannot re-trigger this sheet anyway, because the fresh
+ * bundle's inlined id equals what `/api/version` serves.
  */
 export function useAppUpdate(): AppUpdate {
     const current = process.env.NEXT_PUBLIC_BUILD_ID;
-    const [justUpdated, setJustUpdated] = useState(false);
     const [servedBuildId, setServedBuildId] = useState<string | null>(null);
-
-    useEffect(() => {
-        if (!current) return;
-        const previous = read(BUILD_ID_KEY);
-        // Written on every mount, prompt or no prompt — this is what makes the
-        // *next* update detectable. A first-ever load stores the id and says
-        // nothing, which is the whole of the first-install guard.
-        write(BUILD_ID_KEY, current);
-        if (previous && previous !== current) setJustUpdated(true);
-    }, [current]);
 
     useEffect(() => {
         if (!current) return;
@@ -148,23 +125,7 @@ export function useAppUpdate(): AppUpdate {
     }, [current]);
 
     return {
-        /*
-         * A pending update outranks having just updated. The two cannot both be
-         * fresh — `servedBuildId` is only set when the server reports something
-         * this page is *not* running, which a page that just loaded is not — so
-         * whenever both are set, the served one is strictly newer news. Ordering
-         * it the other way strands a page that announced one update and then sat
-         * open across the next: `justUpdated` never clears on its own, so the
-         * real update would never be able to speak.
-         */
-        reason: servedBuildId ? "update" : justUpdated ? "updated" : null,
-
-        // Without this the two cases collide: reloading onto the new build
-        // would leave the remembered id stale, and the fresh page would open a
-        // second sheet on top of the refresh the user just asked for.
-        markReloading: () => {
-            if (servedBuildId) write(BUILD_ID_KEY, servedBuildId);
-        },
+        reason: servedBuildId ? "update" : null,
 
         dismiss: () => {
             // Persisted, because a declining tap does not make the tab any less
@@ -175,11 +136,7 @@ export function useAppUpdate(): AppUpdate {
             if (servedBuildId) {
                 write(DECLINED_KEY, servedBuildId);
                 setServedBuildId(null);
-                return;
             }
-            // Nothing to persist: the new id was written at mount, so this only
-            // has to stop showing for the rest of this page's life.
-            setJustUpdated(false);
         },
     };
 }

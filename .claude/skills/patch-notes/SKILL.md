@@ -7,7 +7,9 @@ description: Write the release notes for a version bump in apps/seller or apps/b
 
 Notes live in `apps/<app>/lib/patch-notes.ts` as a typed array, newest first.
 They are written in the same commit that bumps the version, because that is the
-only moment anyone knows what changed.
+only moment anyone knows what changed — **and because a version that deploys
+without its note can never show that note again.** See "One commit, not two"
+below before splitting them.
 
 The type is in `packages/ui/custom/PatchNotes.tsx`:
 
@@ -95,6 +97,22 @@ string and today's date in `yyyy-mm-dd`. The `version` must match
 
 Then check the other app. A change that touched shared packages usually owes a
 line on both sides, and both apps get a version bump when a change touches both.
+
+### One commit, not two
+
+The bump in `package.json` and the entry in `patch-notes.ts` go in the same
+commit. Not as a convention — because splitting them loses the note.
+
+The What's New screen remembers the last version a reader dismissed and shows
+every release above it. If `5.4.7` deploys with the bump but no entry, readers
+on that build compute an empty list, see nothing, and are recorded as having
+seen `5.4.7`. When the entry lands a commit later it is already below their
+mark, so it never appears — not on the next release, not ever. The release
+announces itself to nobody and there is no way to replay it.
+
+The same applies to a bump that arrives with no note *because nothing was
+user-visible*. That is fine and intended: no entry, no card, nothing withheld.
+The failure is only a note that exists but arrives late.
 
 ## Editing published notes
 

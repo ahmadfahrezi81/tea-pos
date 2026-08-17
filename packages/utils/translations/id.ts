@@ -410,6 +410,12 @@ export const id: DeepPartial<typeof en> = {
         noStores: "Belum ada toko yang ditugaskan.",
         default: "Utama",
     },
+    whatsNew: {
+        title: "Yang Baru",
+        scrollToContinue: "Geser untuk lanjut",
+        gotIt: "Mengerti",
+        close: "Tutup",
+    },
     map: {
         search: "Cari feedback...",
         noFeedback: "Belum ada feedback dikirim",
