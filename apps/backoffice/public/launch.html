@@ -22,10 +22,14 @@
   Everything here is inlined for the same reason: one cached document, no second
   request to satisfy before it can paint.
 
-  The bar is a copy of `.loading-track` / `.loading-bar` in `app/globals.css`.
-  They have to stay identical — the React loader in `MobileLayoutClient.tsx`
-  takes over from this one mid-boot, and any difference in size or colour shows
-  up as a jump at exactly the moment this is trying to look seamless.
+  Deliberately the logo alone, with no progress bar.
+
+  Leaving here commits a navigation, and the browser then suspends this document
+  and holds its last painted frame until the next one is ready. Anything
+  animating freezes mid-stride — a bar sat at full for the whole wait, reading as
+  broken rather than as loading. There is nothing to freeze now, and the bar in
+  `MobileLayoutClient.tsx` starts moving the moment the app paints, so the loader
+  appears to arrive and begin rather than to stall and restart.
 
   Nothing here may become personalised. It is one cached file shared by every
   account that uses the device.
@@ -52,42 +56,6 @@
         border-radius: 0.75rem;
         box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
     }
-    .loading-track {
-        width: 16rem;
-        height: 1rem;
-        background-color: #e5e7eb;
-        border-radius: 9999px;
-        position: relative;
-        overflow: hidden;
-    }
-    .loading-bar {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        left: -100%;
-        width: 100%;
-        /* `--accent-primary` in app/globals.css — kept literal here because
-       this file loads no stylesheet of its own. */
-        background-color: oklch(0.646 0.222 41.116);
-        border-radius: 9999px;
-        animation: indeterminate 1.5s ease-in-out infinite;
-    }
-    .gloss {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 50%;
-        border-radius: 9999px;
-        background: linear-gradient(to bottom, rgb(255 255 255 / 0.2), transparent);
-    }
-    .status {
-        margin-top: 1rem;
-        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-        font-size: 0.75rem;
-        color: #4b5563;
-        opacity: 0.9;
-    }
     .offline { display: none; }
     .offline h1 {
         margin: 0 0 0.5rem;
@@ -110,15 +78,9 @@
         font-size: 0.875rem;
         font-weight: 500;
     }
-    /* Swapped by script when the device reports no connection. */
-    body.is-offline .loading { display: none; }
+    /* Revealed by script when the device reports no connection. */
     body.is-offline .offline { display: block; }
 
-    @keyframes indeterminate {
-        0%   { left: -100%; width: 100%; }
-        50%  { left: 0%;    width: 100%; }
-        100% { left: 100%;  width: 100%; }
-    }
 </style>
 </head>
 <body>
@@ -130,10 +92,6 @@
          a logo that cannot fail to appear. -->
     <img class="logo" src="data:image/png;base64,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" alt="Tea POS Backoffice" width="70" height="70" />
 
-    <div class="loading">
-        <div class="loading-track"><div class="loading-bar"><div class="gloss"></div></div></div>
-        <div class="status">Loading ...</div>
-    </div>
 
     <div class="offline">
         <h1>No connection</h1>
@@ -143,21 +101,25 @@
 </div>
 
 <script>
-    /* Held deliberately, so the bar is seen moving.
+    function cookie(name) {
+        var m = document.cookie.match(new RegExp("(?:^|; *)" + name + "=([^;]*)"));
+        return m ? decodeURIComponent(m[1]) : "";
+    }
 
-       A committed navigation freezes the outgoing document: the browser keeps
-       its last painted frame as a static image until the next one is ready, and
-       animations on it stop. Leaving immediately therefore showed a single
-       frozen frame of the bar for the whole wait, which read as broken rather
-       than as loading. Roughly half of the bar's 1.5s cycle is enough to be
-       unmistakably moving before the screen goes still. */
-    var HOLD_MS = 800;
+    /* Straight to the tenant when the proxy has told us which one, skipping the
+       /login round trip that exists only to have the server look it up. Both
+       cookies are required: a slug outlives a session (24h against the app being
+       open), and sending a signed-out person to a tenant page just means the
+       proxy bounces them to /login anyway — the hop this is here to avoid.
 
-    /* Always /login. The proxy decides from there — it redirects a valid session
-       on to its tenant, and renders the sign-in form for everyone else — so this
-       file never has to know who is looking at it, and never has to read a
-       cookie to find out. */
-    function go() { location.replace("/login"); }
+       Neither cookie is trusted for anything but choosing a destination. The
+       proxy authorises the navigation on arrival exactly as before, so a stale
+       or edited slug is corrected rather than believed. */
+    function go() {
+        var slug = cookie("x-tenant-slug");
+        var signedIn = !!cookie("x-user-info");
+        location.replace(slug && signedIn ? "/" + slug + "/mobile/home" : "/login");
+    }
 
     /* `navigator.onLine === false` is the one direction that is reliable, and it
        is the case worth handling: leaving now would replace this screen with the
@@ -170,11 +132,11 @@
             return;
         }
         document.body.classList.remove("is-offline");
-        setTimeout(go, HOLD_MS);
+        go();
     }
 
-    /* No hold on an explicit retry — the wait exists to show an animation, and
-       someone who just pressed a button has already had that. */
+    /* Pressing retry while still offline would land on the browser's error
+       page, which is the thing this screen exists to avoid. */
     function retry() {
         if (navigator.onLine === false) return;
         go();

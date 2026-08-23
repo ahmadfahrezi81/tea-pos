@@ -63,6 +63,31 @@ function setTenantIdCookie(response: NextResponse, slug: string, id: string) {
     });
 }
 
+/**
+ * The same slug `x-tenant-id` already carries, minus the httpOnly flag, so
+ * `public/launch.html` can read it.
+ *
+ * The splash is a static file with no way to ask who is looking at it, so
+ * without this it has to send everyone to /login and wait for the server to
+ * look their tenant up — a whole extra page load on every cold open, plus the
+ * `user_tenant_assignments` query that goes with it. With it, the splash goes
+ * straight to the tenant.
+ *
+ * Readable by scripts on purpose, and safe to be: the slug is the first segment
+ * of every URL in the app. Nothing is trusted from it either — it only chooses
+ * where to navigate, and this proxy still authorises that navigation on arrival,
+ * so a stale or edited value gets corrected rather than believed.
+ */
+function setTenantSlugCookie(response: NextResponse, slug: string) {
+    response.cookies.set("x-tenant-slug", slug, {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: TENANT_COOKIE_TTL,
+        path: "/",
+    });
+}
+
 const redirectTo = (path: string, req: NextRequest) =>
     NextResponse.redirect(new URL(path, req.url));
 
@@ -141,10 +166,13 @@ export async function proxy(request: NextRequest) {
 
     if (tenantCacheHit) {
         setTenantIdCookie(response, tenantSlug, cachedTenantId);
+        setTenantSlugCookie(response, tenantSlug);
     } else if (tenantResult.data?.id) {
         setTenantIdCookie(response, tenantSlug, tenantResult.data.id);
+        setTenantSlugCookie(response, tenantSlug);
     } else if (!shouldResolveTenant) {
         response.cookies.delete("x-tenant-id");
+        response.cookies.delete("x-tenant-slug");
     }
 
     // ── Role resolution ───────────────────────────────────────────────────────
