@@ -1,5 +1,5 @@
 "use client";
-import { ReactNode, useCallback, useMemo, useState, useEffect } from "react";
+import { ReactNode, useCallback, useMemo, useState } from "react";
 import Image from "next/image";
 import { ChevronsUpDown } from "lucide-react";
 import { MobileShell } from "@tea-pos/shell/MobileShell";
@@ -17,11 +17,6 @@ interface MobileLayoutClientProps {
 /** Backoffice has no i18n, so route titles are already display text. */
 const identity = (key: string) => key;
 
-/** How long the boot loader stays up at minimum. Paired with the same
-  * deliberate hold in `public/launch.html`, so the splash and this one read
-  * as a single uninterrupted loader rather than two that flicker past. */
-const LOADER_MIN_MS = 500;
-
 export default function MobileLayoutClient({ children }: MobileLayoutClientProps) {
     const { url } = useTenantSlug();
     const { user, avatarUrl, mutate: refreshProfile } = useAuth();
@@ -31,22 +26,7 @@ export default function MobileLayoutClient({ children }: MobileLayoutClientProps
     // Latches on: once the shell has been ready it never reverts, so a later
     // auth failure surfaces the auth overlay rather than the loading screen.
 
-    /* The loader has a floor as well as a trigger. Since the layout began
-       seeding SWR, bootstrap data is present on the very first render, so
-       without this the loader would be created and destroyed in one commit and
-       the app would appear with no opening beat at all.
-
-       It also keeps the loader real for the cases that are not a cold boot —
-       the update prompt, a forced refresh, a recovered timeout — where it is
-       the only thing on screen and vanishing instantly reads as a flash of
-       broken layout rather than as loading. */
-    const [minElapsed, setMinElapsed] = useState(false);
-    useEffect(() => {
-        const timer = setTimeout(() => setMinElapsed(true), LOADER_MIN_MS);
-        return () => clearTimeout(timer);
-    }, []);
-
-    if (!shellReady && user && minElapsed) {
+    if (!shellReady && user) {
         setShellReady(true);
     }
 

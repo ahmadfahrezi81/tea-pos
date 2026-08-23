@@ -1,38 +1,35 @@
 "use client";
-import { SWRConfig, unstable_serialize } from "swr";
+import { SWRConfig } from "swr";
 import type { StoreListResponse } from "@tea-pos/features/stores/schema";
-import type { Flags } from "@/lib/api/flags";
 
 /**
- * Seeds the SWR cache with what the mobile layout already fetched on the server,
- * so no consumer has to wait for a round trip it could have skipped.
+ * Seeds the SWR cache with the store list the mobile layout already fetched, so
+ * nothing has to wait for `/api/stores` before it can render.
  *
- * `SWRConfig.fallback` rather than each hook's own `fallbackData`, because
+ * `SWRConfig.fallback` rather than the hook's own `fallbackData`, because
  * `fallbackData` is per-hook and never reaches the shared cache: `useStores()`
  * has two callers — `StoreProvider`, and `MobileLayoutClient`, which gates the
  * boot loader on it — and only a cache entry satisfies both.
  *
- * Both keys are written the way their hooks write them. `useStores` passes a
- * plain string, which SWR uses as-is; `FlagsProvider` passes an array, which has
- * to go through `unstable_serialize` to produce the same cache key. If either
- * hook changes its key, seeding silently stops working — the app still boots,
- * just slower — so they have to be kept in step.
+ * The key is the literal string `useStores` passes to `useSWR`. If that key ever
+ * changes this silently stops working — the app still boots, just slower — so
+ * the two have to be kept in step.
+ *
+ * Flags deliberately are **not** seeded here. Evaluating them server-side meant a
+ * blocking call to PostHog inside a layout that runs for every screen and every
+ * prefetch of one; it cost far more than the round trip it saved. They are
+ * fetched by `FlagsContext` after hydration, where nothing waits on them.
  */
 export function BootFallback({
     stores,
-    flags,
-    flagsStoreId,
     children,
 }: {
     stores: StoreListResponse | null;
-    flags: Flags | null;
-    /** The store id the client will resolve to on its first render. */
-    flagsStoreId: string;
     children: React.ReactNode;
 }) {
-    const fallback: Record<string, unknown> = {};
-    if (stores) fallback["stores-all"] = stores;
-    if (flags) fallback[unstable_serialize(["flags", flagsStoreId])] = flags;
-
-    return <SWRConfig value={{ fallback }}>{children}</SWRConfig>;
+    return (
+        <SWRConfig value={{ fallback: stores ? { "stores-all": stores } : {} }}>
+            {children}
+        </SWRConfig>
+    );
 }

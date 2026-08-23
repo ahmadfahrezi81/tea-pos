@@ -19,7 +19,6 @@ import { listUserStores } from "@tea-pos/services/stores";
 import { StoreListResponse } from "@tea-pos/features/stores/schema";
 import { getRequestUser } from "@/lib/auth/get-request-user";
 import { BootFallback } from "@/lib/context/BootFallback";
-import { evaluateFlagSet } from "@/lib/flags";
 
 interface MobileLayoutProps {
     children: ReactNode;
@@ -117,50 +116,10 @@ export default async function MobileLayout({ children }: MobileLayoutProps) {
     const initialSelectedStoreId =
         (await cookies()).get("selectedStoreId")?.value ?? "";
 
-    /* Mirrors `resolvedStoreId` in StoreContext. Deliberately duplicated rather
-       than shared: that one is a client hook chain, and this has to run before
-       any of it exists. The two must agree — the flag cache key below is built
-       from this value, and a mismatch just means the seeded entry is never read
-       and the client fetches anyway. */
-    const resolvedStoreId = (() => {
-        if (!initialStores || !requestUser) return initialSelectedStoreId;
-        const { stores, assignments } = initialStores;
-        if (stores.some((s) => s.id === initialSelectedStoreId))
-            return initialSelectedStoreId;
-        const fallbackStore = stores.find((s) =>
-            assignments[s.id]?.some(
-                (a) => a.userId === requestUser.id && a.isDefault,
-            ),
-        );
-        return fallbackStore?.id ?? initialSelectedStoreId;
-    })();
-
-    /* Evaluated here so gated UI is correct in the first paint rather than one
-       round trip later. That window is not cosmetic: `isMaintenanceEnabled`
-       defaults to false, so a tenant in maintenance mode currently sees the app
-       before the overlay arrives.
-
-       Fails closed — `evaluateFlagSet` returns everything false on any error,
-       and a null here simply falls through to the client fetch. */
-    const initialFlags = requestUser
-        ? await evaluateFlagSet(requestUser.id, {
-              role: requestUser.role,
-              tenantId,
-              ...(resolvedStoreId && { storeId: resolvedStoreId }),
-          }).catch((error) => {
-              console.error("[layout] flag evaluation unavailable:", error);
-              return null;
-          })
-        : null;
-
     return (
         <PayFrequencyProvider value={payFrequency}>
             <RealtimeProvider>
-                <BootFallback
-                    stores={initialStores}
-                    flags={initialFlags}
-                    flagsStoreId={resolvedStoreId}
-                >
+                <BootFallback stores={initialStores}>
                     <StoreProvider initialSelectedStoreId={initialSelectedStoreId}>
                         <FlagsProvider>
                             <Suspense>
