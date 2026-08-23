@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { unstable_cache } from "next/cache";
 import MobileLayoutClient from "./components/MobileLayoutClient";
 import InactivityRefreshPopup from "@tea-pos/shell/InactivityRefreshPopup";
 import WhatsNew from "@tea-pos/shell/WhatsNew";
@@ -11,6 +12,32 @@ import { getServiceClient } from "@/lib/supabase/service";
 import { getCurrentTenantId } from "@tea-pos/utils/server-config/tenant";
 import { getTenantPayFrequency } from "@tea-pos/services/tenants";
 
+/**
+ * Five minutes, because this layout wraps every screen *and* every prefetch of
+ * one — `navigation.ts` marks five routes `prefetch: true`, so uncached a single
+ * open pays for this read half a dozen times, blocking a render each time, for a
+ * value that changes a few times a year.
+ *
+ * TTL rather than `revalidateTag`: the write lives on the pay-schedule screen in
+ * this same app, but seller reads the same setting from its own deployment and
+ * cache, so neither side can invalidate the other. The cadence screen already
+ * warns that a change applies from the next period, which is far longer than
+ * five minutes of staleness.
+ *
+ * The Supabase client is built inside the cached function rather than passed in:
+ * `unstable_cache` folds its arguments into the key, and a client object has no
+ * business in one.
+ */
+const CACHE_SECONDS = 300;
+
+function cachedPayFrequency(tenantId: string) {
+    return unstable_cache(
+        () => getTenantPayFrequency(getServiceClient(), tenantId),
+        ["pay-frequency", tenantId],
+        { revalidate: CACHE_SECONDS, tags: [`pay-frequency-${tenantId}`] },
+    );
+}
+
 export default async function MobileLayout({ children }: { children: ReactNode }) {
     /* Read server-side so every pay window is rendered from the real cadence in
        the first paint. Service client rather than SSR: super admins reach a
@@ -20,7 +47,7 @@ export default async function MobileLayout({ children }: { children: ReactNode }
 
        Swallowed on failure so an unreadable payroll setting degrades the pay
        screens rather than blanking every screen in the app. */
-    const payFrequency = await getTenantPayFrequency(getServiceClient(), await getCurrentTenantId())
+    const payFrequency = await cachedPayFrequency(await getCurrentTenantId())()
         .catch((error) => {
             console.error("[layout] pay frequency unavailable:", error);
             return null;
