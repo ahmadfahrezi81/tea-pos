@@ -9,6 +9,15 @@ import type { PatchNote } from "@tea-pos/ui/custom/PatchNotes";
  */
 export const patchNotes: PatchNote[] = [
     {
+        version: "1.0.9",
+        date: "2026-08-23",
+        entries: [
+            { kind: "improved", text: "Every part of the payslip screen now has a heading." },
+            { kind: "improved", text: "The work days calendar on a payslip is bigger and easier to read." },
+            { kind: "improved", text: "The transfer receipt shows as a photo you can tap to enlarge." },
+        ],
+    },
+    {
         version: "1.0.8",
         date: "2026-08-17",
         entries: [

@@ -153,9 +153,6 @@ export const resolveRoute = (path: string): RouteConfig | null => {
             // nothing owed. The title has to fit both.
             return { titleKey: "Confirm Payout", parent: `/mobile/pay/payouts/${payoutId}` };
         }
-        if (segments.length === 4) {
-            return { titleKey: "Summary Details", parent: `/mobile/pay/payouts/${payoutId}` };
-        }
         return { titleKey: "Pay", parent: "/mobile/pay/payouts" };
     }
 
