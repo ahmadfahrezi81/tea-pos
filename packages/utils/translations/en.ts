@@ -342,6 +342,8 @@ export const en = {
         periodLabel: "Period",
         forLabel: "For",
         payslipId: "Payslip ID",
+        paymentDetails: "Payment Details",
+        dailyBreakdown: "Daily Breakdown",
         selectYear: "Select Year",
         week: "Week",
         statusOngoing: "Ongoing",

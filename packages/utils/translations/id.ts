@@ -345,6 +345,8 @@ export const id: DeepPartial<typeof en> = {
         periodLabel: "Periode",
         forLabel: "Untuk",
         payslipId: "ID Slip Gaji",
+        paymentDetails: "Detail Pembayaran",
+        dailyBreakdown: "Rincian Harian",
         selectYear: "Pilih Tahun",
         week: "Minggu",
         statusOngoing: "Berjalan",

@@ -27,7 +27,7 @@ function formatDate(): string {
     return new Date().toLocaleDateString("en-US", {
         weekday: "short",
         day: "numeric",
-        month: "long",
+        month: "short",
     });
 }
 
