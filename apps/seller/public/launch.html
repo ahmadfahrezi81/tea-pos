@@ -136,11 +136,21 @@
     <div class="offline">
         <h1>No connection</h1>
         <p>Tea POS needs the network to start. It will continue on its own once you are back online.</p>
-        <button type="button" onclick="go()">Try again</button>
+        <button type="button" onclick="retry()">Try again</button>
     </div>
 </div>
 
 <script>
+    /* Held deliberately, so the bar is seen moving.
+
+       A committed navigation freezes the outgoing document: the browser keeps
+       its last painted frame as a static image until the next one is ready, and
+       animations on it stop. Leaving immediately therefore showed a single
+       frozen frame of the bar for the whole wait, which read as broken rather
+       than as loading. Roughly half of the bar's 1.5s cycle is enough to be
+       unmistakably moving before the screen goes still. */
+    var HOLD_MS = 800;
+
     /* Always /login. The proxy decides from there — it redirects a valid session
        on to its tenant, and renders the sign-in form for everyone else — so this
        file never has to know who is looking at it, and never has to read a
@@ -151,12 +161,24 @@
        is the case worth handling: leaving now would replace this screen with the
        browser's error page, which is worse than the blank it set out to fix. A
        false positive just means the navigation fails as it would have anyway. */
-    if (navigator.onLine === false) {
-        document.body.classList.add("is-offline");
-        addEventListener("online", go, { once: true });
-    } else {
+    function start() {
+        if (navigator.onLine === false) {
+            document.body.classList.add("is-offline");
+            addEventListener("online", start, { once: true });
+            return;
+        }
+        document.body.classList.remove("is-offline");
+        setTimeout(go, HOLD_MS);
+    }
+
+    /* No hold on an explicit retry — the wait exists to show an animation, and
+       someone who just pressed a button has already had that. */
+    function retry() {
+        if (navigator.onLine === false) return;
         go();
     }
+
+    start();
 </script>
 </body>
 </html>
