@@ -1,4 +1,5 @@
 import { ReactNode, Suspense } from "react";
+import { cookies } from "next/headers";
 import { unstable_cache } from "next/cache";
 import MobileLayoutClient from "./components/MobileLayoutClient";
 import InactivityRefreshPopup from "@tea-pos/shell/InactivityRefreshPopup";
@@ -14,6 +15,11 @@ import { PayFrequencyProvider } from "@/lib/context/PayFrequencyContext";
 import { getServiceClient } from "@/lib/supabase/service";
 import { getCurrentTenantId } from "@tea-pos/utils/server-config/tenant";
 import { getTenantPayFrequency } from "@tea-pos/services/tenants";
+import { listUserStores } from "@tea-pos/services/stores";
+import { StoreListResponse } from "@tea-pos/features/stores/schema";
+import { getRequestUser } from "@/lib/auth/get-request-user";
+import { BootFallback } from "@/lib/context/BootFallback";
+import { evaluateFlagSet } from "@/lib/flags";
 
 interface MobileLayoutProps {
     children: ReactNode;
@@ -44,6 +50,33 @@ function cachedPayFrequency(tenantId: string) {
     );
 }
 
+/**
+ * Shorter than the pay-frequency window because store assignments are edited by
+ * hand, and the picker showing a stale roster is more noticeable than a stale
+ * pay cadence. SWR revalidates against `/api/stores` after boot regardless, so
+ * this only has to be fresh enough for the *first* paint.
+ *
+ * The key carries the user id as well as the tenant, and that is not optional:
+ * this is a per-user roster, so a tenant-only key would hand one seller another
+ * seller's store list.
+ */
+const STORES_CACHE_SECONDS = 60;
+
+function cachedUserStores(tenantId: string, userId: string) {
+    return unstable_cache(
+        async () => {
+            const data = await listUserStores(getServiceClient(), {
+                tenantId,
+                userId,
+            });
+            const parsed = StoreListResponse.safeParse(data);
+            return parsed.success ? parsed.data : null;
+        },
+        ["user-stores", tenantId, userId],
+        { revalidate: STORES_CACHE_SECONDS, tags: [`user-stores-${tenantId}`] },
+    );
+}
+
 export default async function MobileLayout({ children }: MobileLayoutProps) {
     /* Read server-side so every pay window is rendered from the real cadence in
        the first paint. Service client rather than SSR: super admins reach a
@@ -54,33 +87,99 @@ export default async function MobileLayout({ children }: MobileLayoutProps) {
        Swallowed on failure because this layout wraps the till. Payroll screens
        degrade to "unavailable" without a cadence; taking orders must not depend
        on a payroll setting being readable. */
-    const payFrequency = await cachedPayFrequency(await getCurrentTenantId())()
-        .catch((error) => {
+    const tenantId = await getCurrentTenantId();
+
+    /* The store list is fetched here so the boot loader does not have to wait on
+       a client round trip: `MobileLayoutClient` holds the shell until it
+       arrives, and a client fetch cannot even start until hydration is done.
+       Seeded into SWR below, which still revalidates in the background.
+
+       Same failure posture as the cadence — null falls through to the client
+       fetch, so a bad read costs speed rather than the till. */
+    const requestUser = await getRequestUser();
+
+    const [payFrequency, initialStores] = await Promise.all([
+        cachedPayFrequency(tenantId)().catch((error) => {
             console.error("[layout] pay frequency unavailable:", error);
             return null;
-        });
+        }),
+        requestUser
+            ? cachedUserStores(tenantId, requestUser.id)().catch((error) => {
+                  console.error("[layout] store list unavailable:", error);
+                  return null;
+              })
+            : null,
+    ]);
+
+    /* Read on the server so the first render picks the same store the browser
+       last used. See `persistStoreId` in StoreContext for why localStorage
+       alone cannot do this. */
+    const initialSelectedStoreId =
+        (await cookies()).get("selectedStoreId")?.value ?? "";
+
+    /* Mirrors `resolvedStoreId` in StoreContext. Deliberately duplicated rather
+       than shared: that one is a client hook chain, and this has to run before
+       any of it exists. The two must agree — the flag cache key below is built
+       from this value, and a mismatch just means the seeded entry is never read
+       and the client fetches anyway. */
+    const resolvedStoreId = (() => {
+        if (!initialStores || !requestUser) return initialSelectedStoreId;
+        const { stores, assignments } = initialStores;
+        if (stores.some((s) => s.id === initialSelectedStoreId))
+            return initialSelectedStoreId;
+        const fallbackStore = stores.find((s) =>
+            assignments[s.id]?.some(
+                (a) => a.userId === requestUser.id && a.isDefault,
+            ),
+        );
+        return fallbackStore?.id ?? initialSelectedStoreId;
+    })();
+
+    /* Evaluated here so gated UI is correct in the first paint rather than one
+       round trip later. That window is not cosmetic: `isMaintenanceEnabled`
+       defaults to false, so a tenant in maintenance mode currently sees the app
+       before the overlay arrives.
+
+       Fails closed — `evaluateFlagSet` returns everything false on any error,
+       and a null here simply falls through to the client fetch. */
+    const initialFlags = requestUser
+        ? await evaluateFlagSet(requestUser.id, {
+              role: requestUser.role,
+              tenantId,
+              ...(resolvedStoreId && { storeId: resolvedStoreId }),
+          }).catch((error) => {
+              console.error("[layout] flag evaluation unavailable:", error);
+              return null;
+          })
+        : null;
 
     return (
         <PayFrequencyProvider value={payFrequency}>
             <RealtimeProvider>
-                <StoreProvider>
-                    <FlagsProvider>
-                        <Suspense>
-                            <PostHogAnalytics />
-                        </Suspense>
-                        <FastOrderModeProvider>
-                            <ToastProvider>
-                                <ErrorSheetProvider>
-                                    <MobileLayoutClient>
-                                        {children}
-                                        <InactivityRefreshPopup />
-                                        <WhatsNewMount />
-                                    </MobileLayoutClient>
-                                </ErrorSheetProvider>
-                            </ToastProvider>
-                        </FastOrderModeProvider>
-                    </FlagsProvider>
-                </StoreProvider>
+                <BootFallback
+                    stores={initialStores}
+                    flags={initialFlags}
+                    flagsStoreId={resolvedStoreId}
+                >
+                    <StoreProvider initialSelectedStoreId={initialSelectedStoreId}>
+                        <FlagsProvider>
+                            <Suspense>
+                                <PostHogAnalytics />
+                            </Suspense>
+                            <FastOrderModeProvider>
+                                <ToastProvider>
+                                    <ErrorSheetProvider>
+                                        <MobileLayoutClient>
+                                            {children}
+                                            <InactivityRefreshPopup />
+                                            <WhatsNewMount />
+                                        </MobileLayoutClient>
+                                    </ErrorSheetProvider>
+                                </ToastProvider>
+                            </FastOrderModeProvider>
+                        </FlagsProvider>
+                    </StoreProvider>
+                </BootFallback>
             </RealtimeProvider>
         </PayFrequencyProvider>
     );

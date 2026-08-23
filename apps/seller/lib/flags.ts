@@ -1,5 +1,6 @@
 import { PostHog } from "posthog-node";
 import { after } from "next/server";
+import type { Flags } from "@/lib/api/flags";
 
 export const FLAGS = {
     FEATURE: {
@@ -71,4 +72,31 @@ export async function isFlagEnabled(
 ): Promise<boolean> {
     const flags = await getAllFlags(userId, properties);
     return flags.isEnabled(flag);
+}
+
+/**
+ * The whole flag set as the client consumes it.
+ *
+ * Extracted so `GET /api/flags` and the mobile layout's server render produce
+ * the same object from the same evaluation — the layout seeds SWR with this and
+ * the route revalidates it, so any drift between the two would show up as flags
+ * flipping shortly after boot.
+ *
+ * Fails closed by construction: `getAllFlags` returns `DISABLED` on any error,
+ * so every field here comes back false rather than throwing or going stale.
+ */
+export async function evaluateFlagSet(
+    userId: string,
+    properties?: Record<string, string>,
+): Promise<Flags> {
+    const evaluation = await getAllFlags(userId, properties);
+    return {
+        isQrisEnabled: evaluation.isEnabled(FLAGS.FEATURE.QRIS),
+        isReportEnabled: evaluation.isEnabled(FLAGS.FEATURE.REPORT),
+        isRequestEnabled: evaluation.isEnabled(FLAGS.FEATURE.REQUEST),
+        isReimbursementEnabled: evaluation.isEnabled(FLAGS.FEATURE.REIMBURSEMENT),
+        isFastOrderEnabled: evaluation.isEnabled(FLAGS.FEATURE.FAST_ORDER),
+        isSkipManagePhotosEnabled: evaluation.isEnabled(FLAGS.OPS.SKIP_MANAGE_PHOTOS),
+        isMaintenanceEnabled: evaluation.isEnabled(FLAGS.OPS.MAINTENANCE),
+    };
 }

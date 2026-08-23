@@ -18,9 +18,21 @@ const withPWA = withPWAInit({
     aggressiveFrontEndNavCaching: false,
     reloadOnOnline: true,
     cacheStartUrl: true,
-    dynamicStartUrl: true,
+    /* The start URL is now `/launch.html` — a static file with nothing
+       user-specific in it, so it can be served straight from the precache.
+       Left true, next-pwa treats the start URL as auth-dependent and caches it
+       NetworkFirst, which makes a cold launch wait on the network by design. */
+    dynamicStartUrl: false,
     workboxOptions: {
         disableDevLogs: true,
+        /* next-pwa globs `public/` by extension and HTML is not on the list —
+           verified by reading the generated `public/sw.js`, where `launch.html`
+           is absent without this line. Precaching it is the whole point of the
+           file, so it is named explicitly.
+
+           Revision is the build id, so a deploy replaces it rather than leaving
+           a device on an old copy. */
+        additionalManifestEntries: [{ url: "/launch.html", revision: buildId }],
         runtimeCaching: [
             {
                 urlPattern: /\/_next\/data\/.*/i,

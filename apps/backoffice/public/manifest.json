@@ -2,7 +2,7 @@
   "name": "Tea POS Backoffice",
   "short_name": "Backoffice",
   "description": "Admin backoffice for Tea POS",
-  "start_url": "/",
+  "start_url": "/launch.html",
   "id": "/",
   "display": "standalone",
   "background_color": "#f1f5f9",
