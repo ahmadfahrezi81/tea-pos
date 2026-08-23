@@ -303,3 +303,54 @@ for a different reason: `start_url` is read at install time, so an already
 installed PWA keeps launching at `/` until it is removed and re-added. Between
 the two, a correctly working build shows no loader at all, which reads as
 breakage. Worth saying out loud when this ships.
+
+---
+
+## Reworked 2026-08-23 — the splash no longer depends on `start_url`
+
+Owner's objection, and it was the right one: *"we can't expect our user to remove
+it and re-add it."*
+
+An installed PWA reads `start_url` **once, at install time**. Android's Chrome
+re-fetches the manifest and silently updates the WebAPK, so it would land there
+eventually — days, not minutes. iOS never updates it. So pointing `start_url` at
+a new file reaches new installs and essentially nobody else, which is the wrong
+half of the audience.
+
+Reworked so the entry point does not move at all. `start_url` is back to `/`, and
+the service worker answers navigations to `/` from the precache:
+
+```
+navigateFallback: "/launch.html",
+navigateFallbackAllowlist: [/^\/$/],
+```
+
+Verified in the generated worker, both apps:
+`NavigationRoute(createHandlerBoundToURL("/launch.html"), {allowlist:[/^\/$/]})`.
+
+Every existing install benefits as soon as the new worker activates. Nothing has
+to be reinstalled, and `start_url` is no longer load-bearing.
+
+`/` has no content of its own — it is a server redirect to `/login` — so
+answering it from cache costs nothing, and the splash forwards to the same place.
+
+### Why this is not the bug from earlier today
+
+The regression above precached `/` **itself**: a captured redirect that carried
+whichever session the worker happened to fetch it with. This serves a static,
+impersonal document *for* `/`. Nothing user-specific is ever stored, which is the
+property that was missing the first time.
+
+Scoped to exactly `/` by the allowlist, so deep links, `/login` and every mobile
+route go to the network as before. No redirect loop: the splash forwards to
+`/login`, which the allowlist does not match.
+
+### Smoke-tested against `next start`
+
+| Request | Result |
+|---|---|
+| `/` (no worker — a first visit) | `307` to `/login`, unchanged |
+| `/launch.html` | `200`, `text/html`, 8785 bytes |
+| `/sw.js` | `200` |
+| `manifest.json` | `start_url` back to `/` |
+| `launch.html` external references | 0 |

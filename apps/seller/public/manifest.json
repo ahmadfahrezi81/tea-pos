@@ -2,7 +2,7 @@
   "name": "Tea POS",
   "short_name": "Tea POS",
   "description": "Point of Sale System",
-  "start_url": "/launch.html",
+  "start_url": "/",
   "id": "/",
   "display": "standalone",
   "background_color": "#f1f5f9",

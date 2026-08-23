@@ -38,6 +38,19 @@ const withPWA = withPWAInit({
            Revision is the build id, so a deploy replaces it rather than leaving
            a device on an old copy. */
         additionalManifestEntries: [{ url: "/launch.html", revision: buildId }],
+        /* Serve the splash for `/` itself, so this does not depend on the
+           manifest's `start_url` reaching a device. An installed PWA reads
+           `start_url` once, at install: Android refreshes it eventually, iOS
+           never does, so a change there would miss everyone already installed.
+           `/` has no content of its own — it is a server redirect to /login —
+           so answering it from the precache costs nothing and the splash
+           forwards to the same place.
+
+           Scoped to exactly `/`. This is safe in a way that precaching `/`
+           was not: launch.html is a static, impersonal document, not a captured
+           redirect that carries whichever session fetched it. */
+        navigateFallback: "/launch.html",
+        navigateFallbackAllowlist: [/^\/$/],
         runtimeCaching: [
             {
                 urlPattern: /\/_next\/data\/.*/i,
