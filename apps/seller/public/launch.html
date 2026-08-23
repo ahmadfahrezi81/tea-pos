@@ -3,44 +3,39 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="theme-color" content="#f1f5f9" />
+<meta name="theme-color" content="#ffffff" />
 <meta name="google" content="notranslate" />
 <title>Tea POS</title>
 <!--
-  The boot screen, and deliberately not a Next.js route.
+  The first thing on screen when the app is opened, and deliberately not a
+  Next.js route.
 
-  Reached through the service worker's navigation route for `/`, not through
-  the manifest's `start_url` — an installed PWA reads `start_url` once, at
-  install time, so changing it would never reach anyone already installed.
+  `app/layout.tsx` reads cookies, which opts the whole route tree out of static
+  rendering — so nothing under it can be prerendered, and nothing that cannot be
+  prerendered can be precached. A plain file in `public/` can, so the service
+  worker serves this from disk with no network and no session check. It is
+  reached through the worker's navigation route for `/`, not the manifest's
+  `start_url`: an installed PWA reads `start_url` once, at install, so changing
+  that would never reach anyone already installed.
 
-  `app/layout.tsx` reads cookies, which opts the entire route tree out of static
-  rendering — so no page under it can be prerendered, and nothing that cannot be
-  prerendered can be precached. A plain file in `public/` can, which means the
-  service worker serves this from disk with no network and no session check, and
-  the logo is on screen before anything else has started.
+  Background only, by design. It used to carry the logo, but leaving commits a
+  navigation and the browser paints at most one frame before that — usually
+  none — so the logo was fetched, decoded and discarded unseen. Holding long
+  enough to see it meant paying for a second logo moment that only made the
+  handover to the real loader more visible. The loader in `MobileLayoutClient`
+  owns the logo now, animated and on a white background this file matches
+  exactly, so the transition is nothing but a logo fading in.
 
-  Everything here is inlined for the same reason: one cached document, no second
-  request to satisfy before it can paint.
-
-  Deliberately a logo over an invisible bar.
-
-  Leaving here commits a navigation, and the browser then suspends this document
-  and holds its last painted frame until the next one is ready. Anything
-  animating freezes mid-stride — a bar sat at full for the whole wait, reading as
-  broken rather than as loading. So the bar is here but transparent: it holds the
-  space its visible counterpart in `MobileLayoutClient.tsx` will fill, keeping
-  the logo in one place across the handover, while having nothing that can
-  visibly stall. The loader appears to arrive and begin, rather than to freeze
-  and restart.
-
-  Nothing here may become personalised. It is one cached file shared by every
-  account that uses the device.
+  Nothing here may become personalised. It is one cached document, shared by
+  every account that uses the device.
 -->
 <style>
-    * { box-sizing: border-box; }
     html, body {
         margin: 0;
         height: 100%;
+        /* Matches the loader overlay in `MobileLayoutClient.tsx` and the
+           manifest's background_color, so the OS splash, this file and the app
+           are one uninterrupted colour. */
         background: #fff;
     }
     body {
@@ -48,43 +43,12 @@
         align-items: center;
         justify-content: center;
         font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        text-align: center;
     }
-    .wrap { text-align: center; }
-    .logo {
-        width: 70px;
-        height: 70px;
-        margin: 0 auto 2rem;
-        display: block;
-        border-radius: 0.75rem;
-        box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+    .offline {
+        display: none;
+        padding: 1rem;
     }
-    /* Present but unseen, and that is the whole point: it reserves exactly the
-       space the React loader's bar and caption will occupy. Without it this
-       screen is shorter, and since both centre vertically the logo would sit
-       lower here and jump upward the instant the app painted — the one thing a
-       splash exists to prevent.
-
-       Not animated. It cannot be seen, and a navigation freezes this document
-       anyway, so an animation here would only cost battery. The bar in
-       `MobileLayoutClient.tsx` does the moving, arriving in this exact spot. */
-    .loading { opacity: 0; }
-    .loading-track {
-        width: 16rem;
-        height: 1rem;
-        background-color: #e5e7eb;
-        border-radius: 9999px;
-    }
-    .status {
-        margin-top: 1rem;
-        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-        font-size: 0.75rem;
-        /* Tailwind pins text-xs to a 1rem line box. Left at the browser default
-           this line is ~2px taller, which shifts the logo by a pixel on the
-           handover — the exact thing the spacer is here to stop. */
-        line-height: 1rem;
-        color: #4b5563;
-    }
-    .offline { display: none; }
     .offline h1 {
         margin: 0 0 0.5rem;
         font-size: 1.125rem;
@@ -106,33 +70,15 @@
         font-size: 0.875rem;
         font-weight: 500;
     }
-    /* Revealed by script when the device reports no connection. The spacer
-       goes with it — nothing below needs holding a place open then. */
-    body.is-offline .loading { display: none; }
+    /* Revealed by script when the device reports no connection. */
     body.is-offline .offline { display: block; }
-
 </style>
 </head>
 <body>
-<div class="wrap">
-    <!-- Inlined rather than referenced: reading the generated sw.js after a real
-         `--webpack` build shows `public/icons/*` is not precached, so a src of
-         /icons/icon-192x192.png would be a network fetch on exactly the cold,
-         possibly offline launch this file exists to cover. ~3KB of base64 buys
-         a logo that cannot fail to appear. -->
-    <img class="logo" src="data:image/png;base64,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" alt="Tea POS" width="70" height="70" />
-
-
-    <div class="loading" aria-hidden="true">
-        <div class="loading-track"></div>
-        <div class="status">Loading ...</div>
-    </div>
-
-    <div class="offline">
-        <h1>No connection</h1>
-        <p>Tea POS needs the network to start. It will continue on its own once you are back online.</p>
-        <button type="button" onclick="retry()">Try again</button>
-    </div>
+<div class="offline">
+    <h1>No connection</h1>
+    <p>Tea POS needs the network to start. It will continue on its own once you are back online.</p>
+    <button type="button" onclick="retry()">Try again</button>
 </div>
 
 <script>
@@ -143,13 +89,12 @@
 
     /* Straight to the tenant when the proxy has told us which one, skipping the
        /login round trip that exists only to have the server look it up. Both
-       cookies are required: a slug outlives a session (24h against the app being
-       open), and sending a signed-out person to a tenant page just means the
-       proxy bounces them to /login anyway — the hop this is here to avoid.
+       cookies are required: a slug outlives a session, and sending a signed-out
+       person to a tenant page just earns the bounce this is here to avoid.
 
        Neither cookie is trusted for anything but choosing a destination. The
-       proxy authorises the navigation on arrival exactly as before, so a stale
-       or edited slug is corrected rather than believed. */
+       proxy still authorises the navigation on arrival, so a stale or edited
+       slug is corrected rather than believed. */
     function go() {
         var slug = cookie("x-tenant-slug");
         var signedIn = !!cookie("x-user-info");
@@ -170,8 +115,6 @@
         go();
     }
 
-    /* Pressing retry while still offline would land on the browser's error
-       page, which is the thing this screen exists to avoid. */
     function retry() {
         if (navigator.onLine === false) return;
         go();

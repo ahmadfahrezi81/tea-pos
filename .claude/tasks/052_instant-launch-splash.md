@@ -354,3 +354,69 @@ route go to the network as before. No redirect loop: the splash forwards to
 | `/sw.js` | `200` |
 | `manifest.json` | `start_url` back to `/` |
 | `launch.html` external references | 0 |
+
+---
+
+# Final state, end of 2026-08-23
+
+Everything above is the working-out, kept because the wrong turns are the useful
+part. This section is what actually shipped. Where the two disagree, this wins.
+
+## Measured
+
+2.8s to 1.5s on the owner's iPhone, cold open. Most of that came from removing
+the `/login` hop, not from the splash.
+
+## What the boot does now
+
+1. Tap. The service worker answers `/` from the precache with `launch.html` —
+   no network, no session check. **White background, nothing else.**
+2. Its script reads `x-tenant-slug` and `x-user-info` and navigates **once**,
+   straight to the tenant. No `/login` hop, no DB query to resolve it.
+3. The app paints. `MobileLayoutClient`'s loader — logo, animated bar — holds
+   for at least 400ms.
+4. POS.
+
+## Why `launch.html` shows no logo
+
+It carried one, and it was never seen. Leaving commits a navigation, and the
+browser paints at most one frame before that, usually none — so the logo was
+fetched, decoded and discarded. Holding long enough to see it bought a second
+logo moment whose only effect was to make the handover more visible.
+
+The loader owns the logo now. `launch.html` matches its white exactly, and so
+does the manifest's `background_color`, so the OS splash, this file and the app
+are one uninterrupted colour and the only visible event is a logo fading in.
+
+`/icons/icon-192x192.png` is precached alongside `launch.html`, because it is
+now the first logo anyone sees and next-pwa's glob does not include it.
+
+## Settled the hard way — do not revisit
+
+| Thing | Why it is the way it is |
+|---|---|
+| `dynamicStartUrl: true` | Setting it false precaches `/`, a redirect carrying whichever session fetched it. Presents as sessions not persisting. |
+| `navigateFallback` for `/` | `start_url` is read once at install; Android refreshes it in days, iOS never. Reaching existing installs means going through the worker. |
+| No server-side flag evaluation | A blocking PostHog call in a layout that runs for every screen and every prefetch. Cost far more than the round trip it saved. |
+| `LOADER_MIN_MS = 400` | 500 was measurably slow across both apps. Zero means the loader never appears at all, because the store list is already seeded. |
+| Loader floor, not delay | A slower boot still shows the loader for as long as it needs. |
+
+## Not done, and deliberately
+
+- **`users` row query in `proxy.ts`, uncached on every request.** ~40-100ms, and
+  the two queries either side of it are cookie-cached. Skipped because `role`
+  and `status` are what authorise the request: caching them means a suspended
+  account keeps working until the cookie expires, and the gain is under 3% of a
+  1.5s open. The version with no security trade is custom JWT claims via a
+  Supabase auth hook — worth it only if the proxy ever measures as a bottleneck.
+- **`home/layout.tsx:31` renders nothing while the session gate loads.** Header
+  and footer appear, then content. Owner's call: this is ordinary and fine.
+- **Android maskable icon crop** (`manifest.json`). Still there. Owner declined;
+  note that the OS splash renders *before* ours, so a fast `launch.html` does
+  not hide it.
+
+## Where the remaining time is
+
+Almost certainly JS bundle download, parse and execute on the device — routinely
+500ms-1.5s on mobile, an order of magnitude past anything left on the server.
+Every change today shaved the server side. That is now the small half.

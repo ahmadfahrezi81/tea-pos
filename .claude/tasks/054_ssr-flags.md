@@ -1,5 +1,25 @@
 # Task 054 — SSR the feature flags
 
+> **REVERTED the same day it was built. Do not re-attempt as written.**
+>
+> `evaluateFlagSet` in the mobile layout is a blocking HTTP call to PostHog, and
+> that layout runs for every screen and every prefetch of one — six routes are
+> marked `prefetch: true`. It was a measurable slowdown across the app, awaited
+> sequentially after the database work. Task 053's notes warned about exactly
+> this shape; the warning was not applied to a third-party call slower than the
+> query it was written for.
+>
+> What it bought: the maintenance overlay no longer flashed the app for one
+> round trip. Not close to the price.
+>
+> `evaluateFlagSet` survives as a shared helper and `GET /api/flags` uses it —
+> that part was a real improvement. Flags are fetched by `FlagsContext` after
+> hydration, where nothing waits on them.
+>
+> Anyone reviving this needs a way to evaluate flags without a blocking remote
+> call on the render path — cached evaluation, or PostHog local evaluation with
+> a personal API key.
+
 **Status: designed, not built.** Opened 2026-08-23. Same pattern as task 053 —
 work the server already does, thrown away and redone on the client — but smaller,
 and with one caveat the owner explicitly attached: *do it only if it does not
