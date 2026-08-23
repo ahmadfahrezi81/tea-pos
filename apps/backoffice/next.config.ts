@@ -18,11 +18,16 @@ const withPWA = withPWAInit({
     aggressiveFrontEndNavCaching: false,
     reloadOnOnline: true,
     cacheStartUrl: true,
-    /* The start URL is now `/launch.html` — a static file with nothing
-       user-specific in it, so it can be served straight from the precache.
-       Left true, next-pwa treats the start URL as auth-dependent and caches it
-       NetworkFirst, which makes a cold launch wait on the network by design. */
-    dynamicStartUrl: false,
+    /* Do not set this to false. It reads as "the start URL is static, cache
+       it", but next-pwa's start-URL handling targets `/` — not the manifest's
+       `start_url` — and `/` redirects through the proxy to a signed-in tenant
+       or to /login. Turning this off precaches whichever of those the service
+       worker happened to fetch and serves it to everyone afterwards, which
+       presents as sessions not persisting.
+
+       The splash does not depend on this: `/launch.html` is precached by name
+       in `additionalManifestEntries` below. */
+    dynamicStartUrl: true,
     workboxOptions: {
         disableDevLogs: true,
         /* next-pwa globs `public/` by extension and HTML is not on the list —

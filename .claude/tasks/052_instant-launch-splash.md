@@ -270,3 +270,36 @@ both `sw.js` files, both documents free of external references.
 **Not verified on a device.** Nobody has installed the PWA and watched a cold
 launch. The hand-off from this bar to the React one — same background, same logo,
 animation restarting from frame 0 — has been reasoned about but not seen.
+
+---
+
+## Regression on staging, 2026-08-23 — `dynamicStartUrl: false` was wrong
+
+Reported within minutes of the push: sessions not persisting, and no loader.
+
+`dynamicStartUrl: false` reads as "the start URL is a static file now, so cache
+it" — which is true of `/launch.html` and irrelevant, because next-pwa's
+start-URL handling targets **`/`**, not the manifest's `start_url`. With the flag
+off, `/` was added to the precache manifest (three entries, build revision) and
+served from cache from then on. `/` redirects through the proxy — to a signed-in
+tenant, or to `/login` — so the service worker captured whichever of those it
+happened to fetch and replayed it to everyone. A cached logged-out `/login`
+presents exactly as "my login does not persist".
+
+Reverted to `dynamicStartUrl: true` in both apps, with a comment on the option
+saying not to turn it off. Verified against a fresh `pnpm build`: the `/` entries
+are gone and `/launch.html` is still precached, because the splash never depended
+on this setting — it is named in `additionalManifestEntries`.
+
+**The lesson worth keeping:** the reasoning was about the manifest's `start_url`,
+while the option acts on the app's root path. Two different things that both get
+called "the start URL".
+
+### The missing loader was not a second bug
+
+With 053 seeding the store list, `shellReady` is true on the first render, so the
+React loader never appears — that is the feature working. The splash was absent
+for a different reason: `start_url` is read at install time, so an already
+installed PWA keeps launching at `/` until it is removed and re-added. Between
+the two, a correctly working build shows no loader at all, which reads as
+breakage. Worth saying out loud when this ships.
