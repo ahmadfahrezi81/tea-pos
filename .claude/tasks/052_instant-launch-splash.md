@@ -472,6 +472,14 @@ On a fast device the loader is short-lived, and that is correct rather than a
 flicker — the logo either side of it is continuous, so a brief bar reads as a
 fast open.
 
+The hook caps its own wait at 2000ms, because `ready` gates whether the shell
+renders its children at all rather than merely whether a loader sits on top of
+them. `requestAnimationFrame` does not fire in a hidden document, so without a
+cap an app that finishes loading while the user is elsewhere holds the loader
+until they come back. It self-heals on becoming visible, but the timer this
+replaced fired regardless of visibility, and a gate this load-bearing should not
+end up weaker than what it replaced.
+
 Backoffice gained the same gate. It had no floor at all: `user` is hydrated from
 a cookie, so `shellReady` flipped in the same commit the loader mounted in.
 
