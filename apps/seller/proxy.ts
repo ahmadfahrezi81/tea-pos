@@ -176,7 +176,16 @@ export async function proxy(request: NextRequest) {
     }
 
     // ── Role resolution ───────────────────────────────────────────────────────
-    // Always fetch fresh from DB — role changes must take effect immediately.
+    // Freshness: `live`, deliberately, and it is the one read here that is not
+    // cookie-backed. Role and status are what authorise the request, so caching
+    // them means a suspended account keeps working until the cookie expires —
+    // a security trade the latency does not justify.
+    //
+    // It is not free. This runs on every matched request including every
+    // prefetch, and the shell fires six of those on boot, so one open pays for
+    // this read seven times. The version with no security trade is custom JWT
+    // claims via a Supabase auth hook; see the boot budget in CLAUDE.md.
+    //
     // No fallback: unknown or missing role = denied.
     let resolvedRole: string | null = null;
     let resolvedStatus: string | null = null;

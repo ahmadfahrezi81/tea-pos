@@ -1,8 +1,9 @@
 # Task 056 — A contract for the boot path
 
-**Status: agreed in conversation, nothing written.** Opened 2026-08-23, late,
-after a long day of changing the seller and backoffice boot paths by trial and
-error. Picked up next weekend or an evening after work.
+**Status: written 2026-08-25.** The contract is in `CLAUDE.md` under **Boot
+Path**. Opened 2026-08-23, late, after a long day of changing the seller and
+backoffice boot paths by trial and error. See the closing section for what
+shipped, what the working-out below got wrong, and what is still open.
 
 This is a **documentation and rules** task, not a refactor. The deliverable is a
 page in `CLAUDE.md`, not new architecture. Read the reasoning below before
@@ -178,3 +179,84 @@ convention into something the compiler enforces.
   landing paths. Moving the common stages into a package with the differences as
   config would remove the entire drift class of bug, which is where the real
   damage came from. Bigger change; worth doing after the contract, not before.
+
+---
+
+# Written 2026-08-25
+
+`CLAUDE.md` gains a **Boot Path** section beside the 5-layer table: the tier
+table, the layout rule, the proxy cookie-first rule, the freshness rule, and a
+boot budget per app. Both `proxy.ts` files now carry the freshness comment on
+their `users` read.
+
+## Two pieces of evidence above were stale
+
+Worth recording, because the task was nearly written on them.
+
+- **"Backoffice pay frequency, uncached in the layout."** It is cached, 300s,
+  and has been since `08b211c` on 2026-08-23 — the same evening this file was
+  opened. The verdict table in `CLAUDE.md` keeps the row but marks it fixed:
+  a rule that can point at a bug it would have caught, now closed, is more
+  convincing than one pointing at a bug that no longer exists.
+- **"`users` row for role + status — no comment says why."** There was one:
+  *"Always fetch fresh from DB — role changes must take effect immediately."*
+  It gave the reason but not the trade, and did not say the choice was
+  deliberate against two cached reads either side of it. Sharpened rather than
+  written from scratch.
+
+## What the budget turned up
+
+Counting the boot properly, which is the exercise this task exists to force:
+
+**A seller open is 7 proxy runs, not 1.** One navigation plus six prefetches,
+each running the full proxy — including the uncached `users` read. The
+prefetches are off the critical path — `MobileShell` gates them on `ready` and
+schedules them in an idle callback — but off the critical path is not free, and
+the count is what the budget records. Task 052
+priced that read at 40-100ms and declined to cache it, correctly, on the
+security trade. It priced it **once**. Seven times is a different number, and
+nothing in `proxy.ts` or `navigation.ts` connected the two.
+
+This does not change the verdict — caching role and status is still the wrong
+trade. It sharpens the case for the alternative 052 already named: custom JWT
+claims via a Supabase auth hook, which removes the read without weakening the
+gate.
+
+## Found while counting: the apps gate differently
+
+`apps/seller/proxy.ts` selects `role, status` and locks out anything where
+`status !== "active"`. `apps/backoffice/proxy.ts` selects `role` alone and gates
+on `role === "ADMIN"`, never reading `status`.
+
+**So a suspended or inactive ADMIN keeps full backoffice access.** Raised with
+the owner 2026-08-25 and **left as is, deliberately**: they are the only ADMIN,
+so there is no suspended-admin case to lock out. Written into
+`apps/backoffice/proxy.ts` as a decision, with the condition that would reopen
+it — a second admin.
+
+Found by reading the two files side by side, which is the drift the "share the
+proxy pipeline" item below predicts. This instance is harmless; the next one may
+not be.
+
+## What the budget immediately changed
+
+Counting the prefetches led straight to switching them off — see
+[[057_prefetch-experiment]]. That is the section doing its job on the day it was
+written: nobody had a reason to question six prefetches until the cost was
+written next to them.
+
+The two cleanups found on the way are keepers regardless of how that experiment
+ends: the shell no longer prefetches the route already on screen, and the three
+`ComingSoon` placeholders no longer declare `prefetch: true`.
+
+## Left open, deliberately
+
+- **Recording the freshness of every existing server read.** The rule is
+  written and the boot path's own reads are annotated; the long tail of API
+  routes is mechanical and does not need to happen in one sitting.
+- **`cachedTenantRead(name, ttl, fn)`.** Making an undeclared read fail to
+  typecheck is attractive, but it is machinery built to enforce a convention
+  that is one day old. Let the convention earn it first.
+- **PostHog local evaluation.** Still its own task, as stated above.
+- **Sharing the proxy pipeline.** Still deferred, and the status drift above is
+  a point in its favour.

@@ -130,6 +130,19 @@ export async function proxy(request: NextRequest) {
         response.cookies.delete("x-tenant-slug");
     }
 
+    // Freshness: `live`, deliberately, and it is the one read here that is not
+    // cookie-backed. Role is what authorises the request, so caching it means a
+    // revoked admin keeps working until the cookie expires — a security trade
+    // the latency does not justify.
+    //
+    // It is not free. This runs on every matched request including every
+    // prefetch, and the shell fires five of those on boot, so one open pays for
+    // this read six times. See the boot budget in CLAUDE.md.
+    //
+    // Unlike seller, this does not read or check `users.status`: the gate below
+    // is role-only, and that is deliberate rather than an omission. The tenant
+    // owner is the only ADMIN, so there is no suspended-admin case to lock out.
+    // Revisit if this app ever admits a second admin.
     let resolvedRole: string | null = null;
     if (user) {
         const avatarUrl = (user.user_metadata?.avatar_url as string) ?? "";

@@ -20,6 +20,25 @@ import { isSubPage, type ResolveRoute, type Tab } from "./routes";
 /** How long a navigation may take before it earns a loading indicator. */
 const PENDING_BAR_DELAY_MS = 200;
 
+/**
+ * TEMPORARY — route prefetching is switched off while the owner lives with the
+ * app without it. Set 2026-08-25. **Remove this constant and the guard below
+ * once the experiment is settled**; leaving it is how a trial becomes the
+ * accidental permanent behaviour.
+ *
+ * The case for trying it: every tab in both apps is a client component behind a
+ * thin RSC shell, so a prefetch mostly warms the route's JS chunk, while costing
+ * a full proxy run — an auth round trip and a live `users` read apiece. Neither
+ * app sets `experimental.staleTimes`, so on the default a prefetched dynamic
+ * route is stale on arrival and the tap refetches it regardless, which would
+ * make the RSC half of the trade worth nothing at all.
+ *
+ * What it costs while off: a tab switch is one round trip instead of instant.
+ * Navigation runs in a transition, so the previous screen stays up and the tab
+ * lights immediately — it reads as latency, not as a blank.
+ */
+const PREFETCH_DISABLED = true;
+
 export interface MobileShellProps {
     children: ReactNode;
 
@@ -225,10 +244,18 @@ export function MobileShell({
      * Waiting on `ready` is what makes it cheap, and an idle callback keeps it
      * off the commit that finally reveals the app. What to warm is the app's
      * call, declared per route in its table.
+     *
+     * The current route is skipped: warming the screen already on display is a
+     * proxy run bought for nothing, and it was the single most expensive entry
+     * in both apps' tables — every open landed on a route that then prefetched
+     * itself.
      */
     useEffect(() => {
+        if (PREFETCH_DISABLED) return;
         if (!ready || !prefetchPaths?.length) return;
-        const run = () => prefetchPaths.forEach((path) => router.prefetch(path));
+        const targets = prefetchPaths.filter((path) => path !== pathname);
+        if (!targets.length) return;
+        const run = () => targets.forEach((path) => router.prefetch(path));
         // Safari has no requestIdleCallback. A timeout is not the same promise,
         // but it clears the current frame, which is the part that matters.
         const hasIdle = typeof window.requestIdleCallback === "function";
@@ -237,7 +264,9 @@ export function MobileShell({
             : window.setTimeout(run, 500);
         return () => (hasIdle ? window.cancelIdleCallback(handle) : clearTimeout(handle));
         // Targets are static; re-running on every `prefetchPaths` identity would
-        // refetch the same routes on each render.
+        // refetch the same routes on each render. `pathname` is deliberately not
+        // a dependency either: this warms the other tabs once, when the app comes
+        // up, and must not re-run on every navigation.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ready]);
 

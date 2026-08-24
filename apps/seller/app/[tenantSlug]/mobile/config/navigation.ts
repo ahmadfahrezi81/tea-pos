@@ -40,10 +40,11 @@ export const mobileRoutes = {
         titleAccessory: true,
         preserveScroll: true,
     },
+    // No `prefetch`: this screen is a ComingSoon placeholder, and warming it
+    // costs a full proxy run to render nothing.
     "/mobile/chats": {
         titleKey: "nav.chats",
         parent: null,
-        prefetch: true,
     },
     "/mobile/more": {
         titleKey: "nav.more",

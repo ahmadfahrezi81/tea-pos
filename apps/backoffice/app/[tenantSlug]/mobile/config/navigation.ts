@@ -62,15 +62,16 @@ export const mobileRoutes = {
         titleKey: "Pay Schedule",
         parent: "/mobile/pay",
     },
+    // No `prefetch`: this screen is a ComingSoon placeholder, and warming it
+    // costs a full proxy run to render nothing.
     "/mobile/supply": {
         titleKey: "Supply",
         parent: null,
-        prefetch: true,
     },
+    // No `prefetch`: ComingSoon placeholder, same as Supply above.
     "/mobile/chats": {
         titleKey: "Chats",
         parent: null,
-        prefetch: true,
     },
     "/mobile/more": {
         titleKey: "More",
