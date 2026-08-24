@@ -62,15 +62,16 @@ export const mobileRoutes = {
         titleKey: "Pay Schedule",
         parent: "/mobile/pay",
     },
+    // No `prefetch`: this screen is a ComingSoon placeholder, and warming it
+    // costs a full proxy run to render nothing.
     "/mobile/supply": {
         titleKey: "Supply",
         parent: null,
-        prefetch: true,
     },
+    // No `prefetch`: ComingSoon placeholder, same as Supply above.
     "/mobile/chats": {
         titleKey: "Chats",
         parent: null,
-        prefetch: true,
     },
     "/mobile/more": {
         titleKey: "More",
@@ -152,9 +153,6 @@ export const resolveRoute = (path: string): RouteConfig | null => {
             // One screen, two outcomes — a transfer, or a period closed with
             // nothing owed. The title has to fit both.
             return { titleKey: "Confirm Payout", parent: `/mobile/pay/payouts/${payoutId}` };
-        }
-        if (segments.length === 4) {
-            return { titleKey: "Summary Details", parent: `/mobile/pay/payouts/${payoutId}` };
         }
         return { titleKey: "Pay", parent: "/mobile/pay/payouts" };
     }

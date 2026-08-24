@@ -9,6 +9,30 @@ import type { PatchNote } from "@tea-pos/ui/custom/PatchNotes";
  */
 export const patchNotes: PatchNote[] = [
     {
+        version: "1.0.11",
+        date: "2026-08-25",
+        entries: [
+            { kind: "improved", text: "The logo appears the moment you open the app, even with no connection." },
+            { kind: "fixed", text: "The logo no longer goes missing while the app is loading." },
+        ],
+    },
+    {
+        version: "1.0.10",
+        date: "2026-08-23",
+        entries: [
+            { kind: "improved", text: "The app opens faster." },
+        ],
+    },
+    {
+        version: "1.0.9",
+        date: "2026-08-23",
+        entries: [
+            { kind: "improved", text: "Every part of the payslip screen now has a heading." },
+            { kind: "improved", text: "The work days calendar on a payslip is bigger and easier to read." },
+            { kind: "improved", text: "The transfer receipt shows as a photo you can tap to enlarge." },
+        ],
+    },
+    {
         version: "1.0.8",
         date: "2026-08-17",
         entries: [

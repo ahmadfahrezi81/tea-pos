@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useContext, useState, useMemo } from "react";
+import { createContext, useContext, useState, useMemo, useEffect } from "react";
 import { useStores } from "@/lib/hooks/stores/useStores";
 import { useAuth } from "@/lib/context/AuthContext";
 
@@ -31,7 +31,31 @@ const StoreContext = createContext<StoreContextType | null>(null);
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
-export function StoreProvider({ children }: { children: React.ReactNode }) {
+/**
+ * Mirrors the selected store into a cookie so the server render can pick the
+ * same one the browser last used. localStorage is written too and stays the
+ * value people carry between sessions; the cookie exists only so that server
+ * and client agree on the *first* render.
+ *
+ * Without it the two disagree: the server has no localStorage, so it resolves to
+ * the default store while the browser resolves to whatever was picked last — a
+ * hydration mismatch on the store name in the header, and a frame of data
+ * fetched for the wrong store.
+ */
+function persistStoreId(id: string) {
+    if (typeof window === "undefined") return;
+    localStorage.setItem("selectedStoreId", id);
+    document.cookie = `selectedStoreId=${id}; path=/; max-age=31536000`;
+}
+
+export function StoreProvider({
+    children,
+    initialSelectedStoreId = "",
+}: {
+    children: React.ReactNode;
+    /** From the `selectedStoreId` cookie, read by the mobile layout. */
+    initialSelectedStoreId?: string;
+}) {
     const { user } = useAuth();
     const { data: storesData } = useStores();
 
@@ -54,11 +78,31 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         return found?.id ?? null;
     }, [stores, assignments, userId]);
 
-    const [selectedStoreId, setSelectedStoreIdRaw] = useState<string>(() => {
-        if (typeof window === "undefined") return "";
-        const stored = localStorage.getItem("selectedStoreId") ?? "";
-        return stored;
-    });
+    /* Seeded from the cookie, not from localStorage: this initialiser runs on
+       the server too, and reading browser-only storage there would make the
+       first client render differ from the HTML sent to it. Anyone who predates
+       the cookie is migrated by the effect below. */
+    const [selectedStoreId, setSelectedStoreIdRaw] =
+        useState<string>(initialSelectedStoreId);
+
+    /* One-time migration. Someone who chose a store before this cookie existed
+       has the id in localStorage only. Without this they would silently be moved
+       to their default store on the first boot after this shipped, which for a
+       multi-store seller means looking at the wrong shop.
+     *
+     * The alternative — reading localStorage in the initialiser above — makes
+     * the first client render disagree with the server HTML for exactly these
+     * users, trading one extra render for a hydration error. `set-state-in-effect`
+     * guards against cascading renders; this one cascades once, ever, per
+     * device, and then the cookie makes it dead code. */
+    useEffect(() => {
+        if (initialSelectedStoreId) return;
+        const stored = localStorage.getItem("selectedStoreId");
+        if (!stored) return;
+        persistStoreId(stored);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setSelectedStoreIdRaw(stored);
+    }, [initialSelectedStoreId]);
 
     const [isPickerOpen, setIsPickerOpen] = useState(false);
 
@@ -70,7 +114,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     });
 
     const setSelectedStoreId = (id: string) => {
-        localStorage.setItem("selectedStoreId", id);
+        persistStoreId(id);
         setSelectedStoreIdRaw(id);
     };
 
@@ -86,7 +130,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         const isValid = stores.some((s) => s.id === selectedStoreId);
         if (isValid) return selectedStoreId;
         if (defaultStoreId) {
-            localStorage.setItem("selectedStoreId", defaultStoreId);
+            /* Write guarded inside `persistStoreId`. This memo now runs during
+               SSR as well — the store list arrives with the layout, so
+               `storesData` is populated and no longer short-circuits above. */
+            persistStoreId(defaultStoreId);
             return defaultStoreId;
         }
         return selectedStoreId;

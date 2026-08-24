@@ -9,7 +9,7 @@ import { payrollApi } from "@/lib/api/payroll";
 import { apiFetch } from "@/lib/api/client";
 import { parseISO, format, eachDayOfInterval, getISOWeek } from "date-fns";
 import { getExpectedPayoutDate, getDaysUntilPayoutUnlock } from "@tea-pos/utils/week";
-import { Check, X, Info, Copy, AlertTriangle } from "lucide-react";
+import { Check, X, Copy, AlertTriangle } from "lucide-react";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 
 const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -27,7 +27,7 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 type Commission = {
-    id: string; date: string; dailySummaryId: string; storeName?: string | null;
+    id: string; date: string; storeName?: string | null;
     totalCups: number; ratePerCup: number; totalCommission: number;
     status: "pending" | "approved" | "rejected";
 };
@@ -210,187 +210,183 @@ export default function UserPayslipPage({
             </div>
 
             {/* Payout info */}
-            <div className="bg-white p-4 rounded-2xl space-y-2 text-sm">
-                {[
-                    { label: "Staff", value: targetUser?.fullName ?? "—" },
-                    { label: "Payroll From", value: format(parseISO(payout.startDate), "EEE, d MMM yyyy") },
-                    { label: "Payroll To", value: format(parseISO(payout.endDate), "EEE, d MMM yyyy") },
-                    { label: "Per Cup", value: ratePerCup > 0 ? formatRupiah(ratePerCup) : "—" },
-                    { label: "Expected payout", value: (() => { const d = getExpectedPayoutDate(payout.endDate); return d ? format(parseISO(d), "EEE, d MMM yyyy") : "—"; })() },
-                ].map(({ label, value }) => (
-                    <div key={label} className="flex justify-between items-center">
-                        <span className="text-gray-500">{label}</span>
-                        <span className="font-medium text-gray-800">{value}</span>
-                    </div>
-                ))}
-                <div className="flex justify-between items-center pt-1.5 border-t border-gray-100">
-                    <span className="text-gray-500">Payslip ID</span>
-                    <button
-                        onClick={() => { navigator.clipboard.writeText(payout.id); setCopiedId(true); setTimeout(() => setCopiedId(false), 2000); }}
-                        className="flex items-center gap-1 active:opacity-70"
-                    >
-                        <span className="font-mono text-xs text-gray-400">{payout.id.slice(0, 8)}…</span>
-                        {copiedId ? <Check size={13} className="text-green-500" /> : <Copy size={13} className="text-gray-400" />}
-                    </button>
-                </div>
-                {/* Below the divider with the payslip ID: what the period was is
-                    one thing, what actually happened when it was paid is
-                    another. The proof and the note continue this group. */}
-                <div className="flex justify-between items-center">
-                    <span className="text-gray-500">Paid on</span>
-                    <span className="font-medium text-gray-800">
-                        {payout.paidAt ? format(new Date(payout.paidAt), "d MMM yyyy") : "—"}
-                    </span>
-                </div>
-                <div className="flex justify-between items-center">
-                    <span className="text-gray-500">Paid by</span>
-                    <span className="font-medium text-gray-800">{paidByName ?? "—"}</span>
-                </div>
-                {payout.paymentProofUrl && (
-                    <>
-                        {/* A row like the ones above it — label on the left,
-                            action on the right — rather than a full-width bar
-                            that reads as the card's primary action. */}
-                        <div className="flex justify-between items-center">
-                            <span className="text-gray-500">Transfer receipt</span>
-                            <button
-                                onClick={() => setShowProof(true)}
-                                className="px-3 py-1 rounded-lg bg-blue-600 text-white text-xs font-semibold active:opacity-80"
-                            >
-                                View
-                            </button>
+            <section className="space-y-2">
+                <p className="pl-3 text-xs font-bold uppercase tracking-widest text-gray-700">Payment Details</p>
+                <div className="bg-white p-4 rounded-2xl space-y-2 text-sm">
+                    {[
+                        { label: "Staff", value: targetUser?.fullName ?? "—" },
+                        { label: "Payroll From", value: format(parseISO(payout.startDate), "EEE, d MMM yyyy") },
+                        { label: "Payroll To", value: format(parseISO(payout.endDate), "EEE, d MMM yyyy") },
+                        { label: "Per Cup", value: ratePerCup > 0 ? formatRupiah(ratePerCup) : "—" },
+                        { label: "Expected payout", value: (() => { const d = getExpectedPayoutDate(payout.endDate); return d ? format(parseISO(d), "EEE, d MMM yyyy") : "—"; })() },
+                    ].map(({ label, value }) => (
+                        <div key={label} className="flex justify-between items-center">
+                            <span className="text-gray-500">{label}</span>
+                            <span className="font-medium text-gray-800">{value}</span>
                         </div>
-                        {showProof && (
-                            <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setShowProof(false)}>
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={payout.paymentProofUrl} alt="Transfer proof" className="rounded-xl max-h-[80vh] w-auto object-contain" />
-                            </div>
-                        )}
-                    </>
-                )}
-                {/* Note recorded at payment — kept with the payment details it
-                    explains, and matching where the staff member sees it on
-                    their own payslip. */}
-                {payout.notes && (
-                    <div className="mt-1 bg-slate-50 rounded-xl p-3 space-y-1">
-                        <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Note for staff</p>
-                        <p className="text-sm text-gray-800 whitespace-pre-wrap">{payout.notes}</p>
+                    ))}
+                    <div className="flex justify-between items-center pt-1.5 border-t border-gray-100">
+                        <span className="text-gray-500">Payslip ID</span>
+                        <button
+                            onClick={() => { navigator.clipboard.writeText(payout.id); setCopiedId(true); setTimeout(() => setCopiedId(false), 2000); }}
+                            className="flex items-center gap-1 active:opacity-70"
+                        >
+                            <span className="font-mono text-xs text-gray-400">{payout.id.slice(0, 8)}…</span>
+                            {copiedId ? <Check size={13} className="text-green-500" /> : <Copy size={13} className="text-gray-400" />}
+                        </button>
                     </div>
-                )}
-            </div>
+                    {/* Below the divider with the payslip ID: what the period was is
+                        one thing, what actually happened when it was paid is
+                        another. The proof and the note continue this group. */}
+                    <div className="flex justify-between items-center">
+                        <span className="text-gray-500">Paid on</span>
+                        <span className="font-medium text-gray-800">
+                            {payout.paidAt ? format(new Date(payout.paidAt), "d MMM yyyy") : "—"}
+                        </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-gray-500">Paid by</span>
+                        <span className="font-medium text-gray-800">{paidByName ?? "—"}</span>
+                    </div>
+                    {/* The receipt and the note are evidence, not label/value rows —
+                        a thumbnail and a paragraph both break the right-aligned
+                        rhythm above, so they get their own labelled block below the
+                        divider. Same shape the staff member sees on their payslip. */}
+                    {(payout.paymentProofUrl || payout.notes) && (
+                        <div className="pt-2.5 border-t border-gray-100 space-y-3">
+                            {payout.paymentProofUrl && (
+                                <div className="space-y-1.5">
+                                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Transfer receipt</p>
+                                    <button onClick={() => setShowProof(true)} className="block w-20 h-20 rounded-lg overflow-hidden bg-gray-100 active:opacity-80">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img src={payout.paymentProofUrl} alt="Transfer proof" className="w-full h-full object-cover" />
+                                    </button>
+                                </div>
+                            )}
+                            {payout.notes && (
+                                <div className="space-y-1.5">
+                                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Note for staff</p>
+                                    <p className="text-sm text-gray-800 whitespace-pre-wrap bg-slate-50 rounded-xl p-3">{payout.notes}</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    {showProof && (
+                        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setShowProof(false)}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={payout.paymentProofUrl ?? ""} alt="Transfer proof" className="rounded-xl max-h-[80vh] w-auto object-contain" />
+                        </div>
+                    )}
+                </div>
+            </section>
 
-            {/* Calendar */}
-            <div className="bg-white rounded-2xl px-3 py-3 space-y-1.5">
-                <div className="grid grid-cols-8 gap-1 mb-1">
-                    <span />
-                    {WEEKDAY_LABELS.map((d) => (
-                        <span key={d} className="text-xs font-semibold text-gray-500 text-center">{d}</span>
+            {/* Calendar — titled and sized like the Work Days grid on the seller
+                side, so the same week reads the same way in both apps. */}
+            <section className="space-y-2">
+                <p className="pl-3 text-xs font-bold uppercase tracking-widest text-gray-700">Work Days</p>
+                <div className="bg-white rounded-2xl px-3 py-3 space-y-1.5">
+                    <div className="grid grid-cols-7 gap-1.5 mb-1">
+                        {WEEKDAY_LABELS.map((d) => (
+                            <span key={d} className="text-xs font-semibold text-gray-500 text-center">{d}</span>
+                        ))}
+                    </div>
+                    {[week1, week2].filter((w) => w.length > 0).map((week, wi) => (
+                        <div key={wi} className="grid grid-cols-7 gap-1.5 items-center">
+                            {week.map((day) => {
+                                const dateKey = format(day, "yyyy-MM-dd");
+                                const worked = commissionDates.has(dateKey);
+                                return (
+                                    <div key={dateKey} className={`w-9 h-9 mx-auto flex items-center justify-center rounded-lg text-sm font-medium ${worked ? "bg-blue-500 text-white font-semibold" : "bg-gray-100 text-gray-500"}`}>
+                                        {format(day, "d")}
+                                    </div>
+                                );
+                            })}
+                        </div>
                     ))}
                 </div>
-                {[week1, week2].filter((w) => w.length > 0).map((week, wi) => (
-                    <div key={wi} className="grid grid-cols-8 gap-1 items-center">
-                        <span className="text-xs font-semibold text-gray-500 text-center">W{getISOWeek(week[0])}</span>
-                        {week.map((day) => {
-                            const dateKey = format(day, "yyyy-MM-dd");
-                            const worked = commissionDates.has(dateKey);
-                            return (
-                                <div key={dateKey} className={`w-7 h-7 mx-auto flex items-center justify-center rounded-md text-xs font-medium ${worked ? "bg-blue-500 text-white font-semibold" : "bg-gray-100 text-gray-500"}`}>
-                                    {format(day, "d")}
-                                </div>
-                            );
-                        })}
-                    </div>
-                ))}
-            </div>
+            </section>
 
             {/* Per-day cards */}
-            <div className="space-y-2">
-                {allDates.map((dateStr) => {
-                    const dayCommissions = commissionsByDate[dateStr] ?? [];
-                    const dayClaims = claimsByDate[dateStr] ?? [];
-                    const dayApprovedTotal =
-                        dayCommissions.filter((c) => c.status === "approved").reduce((s, c) => s + c.totalCommission, 0) +
-                        dayClaims.filter((c) => c.status === "approved").reduce((s, c) => s + c.amount, 0);
-                    const allReviewed = [...dayCommissions, ...dayClaims].every((c) => c.status !== "pending");
-                    const day = parseISO(dateStr);
+            <section className="space-y-2">
+                <p className="pl-3 text-xs font-bold uppercase tracking-widest text-gray-700">Daily Breakdown</p>
+                <div className="space-y-2">
+                    {allDates.map((dateStr) => {
+                        const dayCommissions = commissionsByDate[dateStr] ?? [];
+                        const dayClaims = claimsByDate[dateStr] ?? [];
+                        const dayApprovedTotal =
+                            dayCommissions.filter((c) => c.status === "approved").reduce((s, c) => s + c.totalCommission, 0) +
+                            dayClaims.filter((c) => c.status === "approved").reduce((s, c) => s + c.amount, 0);
+                        const allReviewed = [...dayCommissions, ...dayClaims].every((c) => c.status !== "pending");
+                        const day = parseISO(dateStr);
 
-                    return (
-                        <div key={dateStr} id={`day-${dateStr}`} className="bg-white rounded-xl overflow-hidden">
-                            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                                <div className="flex items-center gap-2">
-                                    <p className="text-base font-bold text-gray-900">{format(day, "EEE, d MMM")}</p>
-                                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${allReviewed ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
-                                        {allReviewed ? "Done" : "Pending"}
-                                    </span>
+                        return (
+                            <div key={dateStr} id={`day-${dateStr}`} className="bg-white rounded-xl overflow-hidden">
+                                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-base font-bold text-gray-900">{format(day, "EEE, d MMM")}</p>
+                                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${allReviewed ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
+                                            {allReviewed ? "Done" : "Pending"}
+                                        </span>
+                                    </div>
+                                    <p className="text-base font-bold text-gray-900">{formatRupiah(dayApprovedTotal)}</p>
                                 </div>
-                                <p className="text-base font-bold text-gray-900">{formatRupiah(dayApprovedTotal)}</p>
-                            </div>
 
-                            {dayCommissions.map((c) => (
-                                <div key={c.id} className="flex items-center gap-3 px-4 py-3 border-b border-gray-50 last:border-none">
-                                    <div className="flex-1 min-w-0">
-                                        {c.dailySummaryId ? (
-                                            <button
-                                                onClick={() => navigation.push(url(`/mobile/pay/payouts/${payoutId}/day/${dateStr}/summary?summaryId=${c.dailySummaryId}&userId=${userId ?? ""}`))}
-                                                className="flex items-center gap-1 active:opacity-60"
-                                            >
-                                                <span className="text-sm font-medium text-gray-800 truncate">{c.storeName ?? "—"}</span>
-                                                <Info size={14} strokeWidth={2.5} className="shrink-0 text-blue-500" />
-                                            </button>
-                                        ) : (
+                                {dayCommissions.map((c) => (
+                                    <div key={c.id} className="flex items-center gap-3 px-4 py-3 border-b border-gray-50 last:border-none">
+                                        <div className="flex-1 min-w-0">
                                             <p className="text-sm font-medium text-gray-800 truncate">{c.storeName ?? "—"}</p>
-                                        )}
-                                        <p className="text-xs text-gray-600">
-                                            {c.totalCups} cups × {formatRupiah(c.ratePerCup)} = <span className={c.status === "rejected" ? "line-through text-red-400" : ""}>{formatRupiah(c.totalCommission)}</span>
-                                        </p>
+                                            <p className="text-xs text-gray-600">
+                                                {c.totalCups} cups × {formatRupiah(c.ratePerCup)} = <span className={c.status === "rejected" ? "line-through text-red-400" : ""}>{formatRupiah(c.totalCommission)}</span>
+                                            </p>
+                                        </div>
+                                        <div className="flex gap-1.5 shrink-0">
+                                            <button
+                                                disabled={!!busyId}
+                                                onClick={() => setConfirmTarget({ type: "commission", id: c.id, action: "rejected", label: c.storeName ?? "commission", amount: c.totalCommission })}
+                                                className={`p-2 rounded-lg ${c.status === "rejected" ? "bg-red-100 text-red-600" : "bg-gray-100 text-gray-400"} disabled:opacity-40`}
+                                            >
+                                                <X size={15} />
+                                            </button>
+                                            <button
+                                                disabled={!!busyId}
+                                                onClick={() => setConfirmTarget({ type: "commission", id: c.id, action: "approved", label: c.storeName ?? "commission", amount: c.totalCommission })}
+                                                className={`p-2 rounded-lg ${c.status === "approved" ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"} disabled:opacity-40`}
+                                            >
+                                                <Check size={15} />
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div className="flex gap-1.5 shrink-0">
-                                        <button
-                                            disabled={!!busyId}
-                                            onClick={() => setConfirmTarget({ type: "commission", id: c.id, action: "rejected", label: c.storeName ?? "commission", amount: c.totalCommission })}
-                                            className={`p-2 rounded-lg ${c.status === "rejected" ? "bg-red-100 text-red-600" : "bg-gray-100 text-gray-400"} disabled:opacity-40`}
-                                        >
-                                            <X size={15} />
-                                        </button>
-                                        <button
-                                            disabled={!!busyId}
-                                            onClick={() => setConfirmTarget({ type: "commission", id: c.id, action: "approved", label: c.storeName ?? "commission", amount: c.totalCommission })}
-                                            className={`p-2 rounded-lg ${c.status === "approved" ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"} disabled:opacity-40`}
-                                        >
-                                            <Check size={15} />
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
+                                ))}
 
-                            {dayClaims.map((c) => (
-                                <div key={c.id} className="flex items-center gap-3 px-4 py-3 border-b border-gray-50 last:border-none">
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-gray-800 truncate">{c.claimTypeName ?? "Claim"}</p>
-                                        <p className={`text-xs ${c.status === "rejected" ? "line-through text-red-400" : "text-gray-600"}`}>{formatRupiah(c.amount)}</p>
+                                {dayClaims.map((c) => (
+                                    <div key={c.id} className="flex items-center gap-3 px-4 py-3 border-b border-gray-50 last:border-none">
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-gray-800 truncate">{c.claimTypeName ?? "Claim"}</p>
+                                            <p className={`text-xs ${c.status === "rejected" ? "line-through text-red-400" : "text-gray-600"}`}>{formatRupiah(c.amount)}</p>
+                                        </div>
+                                        <div className="flex gap-1.5 shrink-0">
+                                            <button
+                                                disabled={!!busyId}
+                                                onClick={() => setConfirmTarget({ type: "claim", id: c.id, action: "rejected", label: c.claimTypeName ?? "claim", amount: c.amount })}
+                                                className={`p-2 rounded-lg ${c.status === "rejected" ? "bg-red-100 text-red-600" : "bg-gray-100 text-gray-400"} disabled:opacity-40`}
+                                            >
+                                                <X size={15} />
+                                            </button>
+                                            <button
+                                                disabled={!!busyId}
+                                                onClick={() => setConfirmTarget({ type: "claim", id: c.id, action: "approved", label: c.claimTypeName ?? "claim", amount: c.amount })}
+                                                className={`p-2 rounded-lg ${c.status === "approved" ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"} disabled:opacity-40`}
+                                            >
+                                                <Check size={15} />
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div className="flex gap-1.5 shrink-0">
-                                        <button
-                                            disabled={!!busyId}
-                                            onClick={() => setConfirmTarget({ type: "claim", id: c.id, action: "rejected", label: c.claimTypeName ?? "claim", amount: c.amount })}
-                                            className={`p-2 rounded-lg ${c.status === "rejected" ? "bg-red-100 text-red-600" : "bg-gray-100 text-gray-400"} disabled:opacity-40`}
-                                        >
-                                            <X size={15} />
-                                        </button>
-                                        <button
-                                            disabled={!!busyId}
-                                            onClick={() => setConfirmTarget({ type: "claim", id: c.id, action: "approved", label: c.claimTypeName ?? "claim", amount: c.amount })}
-                                            className={`p-2 rounded-lg ${c.status === "approved" ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"} disabled:opacity-40`}
-                                        >
-                                            <Check size={15} />
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    );
-                })}
-            </div>
+                                ))}
+                            </div>
+                        );
+                    })}
+                </div>
+            </section>
 
             {/* Settle button — pay, or close a period with nothing owed */}
             {status === "pending" && pendingCount === 0 && (

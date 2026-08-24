@@ -39,6 +39,31 @@ function setTenantAccessCookie(response: NextResponse, key: string) {
     });
 }
 
+/**
+ * The same slug `x-tenant-id` already carries, minus the httpOnly flag, so
+ * `public/launch.html` can read it.
+ *
+ * The splash is a static file with no way to ask who is looking at it, so
+ * without this it has to send everyone to /login and wait for the server to
+ * look their tenant up — a whole extra page load on every cold open, plus the
+ * `user_tenant_assignments` query that goes with it. With it, the splash goes
+ * straight to the tenant.
+ *
+ * Readable by scripts on purpose, and safe to be: the slug is the first segment
+ * of every URL in the app. Nothing is trusted from it either — it only chooses
+ * where to navigate, and this proxy still authorises that navigation on arrival,
+ * so a stale or edited value gets corrected rather than believed.
+ */
+function setTenantSlugCookie(response: NextResponse, slug: string) {
+    response.cookies.set("x-tenant-slug", slug, {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: TENANT_COOKIE_TTL,
+        path: "/",
+    });
+}
+
 const redirectTo = (path: string, req: NextRequest) =>
     NextResponse.redirect(new URL(path, req.url));
 
@@ -99,10 +124,25 @@ export async function proxy(request: NextRequest) {
             sameSite: "lax",
             maxAge: TENANT_COOKIE_TTL,
         });
+        setTenantSlugCookie(response, tenantSlug);
     } else if (!shouldResolveTenant) {
         response.cookies.delete("x-tenant-id");
+        response.cookies.delete("x-tenant-slug");
     }
 
+    // Freshness: `live`, deliberately, and it is the one read here that is not
+    // cookie-backed. Role is what authorises the request, so caching it means a
+    // revoked admin keeps working until the cookie expires — a security trade
+    // the latency does not justify.
+    //
+    // It is not free. This runs on every matched request including every
+    // prefetch, and the shell fires five of those on boot, so one open pays for
+    // this read six times. See the boot budget in CLAUDE.md.
+    //
+    // Unlike seller, this does not read or check `users.status`: the gate below
+    // is role-only, and that is deliberate rather than an omission. The tenant
+    // owner is the only ADMIN, so there is no suspended-admin case to lock out.
+    // Revisit if this app ever admits a second admin.
     let resolvedRole: string | null = null;
     if (user) {
         const avatarUrl = (user.user_metadata?.avatar_url as string) ?? "";

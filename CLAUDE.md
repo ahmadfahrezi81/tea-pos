@@ -217,6 +217,98 @@ Any API route that calls a mutating service must call `getRequestUser()` and pas
 
 ---
 
+## Boot Path
+
+The 5-layer table answers **what may this code touch?** — and it works because
+capabilities are visible in the import list. The boot path fails a different
+question, **how often does this run?**, and that one is invisible: `MobileLayout`
+reads like it runs once per open, but it runs once per screen *and* once per
+prefetch. Nothing in the file says so.
+
+So the boot path gets its own contract. Classify every server-side read by cost,
+then cap what each place may use.
+
+| Tier | What | Where it may run |
+| ------ | ---- | ---------------- |
+| **0 — Free** | Cookies, headers, static files. No I/O. | Anywhere, unlimited |
+| **1 — Cached** | A DB read behind a TTL. The TTL must be stated. | Layouts and below |
+| **2 — Live** | An uncached DB read. | **Never a layout.** API route + client hook, or a leaf page |
+| **3 — External** | PostHog, Xendit, weather, any third party. | **Never on the render path.** Route + client hook |
+
+One line to remember: **a layout may only do Tier 0 and Tier 1.**
+
+**A tier is a property of the mechanism, not of the data.** Flags fetched over the
+network are Tier 3; the same flags evaluated locally are Tier 0. An uncached
+query is Tier 2; wrap it in a TTL and it is Tier 1. So the question a reviewer
+asks is not *where am I allowed to put this* but **how do I move it into a
+cheaper tier** — and "move it off the render path entirely, into an API route a
+client hook calls after hydration" is always an available answer.
+
+Worked examples, including the ones that were right:
+
+| Decision | Tier | Verdict |
+| -------- | ---- | ------- |
+| `public/launch.html`, served from the precache | 0 | Correct — being Tier 0 is *why* it can be precached at all |
+| Store list, `unstable_cache` 60s, in the layout | 1 | Correct |
+| Pay frequency, `unstable_cache` 300s, in the layout | 1 | Correct |
+| Session gate, uncached, in a client hook | 2, in the right place | Correct — `live` is a legitimate answer |
+| PostHog evaluation in the layout | 3 in a layout | Banned. Reverted; see task 054 |
+| Backoffice pay frequency, uncached in the layout | 2 in a layout | Was banned, now fixed — it is the Tier 1 row above |
+
+### The proxy answers from cookies unless it can prove it cannot
+
+`proxy.ts` runs on every matched request **including every prefetch** — the
+hottest code in either app. Every DB read in it carries a written reason for why
+a cookie will not do.
+
+| Read | Freshness | Why |
+| ---- | --------- | --- |
+| Tenant lookup | `x-tenant-id` cookie, 24h | Slug→id never changes |
+| Access check | `x-tenant-access` cookie, 1h | Membership changes rarely |
+| `supabase.auth.getUser()` | `live` | Session validation |
+| `users` row for role + status | `live`, deliberately | A cached role keeps a suspended account working until the cookie expires. The security trade is not worth the latency |
+
+That last row is the shape to imitate. Not caching role and status is a correct
+decision sitting between two reads that *are* cached — indistinguishable from an
+oversight unless the reason is written next to it. **A deliberate choice that is
+not written down decays into an accident.**
+
+### Every server read declares its freshness
+
+`live`, a TTL, or `immutable` — in a comment beside the read. `live` is a
+legitimate answer; an *undeclared* one is not. The backoffice pay-frequency read
+was uncached in a layout for months precisely because it declared nothing, so
+nobody could see it was wrong while seller's identical call was right.
+
+### Boot budget
+
+What one cold open costs, cookies warm. Check this before adding anything to a
+layout or the proxy — a regression shows up here in review, not on a phone.
+
+**Seller.** On the critical path: 1 precached document (`launch.html`, no
+server), then 1 navigation — which is 1 proxy run (1 auth round trip + 1 live
+`users` read, the tenant and access reads coming from cookies) and 1 layout run
+(2 cached reads + 3 cookie reads). Off it: 1 PostHog call after hydration.
+
+**Backoffice:** the same shape, 1 cached read per layout run instead of 2, and no
+flags call — it uses env flags.
+
+**So an open is 1 proxy run and 1 layout run — while prefetching is off.** It was
+7 and 7. `MobileShell` gates prefetches on `ready` and schedules them in an idle
+callback so they never tax the open, but off the critical path is not free: each
+one pays the full proxy, live `users` read included. That multiplier is the whole
+point of this section — a read that looks like it costs 40ms cost seven times
+that per open, and the number appeared nowhere in the file that performs it.
+
+Prefetching is currently **disabled** by `PREFETCH_DISABLED` in
+`packages/shell/MobileShell.tsx` — a deliberate, temporary experiment; see task
+057. With it back on the budget is 5 proxy runs for seller and 3 for backoffice:
+the tables in each app's `app/[tenantSlug]/mobile/config/navigation.ts` declare
+5 and 3 routes as `prefetch: true`, and the shell skips whichever one you are
+already looking at.
+
+---
+
 ## Mobile Shell (`packages/shell`)
 
 Both mobile apps render inside the shared `MobileShell` — header, scrollable content region, and bottom chrome as three real flex children, so no height is ever measured or guessed.

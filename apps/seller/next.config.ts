@@ -18,9 +18,46 @@ const withPWA = withPWAInit({
     aggressiveFrontEndNavCaching: false,
     reloadOnOnline: true,
     cacheStartUrl: true,
+    /* Do not set this to false. It reads as "the start URL is static, cache
+       it", but next-pwa's start-URL handling targets `/` — not the manifest's
+       `start_url` — and `/` redirects through the proxy to a signed-in tenant
+       or to /login. Turning this off precaches whichever of those the service
+       worker happened to fetch and serves it to everyone afterwards, which
+       presents as sessions not persisting.
+
+       The splash does not depend on this: `/launch.html` is precached by name
+       in `additionalManifestEntries` below. */
     dynamicStartUrl: true,
     workboxOptions: {
         disableDevLogs: true,
+        /* Both of these have to be named. next-pwa globs `public/` by
+           extension, and neither HTML nor the icons come along — verified by
+           reading the generated `public/sw.js`, where they were simply absent.
+
+           `launch.html` is the first thing on screen, and the icon is the logo
+           the loader shows a moment later. Fetching either over the network
+           would put a hole in exactly the cold or offline open they exist to
+           cover.
+
+           Revision is the build id, so a deploy replaces them rather than
+           leaving a device on an old copy. */
+        additionalManifestEntries: [
+            { url: "/launch.html", revision: buildId },
+            { url: "/icons/icon-192x192.png", revision: buildId },
+        ],
+        /* Serve the splash for `/` itself, so this does not depend on the
+           manifest's `start_url` reaching a device. An installed PWA reads
+           `start_url` once, at install: Android refreshes it eventually, iOS
+           never does, so a change there would miss everyone already installed.
+           `/` has no content of its own — it is a server redirect to /login —
+           so answering it from the precache costs nothing and `launch.html`
+           forwards to the same place.
+
+           Scoped to exactly `/`. This is safe in a way that precaching `/`
+           was not: launch.html is a static, impersonal document, not a captured
+           redirect that carries whichever session fetched it. */
+        navigateFallback: "/launch.html",
+        navigateFallbackAllowlist: [/^\/$/],
         runtimeCaching: [
             {
                 urlPattern: /\/_next\/data\/.*/i,

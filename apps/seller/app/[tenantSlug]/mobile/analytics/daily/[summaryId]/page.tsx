@@ -32,7 +32,11 @@ export default async function SummaryDetailPage({
 
     try {
         const [rawSummary, rawBreakdown, rawPhotos, rawExpenses, rawSessions] = await Promise.all([
-            getSummaryById(supabase, { tenantId, summaryId }),
+            // Service client: the summary embeds the users who opened and closed
+            // the day, and `users` is not readable under RLS — through the SSR
+            // client both embeds come back null and the rows silently vanish.
+            // The query filters on tenantId itself, so scoping still holds.
+            getSummaryById(serviceClient, { tenantId, summaryId }),
             getSummaryBreakdown(supabase, { tenantId, summaryId }),
             listSummaryPhotos(supabase, { tenantId, dailySummaryId: summaryId }),
             listExpenses(supabase, { tenantId, dailySummaryId: summaryId }),

@@ -3,6 +3,7 @@ import { ReactNode, useCallback, useMemo, useState } from "react";
 import Image from "next/image";
 import { ChevronsUpDown } from "lucide-react";
 import { MobileShell } from "@tea-pos/shell/MobileShell";
+import { useHasPainted } from "@tea-pos/shell/useHasPainted";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useStoreFilter } from "@/lib/context/StoreFilterContext";
 import { StorePickerDrawer } from "./StorePickerDrawer";
@@ -25,7 +26,14 @@ export default function MobileLayoutClient({ children }: MobileLayoutClientProps
     const [shellReady, setShellReady] = useState(false);
     // Latches on: once the shell has been ready it never reverts, so a later
     // auth failure surfaces the auth overlay rather than the loading screen.
-    if (!shellReady && user) {
+
+    // `user` is hydrated from a cookie, so without the paint gate this flips in
+    // the same commit the loader mounts in and the bar is never drawn — leaving
+    // the handover from `public/launch.html`, which reserves that bar's space,
+    // with nothing to hand over to.
+    const loaderPainted = useHasPainted();
+
+    if (!shellReady && user && loaderPainted) {
         setShellReady(true);
     }
 
@@ -88,12 +96,19 @@ export default function MobileLayoutClient({ children }: MobileLayoutClientProps
                         <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center">
                             <div className="text-center" role="status" aria-live="polite">
                                 <div className="mb-8">
+                                    {/* `unoptimized`: this is a 192px PNG with nothing to optimise, and the
+                                        optimiser would rewrite the src to /_next/image, a URL the service
+                                        worker does not precache — so the one logo the boot screen depends on
+                                        would be fetched over the network on exactly the cold or offline open
+                                        the precache exists for. Kept as the plain path, which is precached by
+                                        name in `next.config.ts`. */}
                                     <Image
                                         src="/icons/icon-192x192.png"
                                         alt="Logo"
                                         width={70}
                                         height={70}
                                         priority
+                                        unoptimized
                                         className="rounded-xl shadow-2xl mx-auto"
                                     />
                                 </div>
@@ -119,6 +134,7 @@ export default function MobileLayoutClient({ children }: MobileLayoutClientProps
                                         width={70}
                                         height={70}
                                         priority
+                                        unoptimized
                                         className="rounded-xl shadow-2xl mx-auto"
                                     />
                                 </div>
