@@ -6,6 +6,7 @@
     "./*": "./*.tsx",
     "./routes": "./routes.ts",
     "./useScrollRestoration": "./useScrollRestoration.ts",
+    "./useHasPainted": "./useHasPainted.ts",
     "./useAppUpdate": "./useAppUpdate.ts"
   },
   "dependencies": {

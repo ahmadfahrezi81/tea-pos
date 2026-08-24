@@ -9,6 +9,14 @@ import type { PatchNote } from "@tea-pos/ui/custom/PatchNotes";
  */
 export const patchNotes: PatchNote[] = [
     {
+        version: "1.0.11",
+        date: "2026-08-25",
+        entries: [
+            { kind: "improved", text: "The logo appears the moment you open the app, even with no connection." },
+            { kind: "fixed", text: "The logo no longer goes missing while the app is loading." },
+        ],
+    },
+    {
         version: "1.0.10",
         date: "2026-08-23",
         entries: [

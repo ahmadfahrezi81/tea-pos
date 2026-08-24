@@ -370,26 +370,32 @@ the `/login` hop, not from the splash.
 ## What the boot does now
 
 1. Tap. The service worker answers `/` from the precache with `launch.html` —
-   no network, no session check. **White background, nothing else.**
-2. Its script reads `x-tenant-slug` and `x-user-info` and navigates **once**,
-   straight to the tenant. No `/login` hop, no DB query to resolve it.
-3. The app paints. `MobileLayoutClient`'s loader — logo, animated bar — holds
-   for at least 400ms.
-4. POS.
+   no network, no session check. **White, and the logo**, inline as a data URI
+   so it is in the document as it parses.
+2. Its script waits for that logo to be painted, then reads `x-tenant-slug` and
+   `x-user-info` and navigates **once**, straight to the tenant. No `/login`
+   hop, no DB query to resolve it.
+3. The browser holds `launch.html`'s last frame — a still logo — for the whole
+   server response.
+4. The app paints. `MobileLayoutClient`'s loader carries the same logo in the
+   same pixels, from the precache, and its bar begins to move. It stays up until
+   the loader has provably been drawn.
+5. POS.
 
-## Why `launch.html` shows no logo
+## Why `launch.html` carries the logo and not the bar
 
-It carried one, and it was never seen. Leaving commits a navigation, and the
-browser paints at most one frame before that, usually none — so the logo was
-fetched, decoded and discarded. Holding long enough to see it bought a second
-logo moment whose only effect was to make the handover more visible.
+Leaving this document commits a navigation, and the browser then suspends it and
+holds its last painted frame until the next document is ready. **A still logo
+holds perfectly; an animation freezes mid-stride** and a bar sat at full for the
+whole server response reads as broken rather than as loading.
 
-The loader owns the logo now. `launch.html` matches its white exactly, and so
-does the manifest's `background_color`, so the OS splash, this file and the app
-are one uninterrupted colour and the only visible event is a logo fading in.
+So the split: `launch.html` shows the logo, and holds the bar's space at
+`opacity: 0` so the two screens are the same height and the logo does not jump
+when the app paints. The bar itself lives in `MobileLayoutClient`, which is free
+to animate because nothing is about to freeze it.
 
-`/icons/icon-192x192.png` is precached alongside `launch.html`, because it is
-now the first logo anyone sees and next-pwa's glob does not include it.
+`/icons/icon-192x192.png` is precached alongside `launch.html`, and the loader
+renders it `unoptimized` so the src stays that exact path.
 
 ## Settled the hard way — do not revisit
 
@@ -398,8 +404,10 @@ now the first logo anyone sees and next-pwa's glob does not include it.
 | `dynamicStartUrl: true` | Setting it false precaches `/`, a redirect carrying whichever session fetched it. Presents as sessions not persisting. |
 | `navigateFallback` for `/` | `start_url` is read once at install; Android refreshes it in days, iOS never. Reaching existing installs means going through the worker. |
 | No server-side flag evaluation | A blocking PostHog call in a layout that runs for every screen and every prefetch. Cost far more than the round trip it saved. |
-| `LOADER_MIN_MS = 400` | 500 was measurably slow across both apps. Zero means the loader never appears at all, because the store list is already seeded. |
-| Loader floor, not delay | A slower boot still shows the loader for as long as it needs. |
+| Bar in the app, not in `launch.html` | Leaving freezes this document's last frame. A still logo survives that; an animation does not. |
+| Logo inlined as a data URI | A `src` is a separate request on exactly the cold or offline open the file exists to cover. ~3KB. |
+| `unoptimized` on the loader logo | Without it next/image rewrites the src to `/_next/image`, which the worker does not precache — the logo went over the network on every open. |
+| Paint gate, not a timer | The loader's visibility can be observed, so it is not guessed at. Replaced `LOADER_MIN_MS = 400`. |
 
 ## Not done, and deliberately
 
@@ -420,3 +428,76 @@ now the first logo anyone sees and next-pwa's glob does not include it.
 Almost certainly JS bundle download, parse and execute on the device — routinely
 500ms-1.5s on mobile, an order of magnitude past anything left on the server.
 Every change today shaved the server side. That is now the small half.
+
+---
+
+# Revised 2026-08-25 — the logo comes back
+
+The "logo was never seen" finding was true and its diagnosis was wrong, in two
+separate places. Both are fixed, and the flow above is the result.
+
+**The splash never painted.** `start()` called `location.replace` synchronously
+during parse, so the document was committed away before it had drawn a frame.
+The logo was not too brief to see; there was no frame to see it in. The
+navigation now waits on `img.decode()` followed by two nested
+`requestAnimationFrame` callbacks — the first runs before the next paint, the
+second after it has been committed — capped at 150ms against a throttled or
+backgrounded tab where
+rAF may never fire. Cost is a frame or two, and it is added to time-to-app one
+for one, which is why the cap exists.
+
+**The app's logo arrived late.** `MobileLayoutClient` rendered it through
+`next/image` with no `unoptimized`, so the browser requested
+`/_next/image?url=%2Ficons%2Ficon-192x192.png&…` — a URL that appears nowhere in
+the precache and matches none of the `runtimeCaching` rules, since supplying
+that array replaces next-pwa's defaults. Every cold open fetched the logo over
+the network, offline included. Verified by grepping the generated `sw.js` in
+both apps: the plain icon path is precached, `_next/image` appears zero times.
+
+That second one is what made the earlier attempt look like a failure of design.
+The two logo moments were not inherently wrong — the second one was simply late,
+so it left a hole where the first had been. Fix the URL and the handover is one
+continuous logo.
+
+## `LOADER_MIN_MS` is gone
+
+The 400ms floor existed to guarantee the loader was seen, because the layout
+seeds SWR with the store list and the loader would otherwise be created and
+destroyed in a single commit. That is a real problem, but the floor guessed at
+something observable: `useHasPainted()` in `packages/shell` flips after two
+nested frames, so `shellReady` now waits on the loader having provably been
+drawn rather than on a clock.
+
+On a fast device the loader is short-lived, and that is correct rather than a
+flicker — the logo either side of it is continuous, so a brief bar reads as a
+fast open.
+
+Backoffice gained the same gate. It had no floor at all: `user` is hydrated from
+a cookie, so `shellReady` flipped in the same commit the loader mounted in.
+
+## Considered and rejected: a static `/boot` route
+
+A prerendered React boot document, precached, with a CSS-animated bar — CSS
+needs no JS, so it moves from the first frame — then `router.replace` to the
+tenant route as a **soft** navigation. Same document throughout, so the bar never
+freezes. It is the ideal version of this design and it is the wrong trade twice
+over:
+
+- **Slower to content, probably by ~500ms.** The hard navigation lets the server
+  start rendering the tenant page at ~16ms. A soft one cannot issue its RSC
+  request until the bundle has downloaded and executed — which is the 500ms-1.5s
+  that already dominates the open.
+- **It cannot be prerendered today.** `app/layout.tsx` awaits `cookies()`, which
+  opts the whole tree out of static rendering — the same fact that forced
+  `launch.html` to be a plain file. It would need a cookie-free route group with
+  its own layout, and a rethink of how `AuthProvider` and `LanguageProvider`
+  hydrate.
+
+Worth revisiting only if the bundle time comes down first.
+
+## Not verified at runtime
+
+Paint-holding across a same-origin navigation is browser behaviour, not spec,
+and none of this has been watched on a device. The check that proves it: cold
+open the installed app and confirm the logo appears immediately, does not move,
+and is never absent — then do it again in airplane mode.

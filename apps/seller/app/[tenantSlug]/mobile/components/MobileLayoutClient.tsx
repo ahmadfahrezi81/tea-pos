@@ -1,8 +1,9 @@
 "use client";
-import { ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import { ReactNode, useCallback, useMemo, useState } from "react";
 import Image from "next/image";
 import { ChevronsUpDown } from "lucide-react";
 import { MobileShell } from "@tea-pos/shell/MobileShell";
+import { useHasPainted } from "@tea-pos/shell/useHasPainted";
 import { useStores } from "@/lib/hooks/stores/useStores";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
@@ -16,21 +17,6 @@ import { useT } from "@/lib/hooks/useT";
 interface MobileLayoutClientProps {
     children: ReactNode;
 }
-
-/**
- * Minimum time the loader stays up.
- *
- * The layout seeds SWR with the store list, so bootstrap data is there on the
- * first render and the loader would otherwise be created and destroyed in a
- * single commit — the app opening with no acknowledgement at all. This is the
- * only logo moment in the boot now that `public/launch.html` is background
- * only, so it has to last long enough to register.
- *
- * A floor, not a delay: a boot that takes longer still shows the loader for as
- * long as it needs. Deliberately short — an earlier 500ms was most of a
- * measurable regression across both apps.
- */
-const LOADER_MIN_MS = 400;
 
 export default function MobileLayoutClient({ children }: MobileLayoutClientProps) {
     const { url } = useTenantSlug();
@@ -49,13 +35,9 @@ export default function MobileLayoutClient({ children }: MobileLayoutClientProps
     // Set during render rather than in an effect — the guard makes it converge
     // in one pass and avoids a second commit on every boot.
 
-    const [minElapsed, setMinElapsed] = useState(false);
-    useEffect(() => {
-        const timer = setTimeout(() => setMinElapsed(true), LOADER_MIN_MS);
-        return () => clearTimeout(timer);
-    }, []);
+    const loaderPainted = useHasPainted();
 
-    if (!shellReady && user && storesData !== undefined && minElapsed) {
+    if (!shellReady && user && storesData !== undefined && loaderPainted) {
         setShellReady(true);
     }
 
@@ -127,12 +109,19 @@ export default function MobileLayoutClient({ children }: MobileLayoutClientProps
                         <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center">
                             <div className="text-center" role="status" aria-live="polite">
                                 <div className="mb-8">
+                                    {/* `unoptimized`: this is a 192px PNG with nothing to optimise, and the
+                                        optimiser would rewrite the src to /_next/image, a URL the service
+                                        worker does not precache — so the one logo the boot screen depends on
+                                        would be fetched over the network on exactly the cold or offline open
+                                        the precache exists for. Kept as the plain path, which is precached by
+                                        name in `next.config.ts`. */}
                                     <Image
                                         src="/icons/icon-192x192.png"
                                         alt="Logo"
                                         width={70}
                                         height={70}
                                         priority
+                                        unoptimized
                                         className="rounded-xl shadow-2xl mx-auto"
                                     />
                                 </div>
@@ -158,6 +147,7 @@ export default function MobileLayoutClient({ children }: MobileLayoutClientProps
                                         width={70}
                                         height={70}
                                         priority
+                                        unoptimized
                                         className="rounded-xl shadow-2xl mx-auto"
                                     />
                                 </div>
@@ -182,6 +172,7 @@ export default function MobileLayoutClient({ children }: MobileLayoutClientProps
                                         width={70}
                                         height={70}
                                         priority
+                                        unoptimized
                                         className="rounded-xl shadow-2xl mx-auto"
                                     />
                                 </div>

@@ -18,24 +18,34 @@
   `start_url`: an installed PWA reads `start_url` once, at install, so changing
   that would never reach anyone already installed.
 
-  Background only, by design. It used to carry the logo, but leaving commits a
-  navigation and the browser paints at most one frame before that — usually
-  none — so the logo was fetched, decoded and discarded unseen. Holding long
-  enough to see it meant paying for a second logo moment that only made the
-  handover to the real loader more visible. The loader in `MobileLayoutClient`
-  owns the logo now, animated and on a white background this file matches
-  exactly, so the transition is nothing but a logo fading in.
+  This file owns the logo, and the loader in `MobileLayoutClient.tsx` owns the
+  bar. That split is the whole design:
+
+  Leaving here commits a navigation, and the browser then suspends this document
+  and holds its last painted frame until the next one is ready. Anything
+  animating freezes mid-stride, so a bar here would sit at full for the entire
+  server response and read as broken rather than as loading. A still logo holds
+  perfectly. So the logo is visible and the bar is present but transparent,
+  reserving the exact space its counterpart will fill — the app paints the same
+  logo in the same pixels and the bar simply begins to move.
+
+  An earlier version carried no logo at all, on the grounds that it was never
+  seen. That was true and the diagnosis was wrong: the script navigated away
+  during parse, before this document had painted a frame, and the app's own logo
+  arrived late over `/_next/image`. Both are fixed — the navigation now waits for
+  a painted frame, and the app's logo is served from the precache.
 
   Nothing here may become personalised. It is one cached document, shared by
   every account that uses the device.
 -->
 <style>
+    * { box-sizing: border-box; }
     html, body {
         margin: 0;
         height: 100%;
         /* Matches the loader overlay in `MobileLayoutClient.tsx` and the
-           manifest's background_color, so the OS splash, this file and the app
-           are one uninterrupted colour. */
+           manifest's background_color, so this file and the app are one
+           uninterrupted colour. */
         background: #fff;
     }
     body {
@@ -43,7 +53,39 @@
         align-items: center;
         justify-content: center;
         font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-        text-align: center;
+    }
+    .wrap { text-align: center; }
+    .logo {
+        width: 70px;
+        height: 70px;
+        margin: 0 auto 2rem;
+        display: block;
+        border-radius: 0.75rem;
+        box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+    }
+    /* Present but unseen, and that is the whole point: it reserves exactly the
+       space the React loader's bar and caption will occupy. Without it this
+       screen is shorter, and since both centre vertically the logo would sit
+       lower here and jump upward the instant the app painted — the one thing a
+       splash exists to prevent.
+
+       Not animated, deliberately. See the note above the styles. */
+    .loading { opacity: 0; }
+    .loading-track {
+        width: 16rem;
+        height: 1rem;
+        background-color: #e5e7eb;
+        border-radius: 9999px;
+    }
+    .status {
+        margin-top: 1rem;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.75rem;
+        /* Tailwind pins text-xs to a 1rem line box. Left at the browser default
+           this line is ~2px taller, which shifts the logo by a pixel on the
+           handover — the exact thing the spacer is here to stop. */
+        line-height: 1rem;
+        color: #4b5563;
     }
     .offline {
         display: none;
@@ -70,15 +112,31 @@
         font-size: 0.875rem;
         font-weight: 500;
     }
-    /* Revealed by script when the device reports no connection. */
+    /* Revealed by script when the device reports no connection. The spacer goes
+       with it — nothing below needs a place held open then. */
+    body.is-offline .loading { display: none; }
     body.is-offline .offline { display: block; }
 </style>
 </head>
 <body>
-<div class="offline">
-    <h1>No connection</h1>
-    <p>Tea POS needs the network to start. It will continue on its own once you are back online.</p>
-    <button type="button" onclick="retry()">Try again</button>
+<div class="wrap">
+    <!-- Inlined rather than referenced. A `src` of /icons/icon-192x192.png is a
+         separate request — service worker lookup at best, network at worst — on
+         exactly the cold or offline launch this file exists to cover. ~3KB of
+         base64 buys a logo that is already in the document when it parses and
+         cannot fail to appear. -->
+    <img class="logo" src="data:image/png;base64,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" alt="Tea POS" width="70" height="70" />
+
+    <div class="loading" aria-hidden="true">
+        <div class="loading-track"></div>
+        <div class="status">Loading ...</div>
+    </div>
+
+    <div class="offline">
+        <h1>No connection</h1>
+        <p>Tea POS needs the network to start. It will continue on its own once you are back online.</p>
+        <button type="button" onclick="retry()">Try again</button>
+    </div>
 </div>
 
 <script>
@@ -101,6 +159,41 @@
         location.replace(slug && signedIn ? "/" + slug + "/mobile/home/pos" : "/login");
     }
 
+    /* Upper bound on the wait below. Every millisecond held here is added to
+       time-to-app one for one, so this is a guard against a throttled or
+       backgrounded tab — where rAF may never fire — and not an expected path.
+       The logo is inline and ~3KB, so the real wait is a frame or two. */
+    var HOLD_MAX_MS = 150;
+
+    /* Hold the navigation until the logo has actually been painted.
+
+       Without this the navigation is committed during parse and the browser
+       discards this document before it has drawn anything, which is why the
+       logo was previously believed to be unseeable. One painted frame is all it
+       takes, and it has to be a painted one: DOMContentLoaded fires before any
+       paint, and `load` is both later and coarser, waiting on every subresource.
+
+       `decode()` resolves when the bitmap can be painted without dropping a
+       frame; the two nested rAFs then straddle a real paint, the first running
+       before it and the second after it has been committed. */
+    function whenPainted(fn) {
+        var fired = false;
+        function once() {
+            if (fired) return;
+            fired = true;
+            fn();
+        }
+        setTimeout(once, HOLD_MAX_MS);
+
+        var logo = document.querySelector(".logo");
+        var decoded = logo && logo.decode ? logo.decode() : Promise.resolve();
+        decoded.catch(function () {}).then(function () {
+            requestAnimationFrame(function () {
+                requestAnimationFrame(once);
+            });
+        });
+    }
+
     /* `navigator.onLine === false` is the one direction that is reliable, and it
        is the case worth handling: leaving now would replace this screen with the
        browser's error page, which is worse than the blank it set out to fix. A
@@ -112,7 +205,7 @@
             return;
         }
         document.body.classList.remove("is-offline");
-        go();
+        whenPainted(go);
     }
 
     function retry() {
