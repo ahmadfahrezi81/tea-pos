@@ -5,6 +5,7 @@ import { Area, AreaChart, XAxis, ReferenceLine, Tooltip, LabelList } from "recha
 import { ChartContainer, type ChartConfig } from "@tea-pos/ui/components/chart";
 import { useStoreFilter } from "@/lib/context/StoreFilterContext";
 import { useDailySales } from "@/lib/hooks/home/useHome";
+import { SkeletonChart } from "@tea-pos/ui/custom/Skeleton";
 
 /* The seller's mini daily chart, asked tenant-wide: cups a day summed over
    every active store. No drill-down and no month picker — home is a
@@ -82,7 +83,7 @@ export default function DailySalesChart() {
     if (isLoading) {
         return (
             <div className="bg-white rounded-2xl p-3">
-                <div className="h-[150px] bg-gray-100 rounded-lg animate-pulse" />
+                <SkeletonChart height={150} bars={10} />
             </div>
         );
     }

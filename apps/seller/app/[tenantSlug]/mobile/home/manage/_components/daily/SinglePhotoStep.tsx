@@ -1,7 +1,8 @@
 "use client";
 
 import { SummaryPhotoThumbnail } from "./SummaryPhotoThumbnail";
-import { PhotoPicker } from "../shared/PhotoPicker";
+import { PhotoPicker } from "@/components/shared/PhotoPicker";
+import { Field } from "@tea-pos/ui/custom/Field";
 import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
 import { PhotoType } from "@tea-pos/features/summaries/photos-schema";
 import {
@@ -64,10 +65,7 @@ export function SinglePhotoStep({
 
             <div className="p-3 bg-white flex flex-col gap-4 rounded-2xl border border-gray-50">
                 {quantityConfig && (
-                    <div className="flex flex-col gap-1.5">
-                        <p className="text-xs font-semibold text-gray-900 uppercase tracking-wide px-1">
-                            Quantity <span className="text-red-500">*</span>
-                        </p>
+                    <Field label={t("manage.quantityLabel")} required>
                         <NumberInput
                             value={quantity?.value ?? null}
                             unit={quantityConfig.unit}
@@ -78,14 +76,10 @@ export function SinglePhotoStep({
                                 )
                             }
                         />
-                    </div>
+                    </Field>
                 )}
 
-                <div className="flex flex-col gap-1.5">
-                    <p className="text-xs font-semibold text-gray-900 uppercase tracking-wide px-1">
-                        Attachment{" "}
-                        <span className="text-red-500 text-base">*</span>
-                    </p>
+                <Field label={t("manage.attachmentLabel")} required>
                     {savedPhoto ? (
                         <div className="w-full h-52 rounded-xl overflow-hidden">
                             <SummaryPhotoThumbnail
@@ -109,7 +103,7 @@ export function SinglePhotoStep({
                             }}
                         />
                     )}
-                </div>
+                </Field>
             </div>
         </div>
     );

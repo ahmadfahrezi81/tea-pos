@@ -13,6 +13,7 @@ import { SummaryPhotoThumbnail } from "@/app/[tenantSlug]/mobile/home/manage/_co
 import type { EventSegment } from "@tea-pos/features/activity-logs/schema";
 import { PHOTO_SLOTS } from "@tea-pos/features/shared/photo-slots";
 import { useT } from "@/lib/hooks/useT";
+import { Skeleton } from "@tea-pos/ui/custom/Skeleton";
 
 // ─── Shared timeline row ──────────────────────────────────────────────────────
 
@@ -258,12 +259,12 @@ export default function EventsPage() {
                         {Array.from({ length: 5 }).map((_, i) => (
                             <div key={i} className="flex gap-3">
                                 <div className="w-8 flex flex-col items-center shrink-0">
-                                    <div className="w-8 h-8 rounded-xl bg-gray-200 shrink-0" />
+                                    <Skeleton delay={i * 90} className="w-8 h-8 rounded-xl shrink-0" />
                                     <div className="w-px h-10 border-l-2 border-dashed border-gray-200 mt-1" />
                                 </div>
-                                <div className="flex-1 mb-3 space-y-2 pt-1 animate-pulse">
-                                    <div className="h-4 w-32 bg-gray-200 rounded" />
-                                    <div className="h-3 w-20 bg-gray-100 rounded" />
+                                <div className="flex-1 mb-3 space-y-2 pt-1">
+                                    <Skeleton delay={i * 90 + 60} className="h-4 w-32 rounded" />
+                                    <Skeleton delay={i * 90 + 120} className="h-3 w-20 rounded" />
                                 </div>
                             </div>
                         ))}

@@ -8,8 +8,9 @@ import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
 import { useFlags } from "@/lib/context/FlagsContext";
 import { getTodayLocalStr } from "@tea-pos/utils/time";
-import { PhotoPicker } from "../_components/shared/PhotoPicker";
+import { PhotoPicker } from "@/components/shared/PhotoPicker";
 import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
+import { Field } from "@tea-pos/ui/custom/Field";
 import { FormFooter } from "@/components/shared/FormFooter";
 import { useT } from "@/lib/hooks/useT";
 import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
@@ -67,13 +68,11 @@ export default function OpenStorePage() {
     return (
         <div className="space-y-4 pb-4">
             <div className="bg-white rounded-xl p-4 space-y-3">
-                <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">{t("manage.storeLabel")}</p>
-                    <p className="font-semibold text-gray-800 mt-0.5">{selectedStore?.name ?? "Unknown Store"}</p>
-                </div>
-                <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">{t("manage.date")}</p>
-                    <p className="font-semibold text-gray-800 mt-0.5">
+                <Field label={t("manage.storeLabel")}>
+                    <p className="font-semibold text-gray-800">{selectedStore?.name ?? "Unknown Store"}</p>
+                </Field>
+                <Field label={t("manage.date")}>
+                    <p className="font-semibold text-gray-800">
                         {new Date().toLocaleDateString("en-US", {
                             weekday: "long",
                             day: "numeric",
@@ -81,48 +80,39 @@ export default function OpenStorePage() {
                             year: "numeric",
                         })}
                     </p>
-                </div>
+                </Field>
             </div>
 
-            {gate !== "no_session" && (
-                <div className="bg-white rounded-xl p-4 space-y-2">
-                    <div className="flex items-center gap-1">
-                        <span className="text-sm font-medium text-gray-700">{t("manage.openingBalanceLabel")}</span>
-                        <span className="text-xs text-red-400 font-medium">{t("manage.required")}</span>
-                    </div>
-                    <NumberInput
-                        currency
-                        value={openingBalance || null}
-                        onChange={(val) => {
-                            setOpeningBalance(val ?? 0);
-                            setBalanceConfirmed(true);
+            {/* Balance and photo are the two things this screen asks for, so
+                they share one card. The asterisk carries what the helper text
+                and the "Required" / "(optional)" pills used to say. */}
+            <div className="bg-white rounded-xl p-4 space-y-4">
+                {gate !== "no_session" && (
+                    <Field label={t("manage.openingBalanceLabel")} required>
+                        <NumberInput
+                            currency
+                            value={openingBalance || null}
+                            onChange={(val) => {
+                                setOpeningBalance(val ?? 0);
+                                setBalanceConfirmed(true);
+                            }}
+                        />
+                    </Field>
+                )}
+
+                <Field label={t("manage.openingPhoto")} required={!skipPhotos}>
+                    <PhotoPicker
+                        previewUrl={photo?.preview ?? null}
+                        onCapture={(file, url) => {
+                            if (photo) URL.revokeObjectURL(photo.preview);
+                            setPhoto({ file, preview: url });
+                        }}
+                        onRemove={() => {
+                            if (photo) URL.revokeObjectURL(photo.preview);
+                            setPhoto(null);
                         }}
                     />
-                    <p className="text-xs text-gray-400">{t("manage.openingBalanceDesc")}</p>
-                </div>
-            )}
-
-            <div className="bg-white rounded-xl p-4">
-                <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-medium text-gray-700">{t("manage.openingPhoto")}</span>
-                    {skipPhotos ? (
-                        <span className="text-xs text-gray-400 font-medium">{t("manage.optional")}</span>
-                    ) : (
-                        <span className="text-xs text-red-400 font-medium">{t("manage.required")}</span>
-                    )}
-                </div>
-                <PhotoPicker
-                    previewUrl={photo?.preview ?? null}
-                    onCapture={(file, url) => {
-                        if (photo) URL.revokeObjectURL(photo.preview);
-                        setPhoto({ file, preview: url });
-                    }}
-                    onRemove={() => {
-                        if (photo) URL.revokeObjectURL(photo.preview);
-                        setPhoto(null);
-                    }}
-                />
-                <p className="text-xs text-gray-400 mt-2">{t("manage.openingPhotoDesc")}</p>
+                </Field>
             </div>
 
             <FormFooter

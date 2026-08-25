@@ -11,12 +11,13 @@ import {
     INCIDENT_CATEGORIES,
     INCIDENT_CATEGORY_LABELS,
 } from "@tea-pos/features/reports/schema";
-import { SelectInput } from "../../_components/shared/SelectInput";
-import { Textarea } from "../../_components/shared/Textarea";
-import { PhotoPicker } from "../../_components/shared/PhotoPicker";
+import { SelectInput } from "@tea-pos/ui/custom/SelectInput";
+import { Textarea } from "@tea-pos/ui/custom/Textarea";
+import { PhotoPicker } from "@/components/shared/PhotoPicker";
 import { FormFooter } from "@/components/shared/FormFooter";
 import { useT } from "@/lib/hooks/useT";
 import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
+import { Field } from "@tea-pos/ui/custom/Field";
 
 export default function AddReportPage() {
     const router = useRouter();
@@ -74,10 +75,7 @@ export default function AddReportPage() {
     return (
         <div className="space-y-3 pb-4">
             <div className="bg-white rounded-xl p-4 space-y-4">
-                <div className="space-y-1.5">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                        {t("manage.type")}
-                    </p>
+                <Field label={t("manage.type")} required>
                     <SelectInput
                         options={TYPE_OPTIONS}
                         value={selectedType}
@@ -88,12 +86,9 @@ export default function AddReportPage() {
                         onOtherChange={setCustomType}
                         otherPlaceholder={t("manage.incidentTypePlaceholder")}
                     />
-                </div>
+                </Field>
 
-                <div className="space-y-1.5">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                        {t("manage.notes")}
-                    </p>
+                <Field label={t("manage.notes")} required>
                     <Textarea
                         value={notes}
                         onChange={setNotes}
@@ -101,18 +96,15 @@ export default function AddReportPage() {
                         rows={4}
                         maxLength={1000}
                     />
-                </div>
+                </Field>
 
-                <div className="space-y-1.5">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                        {t("manage.photo")}
-                    </p>
+                <Field label={t("manage.photo")}>
                     <PhotoPicker
                         previewUrl={photoPreview}
                         onCapture={(file, url) => { setPhotoFile(file); setPhotoPreview(url); }}
                         onRemove={() => { setPhotoFile(null); setPhotoPreview(null); }}
                     />
-                </div>
+                </Field>
             </div>
 
             <FormFooter

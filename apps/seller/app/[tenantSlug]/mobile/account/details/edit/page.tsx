@@ -8,6 +8,7 @@ import { TextInput } from "@tea-pos/ui/custom/TextInput";
 import type { User, UpdateUserInput } from "@tea-pos/features/users/schema";
 import { useT } from "@/lib/hooks/useT";
 import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
+import { Field } from "@tea-pos/ui/custom/Field";
 
 function stripPhonePrefix(phone: string | null): number {
     if (!phone) return 0;
@@ -52,16 +53,13 @@ function EditForm({ user, update }: { user: User; update: (input: UpdateUserInpu
     return (
         <div className="space-y-4">
             <div className="bg-white rounded-xl p-4 space-y-4">
-                <div className="space-y-1.5">
-                    <p className="text-xs font-medium text-gray-500">{t("account.firstName")}</p>
+                <Field label={t("account.firstName")}>
                     <TextInput value={firstName} onChange={setFirstName} placeholder={t("account.firstNamePlaceholder")} />
-                </div>
-                <div className="space-y-1.5">
-                    <p className="text-xs font-medium text-gray-500">{t("account.lastName")}</p>
+                </Field>
+                <Field label={t("account.lastName")}>
                     <TextInput value={lastName} onChange={setLastName} placeholder={t("account.lastNamePlaceholder")} />
-                </div>
-                <div className="space-y-1.5">
-                    <p className="text-xs font-medium text-gray-500">{t("account.phoneNumber")}</p>
+                </Field>
+                <Field label={t("account.phoneNumber")}>
                     <NumberInput
                         prefix="+62"
                         raw
@@ -69,7 +67,7 @@ function EditForm({ user, update }: { user: User; update: (input: UpdateUserInpu
                         onChange={(v) => setPhoneDigits(v ?? 0)}
                         placeholder="812 345 6789"
                     />
-                </div>
+                </Field>
             </div>
 
             <button

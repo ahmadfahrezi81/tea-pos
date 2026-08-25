@@ -3,6 +3,7 @@
 import { getWeekInfo } from "@tea-pos/utils/week";
 import { useStoreFilter } from "@/lib/context/StoreFilterContext";
 import { useWorkDays } from "@/lib/hooks/home/useHome";
+import { Skeleton } from "@tea-pos/ui/custom/Skeleton";
 
 /* The seller's own work-days grid, asked tenant-wide: a filled square is a day
    at least one active store opened. Expected to be solid — a grey square in the
@@ -46,7 +47,7 @@ export default function WorkDays() {
     if (isLoading) {
         return (
             <div className="bg-white rounded-2xl p-3 aspect-square">
-                <div className="h-full bg-gray-100 rounded-lg animate-pulse" />
+                <Skeleton className="h-full rounded-lg" />
             </div>
         );
     }

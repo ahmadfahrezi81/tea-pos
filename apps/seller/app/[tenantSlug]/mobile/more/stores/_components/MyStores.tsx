@@ -2,6 +2,7 @@
 import { useStores } from "@/lib/hooks/stores/useStores";
 import { Store } from "lucide-react";
 import { useT } from "@/lib/hooks/useT";
+import { Skeleton } from "@tea-pos/ui/custom/Skeleton";
 
 export default function MyStores() {
     const { data: storeData, isLoading } = useStores();
@@ -14,10 +15,10 @@ export default function MyStores() {
                 {isLoading ? (
                     Array.from({ length: 3 }).map((_, i) => (
                         <div key={i} className="flex items-center gap-3 px-4 py-4">
-                            <div className="w-9 h-9 rounded-xl bg-gray-100 animate-pulse shrink-0" />
+                            <Skeleton delay={i * 90} className="w-9 h-9 rounded-xl shrink-0" />
                             <div className="flex-1 space-y-1.5">
-                                <div className="h-3.5 w-32 bg-gray-100 rounded animate-pulse" />
-                                <div className="h-3 w-16 bg-gray-100 rounded animate-pulse" />
+                                <Skeleton delay={i * 90 + 60} className="h-3.5 w-32 rounded" />
+                                <Skeleton delay={i * 90 + 120} className="h-3 w-16 rounded" />
                             </div>
                         </div>
                     ))

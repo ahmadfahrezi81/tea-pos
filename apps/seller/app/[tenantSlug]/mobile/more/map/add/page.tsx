@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import mapboxgl from "mapbox-gl";
 import { useT } from "@/lib/hooks/useT";
 import { randomId } from "@tea-pos/utils/uuid";
+import { Field } from "@tea-pos/ui/custom/Field";
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN!;
 
@@ -182,8 +183,7 @@ export default function AddLocationFeedbackPage() {
             {/* Form */}
             <div className="bg-white rounded-xl p-4 space-y-4">
                 {/* Location Search */}
-                <div className="space-y-1.5">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("map.location")}</p>
+                <Field label={t("map.location")} required>
                     <div className="relative">
                         <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-3 border border-gray-100">
                             {isFetching ? (
@@ -222,11 +222,10 @@ export default function AddLocationFeedbackPage() {
                             </div>
                         )}
                     </div>
-                </div>
+                </Field>
 
                 {/* Notes */}
-                <div className="space-y-1.5">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("analytics.notes")}</p>
+                <Field label={t("analytics.notes")}>
                     <textarea
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
@@ -234,7 +233,7 @@ export default function AddLocationFeedbackPage() {
                         rows={3}
                         className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-3 text-base text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand/90 resize-none"
                     />
-                </div>
+                </Field>
             </div>
 
             <FormFooter

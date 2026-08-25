@@ -10,6 +10,8 @@ import { FormFooter } from "@/components/shared/FormFooter";
 import { Copy, Check, Search, X } from "lucide-react";
 import { useToast } from "@/lib/context/ToastContext";
 import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
+import { Field } from "@tea-pos/ui/custom/Field";
+import { ReadOnlyInput } from "@tea-pos/ui/custom/ReadOnlyInput";
 
 function EligibilityToggle({
     userId,
@@ -124,13 +126,11 @@ export default function EditClaimTypePage({ params }: { params: Promise<{ id: st
                         <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${isEnabled ? "translate-x-5" : "translate-x-0"}`} />
                     </button>
                 </div>
-                <div className="space-y-1.5">
-                    <p className="text-sm font-medium text-gray-700">Name</p>
+                <Field label="Name" required>
                     <TextInput value={name} onChange={setName} placeholder="e.g. Lunch Allowance" className="text-base font-medium" />
-                </div>
-                <div className="space-y-1.5">
-                    <p className="text-sm font-medium text-gray-700">Slug</p>
-                    <div className="flex items-center gap-2 px-3 py-2.5 border border-gray-100 rounded-2xl bg-gray-50">
+                </Field>
+                <Field label="Slug">
+                    <div className="flex items-center gap-2 p-4 px-3 border-2 border-gray-100 rounded-2xl bg-gray-50">
                         <p className="flex-1 font-mono text-base text-gray-500">{type.slug}</p>
                         <button
                             onClick={() => {
@@ -148,25 +148,25 @@ export default function EditClaimTypePage({ params }: { params: Promise<{ id: st
                             {copied ? <Check size={16} /> : <Copy size={16} />}
                         </button>
                     </div>
-                </div>
-                <div className="space-y-1.5">
-                    <p className="text-sm font-medium text-gray-700">Amount</p>
-                    <div className="px-3 py-2.5 border border-gray-100 rounded-2xl bg-gray-50">
-                        <p className="text-base text-gray-500">Rp {(type.amount ?? 0).toLocaleString("id-ID")}</p>
-                    </div>
-                </div>
-                <div className="space-y-1.5">
-                    <p className="text-sm font-medium text-gray-700">Decided by</p>
-                    <div className="px-3 py-2.5 border border-gray-100 rounded-2xl bg-gray-50">
-                        <p className="text-base text-gray-500">
-                            {type.claimSource === "auto"
+                </Field>
+                <Field label="Amount">
+                    <ReadOnlyInput
+                        value={`Rp ${(type.amount ?? 0).toLocaleString("id-ID")}`}
+                        className="text-base font-medium"
+                    />
+                </Field>
+                <Field label="Decided by">
+                    <ReadOnlyInput
+                        value={
+                            type.claimSource === "auto"
                                 ? `Auto — needs ${type.autoThresholdHours ?? "?"}h worked`
                                 : type.claimSource === "auto_submit"
                                 ? "Auto submit — admin reviews"
-                                : "Staff submits"}
-                        </p>
-                    </div>
-                </div>
+                                : "Staff submits"
+                        }
+                        className="text-base font-medium"
+                    />
+                </Field>
                 {error && <p className="text-sm text-red-500">{error}</p>}
             </div>
 

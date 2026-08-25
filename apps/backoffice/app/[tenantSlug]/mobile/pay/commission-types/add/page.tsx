@@ -7,6 +7,7 @@ import { TextInput } from "@tea-pos/ui/custom/TextInput";
 import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
 import { FormFooter } from "@/components/shared/FormFooter";
 import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
+import { Field } from "@tea-pos/ui/custom/Field";
 
 export default function AddCommissionTypePage() {
     const router = useRouter();
@@ -39,23 +40,20 @@ export default function AddCommissionTypePage() {
     return (
         <div className="space-y-4">
             <div className="bg-white rounded-xl p-4 space-y-4">
-                <div className="space-y-1.5">
-                    <p className="text-sm font-medium text-gray-700">Name</p>
+                <Field label="Name" required>
                     <TextInput value={name} onChange={setName} placeholder="e.g. Seller Standard" className="text-base font-medium" />
-                </div>
-                <div className="space-y-1.5">
-                    <p className="text-sm font-medium text-gray-700">Slug (auto-formatted)</p>
+                </Field>
+                <Field label="Slug (auto-formatted)" required>
                     <TextInput
                         value={slug}
                         onChange={(v) => setSlug(v.toUpperCase().replace(/\s+/g, "_"))}
                         placeholder="e.g. SELLER_STANDARD"
                         className="text-base font-medium"
                     />
-                </div>
-                <div className="space-y-1.5">
-                    <p className="text-sm font-medium text-gray-700">Rate per cup</p>
+                </Field>
+                <Field label="Rate per cup">
                     <NumberInput value={ratePerCup || null} onChange={(v) => setRatePerCup(v ?? 0)} currency prefix="Rp" />
-                </div>
+                </Field>
                 {error && <p className="text-sm text-red-500">{error}</p>}
             </div>
 

@@ -3,7 +3,7 @@
 import { usePayrollUserInfo } from "@/lib/hooks/payroll/usePayrollUserInfo";
 import { usePayFrequency } from "@/lib/context/PayFrequencyContext";
 import { useT } from "@/lib/hooks/useT";
-import { SkeletonValue } from "@/components/shared/SkeletonValue";
+import { SkeletonValue } from "@tea-pos/ui/custom/Skeleton";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 import { getPayWindowBounds, getExpectedPayoutDate } from "@tea-pos/utils/week";
 import { format, parseISO } from "date-fns";
@@ -64,6 +64,7 @@ export function PayConfigCard() {
 
             {/* Pay config details */}
             <div className="bg-white p-4 rounded-2xl space-y-2 text-sm">
+                <h3 className="font-semibold text-gray-800">{t("earnings.payConfig")}</h3>
                 {rows.map(({ label, value }) => (
                     <div key={label} className="flex justify-between items-center">
                         <span className="text-gray-500">{label}</span>

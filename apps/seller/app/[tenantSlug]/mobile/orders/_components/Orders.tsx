@@ -5,7 +5,7 @@ import useHourlySales from "@/lib/hooks/analytics/useHourlySales";
 import { Calendar, CalendarDays, Receipt } from "lucide-react";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 import CopyableField from "@/components/shared/CopyableField";
-import { SkeletonValue } from "@/components/shared/SkeletonValue";
+import { Skeleton, SkeletonValue } from "@tea-pos/ui/custom/Skeleton";
 import { useStore } from "@/lib/context/StoreContext";
 import { getTodayLocalStr } from "@tea-pos/utils/time";
 import { useT } from "@/lib/hooks/useT";
@@ -15,7 +15,7 @@ import dynamic from "next/dynamic";
 const MiniHourlySalesChart = dynamic(() => import("./MiniHourlySalesChart"), {
     ssr: false,
     loading: () => (
-        <div className="h-43 animate-pulse bg-gray-100 rounded-xl" />
+        <Skeleton className="h-43 rounded-xl" />
     ),
 });
 
@@ -145,7 +145,7 @@ export default function Orders() {
             </div>
 
             {ordersLoading ? (
-                <div className="h-[160px] bg-white rounded-2xl animate-pulse" />
+                <Skeleton className="h-[160px] rounded-2xl" />
             ) : (
                 <MiniHourlySalesChart
                     storeId={selectedStoreId}
@@ -158,12 +158,12 @@ export default function Orders() {
             {ordersLoading ? (
                 <div className="space-y-3">
                     {Array.from({ length: 3 }).map((_, i) => (
-                        <div key={i} className="bg-white rounded-2xl p-3.5 animate-pulse space-y-3">
+                        <div key={i} className="bg-white rounded-2xl p-3.5 space-y-3">
                             <div className="flex justify-between">
-                                <div className="h-6 w-28 bg-gray-200 rounded-md" />
-                                <div className="h-6 w-20 bg-gray-200 rounded-md" />
+                                <Skeleton delay={i * 90} className="h-6 w-28" />
+                                <Skeleton delay={i * 90 + 60} className="h-6 w-20" />
                             </div>
-                            <div className="h-4 w-24 bg-gray-200 rounded-md" />
+                            <Skeleton delay={i * 90 + 120} className="h-4 w-24" />
                         </div>
                     ))}
                 </div>

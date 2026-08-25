@@ -21,7 +21,7 @@ import {
     X,
 } from "lucide-react";
 import type { DailySummaryResponse } from "@tea-pos/features/summaries/schema";
-import { SkeletonValue } from "@/components/shared/SkeletonValue";
+import { Skeleton, SkeletonValue } from "@tea-pos/ui/custom/Skeleton";
 import { useStore } from "@/lib/context/StoreContext";
 import {
     formatDate,
@@ -37,7 +37,7 @@ const MiniDailySalesChart = dynamic(
     {
         ssr: false,
         loading: () => (
-            <div className="h-32 animate-pulse bg-gray-100 rounded-xl" />
+            <Skeleton className="h-32 rounded-xl" />
         ),
     },
 );
@@ -64,11 +64,11 @@ function SummaryUsersRow({ summaryId }: { summaryId: string }) {
     return (
         <div ref={ref}>
             {shouldFetch && isLoading ? (
-                <div className="flex flex-col gap-1.5 animate-pulse">
+                <div className="flex flex-col gap-1.5">
                     <div className="flex items-center gap-2 bg-slate-100 rounded-xl p-1.5 w-full">
-                        <div className="w-7 h-7 rounded-lg bg-gray-200 shrink-0" />
-                        <div className="h-4 bg-gray-200 rounded flex-1" />
-                        <div className="h-5 w-16 bg-gray-200 rounded-lg shrink-0" />
+                        <Skeleton className="w-7 h-7 rounded-lg shrink-0" />
+                        <Skeleton delay={60} className="h-4 flex-1 rounded" />
+                        <Skeleton delay={120} className="h-5 w-16 rounded-lg shrink-0" />
                     </div>
                 </div>
             ) : users.length > 0 ? (
@@ -246,7 +246,7 @@ export default function MobileAnalytics() {
             </div>
 
             {summariesLoading ? (
-                <div className="h-[160px] bg-white rounded-2xl animate-pulse" />
+                <Skeleton className="h-[160px] bg-white rounded-2xl" />
             ) : (
                 <MiniDailySalesChart
                     summaries={summariesData?.summaries ?? []}
@@ -273,19 +273,15 @@ export default function MobileAnalytics() {
                 <div className="space-y-3">
                     {summariesLoading ? (
                         Array.from({ length: 3 }).map((_, i) => (
-                            <div
-                                key={i}
-                                className="bg-white rounded-2xl p-3 animate-pulse space-y-3"
-                            >
+                            <div key={i} className="bg-white rounded-2xl p-3 space-y-3">
                                 <div className="flex justify-between">
-                                    <div className="h-7 w-32 bg-gray-200 rounded-md" />
-                                    <div className="h-7 w-7 bg-gray-200 rounded-full" />
+                                    <Skeleton delay={i * 90} className="h-7 w-32" />
+                                    <Skeleton delay={i * 90 + 60} className="h-7 w-7 rounded-full" />
                                 </div>
                                 <div className="grid grid-cols-2 gap-2 bg-slate-100 rounded-2xl p-2">
-                                    <div className="h-12 bg-gray-200 rounded-md" />
-                                    <div className="h-12 bg-gray-200 rounded-md" />
-                                    <div className="h-12 bg-gray-200 rounded-md" />
-                                    <div className="h-12 bg-gray-200 rounded-md" />
+                                    {[0, 1, 2, 3].map((c) => (
+                                        <Skeleton key={c} delay={i * 90 + 120 + c * 60} className="h-12" />
+                                    ))}
                                 </div>
                             </div>
                         ))

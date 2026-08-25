@@ -8,6 +8,7 @@ import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
 import { UserCircle, Pencil } from "lucide-react";
 import Image from "next/image";
+import { Skeleton } from "@tea-pos/ui/custom/Skeleton";
 
 /**
  * Read-only. Changing someone's commission type lives under Pay -> Config ->
@@ -28,8 +29,16 @@ export default function StaffPayrollInfoPage({ params }: { params: Promise<{ use
     if (isLoading) {
         return (
             <div className="space-y-3">
-                <div className="bg-white rounded-xl h-24 animate-pulse" />
-                {[1, 2, 3].map((i) => <div key={i} className="bg-white rounded-xl h-16 animate-pulse" />)}
+                <div className="bg-white rounded-xl p-4 space-y-2.5">
+                    <Skeleton className="h-5 w-40" />
+                    <Skeleton delay={80} className="h-3.5 w-24" />
+                </div>
+                {[1, 2, 3].map((i) => (
+                    <div key={i} className="bg-white rounded-xl p-4 flex items-center justify-between">
+                        <Skeleton delay={i * 90} className="h-4 w-32" />
+                        <Skeleton delay={i * 90 + 60} className="h-4 w-16" />
+                    </div>
+                ))}
             </div>
         );
     }

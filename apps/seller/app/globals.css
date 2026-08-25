@@ -72,6 +72,46 @@ body {
     animation: indeterminate 1.2s ease-in-out infinite;
 }
 
+/* ── Skeletons ────────────────────────────────────────────────────────────
+   A highlight sweeping left to right, not an opacity pulse.
+
+   `animate-pulse` fades the element to 50% and back in unison across the
+   page. Three cards of four bars each read as twelve things strobing
+   together, which the eye takes for a rendering fault rather than progress;
+   and on a white card the fade is a couple of percent of contrast, so it is
+   nearly invisible on a phone outdoors. A sweep has a direction, so it reads
+   as motion toward completion, and it carries its own contrast.
+
+   The sweep runs on a background gradient rather than a pseudo-element, so a
+   skeleton can be any element and needs no overflow container. `--skeleton-
+   delay` staggers rows so a list does not move as one block. */
+@keyframes skeleton-sweep {
+    from { background-position: 200% 0; }
+    to   { background-position: -200% 0; }
+}
+
+.skeleton {
+    background-color: var(--skeleton-base, #e8eaed);
+    background-image: linear-gradient(
+        90deg,
+        transparent 0%,
+        var(--skeleton-sheen, rgba(255, 255, 255, 0.85)) 50%,
+        transparent 100%
+    );
+    background-size: 200% 100%;
+    background-repeat: no-repeat;
+    animation: skeleton-sweep 1.6s ease-in-out infinite;
+    animation-delay: var(--skeleton-delay, 0ms);
+}
+
+/* Motion is the point, but it is not worth a headache. Without it the base
+   colour alone still says "not content yet". */
+@media (prefers-reduced-motion: reduce) {
+    .skeleton {
+        animation: none;
+    }
+}
+
 @theme inline {
     --radius-sm: calc(var(--radius) - 4px);
     --radius-md: calc(var(--radius) - 2px);

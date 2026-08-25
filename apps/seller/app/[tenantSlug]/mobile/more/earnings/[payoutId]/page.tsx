@@ -8,6 +8,7 @@ import { SummaryPhotoThumbnail } from "@/app/[tenantSlug]/mobile/home/manage/_co
 import { parseISO, format, eachDayOfInterval, getISOWeek } from "date-fns";
 import { useT } from "@/lib/hooks/useT";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
+import { Skeleton, SkeletonText } from "@tea-pos/ui/custom/Skeleton";
 
 const WEEKDAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 
@@ -26,7 +27,10 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
         return (
             <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                    <div key={i} className="bg-white rounded-xl h-20 animate-pulse" />
+                    <div key={i} className="bg-white rounded-2xl p-4 space-y-2.5">
+                        <Skeleton delay={i * 90} className="h-4 w-28" />
+                        <SkeletonText lines={2} delay={i * 90 + 60} />
+                    </div>
                 ))}
             </div>
         );
@@ -95,7 +99,7 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
             {/* Totals */}
             <div className="bg-white p-4 rounded-2xl">
                 <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold text-gray-800">
+                    <h3 className="text-lg font-semibold text-gray-800">
                         {sameWeek
                             ? `${t("earnings.week")} ${weekStart}`
                             : `${t("earnings.week")} ${weekStart} · ${t("earnings.week")} ${weekEnd}`}
@@ -127,9 +131,9 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
             </div>
 
             {/* Payout info */}
-            <section className="space-y-2">
-                <p className="pl-3 text-xs font-bold uppercase tracking-widest text-gray-700">{t("earnings.paymentDetails")}</p>
+            <section>
                 <div className="bg-white p-4 rounded-2xl space-y-2 text-sm">
+                    <h3 className="text-sm font-semibold text-gray-800">{t("earnings.paymentDetails")}</h3>
                     {[
                         { label: t("earnings.payrollFrom"), value: format(parseISO(payout.startDate), "EEE, d MMM yyyy") },
                         { label: t("earnings.payrollTo"), value: format(parseISO(payout.endDate), "EEE, d MMM yyyy") },
@@ -161,31 +165,27 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
                         <span className="text-gray-500">{t("earnings.paidBy")}</span>
                         <span className="font-medium text-gray-800">{paidByName ?? "—"}</span>
                     </div>
-                    {/* The receipt and the note are evidence, not label/value
-                        rows — a thumbnail and a paragraph both break the
-                        right-aligned rhythm above. They get their own labelled
-                        block below the divider instead. The thumbnail is the
+                    {/* The receipt and the note are one piece of evidence —
+                        what was sent and what was said about it — so they share
+                        a label and sit side by side. The thumbnail is the
                         component the day-events timeline uses, so tapping a
                         photo opens the same full-screen viewer everywhere. */}
                     {(payout.paymentProofUrl || payout.notes) && (
-                        <div className="pt-2.5 border-t border-gray-100 space-y-3">
-                            {payout.paymentProofUrl && (
-                                <div className="space-y-1.5">
-                                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">{t("earnings.proofLabel")}</p>
+                        <div className="pt-2.5 border-t border-gray-100 space-y-1.5">
+                            <p className="text-gray-500">{t("earnings.receiptAndNote")}</p>
+                            <div className="flex gap-2.5">
+                                {payout.paymentProofUrl && (
                                     <SummaryPhotoThumbnail
                                         url={payout.paymentProofUrl}
                                         alt={t("earnings.transferProof")}
-                                        className="w-20 h-20"
+                                        className="w-20 h-20 shrink-0"
                                         isSaved={false}
                                     />
-                                </div>
-                            )}
-                            {payout.notes && (
-                                <div className="space-y-1.5">
-                                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">{t("earnings.paymentNote")}</p>
-                                    <p className="text-sm text-gray-800 whitespace-pre-wrap bg-slate-50 rounded-xl p-3">{payout.notes}</p>
-                                </div>
-                            )}
+                                )}
+                                {payout.notes && (
+                                    <p className="flex-1 min-w-0 text-sm text-gray-800 whitespace-pre-wrap bg-slate-50 rounded-xl p-3">{payout.notes}</p>
+                                )}
+                            </div>
                         </div>
                     )}
                 </div>
@@ -193,9 +193,9 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
 
             {/* Calendar — titled like the Work Days section on the More screen,
                 so the same grid reads the same way in both places. */}
-            <section className="space-y-2">
-                <p className="pl-3 text-xs font-bold uppercase tracking-widest text-gray-700">{t("more.workDays")}</p>
+            <section>
                 <div className="bg-white rounded-2xl px-3 py-3 space-y-1.5">
+                    <h3 className="text-sm font-semibold text-gray-800">{t("more.workDays")}</h3>
                     <div className="grid grid-cols-7 gap-1.5 mb-1">
                         {WEEKDAY_KEYS.map((d) => (
                             <span key={d} className="text-xs font-semibold text-gray-500 text-center">{t(`common.weekdays.${d}`)}</span>
@@ -224,7 +224,7 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
 
             {/* Per-day cards */}
             <section className="space-y-2">
-                <p className="pl-3 text-xs font-bold uppercase tracking-widest text-gray-700">{t("earnings.dailyBreakdown")}</p>
+                <p className="pl-3 text-lg font-semibold text-gray-800">{t("earnings.dailyBreakdown")}</p>
                 <div className="space-y-3">
                     {allDates.map((dateStr) => {
                         const dayCommissions = commissionsByDate[dateStr] ?? [];

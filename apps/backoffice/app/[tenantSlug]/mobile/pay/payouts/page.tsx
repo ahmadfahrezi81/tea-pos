@@ -14,6 +14,7 @@ import { getPayWindowBounds, getExpectedPayoutDate } from "@tea-pos/utils/week";
 import type { PayoutResponse } from "@tea-pos/features/payroll/schema";
 import { NON_SELLER_SLUG, isNonSeller as isNonSellerInfo } from "@/lib/utils/non-sellers";
 import { usePayFrequency } from "@/lib/context/PayFrequencyContext";
+import { Skeleton } from "@tea-pos/ui/custom/Skeleton";
 
 const STATUS_STYLE: Record<string, string> = {
     pending: "bg-yellow-100 text-yellow-700",
@@ -298,7 +299,15 @@ export default function StaffPayoutsPage() {
 
             {isLoading ? (
                 <div className="space-y-2">
-                    {[1, 2, 3].map((i) => <div key={i} className="bg-white rounded-2xl p-4 h-40 animate-pulse" />)}
+                    {[1, 2, 3].map((i) => (
+                        <div key={i} className="bg-white rounded-2xl p-4 space-y-3">
+                            <div className="flex justify-between">
+                                <Skeleton delay={i * 90} className="h-5 w-36" />
+                                <Skeleton delay={i * 90 + 60} className="h-5 w-20 rounded-full" />
+                            </div>
+                            <Skeleton delay={i * 90 + 120} className="h-16 rounded-xl" />
+                        </div>
+                    ))}
                 </div>
             ) : filtered.length === 0 ? (
                 <p className="text-center text-gray-400 py-10">No payouts for this period.</p>

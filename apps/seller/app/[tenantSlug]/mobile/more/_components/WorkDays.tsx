@@ -3,7 +3,7 @@
 import { useRef, useEffect } from "react";
 import { useSessionActivity } from "@/lib/hooks/sessions/useSessionActivity";
 import { getWeekInfo } from "@tea-pos/utils/week";
-import { useT } from "@/lib/hooks/useT";
+import { Skeleton } from "@tea-pos/ui/custom/Skeleton";
 
 const PAST_WEEKS = 3;
 const TZ_MS = parseInt(process.env.NEXT_PUBLIC_TIMEZONE_OFFSET ?? "7") * 3_600_000;
@@ -34,7 +34,6 @@ export default function WorkDays() {
     const { dates, isLoading } = useSessionActivity(4);
     const worked = new Set(dates);
     const scrollRef = useRef<HTMLDivElement>(null);
-    const t = useT();
 
     useEffect(() => {
         if (isLoading) return;
@@ -47,8 +46,8 @@ export default function WorkDays() {
 
     if (isLoading) {
         return (
-            <div className="bg-white rounded-2xl px-4 py-3">
-                <div className="h-14 bg-gray-100 rounded-lg animate-pulse" />
+            <div className="bg-white rounded-2xl px-3 py-3">
+                <Skeleton className="h-16 rounded-lg" />
             </div>
         );
     }
@@ -56,28 +55,33 @@ export default function WorkDays() {
     const weeks = buildWeeks();
 
     return (
-        <div className="bg-white rounded-2xl px-4 py-3">
+        <div className="bg-white rounded-2xl px-3 py-3">
             <div ref={scrollRef} className="flex gap-5 overflow-x-auto [&::-webkit-scrollbar]:hidden">
                 {weeks.map(({ weekNum, days, isCurrent, todayIso }) => (
                     <div key={weekNum} className="flex-none flex flex-col gap-1.5">
-                        <p className="text-xs font-semibold text-gray-600">Week {weekNum}{isCurrent && ` (${t("common.current")})`}</p>
+                        <p className="flex items-center gap-1 text-sm font-semibold text-gray-500">
+                            Week {weekNum}
+                            {/* A green dot marks the week in progress — quieter than
+                                the word, and it never widens the column. */}
+                            {isCurrent && <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />}
+                        </p>
                         <div className="flex gap-1.5">
                             {days.map((iso) => {
                                 const isUpcoming = iso > todayIso;
                                 return (
-                                <div key={iso} className="flex flex-col items-center gap-1">
                                     <div
-                                        className={`w-6 h-6 rounded ${
+                                        key={iso}
+                                        className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium ${
                                             worked.has(iso)
-                                                ? "bg-brand"
+                                                ? "bg-brand text-white font-semibold"
                                                 : isUpcoming
-                                                ? "border border-dashed border-gray-300"
-                                                : "bg-gray-200"
+                                                ? "border border-dashed border-gray-300 text-gray-400"
+                                                : "bg-gray-100 text-gray-500"
                                         }`}
-                                    />
-                                    <p className="text-xs leading-none text-gray-600">{+iso.slice(8)}</p>
-                                </div>
-                            );
+                                    >
+                                        {+iso.slice(8)}
+                                    </div>
+                                );
                             })}
                         </div>
                     </div>
