@@ -14,6 +14,8 @@ import { Copy, Check } from "lucide-react";
 import { PhotoPicker } from "@/components/shared/PhotoPicker";
 import { FormFooter } from "@/components/shared/FormFooter";
 import { Callout } from "@tea-pos/ui/custom/Callout";
+import { Field } from "@tea-pos/ui/custom/Field";
+import { Textarea } from "@tea-pos/ui/custom/Textarea";
 
 function CopyableValue({ value, prefix, className }: { value: string; prefix?: string; className?: string }) {
     const [copied, setCopied] = useState(false);
@@ -183,35 +185,33 @@ export default function PayConfirmPage({
 
             {/* Proof upload */}
             {!isSkip && (
-                <div className="bg-white rounded-xl p-4 space-y-3">
-                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Transfer Screenshot</p>
-                    <PhotoPicker
-                        previewUrl={proofPreview}
-                        onCapture={(file, previewUrl) => { setProofFile(file); setProofPreview(previewUrl); }}
-                        onRemove={() => { setProofFile(null); setProofPreview(null); }}
-                        onError={(msg) => setError(msg)}
-                        allowGallery
-                    />
+                <div className="bg-white rounded-xl p-4">
+                    <Field label="Transfer Screenshot" required>
+                        <PhotoPicker
+                            previewUrl={proofPreview}
+                            onCapture={(file, previewUrl) => { setProofFile(file); setProofPreview(previewUrl); }}
+                            onRemove={() => { setProofFile(null); setProofPreview(null); }}
+                            onError={(msg) => setError(msg)}
+                            allowGallery
+                        />
+                    </Field>
                 </div>
             )}
 
             {/* Note to the staff member — they see this on their payslip, so it
                 is addressed to them rather than kept as an internal reference. */}
             <div className="bg-white rounded-xl p-4 space-y-2">
-                <div className="flex items-baseline justify-between">
-                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Note for staff</p>
-                    <span className="text-xs text-gray-400">Optional</span>
-                </div>
-                <textarea
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    maxLength={500}
-                    rows={3}
-                    placeholder={isSkip
-                        ? "e.g. No shifts worked this fortnight"
-                        : "e.g. Paid early for the holiday, includes W30 shortfall"}
-                    className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-3 text-base text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand/90 resize-none"
-                />
+                <Field label="Note for staff">
+                    <Textarea
+                        value={notes}
+                        onChange={setNotes}
+                        maxLength={500}
+                        rows={3}
+                        placeholder={isSkip
+                            ? "e.g. No shifts worked this fortnight"
+                            : "e.g. Paid early for the holiday, includes W30 shortfall"}
+                    />
+                </Field>
                 <Callout>
                     Shown to {staffName} on their payslip. Can&apos;t be edited after
                     {isSkip ? " the period is closed." : " payment."}

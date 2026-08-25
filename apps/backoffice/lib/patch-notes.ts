@@ -9,6 +9,15 @@ import type { PatchNote } from "@tea-pos/ui/custom/PatchNotes";
  */
 export const patchNotes: PatchNote[] = [
     {
+        version: "1.0.13",
+        date: "2026-08-25",
+        entries: [
+            { kind: "improved", text: "A pencil shows which fields you can type in, and a lock shows which you cannot." },
+            { kind: "improved", text: "A red star now marks every field you have to fill in." },
+            { kind: "fixed", text: "An automatic claim type can no longer be created without minimum hours, which stopped it from ever paying out." },
+        ],
+    },
+    {
         version: "1.0.11",
         date: "2026-08-25",
         entries: [

@@ -7,6 +7,7 @@ import { SummaryPhotoThumbnail } from "@/app/[tenantSlug]/mobile/home/manage/_co
 import CopyableField from "@/components/shared/CopyableField";
 import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
 import { useT } from "@/lib/hooks/useT";
+import { Field } from "@tea-pos/ui/custom/Field";
 
 export type SummaryShape = {
     id: string;
@@ -190,10 +191,7 @@ export function SummaryDetailsCard({
 
     const cashInputSection = showConfirmation && (
         <div className="bg-white rounded-2xl p-3 space-y-3">
-            <div className="space-y-1.5">
-                <p className="text-xs font-semibold text-gray-900 uppercase tracking-wide">
-                    {t("manage.cashStep.actualCash")}
-                </p>
+            <Field label={t("manage.cashStep.actualCash")} required>
                 <NumberInput
                     value={actualCash ?? summary.expectedCash}
                     currency
@@ -203,7 +201,7 @@ export function SummaryDetailsCard({
                     {t("manage.cashStep.expected")}{" "}
                     {formatRupiah(summary.expectedCash)}
                 </p>
-            </div>
+            </Field>
             {effectiveVariance !== null && (
                 <div
                     className={`p-2 rounded-lg ${effectiveVariance >= 0 ? "bg-green-50" : "bg-red-50"}`}
@@ -224,6 +222,10 @@ export function SummaryDetailsCard({
 
     const financialsSection = (
         <div className="bg-white rounded-2xl p-3 space-y-2">
+            <h4 className="text-sm font-semibold text-gray-800">
+                {t("daily.cashSummary")}
+            </h4>
+
             {/* Opening Balance - Full width */}
             <div className="bg-blue-100 p-2 rounded-lg">
                 <p className="text-xs font-semibold text-gray-700">

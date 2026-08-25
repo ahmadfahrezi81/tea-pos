@@ -9,6 +9,16 @@ import type { PatchNote } from "@tea-pos/ui/custom/PatchNotes";
  */
 export const patchNotes: PatchNote[] = [
     {
+        version: "5.4.12",
+        date: "2026-08-25",
+        entries: [
+            { kind: "improved", text: "A pencil shows which fields you can type in, and a lock shows which you cannot." },
+            { kind: "improved", text: "A red star now marks every field you have to fill in." },
+            { kind: "improved", text: "The work days calendar is easier to read, with a green dot on this week." },
+            { kind: "improved", text: "New Claim asks for the receipt photo before the notes." },
+        ],
+    },
+    {
         version: "5.4.10",
         date: "2026-08-25",
         entries: [

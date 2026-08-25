@@ -10,6 +10,7 @@ import { X, ChevronRight } from "lucide-react";
 import type { PayrollUserInfoResponse } from "@tea-pos/features/payroll-user-info/schema";
 import { useT } from "@/lib/hooks/useT";
 import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
+import { Field } from "@tea-pos/ui/custom/Field";
 
 function BankPickerDrawer({
     isOpen,
@@ -105,8 +106,7 @@ function EditForm({ info, update }: {
         <>
             <div className="space-y-4">
                 <div className="bg-white rounded-xl p-4 space-y-4">
-                    <div className="space-y-1.5">
-                        <p className="text-xs font-medium text-gray-500">{t("account.bankNameLabel")}</p>
+                    <Field label={t("account.bankNameLabel")}>
                         <button
                             onClick={() => setIsBankPickerOpen(true)}
                             className="w-full flex items-center justify-between px-3 py-2.5 border border-gray-200 rounded-xl text-base focus:outline-none active:ring-2 active:ring-brand/40 text-left"
@@ -116,9 +116,8 @@ function EditForm({ info, update }: {
                             </span>
                             <ChevronRight size={18} className="text-gray-400 shrink-0" />
                         </button>
-                    </div>
-                    <div className="space-y-1.5">
-                        <p className="text-xs font-medium text-gray-500">{t("account.accountNumberLabel")}</p>
+                    </Field>
+                    <Field label={t("account.accountNumberLabel")}>
                         <TextInput
                             inputMode="numeric"
                             value={bankAccountNumber}
@@ -128,9 +127,8 @@ function EditForm({ info, update }: {
                             onChange={(v) => setBankAccountNumber(v.replace(/\D/g, "").slice(0, 50))}
                             placeholder="1234567890"
                         />
-                    </div>
-                    <div className="space-y-1.5">
-                        <p className="text-xs font-medium text-gray-500">{t("account.accountHolderLabel")}</p>
+                    </Field>
+                    <Field label={t("account.accountHolderLabel")}>
                         <div className="uppercase">
                             <TextInput
                                 value={bankAccountHolder}
@@ -138,7 +136,7 @@ function EditForm({ info, update }: {
                                 placeholder={t("account.accountHolderPlaceholder")}
                             />
                         </div>
-                    </div>
+                    </Field>
                 </div>
 
                 <button

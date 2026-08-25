@@ -8,12 +8,13 @@ import { useSession } from "@/lib/hooks/sessions/useSession";
 import { useSupplyRequests } from "@/lib/hooks/requests/useSupplyRequests";
 import { useUpload } from "@/lib/hooks/upload/useUpload";
 import { SUPPLY_REQUEST_TYPES, SUPPLY_REQUEST_TYPE_LABELS } from "@tea-pos/features/requests/schema";
-import { SelectInput } from "../../_components/shared/SelectInput";
-import { Textarea } from "../../_components/shared/Textarea";
-import { PhotoPicker } from "../../_components/shared/PhotoPicker";
+import { SelectInput } from "@tea-pos/ui/custom/SelectInput";
+import { Textarea } from "@tea-pos/ui/custom/Textarea";
+import { PhotoPicker } from "@/components/shared/PhotoPicker";
 import { FormFooter } from "@/components/shared/FormFooter";
 import { useT } from "@/lib/hooks/useT";
 import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
+import { Field } from "@tea-pos/ui/custom/Field";
 
 export default function AddRequestPage() {
     const router = useRouter();
@@ -68,8 +69,7 @@ export default function AddRequestPage() {
     return (
         <div className="space-y-3 pb-4">
             <div className="bg-white rounded-xl p-4 space-y-4">
-                <div className="space-y-1.5">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("manage.type")}</p>
+                <Field label={t("manage.type")} required>
                     <SelectInput
                         options={TYPE_OPTIONS}
                         value={selectedType}
@@ -80,10 +80,9 @@ export default function AddRequestPage() {
                         onOtherChange={setCustomTypeText}
                         otherPlaceholder="e.g. Napkins, Straws..."
                     />
-                </div>
+                </Field>
 
-                <div className="space-y-1.5">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("manage.notes")}</p>
+                <Field label={t("manage.notes")}>
                     <Textarea
                         value={notes}
                         onChange={setNotes}
@@ -91,16 +90,15 @@ export default function AddRequestPage() {
                         rows={3}
                         maxLength={500}
                     />
-                </div>
+                </Field>
 
-                <div className="space-y-1.5">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("manage.photo")}</p>
+                <Field label={t("manage.photo")}>
                     <PhotoPicker
                         previewUrl={photoPreview}
                         onCapture={(file, url) => { setPhotoFile(file); setPhotoPreview(url); }}
                         onRemove={() => { setPhotoFile(null); setPhotoPreview(null); }}
                     />
-                </div>
+                </Field>
             </div>
 
             <FormFooter

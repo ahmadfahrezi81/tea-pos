@@ -8,9 +8,11 @@ import { usePayrollClaims, useClaimableTypes, useClaimableDates } from "@/lib/ho
 import { usePayFrequency } from "@/lib/context/PayFrequencyContext";
 import { getPayWindowBounds } from "@tea-pos/utils/week";
 import { useUpload } from "@/lib/hooks/upload/useUpload";
-import { SelectInput } from "../../../home/manage/_components/shared/SelectInput";
-import { Textarea } from "../../../home/manage/_components/shared/Textarea";
-import { PhotoPicker } from "../../../home/manage/_components/shared/PhotoPicker";
+import { SelectInput } from "@tea-pos/ui/custom/SelectInput";
+import { Textarea } from "@tea-pos/ui/custom/Textarea";
+import { PhotoPicker } from "@/components/shared/PhotoPicker";
+import { ReadOnlyInput } from "@tea-pos/ui/custom/ReadOnlyInput";
+import { Field } from "@tea-pos/ui/custom/Field";
 import { FormFooter } from "@/components/shared/FormFooter";
 import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
 import { format, parseISO } from "date-fns";
@@ -75,8 +77,7 @@ export default function AddClaimPage() {
     return (
         <div className="space-y-3 pb-4">
             <div className="bg-white rounded-xl p-4 space-y-4">
-                <div className="space-y-1.5">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("claims.typeLabel")}</p>
+                <Field label={t("claims.typeLabel")} required>
                     {typesLoading ? (
                         <div className="h-12 bg-gray-100 rounded-xl animate-pulse" />
                     ) : types.length === 0 ? (
@@ -100,47 +101,43 @@ export default function AddClaimPage() {
                             placeholder={t("claims.selectType")}
                         />
                     )}
-                </div>
+                </Field>
 
                 {selectedType && <>
-                    <div className="space-y-1.5">
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("claims.amountLabel")}</p>
-                        <div className="px-3 py-2.5 border border-gray-200 rounded-xl bg-gray-50">
-                            <p className="text-base font-medium text-gray-800">Rp {amount.toLocaleString("id-ID")}</p>
-                        </div>
-                    </div>
+                    <Field label={t("claims.amountLabel")} required>
+                        <ReadOnlyInput value={`Rp ${amount.toLocaleString("id-ID")}`} />
+                    </Field>
 
-                    <div className="space-y-1.5">
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("claims.dateLabel")}</p>
+                    <Field label={t("claims.dateLabel")} required>
                         {isWeekly ? (
                             datesLoading ? (
                                 <div className="h-12 bg-gray-100 rounded-xl animate-pulse" />
                             ) : claimableDates.length === 0 ? (
                                 <p className="text-sm text-gray-400 py-2">{t("claims.noWorkedDates")}</p>
                             ) : (
-                                <select
+                                <SelectInput
+                                    options={claimableDates.map((d: string) => ({
+                                        value: d,
+                                        label: format(parseISO(d), "EEE, d MMM yyyy"),
+                                    }))}
                                     value={effectiveDate}
-                                    onChange={(e) => setDate(e.target.value)}
-                                    className="w-full p-3 border border-gray-200 rounded-xl text-base bg-white focus:ring-2 focus:ring-brand/90 focus:outline-none"
-                                >
-                                    {claimableDates.map((d: string) => (
-                                        <option key={d} value={d}>
-                                            {format(parseISO(d), "EEE, d MMM yyyy")}
-                                        </option>
-                                    ))}
-                                </select>
+                                    onChange={setDate}
+                                />
                             )
                         ) : (
-                            <div className="px-3 py-2.5 border border-gray-200 rounded-xl bg-gray-50">
-                                <p className="text-base font-medium text-gray-800">
-                                    {format(parseISO(effectiveDate), "EEE, d MMM yyyy")}
-                                </p>
-                            </div>
+                            <ReadOnlyInput value={format(parseISO(effectiveDate), "EEE, d MMM yyyy")} />
                         )}
-                    </div>
+                    </Field>
 
-                    <div className="space-y-1.5">
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("claims.notesLabel")}</p>
+                    <Field label={t("claims.receiptPhoto")}>
+                        <PhotoPicker
+                            previewUrl={photoPreview}
+                            onCapture={(file, url) => { setPhotoFile(file); setPhotoPreview(url); }}
+                            onRemove={() => { setPhotoFile(null); setPhotoPreview(null); }}
+                            allowGallery
+                        />
+                    </Field>
+                    <Field label={t("claims.notesLabel")}>
                         <Textarea
                             value={notes}
                             onChange={setNotes}
@@ -148,17 +145,7 @@ export default function AddClaimPage() {
                             rows={3}
                             maxLength={500}
                         />
-                    </div>
-
-                    <div className="space-y-1.5">
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("claims.receiptPhoto")}</p>
-                        <PhotoPicker
-                            previewUrl={photoPreview}
-                            onCapture={(file, url) => { setPhotoFile(file); setPhotoPreview(url); }}
-                            onRemove={() => { setPhotoFile(null); setPhotoPreview(null); }}
-                            allowGallery
-                        />
-                    </div>
+                    </Field>
                 </>}
             </div>
 

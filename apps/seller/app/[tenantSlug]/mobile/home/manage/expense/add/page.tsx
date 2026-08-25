@@ -4,13 +4,14 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/context/StoreContext";
 import { useSummaries } from "@/lib/hooks/summaries/useDailySummaries";
-import { SelectInput } from "../../_components/shared/SelectInput";
+import { SelectInput } from "@tea-pos/ui/custom/SelectInput";
 import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
 import { FormFooter } from "@/components/shared/FormFooter";
 import { getTodayLocalStr, getCurrentLocalMonth } from "@tea-pos/utils/time";
 import { useT } from "@/lib/hooks/useT";
 import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
 import type { DailySummaryResponse } from "@tea-pos/features/summaries/schema";
+import { Field } from "@tea-pos/ui/custom/Field";
 
 const EXPENSE_OPTIONS = [
     { value: "Ice", label: "Ice" },
@@ -77,8 +78,7 @@ export default function AddExpensePage() {
     return (
         <div className="space-y-3 pb-4">
             <div className="bg-white rounded-xl p-4 space-y-4">
-                <div className="space-y-1.5">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("manage.type")}</p>
+                <Field label={t("manage.type")}>
                     <SelectInput
                         options={EXPENSE_OPTIONS}
                         value={label}
@@ -88,12 +88,11 @@ export default function AddExpensePage() {
                         onOtherChange={setCustomLabel}
                         otherPlaceholder="e.g. Maintenance, Transport..."
                     />
-                </div>
+                </Field>
 
-                <div className="space-y-1.5">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("manage.amount")}</p>
+                <Field label={t("manage.amount")} required>
                     <NumberInput value={amount || null} onChange={(v) => setAmount(v ?? 0)} currency />
-                </div>
+                </Field>
             </div>
 
             <FormFooter

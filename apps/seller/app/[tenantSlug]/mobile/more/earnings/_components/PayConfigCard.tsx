@@ -64,6 +64,7 @@ export function PayConfigCard() {
 
             {/* Pay config details */}
             <div className="bg-white p-4 rounded-2xl space-y-2 text-sm">
+                <h3 className="font-semibold text-gray-800">{t("earnings.payConfig")}</h3>
                 {rows.map(({ label, value }) => (
                     <div key={label} className="flex justify-between items-center">
                         <span className="text-gray-500">{label}</span>
