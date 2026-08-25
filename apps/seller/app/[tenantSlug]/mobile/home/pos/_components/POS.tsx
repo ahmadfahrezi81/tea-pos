@@ -11,6 +11,7 @@ import type { ProductResponse } from "@tea-pos/features/products/schema";
 import { CartDrawer } from "./CartDrawer";
 import { FooterSlot } from "@tea-pos/shell/FooterSlotContext";
 import { useT } from "@/lib/hooks/useT";
+import { Skeleton } from "@tea-pos/ui/custom/Skeleton";
 
 // ─── Product Card ─────────────────────────────────────────────────────────────
 
@@ -203,16 +204,16 @@ export default function POS() {
             <div className="grid grid-cols-2 gap-3">
                 {productsLoading
                     ? Array.from({ length: 6 }).map((_, i) => (
-                        <div key={i} className="bg-white rounded-2xl border border-slate-200 overflow-hidden animate-pulse">
+                        <div key={i} className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
                             <div className="p-3">
                                 <div className="flex gap-2 mb-3">
-                                    <div className="shrink-0 w-[50px] h-[50px] bg-gray-200 rounded" />
+                                    <Skeleton delay={i * 90} className="shrink-0 w-[50px] h-[50px] rounded" />
                                     <div className="flex-1 space-y-2 pt-1">
-                                        <div className="h-4 bg-gray-200 rounded w-3/4" />
-                                        <div className="h-4 bg-gray-200 rounded w-1/2" />
+                                        <Skeleton delay={i * 90 + 60} className="h-4 w-3/4 rounded" />
+                                        <Skeleton delay={i * 90 + 120} className="h-4 w-1/2 rounded" />
                                     </div>
                                 </div>
-                                <div className="h-8 bg-gray-100 rounded-lg" />
+                                <Skeleton delay={i * 90 + 180} className="h-8 rounded-lg" />
                             </div>
                         </div>
                     ))

@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import { ChartConfig, ChartContainer } from "@tea-pos/ui/components/chart";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
+import { SkeletonChart } from "@tea-pos/ui/custom/Skeleton";
 
 interface Props {
     storeId: string;
@@ -154,14 +155,7 @@ export default function TeaWasteChart({ storeId, month }: Props) {
 
     if (isLoading) {
         return (
-            <div
-                className="bg-gray-200 rounded-xl animate-pulse relative"
-                style={{ height: 220 }}
-            >
-                <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-6 h-6 border-3 border-brand border-t-transparent rounded-full animate-spin" />
-                </div>
-            </div>
+            <SkeletonChart height={220} />
         );
     }
 

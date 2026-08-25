@@ -14,6 +14,7 @@ import { ChartConfig, ChartContainer } from "@tea-pos/ui/components/chart";
 import { useBrandColor } from "@/lib/hooks/useBrandColor";
 import { useT } from "@/lib/hooks/useT";
 import type { DayOfWeekSalesDataPoint } from "@tea-pos/features/analytics/schema";
+import { SkeletonChart } from "@tea-pos/ui/custom/Skeleton";
 
 interface Props {
     storeId: string;
@@ -76,14 +77,7 @@ export default function DayOfWeekChart({ storeId, month }: Props) {
 
     if (isLoading) {
         return (
-            <div
-                className="bg-gray-200 rounded-xl animate-pulse relative"
-                style={{ height: 372 }}
-            >
-                <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-6 h-6 border-3 border-brand border-t-transparent rounded-full animate-spin" />
-                </div>
-            </div>
+            <SkeletonChart height={372} />
         );
     }
 

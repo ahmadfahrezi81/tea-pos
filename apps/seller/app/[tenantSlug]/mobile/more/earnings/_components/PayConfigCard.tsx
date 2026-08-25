@@ -3,7 +3,7 @@
 import { usePayrollUserInfo } from "@/lib/hooks/payroll/usePayrollUserInfo";
 import { usePayFrequency } from "@/lib/context/PayFrequencyContext";
 import { useT } from "@/lib/hooks/useT";
-import { SkeletonValue } from "@/components/shared/SkeletonValue";
+import { SkeletonValue } from "@tea-pos/ui/custom/Skeleton";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 import { getPayWindowBounds, getExpectedPayoutDate } from "@tea-pos/utils/week";
 import { format, parseISO } from "date-fns";

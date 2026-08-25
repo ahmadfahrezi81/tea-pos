@@ -6,6 +6,7 @@ import { useSessionsBySummary } from "@/lib/hooks/sessions/useSessionsBySummary"
 import type { SessionDetailItem } from "@tea-pos/features/sessions/schema";
 import { UserCircle, ArrowRightLeft } from "lucide-react";
 import { useT } from "@/lib/hooks/useT";
+import { Skeleton } from "@tea-pos/ui/custom/Skeleton";
 
 function formatTime(iso: string): string {
     const tz = parseInt(process.env.NEXT_PUBLIC_TIMEZONE_OFFSET ?? "7", 10);
@@ -106,12 +107,12 @@ export default function SessionsPage() {
             {isLoading ? (
                 <div className="space-y-3">
                     {Array.from({ length: 3 }).map((_, i) => (
-                        <div key={i} className="bg-white rounded-2xl p-4 animate-pulse space-y-3">
+                        <div key={i} className="bg-white rounded-2xl p-4 space-y-3">
                             <div className="flex items-center gap-2.5">
-                                <div className="w-9 h-9 rounded-xl bg-gray-200 shrink-0" />
-                                <div className="h-4 w-28 bg-gray-200 rounded" />
+                                <Skeleton delay={i * 90} className="w-9 h-9 rounded-xl shrink-0" />
+                                <Skeleton delay={i * 90 + 60} className="h-4 w-28 rounded" />
                             </div>
-                            <div className="h-10 bg-gray-100 rounded-xl" />
+                            <Skeleton delay={i * 90 + 120} className="h-10 rounded-xl" />
                         </div>
                     ))}
                 </div>

@@ -12,6 +12,7 @@ import { usePayouts } from "@/lib/hooks/payroll/usePayroll";
 import { useAllPayrollUserInfos } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
 import { usePayFrequency } from "@/lib/context/PayFrequencyContext";
 import { isNonSeller } from "@/lib/utils/non-sellers";
+import { Skeleton } from "@tea-pos/ui/custom/Skeleton";
 
 /* The current pay window totalled across every selling staff member — the same
    card a single payout gets on the payouts list, minus the name plate, so the
@@ -54,7 +55,7 @@ function CurrentPeriodTotals() {
     if (!window) return null;
 
     if (isLoadingInfos || isLoadingPayouts) {
-        return <div className="rounded-xl h-32 animate-pulse bg-white/60" />;
+        return <Skeleton className="rounded-xl h-32" />;
     }
 
     const { endDate } = window;

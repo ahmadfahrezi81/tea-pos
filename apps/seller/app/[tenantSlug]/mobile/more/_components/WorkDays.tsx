@@ -3,6 +3,7 @@
 import { useRef, useEffect } from "react";
 import { useSessionActivity } from "@/lib/hooks/sessions/useSessionActivity";
 import { getWeekInfo } from "@tea-pos/utils/week";
+import { Skeleton } from "@tea-pos/ui/custom/Skeleton";
 
 const PAST_WEEKS = 3;
 const TZ_MS = parseInt(process.env.NEXT_PUBLIC_TIMEZONE_OFFSET ?? "7") * 3_600_000;
@@ -46,7 +47,7 @@ export default function WorkDays() {
     if (isLoading) {
         return (
             <div className="bg-white rounded-2xl px-3 py-3">
-                <div className="h-16 bg-gray-100 rounded-lg animate-pulse" />
+                <Skeleton className="h-16 rounded-lg" />
             </div>
         );
     }

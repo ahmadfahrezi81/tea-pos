@@ -9,7 +9,7 @@ import { parseISO, format, getISOWeek } from "date-fns";
 import { CalendarDays } from "lucide-react";
 import type { PayoutResponse } from "@tea-pos/features/payroll/schema";
 import { useT } from "@/lib/hooks/useT";
-import { SkeletonValue } from "@/components/shared/SkeletonValue";
+import { SkeletonValue } from "@tea-pos/ui/custom/Skeleton";
 import { PayConfigCard } from "./_components/PayConfigCard";
 import { toIndonesiaMonthYear } from "@tea-pos/utils/server-config/timezone";
 

@@ -1,13 +1,14 @@
 "use client";
 // app/mobile/chart/page.tsx
 import dynamic from "next/dynamic";
+import { Skeleton } from "@tea-pos/ui/custom/Skeleton";
 
 const DailyChart = dynamic(
     () => import("./_components/DailyChart"),
     {
         ssr: false,
         loading: () => (
-            <div className="h-64 animate-pulse bg-gray-100 rounded-xl m-4" />
+            <Skeleton className="h-64 rounded-xl m-4" />
         ),
     },
 );

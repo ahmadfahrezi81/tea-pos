@@ -309,6 +309,66 @@ already looking at.
 
 ---
 
+## Form Fields (`packages/ui/custom`)
+
+Every labelled form field in both apps is a `Field` — see task 058.
+
+```tsx
+<Field label="Amount" required>
+    <NumberInput value={amount} onChange={setAmount} currency />
+</Field>
+```
+
+- **Required is a red asterisk; optional is unmarked.** Never write
+  "(optional)" — it puts the longest word on the least important field.
+- **`required` must match what the screen enforces.** Read it off the submit
+  gate. A marker that disagrees with the button teaches the reader to ignore
+  the marker.
+- No helper text under a field. If it needs a sentence, the label is wrong.
+- `Field` is a wrapper, not a `label` prop: the label sits above six different
+  controls, and some fields swap their control by state. Its label is a `<p>` —
+  `TextInput` and `NumberInput` render their own `<label>`, and nesting is
+  invalid HTML.
+
+**The three input shells** share one look (`border-2 border-gray-100`,
+`rounded-2xl`, `p-4 px-3`, `bg-gray-50`) and differ only in what they claim:
+
+| Control | Trailing icon | Means |
+| ------- | ------------- | ----- |
+| `TextInput`, `NumberInput` | pencil, only when filled, hidden on focus | editable |
+| `ReadOnlyInput` | padlock | not editable |
+
+Also shared: `SelectInput`, `Textarea`. **Known gap:** those two still wear the
+older, smaller shell — converging them needs a size decision, not a
+find-and-replace.
+
+`PhotoPicker` is deliberately **not** in `packages/ui` — it needs `useT` and
+`lib/compressPhoto`, and this package has no i18n by design. Each app keeps its
+own copy under `components/shared/`.
+
+---
+
+## Skeletons (`packages/ui/custom/Skeleton.tsx`)
+
+`Skeleton`, `SkeletonText`, `SkeletonValue`, `SkeletonChart` — see task 059.
+Never hand-write `animate-pulse` for a placeholder.
+
+- **The card holds still; the bars inside it move.** A pulsing card reads as
+  broken, not as loading.
+- **Stagger a list**: pass `delay={i * 90}` so the sweep travels down the rows
+  instead of firing at once.
+- The animation is `.skeleton` in each app's `globals.css`, beside the
+  `indeterminate` keyframes. It is a sweeping highlight, not an opacity pulse,
+  and it is dropped under `prefers-reduced-motion`.
+
+**A skeleton may only appear after the shell is `ready`.** Before that the boot
+loader covers the whole shell — see Boot Path. Data seeded by `BootFallback`
+(the store list) needs no skeleton at all: it is in the SWR cache at first paint.
+
+`animate-pulse` is still correct for a *live* indicator, such as the pending-payment dots in `CartDrawer` — something that is happening, rather than something not yet here.
+
+---
+
 ## Mobile Shell (`packages/shell`)
 
 Both mobile apps render inside the shared `MobileShell` — header, scrollable content region, and bottom chrome as three real flex children, so no height is ever measured or guessed.

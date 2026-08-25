@@ -12,6 +12,7 @@ import { ReceiptText, CalendarDays } from "lucide-react";
 import { format } from "date-fns";
 import { useT } from "@/lib/hooks/useT";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
+import { Skeleton } from "@tea-pos/ui/custom/Skeleton";
 
 const STATUS_STYLE: Record<string, string> = {
     pending: "bg-yellow-100 text-yellow-700",
@@ -45,10 +46,7 @@ export default function ReimbursementsPage() {
                 {typesLoading ? (
                     <div className="space-y-2">
                         {[1, 2].map((i) => (
-                            <div
-                                key={i}
-                                className="h-12 bg-gray-100 rounded-xl animate-pulse"
-                            />
+                            <Skeleton key={i} delay={i * 90} className="h-12 rounded-xl" />
                         ))}
                     </div>
                 ) : types.length === 0 ? (

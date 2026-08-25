@@ -6,28 +6,29 @@ import { useStore } from "@/lib/context/StoreContext";
 import { useT } from "@/lib/hooks/useT";
 
 import dynamic from "next/dynamic";
+import { Skeleton } from "@tea-pos/ui/custom/Skeleton";
 const DailySalesChart = dynamic(() => import("./DailySalesChart"), {
     ssr: false,
     loading: () => (
-        <div className="h-48 animate-pulse bg-gray-100 rounded-xl" />
+        <Skeleton className="h-48 rounded-xl" />
     ),
 });
 const DayOfWeekChart = dynamic(() => import("./DayOfWeekChart"), {
     ssr: false,
     loading: () => (
-        <div className="h-48 animate-pulse bg-gray-100 rounded-xl" />
+        <Skeleton className="h-48 rounded-xl" />
     ),
 });
 const ProductSalesChart = dynamic(() => import("./ProductSalesChart"), {
     ssr: false,
     loading: () => (
-        <div className="h-48 animate-pulse bg-gray-100 rounded-xl" />
+        <Skeleton className="h-48 rounded-xl" />
     ),
 });
 const TeaWasteChart = dynamic(() => import("./TeaWasteChart"), {
     ssr: false,
     loading: () => (
-        <div className="h-48 animate-pulse bg-gray-100 rounded-xl" />
+        <Skeleton className="h-48 rounded-xl" />
     ),
 });
 

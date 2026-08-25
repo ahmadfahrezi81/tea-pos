@@ -16,6 +16,7 @@ import { FormFooter } from "@/components/shared/FormFooter";
 import { Callout } from "@tea-pos/ui/custom/Callout";
 import { Field } from "@tea-pos/ui/custom/Field";
 import { Textarea } from "@tea-pos/ui/custom/Textarea";
+import { Skeleton } from "@tea-pos/ui/custom/Skeleton";
 
 function CopyableValue({ value, prefix, className }: { value: string; prefix?: string; className?: string }) {
     const [copied, setCopied] = useState(false);
@@ -84,7 +85,12 @@ export default function PayConfirmPage({
     if (payslipLoading || infoLoading) {
         return (
             <div className="space-y-3">
-                {[1, 2, 3].map((i) => <div key={i} className="bg-white rounded-xl p-4 h-20 animate-pulse" />)}
+                {[1, 2, 3].map((i) => (
+                    <div key={i} className="bg-white rounded-xl p-4 space-y-2.5">
+                        <Skeleton delay={i * 90} className="h-4 w-28" />
+                        <Skeleton delay={i * 90 + 60} className="h-3.5 w-2/3" />
+                    </div>
+                ))}
             </div>
         );
     }

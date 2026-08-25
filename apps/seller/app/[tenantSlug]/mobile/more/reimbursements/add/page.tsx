@@ -16,6 +16,7 @@ import { Field } from "@tea-pos/ui/custom/Field";
 import { FormFooter } from "@/components/shared/FormFooter";
 import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
 import { format, parseISO } from "date-fns";
+import { Skeleton } from "@tea-pos/ui/custom/Skeleton";
 
 function getLocalToday() {
     const offset = parseInt(process.env.NEXT_PUBLIC_TIMEZONE_OFFSET ?? "7");
@@ -79,7 +80,7 @@ export default function AddClaimPage() {
             <div className="bg-white rounded-xl p-4 space-y-4">
                 <Field label={t("claims.typeLabel")} required>
                     {typesLoading ? (
-                        <div className="h-12 bg-gray-100 rounded-xl animate-pulse" />
+                        <Skeleton className="h-12 rounded-xl" />
                     ) : types.length === 0 ? (
                         <p className="text-sm text-gray-400 py-2">{t("claims.noClaimEntitlements")}</p>
                     ) : typeOptions.length === 0 ? (
@@ -111,7 +112,7 @@ export default function AddClaimPage() {
                     <Field label={t("claims.dateLabel")} required>
                         {isWeekly ? (
                             datesLoading ? (
-                                <div className="h-12 bg-gray-100 rounded-xl animate-pulse" />
+                                <Skeleton className="h-12 rounded-xl" />
                             ) : claimableDates.length === 0 ? (
                                 <p className="text-sm text-gray-400 py-2">{t("claims.noWorkedDates")}</p>
                             ) : (

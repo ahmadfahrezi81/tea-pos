@@ -4,6 +4,7 @@ import { usePayrollUserInfo } from "@/lib/hooks/payroll/usePayrollUserInfo";
 import { Copy, Check } from "lucide-react";
 import { useState } from "react";
 import { useT } from "@/lib/hooks/useT";
+import { Skeleton } from "@tea-pos/ui/custom/Skeleton";
 
 const FieldRow = ({ label, value, copyable = false }: { label: string; value: string; copyable?: boolean }) => {
     const [copied, setCopied] = useState(false);
@@ -29,8 +30,8 @@ const FieldRow = ({ label, value, copyable = false }: { label: string; value: st
 
 const SkeletonRow = () => (
     <div className="py-4 border-b border-gray-100 last:border-none space-y-2">
-        <div className="h-3 w-20 bg-gray-200 rounded animate-pulse" />
-        <div className="h-5 w-40 bg-gray-100 rounded animate-pulse" />
+        <Skeleton className="h-3 w-20 rounded" />
+        <Skeleton className="h-5 w-40 rounded" />
     </div>
 );
 

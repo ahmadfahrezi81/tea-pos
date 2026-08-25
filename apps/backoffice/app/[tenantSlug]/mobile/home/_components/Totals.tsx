@@ -2,6 +2,7 @@
 
 import { useStoreFilter } from "@/lib/context/StoreFilterContext";
 import { useDailySales } from "@/lib/hooks/home/useHome";
+import { Skeleton } from "@tea-pos/ui/custom/Skeleton";
 
 /* The numbers the chart beside it only implies: what was sold over the same
    fortnight, in orders, cups and money. Same SWR key and window as the chart,
@@ -22,7 +23,7 @@ export default function Totals() {
     if (isLoading) {
         return (
             <div className="bg-white rounded-2xl p-3 aspect-square">
-                <div className="h-full bg-gray-100 rounded-lg animate-pulse" />
+                <Skeleton className="h-full rounded-lg" />
             </div>
         );
     }

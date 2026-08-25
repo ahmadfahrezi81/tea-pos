@@ -9,6 +9,7 @@ import { FormFooter } from "@/components/shared/FormFooter";
 import { Check, UserCircle } from "lucide-react";
 import Image from "next/image";
 import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
+import { Skeleton } from "@tea-pos/ui/custom/Skeleton";
 
 export default function StaffCommissionPage({ params }: { params: Promise<{ userId: string }> }) {
     const { userId } = use(params);
@@ -46,8 +47,16 @@ export default function StaffCommissionPage({ params }: { params: Promise<{ user
     if (isLoading) {
         return (
             <div className="space-y-3">
-                <div className="bg-white rounded-xl h-24 animate-pulse" />
-                {[1, 2, 3].map((i) => <div key={i} className="bg-white rounded-xl h-16 animate-pulse" />)}
+                <div className="bg-white rounded-xl p-4 space-y-2.5">
+                    <Skeleton className="h-5 w-40" />
+                    <Skeleton delay={80} className="h-3.5 w-24" />
+                </div>
+                {[1, 2, 3].map((i) => (
+                    <div key={i} className="bg-white rounded-xl p-4 flex items-center justify-between">
+                        <Skeleton delay={i * 90} className="h-4 w-32" />
+                        <Skeleton delay={i * 90 + 60} className="h-4 w-16" />
+                    </div>
+                ))}
             </div>
         );
     }

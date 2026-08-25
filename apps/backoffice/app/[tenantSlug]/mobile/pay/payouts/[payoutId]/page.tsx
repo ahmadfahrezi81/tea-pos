@@ -11,6 +11,7 @@ import { parseISO, format, eachDayOfInterval, getISOWeek } from "date-fns";
 import { getExpectedPayoutDate, getDaysUntilPayoutUnlock } from "@tea-pos/utils/week";
 import { Check, X, Copy, AlertTriangle } from "lucide-react";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
+import { Skeleton } from "@tea-pos/ui/custom/Skeleton";
 
 const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -94,7 +95,12 @@ export default function UserPayslipPage({
     };
 
     if (payslipLoading) {
-        return <div className="space-y-3">{[1, 2, 3].map((i) => <div key={i} className="bg-white rounded-xl p-4 h-20 animate-pulse" />)}</div>;
+        return <div className="space-y-3">{[1, 2, 3].map((i) => (
+                    <div key={i} className="bg-white rounded-xl p-4 space-y-2.5">
+                        <Skeleton delay={i * 90} className="h-4 w-28" />
+                        <Skeleton delay={i * 90 + 60} className="h-3.5 w-2/3" />
+                    </div>
+                ))}</div>;
     }
 
     if (!payslip || !("payout" in (payslip as object))) {

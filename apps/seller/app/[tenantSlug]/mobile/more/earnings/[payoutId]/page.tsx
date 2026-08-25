@@ -8,6 +8,7 @@ import { SummaryPhotoThumbnail } from "@/app/[tenantSlug]/mobile/home/manage/_co
 import { parseISO, format, eachDayOfInterval, getISOWeek } from "date-fns";
 import { useT } from "@/lib/hooks/useT";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
+import { Skeleton, SkeletonText } from "@tea-pos/ui/custom/Skeleton";
 
 const WEEKDAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 
@@ -26,7 +27,10 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
         return (
             <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                    <div key={i} className="bg-white rounded-xl h-20 animate-pulse" />
+                    <div key={i} className="bg-white rounded-2xl p-4 space-y-2.5">
+                        <Skeleton delay={i * 90} className="h-4 w-28" />
+                        <SkeletonText lines={2} delay={i * 90 + 60} />
+                    </div>
                 ))}
             </div>
         );

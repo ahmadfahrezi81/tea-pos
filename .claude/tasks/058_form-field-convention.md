@@ -119,7 +119,7 @@ import path without dragging app concerns into the UI package.
 
 `TextInput` and `NumberInput` live in `packages/ui`, so the pencil and the new
 shell reached backoffice whether or not anyone looked at it. Rather than leave it
-half-converted, the same pass ran there: **5 screens, 14 fields**, all on `Field`.
+half-converted, the same pass ran there: **5 screens, 18 fields**, all on `Field`.
 
 Backoffice has no i18n, so labels are plain strings — `<Field label="Name">`.
 
@@ -183,7 +183,9 @@ than a find-and-replace. Left for a follow-up on purpose.
 - New: `packages/ui/custom/Field.tsx`, `packages/ui/custom/ReadOnlyInput.tsx`
 - Moved: `SelectInput.tsx`, `Textarea.tsx` → `packages/ui/custom/`;
   `PhotoPicker.tsx` → `apps/seller/components/shared/`
-- Changed: `NumberInput.tsx`, `TextInput.tsx`, 10 seller screens, 5 backoffice screens
+- Changed: `NumberInput.tsx`, `TextInput.tsx`, 10 seller screens, 5 backoffice
+  screens — **46 fields across 15 files**, and no hand-written field label left
+  in either app
 - Translations: `(optional)` / `(opsional)` removed from `claims.notesLabel` and
   `claims.receiptPhoto`; `earnings.receiptAndNote` added
 - Deleted keys: `manage.required`, `manage.optional`, `manage.openingBalanceDesc`,
