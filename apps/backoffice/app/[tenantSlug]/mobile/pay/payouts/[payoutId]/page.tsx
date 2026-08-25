@@ -6,6 +6,7 @@ import { useTenantUsers } from "@/lib/hooks/users/useTenantUsers";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
 import { payrollApi } from "@/lib/api/payroll";
+import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
 import { apiFetch } from "@/lib/api/client";
 import { parseISO, format, eachDayOfInterval, getISOWeek } from "date-fns";
 import { getExpectedPayoutDate, getDaysUntilPayoutUnlock } from "@tea-pos/utils/week";
@@ -38,10 +39,26 @@ type Claim = {
     amount: number; status: "pending" | "approved" | "rejected";
 };
 
+type PayslipShape = {
+    payout: { id: string; startDate: string; endDate: string; status: string; paidAt: string | null; paymentProofUrl: string | null; notes: string | null };
+    commissions: Commission[];
+    claims: Claim[];
+    commissionsTotal: number;
+    claimsTotal: number;
+    totalPay: number;
+    ratePerCup: number;
+    totalOrders: number;
+    paidByName: string | null;
+};
+
 type ConfirmTarget = {
-    type: "commission" | "claim";
-    id: string; action: "approved" | "rejected";
+    type: "commission" | "claim" | "day";
+    /** The row id, or for a day the date it covers. */
+    id: string;
+    action: "approved" | "rejected";
     label: string; amount: number;
+    /** Days only: how many pending items the one tap decides. */
+    count?: number;
 };
 
 export default function UserPayslipPage({
@@ -56,6 +73,7 @@ export default function UserPayslipPage({
     const { url } = useTenantSlug();
     const { payslip, isLoading: payslipLoading, mutate } = usePayslip(payoutId, userId);
     const { users } = useTenantUsers();
+    const { showError } = useErrorSheet();
     const targetUser = users.find((u) => u.id === userId);
     const [confirmTarget, setConfirmTarget] = useState<ConfirmTarget | null>(null);
     const [busyId, setBusyId] = useState<string | null>(null);
@@ -80,6 +98,39 @@ export default function UserPayslipPage({
         if (!confirmTarget) return;
         setBusyId(confirmTarget.id);
         try {
+            if (confirmTarget.type === "day") {
+                if (!userId) return;
+                /* Optimistic: the server decides exactly the rows that are
+                   pending *now*, and pending is also all this flips locally, so
+                   the two agree. `revalidate: false` keeps the refetch from
+                   racing the paint — the revalidate below does it once, after. */
+                await mutate(
+                    (current: unknown) => {
+                        const cur = current as PayslipShape | undefined;
+                        if (!cur) return current;
+                        const settle = <T extends { date: string; status: string }>(rows: T[]) =>
+                            rows.map((r) =>
+                                r.date === confirmTarget.id && r.status === "pending"
+                                    ? { ...r, status: confirmTarget.action }
+                                    : r,
+                            );
+                        return {
+                            ...cur,
+                            commissions: settle(cur.commissions),
+                            claims: settle(cur.claims),
+                        };
+                    },
+                    { revalidate: false },
+                );
+                setConfirmTarget(null);
+                await payrollApi.reviewDay({
+                    userId,
+                    date: confirmTarget.id,
+                    status: confirmTarget.action,
+                });
+                await mutate();
+                return;
+            }
             if (confirmTarget.type === "commission") {
                 await payrollApi.updateCommission(confirmTarget.id, { status: confirmTarget.action });
             } else {
@@ -91,6 +142,13 @@ export default function UserPayslipPage({
             }
             await mutate();
             setConfirmTarget(null);
+        } catch (err) {
+            /* A settled payout answers 422, and the day branch has already
+               flipped the rows locally — so refetch the truth before showing
+               the error, or the screen would keep insisting on a decision the
+               server refused. */
+            await mutate();
+            showError(err);
         } finally { setBusyId(null); }
     };
 
@@ -107,17 +165,7 @@ export default function UserPayslipPage({
         return <p className="text-center text-gray-400 py-10">No payout found.</p>;
     }
 
-    const ps = payslip as {
-        payout: { id: string; startDate: string; endDate: string; status: string; paidAt: string | null; paymentProofUrl: string | null; notes: string | null };
-        commissions: Commission[];
-        claims: Claim[];
-        commissionsTotal: number;
-        claimsTotal: number;
-        totalPay: number;
-        ratePerCup: number;
-        totalOrders: number;
-        paidByName: string | null;
-    };
+    const ps = payslip as PayslipShape;
 
     const { payout, commissions, claims, totalPay, ratePerCup, totalOrders, paidByName } = ps;
     const status = payout.status;
@@ -323,6 +371,15 @@ export default function UserPayslipPage({
                             dayCommissions.filter((c) => c.status === "approved").reduce((s, c) => s + c.totalCommission, 0) +
                             dayClaims.filter((c) => c.status === "approved").reduce((s, c) => s + c.amount, 0);
                         const allReviewed = [...dayCommissions, ...dayClaims].every((c) => c.status !== "pending");
+                        const dayPending = [...dayCommissions, ...dayClaims].filter((c) => c.status === "pending");
+                        /* With one item left the per-row buttons already are the
+                           bulk action, so a second pair of them is just another
+                           thing to read. The row appears at two and disappears
+                           the moment the day is settled. */
+                        const showBulk = dayPending.length > 1;
+                        const dayPendingTotal =
+                            dayCommissions.filter((c) => c.status === "pending").reduce((sum, c) => sum + c.totalCommission, 0) +
+                            dayClaims.filter((c) => c.status === "pending").reduce((sum, c) => sum + c.amount, 0);
                         const day = parseISO(dateStr);
 
                         return (
@@ -388,6 +445,27 @@ export default function UserPayslipPage({
                                         </div>
                                     </div>
                                 ))}
+
+                                {showBulk && (
+                                    <div className="flex gap-2 px-4 py-3 border-t border-gray-100 bg-gray-50/60">
+                                        <button
+                                            disabled={!!busyId}
+                                            onClick={() => setConfirmTarget({ type: "day", id: dateStr, action: "rejected", label: format(day, "EEE, d MMM"), amount: dayPendingTotal, count: dayPending.length })}
+                                            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold text-red-600 bg-red-50 active:bg-red-100 disabled:opacity-40"
+                                        >
+                                            <X size={15} strokeWidth={2.5} />
+                                            Reject all
+                                        </button>
+                                        <button
+                                            disabled={!!busyId}
+                                            onClick={() => setConfirmTarget({ type: "day", id: dateStr, action: "approved", label: format(day, "EEE, d MMM"), amount: dayPendingTotal, count: dayPending.length })}
+                                            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold text-green-700 bg-green-50 active:bg-green-100 disabled:opacity-40"
+                                        >
+                                            <Check size={15} strokeWidth={2.5} />
+                                            Approve all
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         );
                     })}
@@ -412,7 +490,11 @@ export default function UserPayslipPage({
                 <div className="fixed inset-0 z-50 flex items-end bg-black/40" onClick={() => setConfirmTarget(null)}>
                     <div className="w-full bg-white rounded-t-2xl p-5 pb-8 space-y-4" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between">
-                            <p className="text-lg font-bold text-gray-900 capitalize">{confirmTarget.action} {confirmTarget.type}?</p>
+                            <p className="text-lg font-bold text-gray-900 capitalize">
+                                {confirmTarget.type === "day"
+                                    ? `${confirmTarget.action === "approved" ? "Approve" : "Reject"} all ${confirmTarget.count} items?`
+                                    : `${confirmTarget.action} ${confirmTarget.type}?`}
+                            </p>
                             <button onClick={() => setConfirmTarget(null)}><X size={20} className="text-gray-400" /></button>
                         </div>
                         <div className="bg-gray-50 rounded-xl p-4">

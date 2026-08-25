@@ -641,3 +641,100 @@ export async function assertPayoutNotPaid(
     const row = payout as { id: string; status: string; start_date: string; end_date: string };
     return { id: row.id, status: row.status, startDate: row.start_date, endDate: row.end_date };
 }
+
+// ─── Review a whole day at once ───────────────────────────────────────────────
+
+/**
+ * Approve or reject every *pending* commission and claim a user has on one
+ * date, in one call.
+ *
+ * Doing it per row costs one request each, and each of those repeats work that
+ * is a property of the day rather than of the row: the settled-payout guard, and
+ * the payout recompute afterwards. A four-item day was four requests and around
+ * twenty queries; this is one request and roughly seven, whatever the item
+ * count.
+ *
+ * `status = "pending"` is in the filter, not checked beforehand. That makes the
+ * two updates idempotent and race-safe: a row someone approved a second ago is
+ * simply not matched, so a double tap cannot overwrite a decision that was
+ * already made — and no read is needed to find out which rows to touch.
+ *
+ * Logging is one entry per table with a count, not one per row. Twenty audit
+ * rows saying the same thing at the same second describe the mechanism rather
+ * than the decision; the decision was "this day", once.
+ */
+export async function reviewPayrollDay(
+    supabase: SupabaseClient,
+    {
+        tenantId,
+        actorId,
+        userId,
+        date,
+        status,
+    }: {
+        tenantId: string;
+        actorId: string;
+        userId: string;
+        date: string;
+        status: "approved" | "rejected";
+    },
+): Promise<{ commissions: number; claims: number }> {
+    // Once per day rather than once per row — this is what the per-item path
+    // repeats needlessly.
+    const payoutRow = await assertPayoutNotPaid(supabase, { tenantId, userId, date });
+
+    const [commissionResult, claimResult] = await Promise.all([
+        supabase
+            .from("payroll_commissions")
+            .update({ status })
+            .eq("tenant_id", tenantId)
+            .eq("user_id", userId)
+            .eq("date", date)
+            .eq("status", "pending")
+            .select("id"),
+        supabase
+            .from("payroll_claims")
+            .update({ status })
+            .eq("tenant_id", tenantId)
+            .eq("user_id", userId)
+            .eq("date", date)
+            .eq("status", "pending")
+            .select("id"),
+    ]);
+
+    if (commissionResult.error) throw new Error(commissionResult.error.message);
+    if (claimResult.error) throw new Error(claimResult.error.message);
+
+    const commissions = commissionResult.data?.length ?? 0;
+    const claims = claimResult.data?.length ?? 0;
+
+    if (commissions === 0 && claims === 0) return { commissions, claims };
+
+    const log = createLogger(supabase, { tenantId, userId: actorId });
+    if (commissions > 0) {
+        log("payroll_commission_updated", {
+            refTable: "payroll_commissions",
+            metadata: { status, date, count: commissions, bulk: true },
+        });
+    }
+    if (claims > 0) {
+        log("claim_status_updated", {
+            refTable: "payroll_claims",
+            metadata: { status, date, count: claims, bulk: true },
+        });
+    }
+
+    // Also once, not once per row. Fire-and-forget for the same reason the
+    // single-row path does it: the decision is already saved, and a slow
+    // recompute must not hold up the response.
+    if (payoutRow) {
+        upsertPayout(supabase, {
+            tenantId,
+            userId,
+            startDate: payoutRow.startDate,
+            endDate: payoutRow.endDate,
+        }).catch((err) => console.warn("[payroll] upsertPayout failed after day review:", err));
+    }
+
+    return { commissions, claims };
+}

@@ -45,6 +45,31 @@ export const UpdatePayrollCommissionInput = z
     })
     .openapi({ title: "UpdatePayrollCommissionInput" });
 
+/**
+ * Review every pending item on one day at once.
+ *
+ * The day is addressed by (user, date) rather than by a list of row ids: the
+ * client would have to send ids it read a moment ago, and anything approved in
+ * another tab since then would be missed or clobbered. The server re-reads what
+ * is pending *now* and acts on that.
+ */
+export const ReviewPayrollDayInput = z
+    .object({
+        userId: UUIDSchema,
+        date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected yyyy-mm-dd"),
+        // Only a decision, never back to "pending": this is a bulk action, and
+        // un-reviewing a whole day is not something the screen offers.
+        status: z.enum(["approved", "rejected"]),
+    })
+    .openapi({ title: "ReviewPayrollDayInput" });
+
+export const ReviewPayrollDayResponse = z
+    .object({
+        commissions: z.number().int(),
+        claims: z.number().int(),
+    })
+    .openapi({ title: "ReviewPayrollDayResponse" });
+
 export const UpdatePayoutInput = z
     .object({
         // Both values close the period. Whether a payout is allowed to be
@@ -139,6 +164,8 @@ export type GetPayslipQuery = z.infer<typeof GetPayslipQuery>;
 export type ListPayoutsQuery = z.infer<typeof ListPayoutsQuery>;
 export type UpdatePayrollCommissionInput = z.infer<typeof UpdatePayrollCommissionInput>;
 export type UpdatePayoutInput = z.infer<typeof UpdatePayoutInput>;
+export type ReviewPayrollDayInput = z.infer<typeof ReviewPayrollDayInput>;
+export type ReviewPayrollDayResponse = z.infer<typeof ReviewPayrollDayResponse>;
 export type PayrollCommissionResponse = z.infer<typeof PayrollCommissionResponse>;
 export type PayoutResponse = z.infer<typeof PayoutResponse>;
 export type PayslipResponse = z.infer<typeof PayslipResponse>;

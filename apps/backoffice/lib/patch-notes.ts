@@ -9,6 +9,13 @@ import type { PatchNote } from "@tea-pos/ui/custom/PatchNotes";
  */
 export const patchNotes: PatchNote[] = [
     {
+        version: "1.0.15",
+        date: "2026-08-25",
+        entries: [
+            { kind: "added", text: "You can approve or reject a whole day of pay at once, from the bottom of that day." },
+        ],
+    },
+    {
         version: "1.0.14",
         date: "2026-08-25",
         entries: [

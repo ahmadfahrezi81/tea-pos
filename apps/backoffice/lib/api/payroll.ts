@@ -5,14 +5,26 @@ import type {
     GetPayslipQuery,
     UpdatePayoutInput,
     UpdatePayrollCommissionInput,
+    ReviewPayrollDayInput,
 } from "@tea-pos/features/payroll/schema";
 import {
     PayrollCommissionListResponse,
     PayrollCommissionResponse,
     PayoutListResponse,
+    ReviewPayrollDayResponse,
 } from "@tea-pos/features/payroll/schema";
 
 export const payrollApi = {
+    /** Approve or reject every pending item a user has on one date. */
+    reviewDay: async (input: ReviewPayrollDayInput) => {
+        return ReviewPayrollDayResponse.parse(
+            await apiFetch<unknown>("/api/payroll/reviews/day", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(input),
+            }),
+        );
+    },
     getCommissions: async (params?: Partial<ListPayrollCommissionsQuery>) => {
         const sp = buildParams((params ?? {}) as Record<string, unknown>);
         return PayrollCommissionListResponse.parse(
