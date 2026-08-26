@@ -307,6 +307,51 @@ the tables in each app's `app/[tenantSlug]/mobile/config/navigation.ts` declare
 5 and 3 routes as `prefetch: true`, and the shell skips whichever one you are
 already looking at.
 
+### Render ownership — where a read sits is part of its price
+
+The tiers price a read. They do not price **where** it sits, and for a Tier 0
+read that is the only thing that matters.
+
+**A cookie read is free where it sits and costs everything below it.**
+
+Reading a cookie or a header marks the whole subtree dynamic. Nothing under it
+can be prerendered, cached at the edge, or precached by the service worker —
+permanently, for every screen below, whether or not those screens are personal
+at all. `public/launch.html` is a hand-written file in `public/` for exactly this
+reason: `app/layout.tsx` reads cookies, so no route beneath it can ever be
+precached. That is the rule showing its teeth, already, in a file everyone has
+read.
+
+So classify a *render* the way you classify a read:
+
+| | **Stable** | **Fresh** |
+| --- | --- | --- |
+| **Shared** | prerendered — CDN, zero server | ISR / tag-revalidated |
+| **Personal** | keyed cache | rendered per request |
+
+Every screen in both apps currently sits in the bottom-right cell — not because
+the screens are personal, but because one node near the root put them there.
+
+**The operational rule: a server component that reads a cookie or a header must
+not take `children`.** Personal reads happen in leaves. A trunk that needs a
+personal value takes it from a dynamic *sibling*, rather than reading it and
+wrapping the tree.
+
+This is greppable, which is the only reason it will survive:
+
+```bash
+# apps/admin is archived — never include it, or this returns 8 and two of the
+# hits are in a dead app.
+grep -lE "cookies\(\)|headers\(\)|getRequestUser|getCurrentTenantId" \
+    $(find apps/seller/app apps/backoffice/app \
+        -name "layout.tsx" -o -name "template.tsx")
+```
+
+Any hit that also renders `children` is a violation. **Six exist today**, three
+per app and symmetric — they are listed with line numbers and verdicts in task
+061, which also holds the migration and the reason it must not start before the
+PPR spike. Do not add a seventh; do not treat the six as precedent.
+
 ---
 
 ## Form Fields (`packages/ui/custom`)
