@@ -38,6 +38,31 @@ function getFlagClient(): PostHog {
         host: process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com",
         flushAt: 20,
         flushInterval: 10000,
+
+        /* Local evaluation — task 060 Item 2.
+
+           `POSTHOG_API_KEY` above is the *project* key (`phc_`) and cannot read
+           flag definitions; PostHog withholds that from a key that ships to
+           browsers. This is a second, personal key (`phx_`), scoped to
+           feature-flag read. With it the client holds the flag rules in memory
+           and answers in process instead of paying an HTTP round trip per
+           request — the measured cost was 71ms, the most expensive non-cron
+           route on the board.
+
+           It resolves this project's flags because none of them target a
+           cohort: the conditions are "all users", "no users", `storeId`, and
+           `Distinct ID`, and the first two are trivial while the last two are
+           facts the caller already passes as person properties. **A cohort
+           condition added later would silently fall back to the network** —
+           correct, just not free. Re-check the flag list before assuming this
+           is still buying anything.
+
+           Undefined when the variable is absent, which is a deliberate and
+           load-bearing degradation: local evaluation switches off and every
+           call takes the network path it takes today. So this is safe to deploy
+           before the variable exists in an environment. */
+        personalApiKey: process.env.POSTHOG_PERSONAL_API_KEY,
+        featureFlagsPollingInterval: 30_000,
     });
     return flagClient;
 }
@@ -52,6 +77,17 @@ export async function getAllFlags(
 ): Promise<FlagEvaluations> {
     const client = getFlagClient();
     try {
+        /* `onlyEvaluateLocally` is deliberately left at its default of false.
+
+           Setting it true would guarantee no network call, and would also mean
+           a cold instance — one whose flag definitions have not been fetched
+           yet — answers false for everything. On this codebase that is not a
+           slow path, it is every feature switching off for the first requests
+           an instance serves, and `ops-maintenance` is one of them.
+
+           Left false, an instance without definitions takes the network path,
+           which is exactly today's behaviour. Worst case is what we already
+           have; best case is free. */
         const flags = await client.evaluateFlags(userId, {
             personProperties: properties,
         });

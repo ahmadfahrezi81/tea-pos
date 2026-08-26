@@ -6,7 +6,7 @@ unblocked but not built.** Successor to 044.
 | Item | State |
 |---|---|
 | 1 — double store fetch | **Shipped** in 5.4.14 |
-| 2 — flag evaluation | **Ready to build.** No flag uses cohort targeting, and `POSTHOG_PERSONAL_API_KEY` is in `.env` as of 2026-08-27. Still needs adding to Vercel. Deliberately **not** shipped during the measurement window |
+| 2 — flag evaluation | **Shipped** in 5.4.14. Local evaluation on, `onlyEvaluateLocally` left false on purpose. Inert until `POSTHOG_PERSONAL_API_KEY` reaches Vercel |
 | 3 — instrumentation | **Shipped** in 5.4.14. Reads `[render-metrics]` in the Vercel logs |
 
 **Next action: deploy 5.4.14, let a full window run, record its length, then
@@ -199,7 +199,36 @@ with the client's dedupe.
 
 **~71ms → ~0.** Roughly 6s of the bill.
 
-What it needs before it can be planned properly, none of it verified yet:
+### Built 2026-08-27
+
+`personalApiKey` and `featureFlagsPollingInterval: 30_000` on the client
+(`lib/flags.ts`). Two decisions in there are the whole of the risk:
+
+- **`onlyEvaluateLocally` left at its default of `false`.** Setting it true
+  guarantees no network call and also means an instance whose definitions have
+  not loaded yet answers false for every flag. That is not a slow path, it is
+  every feature off for the first requests a cold instance serves, and
+  `ops-maintenance` is one of them. Left false, such an instance takes the
+  network path — today's behaviour. Worst case is what we already have.
+- **`personalApiKey` is `undefined` when the variable is absent**, which
+  switches local evaluation off rather than failing. So the deploy is safe in an
+  environment that does not have the variable yet, which at time of writing is
+  Vercel.
+
+**Still to do: add `POSTHOG_PERSONAL_API_KEY` to Vercel (staging and
+production).** Until then this ships as a no-op and flags keep taking the 71ms
+path — so the next reading will show no change on `/api/flags` and that is not a
+failure of the item.
+
+**Unresolved, and it needs a decision rather than a default.** Polling is a
+`setInterval`, and a serverless instance freezes between invocations, so the
+timer is not a reliable clock. A low-traffic instance can hold stale definitions
+for longer than 30s. That is fine for the five feature flags and questionable for
+`ops-maintenance`, which is the switch that turns the app off. Options if it
+matters: keep maintenance on a separate network-path check, or accept the lag
+deliberately and write it down. **Not decided.**
+
+What it needed before it could be planned, all now answered:
 
 - `POSTHOG_PERSONAL_API_KEY` — **DONE 2026-08-27.** Created as
   `tea-pos-flag-local-eval`, scoped with PostHog's *Local feature flag
