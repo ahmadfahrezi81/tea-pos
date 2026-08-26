@@ -1,5 +1,5 @@
 import { ReactNode, Suspense } from "react";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { unstable_cache } from "next/cache";
 import MobileLayoutClient from "./components/MobileLayoutClient";
 import InactivityRefreshPopup from "@tea-pos/shell/InactivityRefreshPopup";
@@ -76,6 +76,38 @@ function cachedUserStores(tenantId: string, userId: string) {
     );
 }
 
+/**
+ * ── TEMPORARY — task 060 Item 3. Delete this wrapper and inline the
+ * `Promise.all` back into the layout once the reading is taken. ──────────────
+ *
+ * The two Tier 1 reads, timed. Extracted rather than measured inline because
+ * `performance.now()` is an impure call and `react-hooks/purity` rightly
+ * refuses it inside a component — the React Compiler is on in this app. A plain
+ * async function is not a component, so the rule does not apply and nothing has
+ * to be suppressed.
+ *
+ * Only the reads are timed. The cookie reads around them are Tier 0 and cost
+ * nothing measurable, so `reads` is effectively the whole I/O cost of this
+ * layout; whatever Vercel reports beyond it is the provider tree and
+ * serialization, which cannot be measured from in here.
+ */
+async function loadLayoutData(tenantId: string, userId: string | undefined) {
+    const start = performance.now();
+    const [payFrequency, initialStores] = await Promise.all([
+        cachedPayFrequency(tenantId)().catch((error) => {
+            console.error("[layout] pay frequency unavailable:", error);
+            return null;
+        }),
+        userId
+            ? cachedUserStores(tenantId, userId)().catch((error) => {
+                  console.error("[layout] store list unavailable:", error);
+                  return null;
+              })
+            : null,
+    ]);
+    return { payFrequency, initialStores, readsMs: performance.now() - start };
+}
+
 export default async function MobileLayout({ children }: MobileLayoutProps) {
     /* Read server-side so every pay window is rendered from the real cadence in
        the first paint. Service client rather than SSR: super admins reach a
@@ -97,24 +129,40 @@ export default async function MobileLayout({ children }: MobileLayoutProps) {
        fetch, so a bad read costs speed rather than the till. */
     const requestUser = await getRequestUser();
 
-    const [payFrequency, initialStores] = await Promise.all([
-        cachedPayFrequency(tenantId)().catch((error) => {
-            console.error("[layout] pay frequency unavailable:", error);
-            return null;
-        }),
-        requestUser
-            ? cachedUserStores(tenantId, requestUser.id)().catch((error) => {
-                  console.error("[layout] store list unavailable:", error);
-                  return null;
-              })
-            : null,
-    ]);
+    const { payFrequency, initialStores, readsMs } = await loadLayoutData(
+        tenantId,
+        requestUser?.id,
+    );
 
     /* Read on the server so the first render picks the same store the browser
        last used. See `persistStoreId` in StoreContext for why localStorage
        alone cannot do this. */
     const initialSelectedStoreId =
         (await cookies()).get("selectedStoreId")?.value ?? "";
+
+    /* ── TEMPORARY — task 060 Item 3. Delete once the reading is taken. ───────
+       Three questions in one line, none of them answerable by reading the code:
+
+       `kind` — an RSC segment render and a full document render are both one
+       Vercel invocation and are wildly different amounts of work, so a route's
+       ms/inv is a blend of the two. This says which one this was, and it is the
+       measurement the whole task turns on. Vercel already attributes the line to
+       a route, so the path is not logged.
+
+       `reads` — the two Tier 1 reads. See `loadLayoutData`.
+
+       And the line simply *appearing* on a route other than `home/pos` answers
+       the third question: whether this layout re-runs on a navigation that
+       leaves `home/`, which task 060 asserted and then retracted.
+
+       `headers()` in a trunk is exactly the violation task 061 names. Accepted
+       here only because this file already reads cookies, so the tier is
+       unchanged, and because this block is scheduled for deletion. Do not copy
+       it into a file that is currently clean. */
+    const isRsc = (await headers()).get("rsc") === "1";
+    console.log(
+        `[render-metrics] kind=${isRsc ? "rsc" : "doc"} reads=${readsMs.toFixed(1)}ms`,
+    );
 
     return (
         <PayFrequencyProvider value={payFrequency}>
