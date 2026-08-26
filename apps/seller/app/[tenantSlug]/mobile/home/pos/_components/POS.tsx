@@ -11,7 +11,7 @@ import type { ProductResponse } from "@tea-pos/features/products/schema";
 import { CartDrawer } from "./CartDrawer";
 import { FooterSlot } from "@tea-pos/shell/FooterSlotContext";
 import { useT } from "@/lib/hooks/useT";
-import { Skeleton } from "@tea-pos/ui/custom/Skeleton";
+import { ProductGridSkeleton } from "../../_components/HomeBodySkeleton";
 
 // ─── Product Card ─────────────────────────────────────────────────────────────
 
@@ -200,24 +200,14 @@ export default function POS() {
                 </FooterSlot>
             )}
 
-            {/* Products Grid */}
-            <div className="grid grid-cols-2 gap-3">
-                {productsLoading
-                    ? Array.from({ length: 6 }).map((_, i) => (
-                        <div key={i} className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-                            <div className="p-3">
-                                <div className="flex gap-2 mb-3">
-                                    <Skeleton delay={i * 90} className="shrink-0 w-[50px] h-[50px] rounded" />
-                                    <div className="flex-1 space-y-2 pt-1">
-                                        <Skeleton delay={i * 90 + 60} className="h-4 w-3/4 rounded" />
-                                        <Skeleton delay={i * 90 + 120} className="h-4 w-1/2 rounded" />
-                                    </div>
-                                </div>
-                                <Skeleton delay={i * 90 + 180} className="h-8 rounded-lg" />
-                            </div>
-                        </div>
-                    ))
-                    : products.map((product) => (
+            {/* Products Grid — the same placeholder the home layout shows while
+                the gate resolves, so an open store carries one shape from boot
+                to products rather than swapping between two. */}
+            {productsLoading ? (
+                <ProductGridSkeleton />
+            ) : (
+                <div className="grid grid-cols-2 gap-3">
+                    {products.map((product) => (
                         <ProductCard
                             key={product.id}
                             product={product}
@@ -225,9 +215,9 @@ export default function POS() {
                             onAdd={addToCart}
                             tapToAddLabel={t("cart.tapToAdd")}
                         />
-                    ))
-                }
-            </div>
+                    ))}
+                </div>
+            )}
 
             {/* Cart Drawer — only in normal mode */}
             {!fastOrderMode && (

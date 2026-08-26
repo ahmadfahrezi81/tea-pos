@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { AtAGlance } from "./_components/AtAGlance";
 import { StoreGate } from "./_components/StoreGate";
+import { GateSkeleton, HomeHeaderSkeleton } from "./_components/HomeBodySkeleton";
 import { useStore } from "@/lib/context/StoreContext";
 import { useSession } from "@/lib/hooks/sessions/useSession";
 import { useAuth } from "@/lib/context/AuthContext";
@@ -26,7 +27,18 @@ export default function HomeLayout({
         isHomeRoot &&
         (gate === "no_summary" || gate === "no_session" || gate === "closed" || isPosInUse);
 
-    if (isHomeRoot && gateLoading) return null;
+    // Header and body both, so the region above the fold arrives as one piece.
+    // Neither placeholder guesses at what follows — see GateSkeleton.
+    if (isHomeRoot && gateLoading) {
+        return (
+            <div className="min-h-full flex flex-col gap-4">
+                <HomeHeaderSkeleton />
+                <div className="flex-1 min-h-0">
+                    <GateSkeleton />
+                </div>
+            </div>
+        );
+    }
 
     if (showGate) {
         return (
