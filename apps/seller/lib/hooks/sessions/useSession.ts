@@ -10,15 +10,29 @@ export function useSession(storeId?: string) {
     const key = storeId ? `session-gate-${storeId}` : null;
     const { realtime, isConnected } = useRealtime();
 
-    // Fallback polling: only poll when realtime is down
+    /*
+     * Fallback polling: only poll when realtime is down.
+     *
+     * That comment used to be aspirational. `isConnected` was hardwired false by
+     * a bug in the adapter, so this hook always took the polling branch — and
+     * `Infinity` is not SWR's off switch anyway. SWR reschedules on a truthy
+     * interval and the browser clamps a non-finite delay to 0, so the "healthy"
+     * branch was a 0ms refetch loop waiting for the day the connection signal
+     * started working. `0` is the off switch. See task 062.
+     *
+     * `revalidateOnFocus` stays on, against the app-wide default. The outgoing
+     * device learns it lost the session only from the handover broadcast, and a
+     * phone that was asleep misses it; nothing on the server rejects an order
+     * from a seller whose session has moved on, and payroll attributes orders
+     * inside session windows, so a stale gate means cups that pay nobody.
+     * Refetching on focus is what covers that.
+     */
     const { data, error, mutate, isLoading } = useSWR<GateStateResponse>(
         key,
         () => sessionsApi.getGateState({ storeId: storeId! }),
         {
             revalidateOnFocus: true,
-            // Only poll if realtime is disconnected
-            dedupingInterval: isConnected ? Infinity : 10000,
-            refreshInterval: isConnected ? Infinity : 30000,
+            refreshInterval: isConnected ? 0 : 30000,
         },
     );
 
@@ -26,23 +40,33 @@ export function useSession(storeId?: string) {
     useEffect(() => {
         if (!realtime || !storeId) return;
 
+        // `subscribe` is async, so cleanup can run before it resolves. Without
+        // this flag the unsubscribe handle lands after the effect is gone and
+        // the subscription is orphaned.
+        let cancelled = false;
         let unsubscribe: (() => Promise<void>) | null = null;
 
         (async () => {
             try {
-                unsubscribe = await realtime.subscribe(
+                const release = await realtime.subscribe(
                     { channel: `store:${storeId}`, event: "session:changed" },
                     (update: GateStateResponse) => {
                         mutate(update, false);
                     }
                 );
+                if (cancelled) {
+                    void release();
+                    return;
+                }
+                unsubscribe = release;
             } catch (err) {
                 console.error("[useSession] Realtime subscription failed, falling back to polling:", err);
             }
         })();
 
         return () => {
-            unsubscribe?.();
+            cancelled = true;
+            void unsubscribe?.();
         };
     }, [realtime, storeId, mutate]);
 
