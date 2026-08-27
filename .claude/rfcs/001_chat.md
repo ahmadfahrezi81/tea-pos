@@ -49,7 +49,7 @@ became **task 062**, now shipped. This is the feature that motivated it.
 |---|---|
 | Direct messages | Out of scope by decision |
 | User-created groups | Lifecycle, not permissions — nobody deletes a dead group and there is no moderation tooling |
-| Mentions, reactions, typing indicators | Each changes the schema when it arrives anyway |
+| Mentions, typing indicators | Each changes the schema when it arrives anyway. **Reactions are in scope — see 4 and 5.3b** |
 | Thread-level unread | Phase 2 at the earliest |
 | Deriving chat from `tenant_activity_logs` | See §5.1 |
 
@@ -57,11 +57,43 @@ became **task 062**, now shipped. This is the feature that motivated it.
 
 ## 4. Rollout
 
-| Phase | Ships | Gated by |
+**Read-only is a rollout stage, not a channel property.** Every channel is a
+real chat channel from the first migration; what changes is who may post, and
+that is a column, not a deploy.
+
+```sql
+post_policy text not null default 'none'
+    check (post_policy in ('none','admin','members'))
+```
+
+`none` — nobody posts, system events only. `admin` — `ADMIN` role only.
+`members` — anyone in the channel. Flipping #general from `none` to `admin` on
+the day you want to start posting is an `update`, not a release.
+
+| Phase | Ships | Mechanism |
 |---|---|---|
-| **1** | Read-only. System events only — store opened, store closed, payout paid. No composer | `feature-chat` |
-| **2** | Sellers post and reply in threads | `feature-chat-compose` |
-| **3** | Admin-created `custom` channels, if ever wanted | — |
+| **1** | Read-only. System events only, both channels | `feature-chat`, all channels `post_policy = 'none'` |
+| **2** | **Reactions.** Staff can react but not type | `feature-chat-reactions` |
+| **3** | Admin posts in #general | `#general.post_policy = 'admin'` |
+| **4** | Everyone posts, threads open | `post_policy = 'members'`, `feature-chat-compose` |
+| **5** | Admin-created `custom` channels, if ever wanted | — |
+
+**Reactions before the composer** is a suggestion, not a requirement. Reacting
+is a far lower-commitment first interaction than typing: it gets staff used to
+opening the tab without asking them to compose anything, and it produces signal
+about whether anyone is reading. Typing first asks for the harder behaviour
+before the habit exists.
+
+### 4.0 The two channels
+
+| Kind | Scope | Members | Analogue |
+|---|---|---|---|
+| `general` | One per tenant | Everyone in the tenant | Slack's `#general` |
+| `store` | One per store | `user_store_assignments` for that store | A team channel |
+
+There is one tenant today. The channel is still keyed on `tenant_id` because
+everything else in this codebase is, and because the day there are two, nothing
+about this has to change.
 
 ### 4.1 Why phase 1 is not a view over `tenant_activity_logs`
 
@@ -91,9 +123,11 @@ Sketch, not a migration. Column names checked against `packages/db/types.ts`.
 create table chat_channels (
     id          uuid primary key default gen_random_uuid(),
     tenant_id   uuid not null references tenants(id) on delete cascade,
-    kind        text not null check (kind in ('announcement','store','custom')),
+    kind        text not null check (kind in ('general','store','custom')),
     store_id    uuid references stores(id) on delete cascade,
     name        text not null,
+    post_policy text not null default 'none'
+                check (post_policy in ('none','admin','members')),
     is_archived boolean not null default false,
     created_at  timestamptz not null default now(),
 
@@ -102,8 +136,8 @@ create table chat_channels (
         check ((kind = 'store') = (store_id is not null))
 );
 
-create unique index chat_channels_one_announcement_per_tenant
-    on chat_channels (tenant_id) where kind = 'announcement';
+create unique index chat_channels_one_general_per_tenant
+    on chat_channels (tenant_id) where kind = 'general';
 
 create unique index chat_channels_one_per_store
     on chat_channels (store_id) where kind = 'store';
@@ -185,6 +219,63 @@ The tab badge is one query on cold open, incremented locally from realtime
 pushes after that. **This is the piece that quietly becomes a poll if left to
 later**, which is why it is in phase 1 even though phase 1 has no composer.
 
+### 5.3b `chat_message_reactions`
+
+```sql
+create table chat_message_reactions (
+    tenant_id  uuid not null references tenants(id) on delete cascade,
+    message_id uuid not null references chat_messages(id) on delete cascade,
+    user_id    uuid not null references users(id) on delete cascade,
+    emoji      text not null,   -- the literal Unicode string, e.g. '👍'
+    created_at timestamptz not null default now(),
+    primary key (message_id, user_id, emoji)
+);
+
+create index chat_message_reactions_message_idx
+    on chat_message_reactions (message_id);
+```
+
+The composite primary key is the whole concurrency story: one user, one emoji,
+one message, once. A double-tap is an upsert that changes nothing, and removing
+a reaction is a delete on the same key. No counter to keep in sync.
+
+**Counts are aggregated on read**, not denormalised. A thread view loads at most
+a few dozen messages and the aggregation is a grouped count on an indexed
+column. Unlike `reply_count` — which the *channel list* needs and would
+otherwise pay a subquery per row for — nothing renders a reaction count without
+already having the message.
+
+### 5.3c The emoji set — fixed, and deliberately old
+
+**No emoji picker.** Six reactions, fixed, rendered as a row under each message.
+
+- A full picker is a heavy component on a phone, and sellers use this between
+  customers.
+- A fixed set renders in a stable order, so counts changing never reflows the
+  message.
+- Slack's picker is a desktop-first affordance, and Slack needs it because it
+  also supports uploaded `:team-emoji:`. We do not.
+
+**Pick emoji from an old Unicode version.** Older Android devices carry older
+emoji fonts and anything recent renders as a tofu box — a real constraint here,
+where the fleet is mid-range Android of varying age.
+
+| Emoji | Unicode | Year |
+|---|---|---|
+| 👍 | 6.0 | 2010 |
+| ❤️ | 1.1 | 1993 |
+| 😂 | 6.0 | 2010 |
+| 🎉 | 6.0 | 2010 |
+| 🙏 | 6.0 | 2010 |
+| ✅ | 6.0 | 2010 |
+
+All safe to the oldest device likely in the field. By contrast 🫡 is Unicode
+14.0 (2021) and is a blank square on Android 10.
+
+The set is a constant in code, not a table. Changing it later leaves old
+reactions in the database with emoji no longer offered — which is fine, they
+still render; they just cannot be added again.
+
 ### 5.4 Membership — derived, no table
 
 ```sql
@@ -205,7 +296,7 @@ No join table, no invite flow, nothing to drift out of sync with
 both RLS and push fan-out.
 
 **Do not reference this view directly from an RLS policy.** A view in a policy is
-re-evaluated per row, and the announcement branch joins every user in the
+re-evaluated per row, and the general branch joins every user in the
 tenant. Wrap it in a `security definer` function returning channel ids for
 `auth.uid()` so it evaluates once per query.
 
@@ -273,6 +364,8 @@ protection. Never take a `channelId` on trust; check membership.
 | `POST` | `/api/chat/channels/[channelId]/read` | 1 | Move `last_read_at` |
 | `POST` | `/api/chat/messages` | 2 | Post a root or a reply |
 | `PATCH` | `/api/chat/channels/[channelId]` | 2 | Mute (`mutedUntil`) |
+| `PUT` | `/api/chat/messages/[messageId]/reactions` | 2 | Add one reaction |
+| `DELETE` | `/api/chat/messages/[messageId]/reactions` | 2 | Remove one reaction |
 | `POST` | `/api/chat/push/subscriptions` | 1 | Upsert by `endpoint` |
 | `DELETE` | `/api/chat/push/subscriptions` | 1 | Remove by `endpoint` |
 
@@ -281,7 +374,7 @@ protection. Never take a `channelId` on trust; check membership.
 ```ts
 // packages/features/chat/schema.ts
 
-export const ChannelKind = z.enum(["announcement", "store", "custom"]);
+export const ChannelKind = z.enum(["general", "store", "custom"]);
 export const AuthorType = z.enum(["user", "system"]);
 
 export const ChannelResponse = z.object({
@@ -309,7 +402,15 @@ export const MessageResponse = z.object({
     replyCount: z.number().int(),
     lastReplyAt: z.iso.datetime().nullable(),
     createdAt: z.iso.datetime(),
+    // aggregated on read; `mine` drives the toggled state without a second query
+    reactions: z.array(z.object({
+        emoji: z.string(),
+        count: z.number().int(),
+        mine: z.boolean(),
+    })),
 });
+
+export const ReactionInput = z.object({ emoji: z.enum(REACTION_SET) });
 
 export const ListMessagesQuery = z.object({
     channelId: z.uuid(),
@@ -354,6 +455,8 @@ listThreadReplies(supabase, { tenantId, userId, messageId })
 markChannelRead(supabase, { tenantId, userId, channelId, readAt })
 postUserMessage(supabase, { tenantId, userId, channelId, threadRootId, body })
 postSystemMessage(supabase, { tenantId, channelId, eventType, metadata })
+addReaction(supabase, { tenantId, userId, messageId, emoji })
+removeReaction(supabase, { tenantId, userId, messageId, emoji })
 upsertPushSubscription(supabase, { tenantId, userId, endpoint, p256dh, auth })
 deletePushSubscription(supabase, { endpoint })
 ```
@@ -586,11 +689,12 @@ implicit promise that is expensive to withdraw.
 
 ## 12. Open questions
 
-1. **Does the announcement channel accept replies, or is it broadcast-only?**
-   Slack lets you thread on anything. A store channel obviously accepts replies.
-   Tenant-wide might not want to.
-2. **Who can post to the announcement channel?** `ADMIN` only is the assumption;
-   it is not stated anywhere yet.
+1. **Does #general go all the way to `post_policy = 'members'`, or stop at
+   `admin`?** The schema supports either and the switch is one `update`, so this
+   does not need answering before phase 1 — but it changes whether phase 4 exists.
+2. **Do reactions apply to system events, or only to human messages?** Letting
+   staff 🎉 a payout is the kind of thing that makes the tab feel alive. Letting
+   them react to every store open is noise.
 3. **Does a system event notify?** Every store open pushing to every seller in
    the tenant is noise. Likely: store channels notify, announcements notify,
    routine system events do not — but that is a product call.
