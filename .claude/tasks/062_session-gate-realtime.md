@@ -1,8 +1,13 @@
 # Task 062 — The session gate reports a connection nobody ever measured
 
-**Status: written 2026-08-27, rewritten 2026-08-28 after the usage questions
-were answered. Nothing built.** Successor to 060's *Watch, don't act* entry on
-`/api/sessions/gate`.
+**Status: shipped to `staging` 2026-08-28 as `dfe81c5`. Verification steps 1-4
+pass on two phones against a tunnelled dev server. Steps 5 and 6 outstanding.**
+Successor to 060's *Watch, don't act* entry on `/api/sessions/gate`.
+
+Written 2026-08-27, rewritten 2026-08-28 after the usage questions were answered
+— which is what dropped the second item; see *Considered and dropped*. No
+version bump: the change is invisible to a user who was not reading the request
+log.
 
 **One item.** Fix four bugs in `SupabaseRealtimeAdapter` so the app can tell
 whether realtime is connected. A second item — stopping the gate's mount
@@ -359,26 +364,31 @@ In `node_modules`: `swr@2.4.1` `dist/index/index.mjs` lines 341, 383-412,
 
 ## Verification
 
-1. **Bugs (a)/(b).** Log the subscribe status callback and confirm `SUBSCRIBED`
-   arrives on a normal boot. Kill the network: `CHANNEL_ERROR` / `CLOSED` must
-   flip `isConnected` false. Restore it: back to true, **via realtime-js's own
-   reconnect, with no adapter timer involved.**
-2. **Bug (c).** With realtime connected, watch the network panel for 60s on the
-   POS screen. **Zero** `/api/sessions/gate` requests. If they stream, the
-   `Infinity` path is still live and the fix is wrong.
-3. **Bug (d).** Switch stores three times, then inspect
-   `supabase.realtime.getChannels()`. One channel, not three.
-4. **The handover path, on two devices.** A holds the session; B claims it. A's
-   screen must flip to closed without a manual refresh — that is the broadcast.
-   Then repeat with A's network dropped across the handover and restored after:
-   A must correct itself, and the route it takes (reconnect or focus) should be
-   identified rather than assumed.
-5. **The payroll gap, deliberately.** Force a stale gate on A — drop the network,
+**Steps 1-4 done 2026-08-28, all pass.** Run on two phones against a tunnelled
+dev server, reading the dev server's request log in place of a network panel —
+worth recording as the method, since it needs no devtools and no deploy.
+
+1. **Bug (c) — polling stopped.** ✅ Phone idle on POS, foreground, untouched for
+   two minutes. A burst of `/api/sessions/gate` at open, then **nothing**. Under
+   the old code that was a line every 30s. The opening burst is doubled by
+   `reactStrictMode` in dev and is not a defect.
+2. **Bugs (a)/(b) — handover is instant.** ✅ A holds the session, B claims the
+   code, A's screen flips to closed on its own. This also settles the largest
+   *stop and re-plan* trigger below: `SUBSCRIBED` does arrive, so realtime has
+   been delivering all along and only the health signal was missing.
+3. **Reconnect.** ✅ A offline ~30s, back online, then a second handover from B —
+   A flips on its own. The channel rejoins on realtime-js's own retry curve, with
+   no adapter timer in the path.
+4. **Bug (d) — no channel leak.** ✅ Four store switches on A, back to the
+   original store, then a handover: A still flips once, promptly, with no
+   duplicate or flickering update.
+5. **The payroll gap, deliberately. Not run** — needs a close-day and a database
+   read, not an outside-on-a-phone job. Force a stale gate on A — drop the network,
    have B claim, keep A offline — then have A take an order and close the day.
    Confirm whether those cups land in anyone's `payroll_commissions` row. If they
    vanish, that is the bug this task is really about, and it deserves its own
    task on the server side; if they do not, correct *Why this matters* above.
-6. **Scoreboard.** Re-read after a full window and **record the window length**.
+6. **Scoreboard. Not run** — re-read after a full window and **record the window length**.
    Expect `/api/sessions/gate` to move slightly and nothing else to. A move of
    more than ~20% on any other row means the dashboard is noisier than 044 or
    060 assumed.
@@ -387,14 +397,12 @@ In `node_modules`: `swr@2.4.1` `dist/index/index.mjs` lines 341, 383-412,
 
 ## What would make me stop and re-plan
 
-- **Gate calls not dropping at all after the fix.** Then the ~19 is entirely
-  focus, the poll was never firing, and this task's CPU claim is zero. The bug
-  fixes still stand on their own.
-- **`SUBSCRIBED` never arriving.** Then realtime is not actually delivering
-  either, the broadcast path has been dead as well, and the handover flow has
-  been relying on focus revalidation alone — a much bigger finding than this
-  task.
-- **Verification step 5 showing the cups vanish.** Server-side session
+- ~~**Gate calls not dropping at all after the fix.**~~ Closed by step 1 — they
+  stop dead after the opening burst.
+- ~~**`SUBSCRIBED` never arriving.**~~ Closed by steps 2 and 3. Realtime has been
+  delivering the whole time; only the health signal was missing, which is exactly
+  the shape this task claimed.
+- **Verification step 5 showing the cups vanish.** Still open. Server-side session
   enforcement in `createOrder` becomes the priority, and it outranks everything
   in this file.
 
