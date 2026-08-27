@@ -86,10 +86,17 @@ before the habit exists.
 
 ### 4.0 The two channels
 
-| Kind | Scope | Members | Analogue |
-|---|---|---|---|
-| `general` | One per tenant | Everyone in the tenant | Slack's `#general` |
-| `store` | One per store | `user_store_assignments` for that store | A team channel |
+| Kind | Scope | Members | Post policy | Analogue |
+|---|---|---|---|---|
+| `general` | One per tenant | Everyone in the tenant | `none` → `admin` → `members` | Slack's `#general` |
+| `store` | One per store | `user_store_assignments` for that store | `none` → `members` | A team channel |
+| `personal` | One per user | That user, alone | **`none`, permanently** | Slack's Slackbot slot |
+
+**`personal` is not a DM.** Nobody can post into it — not another user, not the
+owner. It is a system-to-one-person feed, and it exists because some events are
+personal: a payout is one person's pay, and it cannot go in a channel where
+colleagues read it. The constraint `kind <> 'personal' or post_policy = 'none'`
+makes that permanent in the schema rather than in a convention.
 
 There is one tenant today. The channel is still keyed on `tenant_id` because
 everything else in this codebase is, and because the day there are two, nothing
@@ -123,8 +130,9 @@ Sketch, not a migration. Column names checked against `packages/db/types.ts`.
 create table chat_channels (
     id          uuid primary key default gen_random_uuid(),
     tenant_id   uuid not null references tenants(id) on delete cascade,
-    kind        text not null check (kind in ('general','store','custom')),
+    kind        text not null check (kind in ('general','store','personal','custom')),
     store_id    uuid references stores(id) on delete cascade,
+    user_id     uuid references users(id) on delete cascade,   -- personal only
     name        text not null,
     post_policy text not null default 'none'
                 check (post_policy in ('none','admin','members')),
@@ -133,7 +141,12 @@ create table chat_channels (
 
     -- store channels have a store; the other kinds must not
     constraint chat_channels_store_matches_kind
-        check ((kind = 'store') = (store_id is not null))
+        check ((kind = 'store') = (store_id is not null)),
+    constraint chat_channels_user_matches_kind
+        check ((kind = 'personal') = (user_id is not null)),
+    -- a personal channel is system-only, permanently
+    constraint chat_channels_personal_is_read_only
+        check (kind <> 'personal' or post_policy = 'none')
 );
 
 create unique index chat_channels_one_general_per_tenant
@@ -141,6 +154,9 @@ create unique index chat_channels_one_general_per_tenant
 
 create unique index chat_channels_one_per_store
     on chat_channels (store_id) where kind = 'store';
+
+create unique index chat_channels_one_personal_per_user
+    on chat_channels (user_id) where kind = 'personal';
 ```
 
 `custom` is in the enum and nothing creates one. Costs nothing now, saves a
@@ -288,7 +304,11 @@ create view chat_channel_members as
     select c.id, c.tenant_id, a.user_id
       from chat_channels c
       join user_store_assignments a on a.store_id = c.store_id
-     where c.kind = 'store';
+     where c.kind = 'store'
+    union all
+    select c.id, c.tenant_id, c.user_id
+      from chat_channels c
+     where c.kind = 'personal';
 ```
 
 No join table, no invite flow, nothing to drift out of sync with
@@ -374,7 +394,7 @@ protection. Never take a `channelId` on trust; check membership.
 ```ts
 // packages/features/chat/schema.ts
 
-export const ChannelKind = z.enum(["general", "store", "custom"]);
+export const ChannelKind = z.enum(["general", "store", "personal", "custom"]);
 export const AuthorType = z.enum(["user", "system"]);
 
 export const ChannelResponse = z.object({
@@ -605,10 +625,33 @@ types into `chat_messages`. **Do not.**
 Couple them and every change to what gets audited becomes a user-visible change,
 and you can never log something without broadcasting it to staff.
 
-Instead call `postSystemMessage()` beside the existing `log()` calls in
-`openStore`, `endSession` and `upsertPayout`. Explicit, and each call site
-chooses. Matches how `createLogger` is already used — CLAUDE.md, *Activity
-logging in services*.
+Instead call `postSystemMessage()` beside the existing `log()` calls. Explicit,
+and each call site chooses its destination — which matters, because the
+destination is not the same for every event.
+
+### 9.1 Event routing
+
+| Event | Channel | Why |
+|---|---|---|
+| `store_opened`, `store_closed` | That store's channel | Naturally scoped to the people who work there |
+| `payroll_payout_updated` | The recipient's **personal** channel | One person's pay. Colleagues must not see it |
+| Admin announcements | `general` | Written by a human, not a system event |
+
+**Scoping is the volume control.** A seller assigned to one store sees two
+system events a day plus their own payouts. Nobody is subscribed to every
+store's opens unless they are assigned to every store.
+
+### 9.2 A system message is a normal message
+
+Decided, 2026-08-28. There is no second class of row and no reduced surface:
+
+- **Repliable.** A seller can ask "why did we open late?" on the `store_opened`
+  event itself, and the reply is a thread on it.
+- **Reactable.** Same six emoji, same table.
+- **Notifies.** Like everything else — see §8.
+
+The only difference from a human message is `author_type = 'system'`, which
+changes how it renders and nothing else.
 
 ---
 
@@ -677,6 +720,23 @@ Task 060 found PostHog has 8 flags, `lib/flags.ts` declares 7, and they are not
 the same 7 — `feature-fast-order` is declared in code and missing in PostHog, so
 it evaluates false forever. **Fix that before adding `feature-chat`**, or the
 same failure is silently possible here.
+
+### 11.7 "Everything notifies" scales with stores per user, not users
+
+The decision is deliberate and the volume is bounded by §9.1's routing: a seller
+assigned to one store sees two system events a day plus their own payouts.
+
+**It is the admin who feels it.** Someone assigned to every store gets every
+open and every close — two per store per day. At five stores that is ten
+notifications a day and fine. At fifty it is a hundred, and the feature becomes
+something people turn off entirely.
+
+The pressure valve is already in this design: `muted_until` on `chat_reads`, per
+channel. **That argues for moving mute forward to phase 2**, beside reactions,
+rather than leaving it with the composer in phase 4 — the person who most needs
+it is the one who will be using the feature from day one.
+
+Nothing here changes the decision. It changes when mute is needed.
 
 ### 11.6 Retention
 
