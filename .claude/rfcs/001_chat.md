@@ -220,7 +220,7 @@ The tab badge is one query on cold open, incremented locally from realtime
 pushes after that. **This is the piece that quietly becomes a poll if left to
 later**, which is why it is in phase 1 even though phase 1 has no composer.
 
-### 5.3b `chat_message_reactions`
+### 5.4 `chat_message_reactions`
 
 ```sql
 create table chat_message_reactions (
@@ -246,7 +246,7 @@ column. Unlike `reply_count` — which the *channel list* needs and would
 otherwise pay a subquery per row for — nothing renders a reaction count without
 already having the message.
 
-### 5.3c The emoji set — fixed, and deliberately old
+### 5.5 The emoji set — fixed, and deliberately old
 
 **No emoji picker.** Six reactions, fixed, rendered as a row under each message.
 
@@ -277,14 +277,14 @@ The set is a constant in code, not a table. Changing it later leaves old
 reactions in the database with emoji no longer offered — which is fine, they
 still render; they just cannot be added again.
 
-### 5.4 Membership — derived, no table
+### 5.6 Membership — derived, no table
 
 ```sql
 create view chat_channel_members as
     select c.id as channel_id, c.tenant_id, a.user_id
       from chat_channels c
       join user_tenant_assignments a on a.tenant_id = c.tenant_id
-     where c.kind = 'announcement'
+     where c.kind = 'general'
     union all
     select c.id, c.tenant_id, a.user_id
       from chat_channels c
@@ -301,7 +301,7 @@ re-evaluated per row, and the general branch joins every user in the
 tenant. Wrap it in a `security definer` function returning channel ids for
 `auth.uid()` so it evaluates once per query.
 
-### 5.5 `user_push_subscriptions`
+### 5.7 `user_push_subscriptions`
 
 ```sql
 create table user_push_subscriptions (
@@ -322,25 +322,44 @@ create index user_push_subscriptions_user_idx on user_push_subscriptions (user_i
 Delete the row on `404` or `410` from the endpoint. That is the only mechanism
 the push service has for saying a subscription is dead.
 
-### 5.6 `chat_notifications` — optional, recommended
+### 5.8 `push_deliveries`
+
+**Not a notification type — the ledger that sends them.** One row per recipient
+per message, tracking whether that push actually went out. Invisible to users;
+it exists so the fan-out is not in the request path.
 
 ```sql
-create table chat_notifications (
+create table push_deliveries (
     id         uuid primary key default gen_random_uuid(),
     message_id uuid not null references chat_messages(id) on delete cascade,
     user_id    uuid not null references users(id) on delete cascade,
     status     text not null default 'pending'
                check (status in ('pending','sent','failed','skipped')),
+    attempts   integer not null default 0,
     error      text,
     sent_at    timestamptz,
     created_at timestamptz not null default now(),
     unique (message_id, user_id)
 );
+
+create index push_deliveries_pending_idx
+    on push_deliveries (created_at) where status = 'pending';
 ```
 
-Keeps fan-out off the request path and makes failures retryable. The `unique`
-stops a retry double-notifying. One row per recipient per message is heavy at
-Slack scale and entirely fine here.
+**It earns its place on latency, not reliability.** Without it,
+`POST /api/chat/messages` does the fan-out inline: resolve members, resolve
+their subscriptions, then one HTTPS request per endpoint. A store channel with
+five members on two devices each is ten requests at 100–300ms, all before the
+seller's POST returns. **That is seconds of spinner on a POS to send one
+message.**
+
+`unique (message_id, user_id)` stops a retry double-notifying. The partial index
+is what the drain reads. `skipped` is a real outcome rather than a failure — it
+is what `notify_level` produces (§8.6).
+
+One row per recipient per message is heavy at Slack scale and fine here: at the
+estimate in §11.6, a busy store channel with five members produces about 75 rows
+a day.
 
 ---
 
@@ -531,11 +550,36 @@ rewrite.
 
 ### 8.2 Delivery
 
-1. `postUserMessage` / `postSystemMessage` inserts the row.
-2. Trigger or route enqueues `chat_notifications` rows for
-   `chat_channel_members` minus the author.
-3. A worker drains the queue and POSTs to each endpoint.
-4. `404`/`410` → delete the subscription row. Other errors → `failed`, retry.
+Two tiers: `after()` for latency, a cron sweep for reliability.
+
+1. `postUserMessage` / `postSystemMessage` inserts the message.
+2. The same statement enqueues `push_deliveries` — one `insert … select` over
+   the membership function, filtered by `notify_level` (§8.6). One round trip,
+   no loop.
+3. **The route returns.** The client waits on none of what follows.
+4. `after()` from `next/server` drains that message's pending rows once the
+   response has been sent — same invocation, no new dependency, verified present
+   in Next 16.2.4.
+5. A cron sweeps rows still `pending` after a few minutes and retries them. That
+   is the path for an invocation that died mid-drain.
+
+```ts
+import { after } from "next/server";
+
+const message = await postUserMessage(supabase, { ... });
+after(() => drainDeliveries(supabase, message.id));   // runs post-response
+return ok(parsed.data);
+```
+
+**`after()` alone would be enough if invocations never died.** The cron exists
+because they do — and because a dropped notification, in a system whose whole
+premise is that everything reaches the user, is the one failure that undermines
+the premise.
+
+The cron goes beside the existing `/api/cron/*` routes, guarded by
+`CRON_SECRET` as those are. Vercel's minimum interval is one minute, far too
+slow to be the *primary* path — hence `after()` — and perfectly adequate as a
+backstop.
 
 **Payload is an id and a short title.** The limit is ~4KB, and message bodies do
 not belong in a push.
@@ -791,15 +835,8 @@ implicit promise that is expensive to withdraw.
 
 ## 12. Open questions
 
-1. **Does #general go all the way to `post_policy = 'members'`, or stop at
-   `admin`?** The schema supports either and the switch is one `update`, so this
-   does not need answering before phase 1 — but it decides whether phase 4
-   exists.
-2. **What is the retention horizon?** See §11.7.
-3. **Is `chat_notifications` worth it in phase 1**, when phase 1 has no user
-   messages and the volume is a handful of events a day? It could arrive with
-   the composer instead.
-4. **Does `humans` need to distinguish store events from admin announcements?**
+1. **What is the retention horizon?** See §11.7.
+2. **Does `humans` need to distinguish store events from admin announcements?**
    §8.6 splits on `author_type`, so an admin announcement in `#general` counts as
    human and pushes. That is probably right — but it means `#general` cannot be
    set to "events only", if that is ever wanted.
@@ -810,6 +847,8 @@ implicit promise that is expensive to withdraw.
 |---|---|---|
 | Are system messages repliable, threadable, reactable? | **Yes, all three.** A system message is a normal message; `author_type` changes rendering and nothing else | 2026-08-28 |
 | Do system events send a push? | **Yes. Everything notifies.** That is the point of the system — one surface, and anything shown there reaches the user. Collapse and levels (§8.5, §8.6) make it survivable at admin volume | 2026-08-28 |
+| Does #general reach `post_policy = 'members'`? | **Yes, eventually.** `none` → `admin` → `members`, rolled out slowly. Phase 4 exists | 2026-08-28 |
+| Is `push_deliveries` worth it in phase 1? | **Yes — for latency, not reliability.** Inline fan-out puts ten HTTPS round trips in front of a seller's POST. See §5.8 and §8.2 | 2026-08-28 |
 | Where do payroll events go? | **Nowhere. Dropped**, along with the `personal` channel kind that existed to hold them. A payout is one person's pay and every channel here has more than one reader. Payroll stays on `/mobile/more/earnings` | 2026-08-28 |
 
 ---
