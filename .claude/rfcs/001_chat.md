@@ -90,13 +90,6 @@ before the habit exists.
 |---|---|---|---|---|
 | `general` | One per tenant | Everyone in the tenant | `none` → `admin` → `members` | Slack's `#general` |
 | `store` | One per store | `user_store_assignments` for that store | `none` → `members` | A team channel |
-| `personal` | One per user | That user, alone | **`none`, permanently** | Slack's Slackbot slot |
-
-**`personal` is not a DM.** Nobody can post into it — not another user, not the
-owner. It is a system-to-one-person feed, and it exists because some events are
-personal: a payout is one person's pay, and it cannot go in a channel where
-colleagues read it. The constraint `kind <> 'personal' or post_policy = 'none'`
-makes that permanent in the schema rather than in a convention.
 
 There is one tenant today. The channel is still keyed on `tenant_id` because
 everything else in this codebase is, and because the day there are two, nothing
@@ -130,9 +123,8 @@ Sketch, not a migration. Column names checked against `packages/db/types.ts`.
 create table chat_channels (
     id          uuid primary key default gen_random_uuid(),
     tenant_id   uuid not null references tenants(id) on delete cascade,
-    kind        text not null check (kind in ('general','store','personal','custom')),
+    kind        text not null check (kind in ('general','store','custom')),
     store_id    uuid references stores(id) on delete cascade,
-    user_id     uuid references users(id) on delete cascade,   -- personal only
     name        text not null,
     post_policy text not null default 'none'
                 check (post_policy in ('none','admin','members')),
@@ -141,12 +133,7 @@ create table chat_channels (
 
     -- store channels have a store; the other kinds must not
     constraint chat_channels_store_matches_kind
-        check ((kind = 'store') = (store_id is not null)),
-    constraint chat_channels_user_matches_kind
-        check ((kind = 'personal') = (user_id is not null)),
-    -- a personal channel is system-only, permanently
-    constraint chat_channels_personal_is_read_only
-        check (kind <> 'personal' or post_policy = 'none')
+        check ((kind = 'store') = (store_id is not null))
 );
 
 create unique index chat_channels_one_general_per_tenant
@@ -155,8 +142,6 @@ create unique index chat_channels_one_general_per_tenant
 create unique index chat_channels_one_per_store
     on chat_channels (store_id) where kind = 'store';
 
-create unique index chat_channels_one_personal_per_user
-    on chat_channels (user_id) where kind = 'personal';
 ```
 
 `custom` is in the enum and nothing creates one. Costs nothing now, saves a
@@ -304,11 +289,7 @@ create view chat_channel_members as
     select c.id, c.tenant_id, a.user_id
       from chat_channels c
       join user_store_assignments a on a.store_id = c.store_id
-     where c.kind = 'store'
-    union all
-    select c.id, c.tenant_id, c.user_id
-      from chat_channels c
-     where c.kind = 'personal';
+     where c.kind = 'store';
 ```
 
 No join table, no invite flow, nothing to drift out of sync with
@@ -394,7 +375,7 @@ protection. Never take a `channelId` on trust; check membership.
 ```ts
 // packages/features/chat/schema.ts
 
-export const ChannelKind = z.enum(["general", "store", "personal", "custom"]);
+export const ChannelKind = z.enum(["general", "store", "custom"]);
 export const AuthorType = z.enum(["user", "system"]);
 
 export const ChannelResponse = z.object({
@@ -601,6 +582,51 @@ the `"permission"` / `"generic"` Drawer bottom sheet. Same shape, different copy
 **Show the real state, not just the preference.** Permission `denied` with the
 preference true should render as off with a "fix in settings" affordance.
 
+### 8.6 Collapse by channel
+
+A Web Push notification carries a `tag`. **A notification with the same tag
+replaces the previous one** rather than stacking beside it.
+
+```ts
+self.registration.showNotification(title, {
+    tag: channelId,        // one live slot per channel
+    renotify: false,       // replacing must not buzz again
+    body,                  // "Store A · 15 new"
+    icon: "/icons/icon-192x192.png",
+    badge: "/icons/badge-monochrome.png",
+    data: { channelId, messageId },
+});
+```
+
+Fifteen messages in one channel become one notification line that updates in
+place. An admin on ten stores holds **ten** slots, not a hundred and fifty.
+
+`renotify: false` is the half people forget: without it the replacement
+re-buzzes, and the collapse gains nothing except a tidier shade.
+
+### 8.7 Notification level, per channel
+
+Not a mute toggle. Mute is all-or-nothing, which is why Slack does not use one
+as its primary control.
+
+```sql
+notify_level text not null default 'all'
+    check (notify_level in ('all','humans','none'))
+```
+
+Column lives on `chat_reads`, beside `last_read_at`.
+
+| Level | Pushes | For |
+|---|---|---|
+| `all` | Everything | A seller on one store. Default |
+| `humans` | `author_type = 'user'` only; system events bump the badge | An admin across many stores |
+| `none` | Nothing. Badge only | A channel someone is not working today |
+
+**`humans` is the useful tier, and it works without mentions existing** — which
+matters, because mentions are a non-goal. A store opening is informational; a
+colleague asking a question is not. `author_type` already draws that line, so
+the setting costs one column and one `where` clause in the fan-out.
+
 ### 8.5 Onboarding checklist
 
 All three while the device is in hand, because all three are hard to fix
@@ -634,8 +660,13 @@ destination is not the same for every event.
 | Event | Channel | Why |
 |---|---|---|
 | `store_opened`, `store_closed` | That store's channel | Naturally scoped to the people who work there |
-| `payroll_payout_updated` | The recipient's **personal** channel | One person's pay. Colleagues must not see it |
 | Admin announcements | `general` | Written by a human, not a system event |
+
+**Payroll events are deliberately not here.** A payout is one person's pay, and
+every channel in this design is read by more than one person. Rather than invent
+a private destination for a single event type, payroll stays where it already
+lives — `/mobile/more/earnings`. If that changes, it needs its own decision, not
+a routing row.
 
 **Scoping is the volume control.** A seller assigned to one store sees two
 system events a day plus their own payouts. Nobody is subscribed to every
@@ -665,7 +696,7 @@ In the order they block things.
 | 2 | Membership as a `security definer` function | RLS re-evaluates a bare view per row |
 | 3 | `reply_count` trigger | A denormalised counter drifts without one |
 | 4 | Manifest `name` → the real product name | Baked into the WebAPK at install |
-| 5 | Monochrome badge icon | Android status bar renders a grey bell without it |
+| 5 | Monochrome badge icon | Android status bar renders a grey bell without it. Referenced as `/icons/badge-monochrome.png` in §8.6 |
 | 6 | Supabase concurrent-peak check | One channel per user per shift is the real cost |
 
 **Item 1 should be done regardless of whether this RFC is accepted.**
@@ -721,27 +752,38 @@ the same 7 — `feature-fast-order` is declared in code and missing in PostHog, 
 it evaluates false forever. **Fix that before adding `feature-chat`**, or the
 same failure is silently possible here.
 
-### 11.7 "Everything notifies" scales with stores per user, not users
+### 11.6 "Everything notifies" holds — but only with collapse
 
-The decision is deliberate and the volume is bounded by §9.1's routing: a seller
-assigned to one store sees two system events a day plus their own payouts.
+Volume estimate from the owner, 2026-08-28: **10–15 messages per store per
+day**, system events included. Over a 12-hour working day:
 
-**It is the admin who feels it.** Someone assigned to every store gets every
-open and every close — two per store per day. At five stores that is ten
-notifications a day and fine. At fifty it is a hundred, and the feature becomes
-something people turn off entirely.
+| Stores | Messages/day | Cadence | Verdict |
+|---|---|---|---|
+| 1 | 10–15 | ~1 per hour | Fine |
+| 3 | 30–45 | ~1 per 20 min | Noticeable |
+| 10 | 100–150 | **~1 per 5–7 min** | Unusable raw |
+| 20 | 200–300 | ~1 per 3 min | — |
 
-The pressure valve is already in this design: `muted_until` on `chat_reads`, per
-channel. **That argues for moving mute forward to phase 2**, beside reactions,
-rather than leaving it with the composer in phase 4 — the person who most needs
-it is the one who will be using the feature from day one.
+**A seller is fine at any point on this table**; they belong to one store. The
+case that breaks is an admin assigned to every store, and it breaks at exactly
+the volume predicted rather than at some hypothetical scale.
 
-Nothing here changes the decision. It changes when mute is needed.
+The decision does not change — everything still notifies. Two mechanisms make it
+survivable, and they are described in §8.6 and §8.7:
+
+1. **Collapse by channel** with a Web Push `tag`. Nearly free, and it is the
+   larger of the two: an admin on ten stores holds ten notification slots that
+   update in place, not 150 that stack.
+2. **A three-level per-channel setting**, `all` / `humans` / `none` — not a mute
+   toggle, which is all-or-nothing and is why Slack does not use one as the
+   primary control.
+
+**Both belong in phase 2**, beside reactions. The person who needs them is the
+admin, who is using the feature from day one.
 
 ### 11.6 Retention
 
-System events accumulate forever — roughly one per store per open and close,
-plus payouts. No horizon is proposed. At current volume it does not matter for
+System events accumulate forever — roughly two per store per day. No horizon is proposed. At current volume it does not matter for
 years; the concern is that "scroll back to the beginning of time" becomes an
 implicit promise that is expensive to withdraw.
 
