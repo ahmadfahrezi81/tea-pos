@@ -99,11 +99,11 @@ about this has to change.
 
 It was the first proposal in this discussion and it was wrong.
 
-Every phase-1 event is already logged — `store_opened`, `store_closed`,
-`payroll_payout_updated` are all in the `ActivityLogType` enum. A feed screen
-reading that table is a day's work and needs no new tables at all.
+Every phase-1 event is already logged — `store_opened` and `store_closed` are
+both in the `ActivityLogType` enum. A feed screen reading that table is a day's
+work and needs no new tables at all.
 
-The problem is phase 2. Adding chat then means **two sources, two orderings, and
+The problem is everything after it. Adding chat then means **two sources, two orderings, and
 two unread models** to reconcile in the UI forever, and that merge never gets
 cleaned up. One table where a system event and a seller's message differ only by
 `author_type` costs slightly more now and nothing later.
@@ -582,7 +582,7 @@ the `"permission"` / `"generic"` Drawer bottom sheet. Same shape, different copy
 **Show the real state, not just the preference.** Permission `denied` with the
 preference true should render as off with a "fix in settings" affordance.
 
-### 8.6 Collapse by channel
+### 8.5 Collapse by channel
 
 A Web Push notification carries a `tag`. **A notification with the same tag
 replaces the previous one** rather than stacking beside it.
@@ -604,7 +604,7 @@ place. An admin on ten stores holds **ten** slots, not a hundred and fifty.
 `renotify: false` is the half people forget: without it the replacement
 re-buzzes, and the collapse gains nothing except a tidier shade.
 
-### 8.7 Notification level, per channel
+### 8.6 Notification level, per channel
 
 Not a mute toggle. Mute is all-or-nothing, which is why Slack does not use one
 as its primary control.
@@ -627,7 +627,7 @@ matters, because mentions are a non-goal. A store opening is informational; a
 colleague asking a question is not. `author_type` already draws that line, so
 the setting costs one column and one `where` clause in the fan-out.
 
-### 8.5 Onboarding checklist
+### 8.7 Onboarding checklist
 
 All three while the device is in hand, because all three are hard to fix
 remotely:
@@ -669,8 +669,8 @@ lives — `/mobile/more/earnings`. If that changes, it needs its own decision, n
 a routing row.
 
 **Scoping is the volume control.** A seller assigned to one store sees two
-system events a day plus their own payouts. Nobody is subscribed to every
-store's opens unless they are assigned to every store.
+system events a day. Nobody is subscribed to every store's opens unless they are
+assigned to every store.
 
 ### 9.2 A system message is a normal message
 
@@ -696,7 +696,7 @@ In the order they block things.
 | 2 | Membership as a `security definer` function | RLS re-evaluates a bare view per row |
 | 3 | `reply_count` trigger | A denormalised counter drifts without one |
 | 4 | Manifest `name` → the real product name | Baked into the WebAPK at install |
-| 5 | Monochrome badge icon | Android status bar renders a grey bell without it. Referenced as `/icons/badge-monochrome.png` in §8.6 |
+| 5 | Monochrome badge icon | Android status bar renders a grey bell without it. Referenced as `/icons/badge-monochrome.png` in §8.5 |
 | 6 | Supabase concurrent-peak check | One channel per user per shift is the real cost |
 
 **Item 1 should be done regardless of whether this RFC is accepted.**
@@ -769,7 +769,7 @@ case that breaks is an admin assigned to every store, and it breaks at exactly
 the volume predicted rather than at some hypothetical scale.
 
 The decision does not change — everything still notifies. Two mechanisms make it
-survivable, and they are described in §8.6 and §8.7:
+survivable, and they are described in §8.5 and §8.6:
 
 1. **Collapse by channel** with a Web Push `tag`. Nearly free, and it is the
    larger of the two: an admin on ten stores holds ten notification slots that
@@ -781,7 +781,7 @@ survivable, and they are described in §8.6 and §8.7:
 **Both belong in phase 2**, beside reactions. The person who needs them is the
 admin, who is using the feature from day one.
 
-### 11.6 Retention
+### 11.7 Retention
 
 System events accumulate forever — roughly two per store per day. No horizon is proposed. At current volume it does not matter for
 years; the concern is that "scroll back to the beginning of time" becomes an
@@ -793,17 +793,24 @@ implicit promise that is expensive to withdraw.
 
 1. **Does #general go all the way to `post_policy = 'members'`, or stop at
    `admin`?** The schema supports either and the switch is one `update`, so this
-   does not need answering before phase 1 — but it changes whether phase 4 exists.
-2. **Do reactions apply to system events, or only to human messages?** Letting
-   staff 🎉 a payout is the kind of thing that makes the tab feel alive. Letting
-   them react to every store open is noise.
-3. **Does a system event notify?** Every store open pushing to every seller in
-   the tenant is noise. Likely: store channels notify, announcements notify,
-   routine system events do not — but that is a product call.
-4. **Retention horizon?** See §11.6.
-5. **Is `chat_notifications` worth it in phase 1**, when phase 1 has no user
-   messages and the volume is a handful of events a day? It could be added with
+   does not need answering before phase 1 — but it decides whether phase 4
+   exists.
+2. **What is the retention horizon?** See §11.7.
+3. **Is `chat_notifications` worth it in phase 1**, when phase 1 has no user
+   messages and the volume is a handful of events a day? It could arrive with
    the composer instead.
+4. **Does `humans` need to distinguish store events from admin announcements?**
+   §8.6 splits on `author_type`, so an admin announcement in `#general` counts as
+   human and pushes. That is probably right — but it means `#general` cannot be
+   set to "events only", if that is ever wanted.
+
+### Answered
+
+| Question | Answer | Date |
+|---|---|---|
+| Are system messages repliable, threadable, reactable? | **Yes, all three.** A system message is a normal message; `author_type` changes rendering and nothing else | 2026-08-28 |
+| Do system events send a push? | **Yes. Everything notifies.** That is the point of the system — one surface, and anything shown there reaches the user. Collapse and levels (§8.5, §8.6) make it survivable at admin volume | 2026-08-28 |
+| Where do payroll events go? | **Nowhere. Dropped**, along with the `personal` channel kind that existed to hold them. A payout is one person's pay and every channel here has more than one reader. Payroll stays on `/mobile/more/earnings` | 2026-08-28 |
 
 ---
 
