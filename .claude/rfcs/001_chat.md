@@ -114,6 +114,35 @@ cleaned up. One table where a system event and a seller's message differ only by
 **This is the single largest cost in the RFC.** If phase 3 is genuinely
 uncertain, it deserves another look.
 
+### 4.4 Channel lifecycle
+
+Three small decisions, all following from rules already in this file.
+
+**Creation is explicit, not a trigger.** A seed migration creates #general and
+one channel per store that exists today. New stores get theirs from the
+store-create path, beside the code that creates the store — the same reasoning
+as §9.1: a trigger makes channel creation invisible, and the one place that
+knows a store was created is the code that created it.
+
+**A store channel is named after its store.** `chat_channels.name` is a copy,
+not a join, so renaming a store leaves the channel stale until something updates
+it. That is deliberate: the channel list must not join `stores` to render, and a
+rename is rare enough to handle in the same place the rename happens.
+
+**Deactivating a store makes its channel read-only, not gone.**
+`stores.status` changing sets `post_policy = 'none'`. Nothing is deleted, the
+history stays readable, and nobody can post into a store that is not operating.
+
+No new mechanism for any of it: `post_policy` already exists, and this is the
+fourth thing it does.
+
+> `user_store_assignments` carries no status of its own, so deactivating a store
+> leaves its assignments in place and members keep read access through the
+> derived membership view (§5.6). If assignments are ever cleared on
+> deactivation instead, members lose the channel and its history immediately —
+> which is the risk §13 flags about derived membership, arriving through a side
+> door.
+
 ---
 
 ## 5. Data model
@@ -765,14 +794,9 @@ same silent failure is possible here.
 
 ## 12. Open questions
 
-1. **Who creates the channels, and when?** A seed migration covers #general and
-   the stores that exist today. New stores need a channel too — from the
-   store-create path, or a trigger.
-2. **What happens to a store's channel when the store is deactivated?**
-   `stores.status` exists. The channel could stay readable, disappear, or go
-   read-only. Nothing in this design decides it.
-3. **What is a store channel called?** The store's name is the obvious answer;
-   it is not written down anywhere.
+**None.** Everything raised in review has been answered; the table below is the
+record. What remains is not uncertainty about the design but the judgement calls
+in §13, which are decisions already made that would be expensive to reverse.
 
 ### Answered
 
@@ -785,6 +809,9 @@ same silent failure is possible here.
 | Where do payroll events go? | **Nowhere. Dropped** | 2026-08-28 |
 | What is the retention horizon? | **Messages forever; `push_deliveries` swept at 30 days.** See §5.9 | 2026-08-28 |
 | Is `push_deliveries` worth it in phase 1? | **No — deferred to phase 3.** `after()` solves latency; the table only buys retry. See §5.8 | 2026-08-28 |
+| Who creates the channels, and when? | **A seed migration, then the store-create path.** Explicit, not a trigger. See §4.4 | 2026-08-28 |
+| What happens when a store is deactivated? | **The channel goes read-only.** `post_policy = 'none'`; history stays. See §4.4 | 2026-08-28 |
+| What is a store channel called? | **The store's name**, copied onto the channel rather than joined | 2026-08-28 |
 
 ---
 
@@ -807,4 +834,5 @@ same silent failure is possible here.
 | 2026-08-28 | First draft |
 | 2026-08-28 | `announcement` → `general`; `post_policy`; reactions added |
 | 2026-08-28 | Personal channels and payroll routing dropped; notification volume costed |
+| 2026-08-28 | Channel lifecycle decided (§4.4). **No open questions remain** |
 | 2026-08-28 | **Simplification pass.** Cut `custom` channels, `is_archived`, `edited_at`, the `reply_count` denormalisation and its trigger, one feature flag, and the database broadcast trigger. `push_deliveries` deferred to phase 3 after the latency argument for it turned out to be wrong. Five phases became three; six prerequisites became five |
