@@ -143,6 +143,11 @@ relocated, not created.
 
 ### Item 1 — `/api/stores` is 54 calls repeating a read the layout just did
 
+> **Shipped. Corrected 2026-09-05 by task 063.** This item reads as unbuilt below
+> and is not: `useStores` already carries `revalidateIfStale: false`, with a doc
+> comment covering the same reasoning. The separate 89ms question at the end of
+> the item is still open.
+
 `BootFallback` seeds `SWRConfig.fallback` with the store list `MobileLayout`
 already fetched. **SWR treats `fallback` as stale and revalidates on mount** —
 `useStores` sets `revalidateOnFocus: false` and a 60s dedupe, and neither stops
