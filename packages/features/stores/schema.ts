@@ -72,6 +72,14 @@ export const UpdateStoreInput = z
     })
     .openapi({ title: "UpdateStoreInput" });
 
+export const SetDefaultStoreInput = z
+    .object({
+        storeId: UUIDSchema.openapi({
+            description: "The store this user's app should open on",
+        }),
+    })
+    .openapi({ title: "SetDefaultStoreInput" });
+
 // ============================================================================
 // QUERY SCHEMAS
 // ============================================================================

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { RefreshCw, Info } from "lucide-react";
 import { Icon } from "@iconify/react";
 import { useAppUpdate } from "./useAppUpdate";
@@ -53,7 +54,21 @@ const COPY = {
  */
 const ACTIVITY_EVENTS = ["pointerdown", "mousemove", "keydown"] as const;
 
-export default function InactivityRefreshPopup() {
+interface InactivityRefreshPopupProps {
+    /**
+     * Revalidate the app's client caches. Supplied by the app rather than done
+     * here, because this package has no SWR dependency and should not grow one
+     * — the same split as route data and i18n. Omitted, the idle refresh falls
+     * back to `router.refresh()` alone, which re-renders the server tree but
+     * leaves every SWR key as it was.
+     */
+    onSoftRefresh?: () => void | Promise<unknown>;
+}
+
+export default function InactivityRefreshPopup({
+    onSoftRefresh,
+}: InactivityRefreshPopupProps = {}) {
+    const router = useRouter();
     const [showInactivityPrompt, setShowInactivityPrompt] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const { reason: updateReason, dismiss: dismissUpdate } = useAppUpdate();
@@ -98,18 +113,38 @@ export default function InactivityRefreshPopup() {
     const reason = updateReason ?? (showInactivityPrompt ? "inactivity" : null);
 
     /**
-     * One reload for both reasons. A stale page has to fetch a new document to
-     * run new code; an idle page has to fetch one to see current data. Same
-     * call.
+     * The two reasons need different things, and only one of them needs a new
+     * document.
      *
-     * There used to be a second branch here, a `router.refresh()` for a page
-     * that already *was* the new build and only needed its data re-rendered.
-     * That case no longer reaches this sheet — `WhatsNew` has it, and spends
-     * the tap on the release notes instead of on an invisible refetch.
+     * **Update** is behind on *code*. A tab can only run a newer bundle by
+     * fetching a new document, so this stays a hard reload.
+     *
+     * **Inactivity** is behind on *data*, and the code it is running is fine. A
+     * hard reload there throws away everything the page was holding to fix
+     * something a refetch fixes — and on the POS screen the cart is held in
+     * memory only, so twenty quiet minutes mid-order used to cost the order.
+     * Revalidating the caches and re-rendering the server tree is the whole
+     * job; the sheet then closes onto the same screen, now current.
      */
-    const handleRefresh = () => {
+    const handleRefresh = async () => {
         setIsRefreshing(true);
-        window.location.reload();
+
+        if (reason === "update") {
+            window.location.reload();
+            return;
+        }
+
+        try {
+            await onSoftRefresh?.();
+        } catch {
+            // A failed revalidation leaves the old data on screen, which is
+            // what was there anyway. Nothing here is worth an error sheet.
+        }
+        router.refresh();
+
+        setIsRefreshing(false);
+        setShowInactivityPrompt(false);
+        lastActivityRef.current = Date.now();
     };
 
     /**

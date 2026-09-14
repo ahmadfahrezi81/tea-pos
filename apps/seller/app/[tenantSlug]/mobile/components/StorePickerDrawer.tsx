@@ -4,6 +4,7 @@ import { Drawer } from "vaul";
 import { Check, X, Eye, EyeOff } from "lucide-react";
 import { useShellScroll } from "@tea-pos/shell/ScrollContext";
 import { useStore } from "@/lib/context/StoreContext";
+import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
 import { useT } from "@/lib/hooks/useT";
 
 export function StorePickerDrawer() {
@@ -17,6 +18,7 @@ export function StorePickerDrawer() {
         setHideInactiveStores,
     } = useStore();
     const t = useT();
+    const { showError } = useErrorSheet();
     const { scrollRef } = useShellScroll();
 
     // Opening the drawer locks scrolling, which drops the page's position.
@@ -113,9 +115,15 @@ export function StorePickerDrawer() {
                             return (
                                 <button
                                     key={store.id}
+                                    /* Closed first, awaited after: the choice
+                                       applies locally at once and the write
+                                       follows. It only rejects having already
+                                       put the old store back, so the error
+                                       sheet explains a selection the user can
+                                       see has reverted. */
                                     onClick={() => {
-                                        setSelectedStoreId(store.id);
                                         setIsPickerOpen(false);
+                                        setSelectedStoreId(store.id).catch(showError);
                                     }}
                                     className={`w-full flex items-center justify-between py-5 mb-0 transition-colors ${
                                         !isLast ? "border-b" : ""
