@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { unstable_cache } from "next/cache";
 import MobileLayoutClient from "./components/MobileLayoutClient";
-import InactivityRefreshPopup from "@tea-pos/shell/InactivityRefreshPopup";
+import { InactivityRefresh } from "@/components/shared/InactivityRefresh";
 import WhatsNew from "@tea-pos/shell/WhatsNew";
 import { patchNotes } from "@/lib/patch-notes";
 import { ToastProvider } from "@/lib/context/ToastContext";
@@ -62,7 +62,7 @@ export default async function MobileLayout({ children }: { children: ReactNode }
                     <StoreFilterProvider>
                         <MobileLayoutClient>
                             {children}
-                            <InactivityRefreshPopup />
+                            <InactivityRefresh />
                             {/* Literals, not `useT`: this app has no i18n
                                 layer. The seller passes translated copy into
                                 the same component. */}

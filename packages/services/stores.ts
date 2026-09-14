@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { ApiError } from "@tea-pos/utils/errors";
 
 /**
  * Aliased to camelCase in the query rather than walked afterwards, so rows come
@@ -53,6 +54,72 @@ export async function listUserStores(supabase: SupabaseClient, { tenantId, userI
         stores: stores ?? [],
         assignments: assignmentsByStore,
     };
+}
+
+/**
+ * Remember which store this user's app opens on — see task 064.
+ *
+ * `is_default` means *the store this user opens on*, and the picker is what
+ * writes it. It is not an admin's roster decision: the only code that ever
+ * wrote it with that meaning lives in the archived `apps/admin`, and the two
+ * live readers of this table (`createOrder` here in `orders.ts`, and the QRIS
+ * route) both `select("id")` as a pure access check and never look at the
+ * column.
+ *
+ * **Scoped to the tenant, through `stores`.** The rows carry `user_id`,
+ * `store_id` and no `tenant_id`, so "one default per user" is only the right
+ * rule inside one tenant — a user assigned across two of them wants one default
+ * in each. No user is today, and the join costs nothing, so the scope is here
+ * rather than in a comment promising to add it later.
+ *
+ * **Two statements, not one.** Between them the user briefly has no default at
+ * all. A second device booting inside that window falls through to the first
+ * assigned store, shows something valid, and corrects itself on the next load —
+ * one device, one boot, nothing written. The single-statement version needs
+ * `set is_default = (store_id = $1)`, which is an expression supabase-js cannot
+ * send, so it would mean an RPC and a migration. `transfer_store_session` is
+ * the precedent if that ever becomes worth it.
+ *
+ * Idempotent: picking the store that is already default writes nothing.
+ */
+export async function setDefaultStore(
+    supabase: SupabaseClient,
+    { tenantId, userId, storeId }: { tenantId: string; userId: string; storeId: string },
+) {
+    /* One read does both jobs: it proves the caller may have this store — the
+       inner join means a store in another tenant simply does not come back —
+       and it names the rows to clear. Never trust the store id in the body. */
+    const { data: rows, error } = await supabase
+        .from("user_store_assignments")
+        .select("id, storeId:store_id, isDefault:is_default, stores!inner(tenant_id)")
+        .eq("user_id", userId)
+        .eq("stores.tenant_id", tenantId);
+
+    if (error) throw error;
+
+    const assignments = rows ?? [];
+    const target = assignments.find((row) => row.storeId === storeId);
+    if (!target) throw new ApiError("Not assigned to this store", 403);
+
+    const stale = assignments
+        .filter((row) => row.isDefault && row.id !== target.id)
+        .map((row) => row.id);
+
+    if (stale.length > 0) {
+        const { error: clearError } = await supabase
+            .from("user_store_assignments")
+            .update({ is_default: false })
+            .in("id", stale);
+        if (clearError) throw clearError;
+    }
+
+    if (!target.isDefault) {
+        const { error: setError } = await supabase
+            .from("user_store_assignments")
+            .update({ is_default: true })
+            .eq("id", target.id);
+        if (setError) throw setError;
+    }
 }
 
 /**

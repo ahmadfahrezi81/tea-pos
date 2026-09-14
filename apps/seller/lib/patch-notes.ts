@@ -9,6 +9,17 @@ import type { PatchNote } from "@tea-pos/ui/custom/PatchNotes";
  */
 export const patchNotes: PatchNote[] = [
     {
+        version: "5.4.16",
+        date: "2026-09-14",
+        entries: [
+            { kind: "fixed", text: "The app now always opens on one of your stores, even on a new phone." },
+            { kind: "added", text: "The store you pick is remembered, so your other phone opens on it too." },
+            { kind: "improved", text: "Taking over the till from another phone now shows up straight away." },
+            { kind: "fixed", text: "Refreshing after a quiet spell no longer empties the order you were building." },
+            { kind: "fixed", text: "On a small screen, the card asking you to open the store is no longer cut off." },
+        ],
+    },
+    {
         version: "5.4.14",
         date: "2026-08-26",
         entries: [

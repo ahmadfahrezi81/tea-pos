@@ -2,7 +2,7 @@ import { ReactNode, Suspense } from "react";
 import { cookies, headers } from "next/headers";
 import { unstable_cache } from "next/cache";
 import MobileLayoutClient from "./components/MobileLayoutClient";
-import InactivityRefreshPopup from "@tea-pos/shell/InactivityRefreshPopup";
+import { InactivityRefresh } from "@/components/shared/InactivityRefresh";
 import WhatsNewMount from "./components/WhatsNewMount";
 import { StoreProvider } from "@/lib/context/StoreContext";
 import { FastOrderModeProvider } from "@/lib/context/FastOrderModeContext";
@@ -178,7 +178,7 @@ export default async function MobileLayout({ children }: MobileLayoutProps) {
                                     <ErrorSheetProvider>
                                         <MobileLayoutClient>
                                             {children}
-                                            <InactivityRefreshPopup />
+                                            <InactivityRefresh />
                                             <WhatsNewMount />
                                         </MobileLayoutClient>
                                     </ErrorSheetProvider>

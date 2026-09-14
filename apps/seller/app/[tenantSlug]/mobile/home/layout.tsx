@@ -33,7 +33,8 @@ export default function HomeLayout({
         return (
             <div className="min-h-full flex flex-col gap-4">
                 <HomeHeaderSkeleton />
-                <div className="flex-1 min-h-0">
+                {/* flex-1 flex, matching the gate it stands in for. */}
+                <div className="flex-1 flex">
                     <GateSkeleton />
                 </div>
             </div>
@@ -48,7 +49,24 @@ export default function HomeLayout({
             // spills out over the page behind it.
             <div className="flex flex-col min-h-full gap-4">
                 <AtAGlance summaryId={summaryId ?? undefined} />
-                <div className="flex-1 min-h-0">
+                {/* flex-1 flex, and deliberately no min-h-0.
+                 *
+                 * min-h-0 lets a flex item shrink below its content, and with
+                 * flex-1's 0% basis that is what happened: this stayed at the
+                 * leftover viewport height whatever was inside it, so a gate
+                 * card taller than the fold — TakeOverCard showing a transfer
+                 * error, or any of them on a short phone — hung out of a parent
+                 * that never grew, and the shell's scroll region had nothing to
+                 * scroll to.
+                 *
+                 * At min-height:auto it is the larger of the free space and its
+                 * own content, which is both halves of what the gate needs.
+                 * `flex` is how the card claims the first half: as a flex child
+                 * it stretches to this height, where the card's own min-h-full
+                 * is a percentage of a height that is only definite while the
+                 * card is the shorter of the two. Same look when it fits, and
+                 * it grows and scrolls when it does not. */}
+                <div className="flex-1 flex">
                     <StoreGate
                         gate={gate}
                         isPosInUse={isPosInUse}
