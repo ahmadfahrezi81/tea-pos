@@ -1,8 +1,8 @@
 # Task 065 — The navigation progress bar
 
 **Status: steps 1–5 shipped to staging 2026-09-15 and checked by the owner; PR #110
-open against master. Step 6 appended and built the same day, not yet committed.
-Step 7 appended, not built.** Scope is
+open against master. Step 6 committed the same day; step 7 built, not committed.
+Neither pushed.** Scope is
 the shell (`packages/shell`), so seller and backoffice both get every change. The
 boot loader bar in `MobileLayoutClient.tsx` and `launch.html` are out of scope.
 
