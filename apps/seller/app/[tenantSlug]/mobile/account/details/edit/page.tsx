@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { navigation } from "@tea-pos/utils/navigation";
 import { useCurrentUser } from "@/lib/hooks/user/useCurrentUser";
 import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
 import { TextInput } from "@tea-pos/ui/custom/TextInput";
@@ -24,7 +24,6 @@ function splitFullName(fullName: string) {
 }
 
 function EditForm({ user, update }: { user: User; update: (input: UpdateUserInput) => Promise<User> }) {
-    const router = useRouter();
     const t = useT();
     const { showError } = useErrorSheet();
     const { firstName: initFirst, lastName: initLast } = splitFullName(user.fullName);
@@ -42,7 +41,7 @@ function EditForm({ user, update }: { user: User; update: (input: UpdateUserInpu
                 fullName: fullName || undefined,
                 phoneNumber: phoneDigits ? `+62${phoneDigits}` : null,
             });
-            router.back();
+            navigation.back();
         } catch (err) {
             showError(err);
         } finally {

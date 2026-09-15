@@ -1,5 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+/* Plain CSS from the shell, not Tailwind classes, so `@source` cannot carry it. */
+@import "../../../packages/shell/nav-progress.css";
 
 /* Tailwind's auto source detection is rooted at this app, so shared
    components are never scanned and classes used only there are silently
@@ -57,18 +59,6 @@ a,
     background-color: var(--accent-primary);
     border-radius: 9999px;
     animation: indeterminate 1.5s ease-in-out infinite;
-}
-
-/* Navigation progress, used by @tea-pos/shell. Shown only once a route is slow
-   enough to notice, over the outgoing page rather than in place of it. Colour
-   comes from the class alongside it so this stays purely positional. */
-.nav-pending-bar {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: -100%;
-    width: 100%;
-    animation: indeterminate 1.2s ease-in-out infinite;
 }
 
 /* ── Skeletons ────────────────────────────────────────────────────────────
@@ -140,6 +130,27 @@ a,
 @layer base {
     * { @apply border-border outline-ring/50; margin-bottom: 0; }
     body { @apply bg-background text-foreground; }
+
+    /* Native feel: nothing highlights on a long-press, no iOS link or image
+       preview menu, no Android tap flash. Copying a value is a copy button's
+       job. In the base layer so a `select-text` utility can still opt out. */
+    html {
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Set explicitly rather than left to inheritance: older iOS Safari would
+       not let you select, or paste into, a field under a user-select:none
+       ancestor. The callout comes back too, because it carries Paste. */
+    input,
+    textarea,
+    [contenteditable="true"] {
+        -webkit-user-select: text;
+        user-select: text;
+        -webkit-touch-callout: default;
+    }
 }
 
 select,

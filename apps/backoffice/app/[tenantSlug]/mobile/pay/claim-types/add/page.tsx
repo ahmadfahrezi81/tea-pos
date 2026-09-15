@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { navigation } from "@tea-pos/utils/navigation";
 import { usePayrollClaimConfigs } from "@/lib/hooks/payroll-claim-configs/usePayrollClaimConfigs";
 import { TextInput } from "@tea-pos/ui/custom/TextInput";
 import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
@@ -17,7 +17,6 @@ const FREQUENCY_LABEL: Record<string, string> = {
 };
 
 export default function AddClaimTypePage() {
-    const router = useRouter();
     const { create } = usePayrollClaimConfigs();
     const { showError } = useErrorSheet();
     const [name, setName] = useState("");
@@ -49,7 +48,7 @@ export default function AddClaimTypePage() {
                 claimSource,
                 ...((claimSource === "auto" || claimSource === "auto_submit") ? { autoThresholdHours } : {}),
             });
-            router.back();
+            navigation.back();
         } catch (err) {
             showError(err);
         } finally {

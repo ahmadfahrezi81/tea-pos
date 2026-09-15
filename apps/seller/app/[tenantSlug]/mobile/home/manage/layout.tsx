@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
+import { navigation } from "@tea-pos/utils/navigation";
 import { useStore } from "@/lib/context/StoreContext";
 import { useSession } from "@/lib/hooks/sessions/useSession";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 
 export default function ManageLayout({ children }: { children: React.ReactNode }) {
-    const router = useRouter();
     const pathname = usePathname();
     const { url } = useTenantSlug();
     const { selectedStoreId } = useStore();
@@ -24,9 +24,11 @@ export default function ManageLayout({ children }: { children: React.ReactNode }
         if (!gate || isExempt) return;
         const sessionTakenByOther = gate === "open" && !!session && !!user && session.userId !== user.id;
         if (gate !== "open" || sessionTakenByOther) {
-            router.push(url("/mobile/home/manage"));
+            // Replace, not push: a blocked page left in history would redirect
+            // again the moment back reached it, trapping the back button.
+            navigation.replace(url("/mobile/home/manage"));
         }
-    }, [gate, session, user, isExempt, router, url]);
+    }, [gate, session, user, isExempt, url]);
 
     return <>{children}</>;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { navigation } from "@tea-pos/utils/navigation";
 import { usePayrollUserInfo } from "@/lib/hooks/payroll/usePayrollUserInfo";
 import { useBanks } from "@/lib/hooks/banks/useBanks";
 import { TextInput } from "@tea-pos/ui/custom/TextInput";
@@ -74,7 +74,6 @@ function EditForm({ info, update }: {
     info: PayrollUserInfoResponse | null;
     update: (input: { bankName?: string; bankAccountNumber?: string; bankAccountHolder?: string }) => Promise<PayrollUserInfoResponse>;
 }) {
-    const router = useRouter();
     const t = useT();
     const { showError } = useErrorSheet();
     const [bankName, setBankName] = useState(info?.bankName ?? "");
@@ -94,7 +93,7 @@ function EditForm({ info, update }: {
                 bankAccountNumber: bankAccountNumber.trim() || undefined,
                 bankAccountHolder: bankAccountHolder.trim() || undefined,
             });
-            router.back();
+            navigation.back();
         } catch (err) {
             showError(err);
         } finally {

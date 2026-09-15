@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { navigation } from "@tea-pos/utils/navigation";
 import { usePayrollCommissionConfigs } from "@/lib/hooks/payroll-commission-configs/usePayrollCommissionConfigs";
 import { TextInput } from "@tea-pos/ui/custom/TextInput";
 import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
@@ -13,7 +13,6 @@ import { Field } from "@tea-pos/ui/custom/Field";
 
 export default function EditCommissionTypePage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
-    const router = useRouter();
     const { commissionTypes, isLoading, update } = usePayrollCommissionConfigs();
     const type = commissionTypes.find((t) => t.id === id);
     const { showToast } = useToast();
@@ -40,7 +39,7 @@ export default function EditCommissionTypePage({ params }: { params: Promise<{ i
         setError(null);
         try {
             await update(id, { name: name.trim(), isEnabled, ratePerCup });
-            router.back();
+            navigation.back();
         } catch (err) {
             showError(err);
         } finally {

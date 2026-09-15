@@ -1,5 +1,7 @@
 "use client";
 import { ReactNode, useCallback, useMemo, useState } from "react";
+import { SWRConfig, useSWRConfig } from "swr";
+import { trackFirstLoad } from "@/lib/utils/trackFirstLoad";
 import Image from "next/image";
 import { ChevronsUpDown } from "lucide-react";
 import { MobileShell } from "@tea-pos/shell/MobileShell";
@@ -13,6 +15,13 @@ import { navigation } from "@tea-pos/utils/navigation";
 import { prefetchSuffixes, resolveRoute, rootTabSuffixes, tabGroups } from "../config/navigation";
 import { useFlags } from "@/lib/context/FlagsContext";
 import { useT } from "@/lib/hooks/useT";
+
+/**
+ * Wraps page content only. A request a page starts on its first load holds the
+ * navigation bar until it settles (task 065). Module-level so the config keeps
+ * its identity: a new object each render would re-render every SWR hook below.
+ */
+const TRACK_PAGE_LOADS = { use: [trackFirstLoad] };
 
 interface MobileLayoutClientProps {
     children: ReactNode;
@@ -70,6 +79,17 @@ export default function MobileLayoutClient({ children }: MobileLayoutClientProps
         navigation.registerReplace(replace);
     }, []);
 
+    const registerBack = useCallback((back: () => void) => {
+        navigation.registerBack(back);
+    }, []);
+
+    // Pull to refresh refetches every mounted hook in place, as the idle sheet
+    // does — never a reload, so the POS cart survives. No router.refresh(): the
+    // layout's server reads sit behind 60s and 300s caches and would rarely
+    // return anything new for the proxy run they cost.
+    const { mutate } = useSWRConfig();
+    const refresh = useCallback(() => mutate(() => true), [mutate]);
+
     const onAccount = useCallback(() => {
         navigation.push(url("/mobile/account"));
     }, [url]);
@@ -86,12 +106,12 @@ export default function MobileLayoutClient({ children }: MobileLayoutClientProps
                 selectedStore ? (
                     <button
                         onClick={() => setIsPickerOpen(true)}
-                        className="flex items-center gap-0.5 active:scale-95"
+                        className="flex min-w-0 items-center gap-0.5 active:scale-95"
                     >
-                        <span className="text-[22px] font-semibold tracking-tight text-brand">
+                        <span className="truncate text-[22px] font-semibold tracking-tight text-brand">
                             {selectedStore.name}
                         </span>
-                        <ChevronsUpDown size={18} strokeWidth={3} className="text-brand" />
+                        <ChevronsUpDown size={18} strokeWidth={3} className="shrink-0 text-brand" />
                     </button>
                 ) : null
             }
@@ -101,6 +121,8 @@ export default function MobileLayoutClient({ children }: MobileLayoutClientProps
             prefetchPaths={prefetchPaths}
             onNavigate={registerNavigate}
             onReplace={registerReplace}
+            onBack={registerBack}
+            onRefresh={refresh}
             extras={<StorePickerDrawer />}
             overlay={
                 <>
@@ -203,7 +225,7 @@ export default function MobileLayoutClient({ children }: MobileLayoutClientProps
                 </>
             }
         >
-            {children}
+            <SWRConfig value={TRACK_PAGE_LOADS}>{children}</SWRConfig>
         </MobileShell>
     );
 }

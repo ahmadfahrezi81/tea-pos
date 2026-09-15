@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { navigation } from "@tea-pos/utils/navigation";
 import { useStore } from "@/lib/context/StoreContext";
 import { useSummaries } from "@/lib/hooks/summaries/useDailySummaries";
 import { SelectInput } from "@tea-pos/ui/custom/SelectInput";
@@ -20,7 +20,6 @@ const EXPENSE_OPTIONS = [
 ];
 
 export default function AddExpensePage() {
-    const router = useRouter();
     const { selectedStoreId } = useStore();
     const t = useT();
 
@@ -51,7 +50,7 @@ export default function AddExpensePage() {
                 storeId: selectedStoreId,
                 expenses: [{ label, customLabel, amount: String(amount) }],
             });
-            router.back();
+            navigation.back();
         } catch (err) {
             showError(err);
         } finally {

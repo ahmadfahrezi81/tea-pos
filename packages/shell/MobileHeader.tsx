@@ -35,10 +35,14 @@ export function MobileHeader({
     return (
         <header className="shrink-0 bg-slate-100 px-4 py-3 pt-[calc(0.75rem_+_env(safe-area-inset-top))]">
             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 flex-1">
+                {/* min-w-0 down the chain lets the title accessory truncate. A
+                    flex child will not shrink below its content otherwise, so a
+                    long store name wrapped the header onto a second line and
+                    moved the page each time the store changed. */}
+                <div className="flex items-center gap-2 flex-1 min-w-0">
                     {!isSubPage ? (
-                        <div className="flex items-baseline gap-2">
-                            <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">
+                        <div className="flex items-baseline gap-2 min-w-0">
+                            <h1 className="shrink-0 text-3xl font-extrabold tracking-tight text-gray-900">
                                 {title}
                             </h1>
                             {accessory}
@@ -81,17 +85,17 @@ export function MobileHeader({
                             </p>
                         </div>
                     ) : (
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-2 min-w-0">
                             <button
                                 onClick={onBack}
                                 className="text-gray-900 active:scale-95 self-start pr-2 pl-0 py-1"
                             >
                                 <ArrowLeft size={30} strokeWidth={2.5} />
                             </button>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
                                 <p
                                     className={`text-2xl tracking-tight text-gray-900 ${
-                                        accessory ? "font-semibold" : "font-bold"
+                                        accessory ? "shrink-0 font-semibold" : "font-bold"
                                     }`}
                                 >
                                     {title}
@@ -103,7 +107,7 @@ export function MobileHeader({
                 </div>
 
                 {showAccountIcon && (
-                    <button onClick={onAccount} className="active:scale-95" aria-label="Account">
+                    <button onClick={onAccount} className="shrink-0 active:scale-95" aria-label="Account">
                         {avatarUrl ? (
                             <div className="w-[42px] h-[42px] rounded-xl overflow-hidden ring-1 ring-black/10">
                                 <Image

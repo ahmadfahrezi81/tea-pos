@@ -9,6 +9,17 @@ import type { PatchNote } from "@tea-pos/ui/custom/PatchNotes";
  */
 export const patchNotes: PatchNote[] = [
     {
+        version: "5.4.17",
+        date: "2026-09-15",
+        entries: [
+            { kind: "added", text: "You can now pull down on a screen to refresh it." },
+            { kind: "improved", text: "The loading bar now shows every time you change screens, including going back." },
+            { kind: "improved", text: "The loading bar keeps moving on slower phones until the page has loaded." },
+            { kind: "improved", text: "Pressing and holding no longer highlights text, except in a box you type in." },
+            { kind: "fixed", text: "A long store name at the top of the screen no longer pushes the page down." },
+        ],
+    },
+    {
         version: "5.4.16",
         date: "2026-09-14",
         entries: [

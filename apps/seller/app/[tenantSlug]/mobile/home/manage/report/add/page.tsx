@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { navigation } from "@tea-pos/utils/navigation";
 import { useStore } from "@/lib/context/StoreContext";
 import { getTodayLocalStr } from "@tea-pos/utils/time";
 import { useSession } from "@/lib/hooks/sessions/useSession";
@@ -20,7 +20,6 @@ import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
 import { Field } from "@tea-pos/ui/custom/Field";
 
 export default function AddReportPage() {
-    const router = useRouter();
     const { selectedStoreId } = useStore();
     const { summaryId } = useSession(selectedStoreId);
     const { create } = useIncidentReports(selectedStoreId);
@@ -64,7 +63,7 @@ export default function AddReportPage() {
                 photoUrl,
                 dailySummaryId: summaryId ?? undefined,
             });
-            router.back();
+            navigation.back();
         } catch (err) {
             showError(err);
         } finally {

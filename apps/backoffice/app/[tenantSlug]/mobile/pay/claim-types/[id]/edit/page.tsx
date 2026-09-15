@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { navigation } from "@tea-pos/utils/navigation";
 import { usePayrollClaimConfigs, useUserClaimEligibility } from "@/lib/hooks/payroll-claim-configs/usePayrollClaimConfigs";
 import { useTenantUsers } from "@/lib/hooks/users/useTenantUsers";
 import { apiFetch } from "@/lib/api/client";
@@ -47,7 +47,6 @@ function EligibilityToggle({
 
 export default function EditClaimTypePage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
-    const router = useRouter();
     const { claimTypes, isLoading, update } = usePayrollClaimConfigs();
     const { users } = useTenantUsers();
     const type = claimTypes.find((t) => t.id === id);
@@ -96,7 +95,7 @@ export default function EditClaimTypePage({ params }: { params: Promise<{ id: st
                     })
                 )
             );
-            router.back();
+            navigation.back();
         } catch (err) {
             showError(err);
         } finally {

@@ -16,24 +16,28 @@ import type { RouteConfig } from "@tea-pos/shell/routes";
 export const mobileRoutes = {
     // ── Root tabs ─────────────────────────────────────────────────────────────
     "/mobile/home/pos": {
+        refreshable: true,
         titleKey: "nav.pos",
         parent: null,
         prefetch: true,
         titleAccessory: true,
     },
     "/mobile/home/manage": {
+        refreshable: true,
         titleKey: "nav.manage",
         parent: null,
         prefetch: true,
         titleAccessory: true,
     },
     "/mobile/orders": {
+        refreshable: true,
         titleKey: "nav.orders",
         parent: null,
         prefetch: true,
         titleAccessory: true,
     },
     "/mobile/analytics": {
+        refreshable: true,
         titleKey: "nav.analytics",
         parent: null,
         prefetch: true,
@@ -47,6 +51,7 @@ export const mobileRoutes = {
         parent: null,
     },
     "/mobile/more": {
+        refreshable: true,
         titleKey: "nav.more",
         parent: null,
         prefetch: true,
@@ -62,6 +67,7 @@ export const mobileRoutes = {
         parent: "/mobile/home/manage",
     },
     "/mobile/home/manage/expense": {
+        refreshable: true,
         titleKey: "nav.storeExpenses",
         parent: "/mobile/home/manage",
         inlineHeader: true,
@@ -73,6 +79,7 @@ export const mobileRoutes = {
         parent: "/mobile/home/manage/expense",
     },
     "/mobile/home/manage/request": {
+        refreshable: true,
         titleKey: "nav.storeRequests",
         parent: "/mobile/home/manage",
         inlineHeader: true,
@@ -84,6 +91,7 @@ export const mobileRoutes = {
         parent: "/mobile/home/manage/request",
     },
     "/mobile/home/manage/report": {
+        refreshable: true,
         titleKey: "nav.storeReports",
         parent: "/mobile/home/manage",
         inlineHeader: true,
@@ -97,6 +105,7 @@ export const mobileRoutes = {
 
     // ── Orders ────────────────────────────────────────────────────────────────
     "/mobile/orders/chart": {
+        refreshable: true,
         titleKey: "nav.dailyChart",
         parent: "/mobile/orders",
         titleAccessory: true,
@@ -104,6 +113,7 @@ export const mobileRoutes = {
 
     // ── Analytics ─────────────────────────────────────────────────────────────
     "/mobile/analytics/chart": {
+        refreshable: true,
         titleKey: "nav.monthlyChart",
         parent: "/mobile/analytics",
         titleAccessory: true,
@@ -113,20 +123,24 @@ export const mobileRoutes = {
         parent: "/mobile/analytics",
     },
     "/mobile/analytics/daily/*": {
+        refreshable: true,
         titleKey: "nav.daySummaryDetails",
         parent: "/mobile/analytics",
     },
     "/mobile/analytics/daily/*/events": {
+        refreshable: true,
         titleKey: "nav.dayActivity",
         parent: "/mobile/analytics",
     },
     "/mobile/analytics/daily/*/sessions": {
+        refreshable: true,
         titleKey: "nav.daySessions",
         parent: "/mobile/analytics",
     },
 
     // ── More ──────────────────────────────────────────────────────────────────
     "/mobile/more/stores": {
+        refreshable: true,
         titleKey: "nav.myStores",
         parent: "/mobile/more",
     },
@@ -142,14 +156,17 @@ export const mobileRoutes = {
         parent: "/mobile/more/map",
     },
     "/mobile/more/earnings": {
+        refreshable: true,
         titleKey: "nav.myPay",
         parent: "/mobile/more",
     },
     "/mobile/more/earnings/*": {
+        refreshable: true,
         titleKey: "nav.payDetails",
         parent: "/mobile/more/earnings",
     },
     "/mobile/more/reimbursements": {
+        refreshable: true,
         titleKey: "nav.myClaims",
         parent: "/mobile/more",
         inlineHeader: true,
@@ -171,6 +188,7 @@ export const mobileRoutes = {
         inlineHeader: true,
     },
     "/mobile/account/details": {
+        refreshable: true,
         titleKey: "nav.personalDetails",
         parent: "/mobile/account",
         inlineHeader: true,
@@ -185,6 +203,7 @@ export const mobileRoutes = {
         parent: "/mobile/account",
     },
     "/mobile/account/payroll-info": {
+        refreshable: true,
         titleKey: "nav.payrollInfo",
         parent: "/mobile/account",
         inlineHeader: true,

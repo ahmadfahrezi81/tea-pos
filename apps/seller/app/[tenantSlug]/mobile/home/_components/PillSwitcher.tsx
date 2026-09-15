@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname, useParams } from "next/navigation";
+import { navigation } from "@tea-pos/utils/navigation";
 import { useT } from "@/lib/hooks/useT";
 
 export function PillSwitcher() {
@@ -21,10 +21,14 @@ export function PillSwitcher() {
 
     return (
         <div className="flex items-center bg-slate-200 rounded-xl p-1 self-start">
+            {/* Through the shell rather than <Link>, which runs its own
+                transition the shell cannot see — so this switch showed no
+                navigation bar while every other one did. */}
             {tabs.map((tab) => (
-                <Link
+                <button
                     key={tab.href}
-                    href={tab.href}
+                    type="button"
+                    onClick={() => navigation.push(tab.href)}
                     className={`px-3.5 py-0.5 rounded-lg text-lg font-semibold transition-all duration-200 ${
                         isActive(tab.href)
                             ? "bg-white text-slate-950"
@@ -32,7 +36,7 @@ export function PillSwitcher() {
                     }`}
                 >
                     {tab.label}
-                </Link>
+                </button>
             ))}
         </div>
     );

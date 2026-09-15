@@ -30,11 +30,10 @@ const ProductCard = memo(function ProductCard({
 }: ProductCardProps) {
     return (
         <div
-            className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden select-none relative cursor-pointer hover:shadow-md"
+            className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative cursor-pointer hover:shadow-md"
             style={{
                 transform: "translateZ(0)",
                 transition: "transform 150ms ease, box-shadow 200ms ease",
-                WebkitTapHighlightColor: "transparent",
                 willChange: "transform",
             }}
             onPointerDown={(e) => {

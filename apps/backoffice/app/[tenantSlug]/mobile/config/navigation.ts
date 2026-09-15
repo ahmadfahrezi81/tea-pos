@@ -12,29 +12,35 @@ import type { RouteConfig } from "@tea-pos/shell/routes";
 
 export const mobileRoutes = {
     "/mobile/home": {
+        refreshable: true,
         titleKey: "Home",
         parent: null,
         prefetch: true,
         titleAccessory: true,
     },
     "/mobile/pay": {
+        refreshable: true,
         titleKey: "Pay",
         parent: null,
         prefetch: true,
     },
     "/mobile/pay/payouts": {
+        refreshable: true,
         titleKey: "Staff Payouts",
         parent: "/mobile/pay",
     },
     "/mobile/pay/claims": {
+        refreshable: true,
         titleKey: "Claims",
         parent: "/mobile/pay",
     },
     "/mobile/pay/staff": {
+        refreshable: true,
         titleKey: "Staff Payroll Info",
         parent: "/mobile/pay",
     },
     "/mobile/pay/claim-types": {
+        refreshable: true,
         titleKey: "Claim Types",
         inlineHeader: true,
         headerAction: "add",
@@ -45,6 +51,7 @@ export const mobileRoutes = {
         parent: "/mobile/pay/claim-types",
     },
     "/mobile/pay/commission-types": {
+        refreshable: true,
         titleKey: "Commission Types",
         inlineHeader: true,
         headerAction: "add",
@@ -55,6 +62,7 @@ export const mobileRoutes = {
         parent: "/mobile/pay/commission-types",
     },
     "/mobile/pay/staff-commissions": {
+        refreshable: true,
         titleKey: "Staff Commissions",
         parent: "/mobile/pay",
     },
@@ -74,6 +82,7 @@ export const mobileRoutes = {
         parent: null,
     },
     "/mobile/more": {
+        refreshable: true,
         titleKey: "More",
         parent: null,
         prefetch: true,
@@ -147,7 +156,7 @@ export const resolveRoute = (path: string): RouteConfig | null => {
         const payoutId = segments[0];
 
         if (segments.length === 1) {
-            return { titleKey: "Payslip Details", parent: "/mobile/pay/payouts" };
+            return { titleKey: "Payslip Details", parent: "/mobile/pay/payouts", refreshable: true };
         }
         if (segments.length === 2 && segments[1] === "pay") {
             // One screen, two outcomes — a transfer, or a period closed with

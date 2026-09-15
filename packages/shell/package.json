@@ -7,7 +7,8 @@
     "./routes": "./routes.ts",
     "./useScrollRestoration": "./useScrollRestoration.ts",
     "./useHasPainted": "./useHasPainted.ts",
-    "./useAppUpdate": "./useAppUpdate.ts"
+    "./useAppUpdate": "./useAppUpdate.ts",
+    "./navProgress": "./navProgress.ts"
   },
   "dependencies": {
     "@iconify/react": "^6.0.2",

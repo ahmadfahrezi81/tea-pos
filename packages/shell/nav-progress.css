@@ -1,0 +1,137 @@
+/* Navigation progress bar, driven by `navProgress.ts`. See task 065.
+
+   Every animated property here is `transform` or `opacity`. Those two run on
+   the compositor, so the bar keeps moving while the main thread is busy
+   evaluating and committing the next route, which is exactly when it is on
+   screen. The bar it replaces animated `left` and froze on slow phones.
+
+   The state lives in `data-state`, written by the controller and never by
+   React. Every rule matches a state positively, so before the controller has
+   attached, the bar is inert rather than animating invisibly. */
+
+.nav-progress {
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    z-index: 10;
+    height: 2px;
+    overflow: hidden;
+    pointer-events: none;
+    opacity: 0;
+}
+
+.nav-progress > span {
+    position: absolute;
+    inset: 0;
+    background: var(--accent-primary);
+    transform: translateX(-100%);
+    will-change: transform;
+}
+
+/* Clips the landing sheen to the coloured part, or it streaks past the end. */
+.nav-progress > .crawl {
+    overflow: hidden;
+}
+
+.nav-progress:is([data-state="loading"], [data-state="landing"], [data-state="done"]) {
+    opacity: 1;
+}
+
+/* Crawl: answers the tap quickly, slows down, and never reaches the end on its
+   own — only `done` does that. Still running during `done`, under the fill. */
+.nav-progress:is([data-state="loading"], [data-state="landing"], [data-state="done"]) > .crawl {
+    animation: nav-crawl-a 12s forwards;
+}
+
+/* Identical keyframes under a second name. Swapping the name restarts the
+   animation from zero without forcing a reflow to do it. */
+.nav-progress[data-run="b"]:is([data-state="loading"], [data-state="landing"], [data-state="done"]) > .crawl {
+    animation-name: nav-crawl-b;
+}
+
+@keyframes nav-crawl-a {
+    0%   { transform: translateX(-100%); animation-timing-function: ease-out; }
+    2%   { transform: translateX(-75%);  animation-timing-function: ease-out; }
+    20%  { transform: translateX(-35%);  animation-timing-function: ease-out; }
+    100% { transform: translateX(-10%); }
+}
+
+@keyframes nav-crawl-b {
+    0%   { transform: translateX(-100%); animation-timing-function: ease-out; }
+    2%   { transform: translateX(-75%);  animation-timing-function: ease-out; }
+    20%  { transform: translateX(-35%);  animation-timing-function: ease-out; }
+    100% { transform: translateX(-10%); }
+}
+
+/* Landing: the route is here and its data is still arriving. */
+.nav-progress[data-state="landing"] > .crawl::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.6), transparent);
+    animation: nav-sheen 900ms ease-in-out infinite;
+}
+
+@keyframes nav-sheen {
+    from { transform: translateX(-100%); }
+    to   { transform: translateX(100%); }
+}
+
+/* Done: a second layer overtakes the crawl from the left, so finishing never
+   needs to know how far the crawl had got. Then one pulse, then gone. The
+   controller returns to idle on `nav-settle`'s animationend. */
+.nav-progress[data-state="done"] > .fill {
+    animation: nav-fill 180ms ease-out forwards;
+}
+
+.nav-progress[data-state="done"] {
+    animation: nav-settle 650ms 180ms forwards;
+}
+
+@keyframes nav-fill {
+    to { transform: translateX(0); }
+}
+
+@keyframes nav-settle {
+    0%   { opacity: 1; }
+    35%  { opacity: 0.45; }
+    70%  { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* Pull to refresh. The gesture in MobileShell writes this element's transform
+   and opacity directly, at most once a frame; this is only its resting place,
+   hidden above the content region. The offset matches PULL_REST_OFFSET_PX. */
+.pull-indicator {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    z-index: 10;
+    pointer-events: none;
+    opacity: 0;
+    transform: translate3d(-50%, -44px, 0);
+    will-change: transform, opacity;
+}
+
+/* No sweeping motion: a still bar while loading, full when done, then a fade.
+   There is no animationend here, which is why the controller caps `done`. */
+@media (prefers-reduced-motion: reduce) {
+    .nav-progress,
+    .nav-progress *,
+    .nav-progress *::after {
+        animation: none !important;
+    }
+
+    .nav-progress:is([data-state="loading"], [data-state="landing"]) > .crawl {
+        transform: translateX(-50%);
+    }
+
+    .nav-progress[data-state="done"] > .fill {
+        transform: none;
+    }
+
+    .nav-progress[data-state="done"] {
+        opacity: 0;
+        transition: opacity 300ms;
+    }
+}
