@@ -1,5 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+/* Plain CSS from the shell, not Tailwind classes, so `@source` cannot carry it. */
+@import "../../../packages/shell/nav-progress.css";
 
 /* Tailwind's auto source detection is rooted at this app, so shared
    components are never scanned and classes used only there are silently
@@ -57,18 +59,6 @@ a,
     background-color: var(--accent-primary);
     border-radius: 9999px;
     animation: indeterminate 1.5s ease-in-out infinite;
-}
-
-/* Navigation progress, used by @tea-pos/shell. Shown only once a route is slow
-   enough to notice, over the outgoing page rather than in place of it. Colour
-   comes from the class alongside it so this stays purely positional. */
-.nav-pending-bar {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: -100%;
-    width: 100%;
-    animation: indeterminate 1.2s ease-in-out infinite;
 }
 
 /* ── Skeletons ────────────────────────────────────────────────────────────

@@ -16,9 +16,7 @@ import { ScrollContext } from "./ScrollContext";
 import { useScrollRestoration } from "./useScrollRestoration";
 import { useStandaloneViewportHeight } from "./useStandaloneViewportHeight";
 import { isSubPage, type ResolveRoute, type Tab } from "./routes";
-
-/** How long a navigation may take before it earns a loading indicator. */
-const PENDING_BAR_DELAY_MS = 200;
+import { navProgress } from "./navProgress";
 
 /**
  * TEMPORARY — route prefetching is switched off while the owner lives with the
@@ -106,6 +104,10 @@ export function MobileShell({
     // Only drives the tab highlight, so a tap lights up immediately even though
     // the header and content deliberately wait for the new route to commit.
     const [pendingPath, setPendingPath] = useState<string | null>(null);
+    // The same destination, readable from callbacks without re-creating them.
+    const pendingPathRef = useRef<string | null>(null);
+    // The committed route, for the popstate listener, which is registered once.
+    const pathnameRef = useRef(pathname);
     // A DOM node, not a stored ReactNode: pages portal into it, so the shell
     // never re-renders because of what a page put in its footer.
     const [footerSlotEl, setFooterSlotEl] = useState<HTMLDivElement | null>(null);
@@ -132,9 +134,18 @@ export function MobileShell({
                 scrollContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
                 return;
             }
-            // Save while the outgoing page is still the one on screen.
+            const destination = path.split("?")[0];
+            // A second tap on a destination still loading is the same
+            // navigation. Letting it through counted one history entry twice,
+            // so header back later walked out of the app instead of up a level.
+            if (destination === pendingPathRef.current) return;
+            // Save while the outgoing page is still the one on screen, and
+            // before the bar starts: saving reads scrollTop, and a read after a
+            // write forces layout.
             saveScroll();
-            setPendingPath(path.split("?")[0]);
+            navProgress.start();
+            pendingPathRef.current = destination;
+            setPendingPath(destination);
             pushDepthRef.current += 1;
             // Inside a transition the current screen stays mounted and
             // interactive until the next one is ready to commit, instead of
@@ -153,8 +164,12 @@ export function MobileShell({
     const replaceWith = useCallback(
         (path: string) => {
             if (path === pathname) return;
+            const destination = path.split("?")[0];
+            if (destination === pendingPathRef.current) return;
             saveScroll();
-            setPendingPath(path.split("?")[0]);
+            navProgress.start();
+            pendingPathRef.current = destination;
+            setPendingPath(destination);
             startTransition(() => {
                 router.replace(path);
             });
@@ -180,9 +195,11 @@ export function MobileShell({
         (fallbackPath: string) => {
             saveScroll();
             if (pushDepthRef.current > 0) {
-                startTransition(() => {
-                    router.back();
-                });
+                // No transition: router.back() is history.back(), which returns
+                // at once, so a transition around it always ended empty. The
+                // popstate that follows is what navigates.
+                navProgress.start();
+                router.back();
                 return;
             }
             replaceWith(fallbackPath);
@@ -196,6 +213,10 @@ export function MobileShell({
     useEffect(() => {
         const onPopState = () => {
             pushDepthRef.current = Math.max(0, pushDepthRef.current - 1);
+            // The phone's back button never passes through navigate. The URL has
+            // already changed when popstate fires, so this is one comparison —
+            // and a popstate that keeps the path would start a bar nothing ends.
+            if (window.location.pathname !== pathnameRef.current) navProgress.start();
         };
         window.addEventListener("popstate", onPopState);
         return () => window.removeEventListener("popstate", onPopState);
@@ -217,19 +238,20 @@ export function MobileShell({
 
     useEffect(() => {
         setPendingPath(null);
+        pendingPathRef.current = null;
+        pathnameRef.current = pathname;
+        navProgress.committed();
     }, [pathname]);
 
-    // A prefetched tab commits in well under this, so the common case shows no
-    // loading affordance at all. Only a genuinely slow route gets one, which
-    // keeps the bar meaningful instead of flashing on every tap.
-    const [showPendingBar, setShowPendingBar] = useState(false);
+    // A push or replace can also settle without changing the path — a change to
+    // the query string alone. Clearing here keeps that destination from
+    // swallowing every later tap on it, and committing here keeps the bar from
+    // crawling to its cap. A back navigation never enters a transition, so it
+    // relies on the pathname effect above instead.
     useEffect(() => {
-        if (!isPending) {
-            setShowPendingBar(false);
-            return;
-        }
-        const timer = setTimeout(() => setShowPendingBar(true), PENDING_BAR_DELAY_MS);
-        return () => clearTimeout(timer);
+        if (isPending) return;
+        pendingPathRef.current = null;
+        navProgress.committed();
     }, [isPending]);
 
     /**
@@ -329,13 +351,13 @@ export function MobileShell({
                     would refuse to shrink below its content, pushing the footer
                     off-screen instead of scrolling internally. */}
                 <main className="flex-1 min-h-0 relative">
-                    {/* Only a slow navigation gets an indicator, and it sits over
+                    {/* Always mounted and never re-rendered for progress:
+                        navProgress drives it through data-state. It sits over
                         the outgoing page rather than replacing it. */}
-                    {showPendingBar && (
-                        <div className="absolute inset-x-0 top-0 z-10 h-0.5 overflow-hidden">
-                            <div className="nav-pending-bar bg-brand" />
-                        </div>
-                    )}
+                    <div ref={navProgress.attach} className="nav-progress" aria-hidden>
+                        <span className="crawl" />
+                        <span className="fill" />
+                    </div>
                     <div
                         ref={scrollContainerRef}
                         className={`absolute inset-0 overflow-y-auto p-4 ${scrollPaddingBottom}`}

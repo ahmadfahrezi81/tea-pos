@@ -421,6 +421,7 @@ Both mobile apps render inside the shared `MobileShell` — header, scrollable c
 - `MobileShell.tsx` — the shell itself. Route data, chrome, and i18n are **props**, never inferred inside the package.
 - `routes.ts` — `RouteConfig` type. Every field describes a *layout capability* (`inlineHeader`, `headerAction`, `titleAccessory`, `footerCtaKey`, `preserveScroll`, `scrollPaddingBottom`), never a specific screen. `parent: null` marks a root tab; `"lastRootTab"` returns to whichever tab the user came from.
 - `MobileHeader.tsx`, `MobileFooterNav.tsx`, `FooterSlotContext.tsx`, `ScrollContext.tsx`, `useScrollRestoration.ts`, `useStandaloneViewportHeight.ts`.
+- `navProgress.ts` + `nav-progress.css` — the navigation progress bar, deliberately **outside React**: the module writes `data-state` on one always-mounted node and the CSS animates only `transform`/`opacity`, so it keeps moving while the main thread commits a route. Never drive it with React state. Both apps `@import` the CSS from `globals.css`. See task 065.
 
 Each app owns its own route table and wiring:
 

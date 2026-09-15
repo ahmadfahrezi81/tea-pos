@@ -1,5 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+/* Plain CSS from the shell, not Tailwind classes, so `@source` cannot carry it. */
+@import "../../../packages/shell/nav-progress.css";
 /* app/globals.css */
 @import "leaflet/dist/leaflet.css";
 
@@ -58,18 +60,6 @@ body {
     background-color: #2563eb;
     border-radius: 9999px;
     animation: indeterminate 1.5s ease-in-out infinite;
-}
-
-/* Navigation progress. Shown only once a route is slow enough to notice, over
-   the outgoing page rather than in place of it. Colour comes from the class
-   alongside it so this stays purely positional. */
-.nav-pending-bar {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: -100%;
-    width: 100%;
-    animation: indeterminate 1.2s ease-in-out infinite;
 }
 
 /* ── Skeletons ────────────────────────────────────────────────────────────

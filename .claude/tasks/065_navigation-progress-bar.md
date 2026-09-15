@@ -1,6 +1,6 @@
 # Task 065 — The navigation progress bar
 
-**Status: written and revised 2026-09-15. Step 1 built, uncommitted.** Scope is
+**Status: written and revised 2026-09-15. Steps 1 and 2 committed, not pushed.** Scope is
 the shell (`packages/shell`), so seller and backoffice both get every change. The
 boot loader bar in `MobileLayoutClient.tsx` and `launch.html` are out of scope.
 
@@ -38,8 +38,11 @@ route's JS, committing the tree. So:
 5. **Readiness is counted, not polled.** No `MutationObserver`, no timers guessing.
 6. **Every wait has a cap,** and reduced motion is honoured.
 
-Ship each step with a version bump in **both** apps' `package.json`, with its patch
-notes in the same commit.
+**One version bump for the whole task** — seller 5.4.17, backoffice 1.0.18, made in
+step 1 (owner's call: no bump per step). Each later step edits that version's
+patch notes instead, keeping at most five lines. **Do not push until the last step
+is committed:** a reader who has already dismissed 5.4.17 never sees notes added to
+it afterwards.
 
 ---
 
@@ -217,8 +220,10 @@ Plain module, no React, about 60 lines:
   always empty.
 - Keep `isPending`: `useScrollRestoration` reads it (`:124`).
 
-Commit is detected by `pathname` changing. No shell navigation today changes only
-the query string; a future one would hit the 15s cap and the dev warning.
+Commit is detected two ways: `pathname` changing (the only signal a back
+navigation gives), and `isPending` falling back to false (so a push or replace that
+changes only the query string still finishes instead of crawling to the cap).
+`committed()` acts only in `loading`, so the two firing in one commit is harmless.
 
 ### Double tap counts twice
 
