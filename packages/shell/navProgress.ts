@@ -10,7 +10,8 @@
  *
  *     idle → loading → landing → done → idle
  *
- * - **loading** — from the tap until the route commits.
+ * - **loading** — from the tap until the route commits; or, for a pull to
+ *   refresh, until the refetch settles.
  * - **landing** — the route has committed and the requests its page started on
  *   first load are still in flight. Each app counts them with `track`.
  * - **done** — fill, one pulse, fade. Ends on `nav-settle`'s animationend.
@@ -36,8 +37,8 @@ let state: State = "idle";
 let cap: ReturnType<typeof setTimeout> | undefined;
 let settleFrame = 0;
 /**
- * Bumped by every navigation. A request remembers the generation it was counted
- * in, so one that outlives its navigation cannot decrement the next one's count.
+ * Bumped by every navigation and every refresh. Work remembers the generation it
+ * began in, so work that outlives it cannot finish or decrement the next one.
  */
 let generation = 0;
 /** First-load requests in flight for the current generation. */
@@ -64,6 +65,20 @@ function finish() {
     cancelAnimationFrame(settleFrame);
     setState("done");
     armCap(DONE_CAP_MS, () => setState("idle"));
+}
+
+/**
+ * Enters loading. An interrupted bar keeps its crawl going rather than snapping
+ * back, which reads smoother; a finished one restarts from zero.
+ */
+function begin() {
+    cancelAnimationFrame(settleFrame);
+    generation += 1;
+    pending = 0;
+    if (bar && (state === "idle" || state === "done")) {
+        bar.dataset.run = bar.dataset.run === "b" ? "a" : "b";
+    }
+    setState("loading");
 }
 
 /**
@@ -102,19 +117,9 @@ export const navProgress = {
      * A navigation has begun. Call it before the work starts — before
      * `router.push` — so the bar has painted and handed its animation to the
      * compositor by the time the main thread blocks.
-     *
-     * A navigation that interrupts one still in progress keeps the crawl going
-     * rather than snapping back, which reads smoother. One that follows a
-     * finished bar restarts it from zero.
      */
     start() {
-        cancelAnimationFrame(settleFrame);
-        generation += 1;
-        pending = 0;
-        if (bar && (state === "idle" || state === "done")) {
-            bar.dataset.run = bar.dataset.run === "b" ? "a" : "b";
-        }
-        setState("loading");
+        begin();
         armCap(LOADING_CAP_MS, () => {
             if (process.env.NODE_ENV !== "production") {
                 console.warn("[navProgress] no commit within 15s — a navigation path is missing its signal");
@@ -151,5 +156,25 @@ export const navProgress = {
             pending -= 1;
             if (state === "landing" && pending === 0) settleNextFrame();
         });
+    },
+
+    /**
+     * Runs the bar for `promise` alone — a pull to refresh, where no route
+     * changes. A navigation that starts meanwhile takes the bar over, and this
+     * refresh then settles without touching it.
+     */
+    run(promise: Promise<unknown>) {
+        begin();
+        armCap(LOADING_CAP_MS, finish);
+        const counted = generation;
+        const settle = () => {
+            if (counted === generation && state === "loading") finish();
+        };
+        promise.then(settle, settle);
+    },
+
+    /** A navigation or refresh is in flight. A finishing bar does not count. */
+    isBusy() {
+        return state === "loading" || state === "landing";
     },
 };

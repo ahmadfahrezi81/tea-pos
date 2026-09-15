@@ -9,6 +9,7 @@ import {
     useTransition,
 } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { RefreshCw } from "lucide-react";
 import { MobileHeader } from "./MobileHeader";
 import { MobileFooterNav } from "./MobileFooterNav";
 import { FooterSlotContext } from "./FooterSlotContext";
@@ -17,6 +18,15 @@ import { useScrollRestoration } from "./useScrollRestoration";
 import { useStandaloneViewportHeight } from "./useStandaloneViewportHeight";
 import { isSubPage, type ResolveRoute, type Tab } from "./routes";
 import { navProgress } from "./navProgress";
+
+/** How far the indicator must travel, after resistance, for letting go to refresh. */
+const PULL_THRESHOLD_PX = 64;
+/** The indicator stops following the finger here. */
+const PULL_MAX_PX = 96;
+/** The indicator moves half as far as the finger, so the pull feels weighted. */
+const PULL_RESISTANCE = 0.5;
+/** Where the indicator rests, hidden above the content. Matches `.pull-indicator`. */
+const PULL_REST_OFFSET_PX = 44;
 
 /**
  * TEMPORARY — route prefetching is switched off while the owner lives with the
@@ -72,6 +82,12 @@ export interface MobileShellProps {
     onReplace?: (replace: (path: string) => void) => void;
     /** The same, for going up a level — what a form does once it has saved. */
     onBack?: (back: () => void) => void;
+    /**
+     * Refetch what is on screen, in place — never a reload. Runs when the user
+     * pulls down past the threshold on a route marked `refreshable`. Supplied by
+     * the app, because this package has no SWR dependency.
+     */
+    onRefresh?: () => Promise<unknown>;
 }
 
 /**
@@ -99,6 +115,7 @@ export function MobileShell({
     onNavigate,
     onReplace,
     onBack,
+    onRefresh,
 }: MobileShellProps) {
     const router = useRouter();
     const pathname = usePathname();
@@ -115,6 +132,7 @@ export function MobileShell({
     // never re-renders because of what a page put in its footer.
     const [footerSlotEl, setFooterSlotEl] = useState<HTMLDivElement | null>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const pullIndicatorRef = useRef<HTMLDivElement>(null);
     const scrollContext = useMemo(() => ({ scrollRef: scrollContainerRef }), []);
     const lastRootTabRef = useRef<string>(homePath);
     /** History entries this shell pushed, so back can unwind instead of push. */
@@ -325,6 +343,110 @@ export function MobileShell({
         onBack?.(goBack);
     }, [onBack, goBack]);
 
+    // Read by the pull gesture, which attaches once rather than on every
+    // navigation, so it needs the current values from somewhere stable.
+    const refreshable = route?.refreshable ?? false;
+    const pullRef = useRef({ refreshable, onRefresh });
+    useEffect(() => {
+        pullRef.current = { refreshable, onRefresh };
+    }, [refreshable, onRefresh]);
+
+    /**
+     * Pull to refresh.
+     *
+     * Passive listeners, so the browser never waits on them to scroll, and style
+     * writes batched to one per frame, so the gesture re-renders nothing. A tap
+     * writes nothing at all: styles are touched only once a movement has been
+     * judged a pull. Armed only at the very top of a refreshable route, and not
+     * while a navigation is in flight.
+     */
+    useEffect(() => {
+        const scroller = scrollContainerRef.current;
+        const indicator = pullIndicatorRef.current;
+        if (!scroller || !indicator) return;
+        const icon = indicator.firstElementChild as SVGElement | null;
+
+        let armed = false;
+        let pulling = false;
+        let startX = 0;
+        let startY = 0;
+        let distance = 0;
+        let frame = 0;
+
+        const paint = () => {
+            frame = 0;
+            const progress = Math.min(distance / PULL_THRESHOLD_PX, 1);
+            indicator.style.transform = `translate3d(-50%, ${distance - PULL_REST_OFFSET_PX}px, 0)`;
+            indicator.style.opacity = String(progress);
+            indicator.dataset.ready = String(distance >= PULL_THRESHOLD_PX);
+            if (icon) icon.style.transform = `rotate(${progress * 270}deg)`;
+        };
+        const schedule = () => {
+            if (!frame) frame = requestAnimationFrame(paint);
+        };
+
+        const onTouchStart = (event: TouchEvent) => {
+            // Cheapest checks first: scrollTop is a layout read, and it must not
+            // run while a navigation is committing.
+            armed =
+                event.touches.length === 1 &&
+                pullRef.current.refreshable &&
+                !navProgress.isBusy() &&
+                scroller.scrollTop <= 0;
+            pulling = false;
+            if (!armed) return;
+            startX = event.touches[0].clientX;
+            startY = event.touches[0].clientY;
+        };
+
+        const onTouchMove = (event: TouchEvent) => {
+            if (!armed) return;
+            const dx = event.touches[0].clientX - startX;
+            const dy = event.touches[0].clientY - startY;
+            if (!pulling) {
+                if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+                // The first real movement decides. Sideways belongs to a
+                // horizontal scroller, upwards to ordinary scrolling.
+                if (Math.abs(dx) > Math.abs(dy) || dy < 0) {
+                    armed = false;
+                    return;
+                }
+                pulling = true;
+                indicator.style.transition = "none";
+            }
+            distance = Math.min(Math.max(dy, 0) * PULL_RESISTANCE, PULL_MAX_PX);
+            schedule();
+        };
+
+        const release = (refresh: boolean) => {
+            const wasPulling = armed && pulling;
+            armed = false;
+            pulling = false;
+            if (!wasPulling) return;
+            const onRefreshNow = pullRef.current.onRefresh;
+            const fire = refresh && distance >= PULL_THRESHOLD_PX && onRefreshNow;
+            distance = 0;
+            indicator.style.transition = "transform 200ms ease, opacity 200ms ease";
+            schedule();
+            // Deferred a microtask so a refresh that throws cannot throw here.
+            if (fire) navProgress.run(Promise.resolve().then(onRefreshNow));
+        };
+        const onTouchEnd = () => release(true);
+        const onTouchCancel = () => release(false);
+
+        scroller.addEventListener("touchstart", onTouchStart, { passive: true });
+        scroller.addEventListener("touchmove", onTouchMove, { passive: true });
+        scroller.addEventListener("touchend", onTouchEnd, { passive: true });
+        scroller.addEventListener("touchcancel", onTouchCancel, { passive: true });
+        return () => {
+            cancelAnimationFrame(frame);
+            scroller.removeEventListener("touchstart", onTouchStart);
+            scroller.removeEventListener("touchmove", onTouchMove);
+            scroller.removeEventListener("touchend", onTouchEnd);
+            scroller.removeEventListener("touchcancel", onTouchCancel);
+        };
+    }, []);
+
     // Defaults to nothing, so the p-4 below applies evenly on all four sides.
     // Routes opt out (pb-0 for full-bleed content) or add room as they need it.
     const scrollPaddingBottom = route?.scrollPaddingBottom ?? "";
@@ -357,13 +479,22 @@ export function MobileShell({
                 {/* min-h-0 is required: a flex child defaults to min-height:auto and
                     would refuse to shrink below its content, pushing the footer
                     off-screen instead of scrolling internally. */}
-                <main className="flex-1 min-h-0 relative">
+                {/* overflow-hidden clips the pull indicator, so it emerges from the
+                    top of the content rather than over the header. */}
+                <main className="flex-1 min-h-0 relative overflow-hidden">
                     {/* Always mounted and never re-rendered for progress:
                         navProgress drives it through data-state. It sits over
                         the outgoing page rather than replacing it. */}
                     <div ref={navProgress.attach} className="nav-progress" aria-hidden>
                         <span className="crawl" />
                         <span className="fill" />
+                    </div>
+                    <div
+                        ref={pullIndicatorRef}
+                        className="pull-indicator flex h-9 w-9 items-center justify-center rounded-full bg-white text-gray-500 shadow-md data-[ready=true]:text-brand"
+                        aria-hidden
+                    >
+                        <RefreshCw size={18} strokeWidth={2.5} />
                     </div>
                     <div
                         ref={scrollContainerRef}

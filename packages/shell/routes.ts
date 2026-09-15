@@ -36,6 +36,14 @@ export type RouteConfig = {
     /** Return to this route at the scroll offset it was left at. */
     preserveScroll?: boolean;
     /**
+     * Pulling down at the top refetches what is on screen, in place.
+     *
+     * Opt-in, and only for screens with nothing to lose: a refetch can reset a
+     * form that seeds itself from fetched data, so a forgotten flag must mean no
+     * gesture rather than a lost form.
+     */
+    refreshable?: boolean;
+    /**
      * Warm this route once the app is up, so opening it commits without a
      * loading state.
      *

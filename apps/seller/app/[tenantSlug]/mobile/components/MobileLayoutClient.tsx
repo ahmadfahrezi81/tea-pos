@@ -1,6 +1,6 @@
 "use client";
 import { ReactNode, useCallback, useMemo, useState } from "react";
-import { SWRConfig } from "swr";
+import { SWRConfig, useSWRConfig } from "swr";
 import { trackFirstLoad } from "@/lib/utils/trackFirstLoad";
 import Image from "next/image";
 import { ChevronsUpDown } from "lucide-react";
@@ -83,6 +83,13 @@ export default function MobileLayoutClient({ children }: MobileLayoutClientProps
         navigation.registerBack(back);
     }, []);
 
+    // Pull to refresh refetches every mounted hook in place, as the idle sheet
+    // does — never a reload, so the POS cart survives. No router.refresh(): the
+    // layout's server reads sit behind 60s and 300s caches and would rarely
+    // return anything new for the proxy run they cost.
+    const { mutate } = useSWRConfig();
+    const refresh = useCallback(() => mutate(() => true), [mutate]);
+
     const onAccount = useCallback(() => {
         navigation.push(url("/mobile/account"));
     }, [url]);
@@ -115,6 +122,7 @@ export default function MobileLayoutClient({ children }: MobileLayoutClientProps
             onNavigate={registerNavigate}
             onReplace={registerReplace}
             onBack={registerBack}
+            onRefresh={refresh}
             extras={<StorePickerDrawer />}
             overlay={
                 <>

@@ -1,7 +1,7 @@
 # Task 065 — The navigation progress bar
 
-**Status: written and revised 2026-09-15. Steps 1–3 committed, step 4 built; none
-pushed.** Scope is
+**Status: all five steps committed 2026-09-15, not pushed. The owner pushes to
+staging and verifies there; each step's Verify list is what to check.** Scope is
 the shell (`packages/shell`), so seller and backoffice both get every change. The
 boot loader bar in `MobileLayoutClient.tsx` and `launch.html` are out of scope.
 
@@ -125,7 +125,7 @@ idle ──start──▶ loading ──route commits──▶ landing ──cou
   from zero.
 - **Caps:** loading 15s → done, with a dev-only `console.warn`. Landing 4s → done.
   Done 1.5s → idle — required, because under reduced motion there is no
-  `animationend` to end it, and step 5's pull only arms when the bar is idle.
+  `animationend` to end it.
 
 ### CSS — `packages/shell/nav-progress.css`
 
@@ -379,13 +379,16 @@ goes on those.
 - Passive `touchstart` / `touchmove` / `touchend` on the scroll container, attached
   once.
 - Armed only if, at `touchstart`, the route is refreshable (read from a ref),
-  `scrollTop <= 0`, and the bar is idle.
+  `scrollTop <= 0`, and no navigation is in flight (`navProgress.isBusy()`; a
+  finishing bar does not block a pull).
 - The first move decides the axis; horizontal disarms, so horizontal scrollers
   keep working.
 - An indicator follows the finger through `transform`, written at most once per
   frame. No React state during the gesture.
 - Resistance 0.5, threshold 64px. Released past it:
-  `navProgress.run(onSoftRefresh())`.
+  `navProgress.run(onRefresh())`. The indicator is a small circle that comes down
+  over the content — the content itself does not move — and `<main>` clips it so
+  it emerges from under the header.
 
 This costs main-thread work per frame, which is acceptable because a pull happens on
 a screen at rest. If it lags on the slow Android, the fallback is a `scroll-snap`
@@ -394,7 +397,7 @@ tap-to-top.
 
 ### What it refetches
 
-The app passes `onSoftRefresh`, as for the idle sheet. For the pull, **only
+The app passes `onRefresh`. Like the idle sheet's soft refresh, but **only
 `mutate(() => true)`**, without `router.refresh()`:
 
 - `mutate(() => true)` refetches only keys with a mounted hook

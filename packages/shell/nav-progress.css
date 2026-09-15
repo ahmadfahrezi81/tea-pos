@@ -99,6 +99,20 @@
     100% { opacity: 0; }
 }
 
+/* Pull to refresh. The gesture in MobileShell writes this element's transform
+   and opacity directly, at most once a frame; this is only its resting place,
+   hidden above the content region. The offset matches PULL_REST_OFFSET_PX. */
+.pull-indicator {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    z-index: 10;
+    pointer-events: none;
+    opacity: 0;
+    transform: translate3d(-50%, -44px, 0);
+    will-change: transform, opacity;
+}
+
 /* No sweeping motion: a still bar while loading, full when done, then a fade.
    There is no animationend here, which is why the controller caps `done`. */
 @media (prefers-reduced-motion: reduce) {
