@@ -9,7 +9,6 @@ import {
     useTransition,
 } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { RefreshCw } from "lucide-react";
 import { MobileHeader } from "./MobileHeader";
 import { MobileFooterNav } from "./MobileFooterNav";
 import { FooterSlotContext } from "./FooterSlotContext";
@@ -19,14 +18,20 @@ import { useStandaloneViewportHeight } from "./useStandaloneViewportHeight";
 import { isSubPage, type ResolveRoute, type Tab } from "./routes";
 import { navProgress } from "./navProgress";
 
-/** How far the indicator must travel, after resistance, for letting go to refresh. */
+/** Pull distance, after resistance, at which letting go refreshes. */
 const PULL_THRESHOLD_PX = 64;
-/** The indicator stops following the finger here. */
-const PULL_MAX_PX = 96;
-/** The indicator moves half as far as the finger, so the pull feels weighted. */
-const PULL_RESISTANCE = 0.5;
-/** Where the indicator rests, hidden above the content. Matches `.pull-indicator`. */
-const PULL_REST_OFFSET_PX = 44;
+/** However far the finger goes, the content stops here. */
+const PULL_MAX_PX = 120;
+/** Shapes the resistance curve. Smaller is stiffer. */
+const PULL_STIFFNESS_PX = 160;
+/** The gap held open under the header while a refresh runs. */
+const PULL_HOLD_PX = 56;
+/** A refresh holds the gap at least this long, so a fast one never just blinks. */
+const PULL_MIN_SPIN_MS = 400;
+/** How long the gap takes to close. */
+const PULL_CLOSE_MS = 280;
+/** How long the spinner takes to fade after a refresh. Matches `.pull-spinner[data-state="leaving"]`. */
+const PULL_SPINNER_FADE_MS = 150;
 
 /**
  * TEMPORARY — route prefetching is switched off while the owner lives with the
@@ -132,7 +137,10 @@ export function MobileShell({
     // never re-renders because of what a page put in its footer.
     const [footerSlotEl, setFooterSlotEl] = useState<HTMLDivElement | null>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
-    const pullIndicatorRef = useRef<HTMLDivElement>(null);
+    const pullSpinnerRef = useRef<HTMLDivElement>(null);
+    // Closes an open pull gap at once. Set by the pull gesture; called when a
+    // route commits, because the content the gap was holding open is gone.
+    const closePullRef = useRef<(() => void) | null>(null);
     const scrollContext = useMemo(() => ({ scrollRef: scrollContainerRef }), []);
     const lastRootTabRef = useRef<string>(homePath);
     /** History entries this shell pushed, so back can unwind instead of push. */
@@ -261,6 +269,7 @@ export function MobileShell({
         setPendingPath(null);
         pendingPathRef.current = null;
         pathnameRef.current = pathname;
+        closePullRef.current?.();
         navProgress.committed();
     }, [pathname]);
 
@@ -274,6 +283,25 @@ export function MobileShell({
         pendingPathRef.current = null;
         navProgress.committed();
     }, [isPending]);
+
+    /**
+     * A fresh open is a navigation too. When `ready` lets the first screen mount,
+     * its requests start in its own layout effects — before any effect here runs —
+     * and `track` only counts while the bar is running. So the bar starts at shell
+     * mount, crawling unseen under the boot loader, and `ready` stands in for the
+     * commit.
+     *
+     * Declared after the two effects above on purpose: both call `committed()` on
+     * mount, and if this ran first they would land the bar before anything had
+     * mounted.
+     */
+    useEffect(() => {
+        navProgress.start();
+    }, []);
+
+    useEffect(() => {
+        if (ready) navProgress.committed();
+    }, [ready]);
 
     /**
      * Only once the app is up.
@@ -352,48 +380,115 @@ export function MobileShell({
     }, [refreshable, onRefresh]);
 
     /**
-     * Pull to refresh.
+     * Pull to refresh, the YouTube way (task 065, step 7).
      *
-     * Passive listeners, so the browser never waits on them to scroll, and style
-     * writes batched to one per frame, so the gesture re-renders nothing. A tap
-     * writes nothing at all: styles are touched only once a movement has been
-     * judged a pull. Armed only at the very top of a refreshable route, and not
-     * while a navigation is in flight.
+     * Pulling slides the scroll container down, opening a gap under the header
+     * with a spinner in it. Let go past the threshold and the gap holds open while
+     * the app refetches, then closes.
+     *
+     * Only the finger-following write is JavaScript, at most once a frame, on a
+     * screen at rest. Holding, springing, closing and spinning are CSS. Listeners
+     * are passive, nothing here is React state, and a tap writes nothing. At rest
+     * the container's transform is cleared outright — not left at zero — so
+     * fixed-position elements inside a page behave normally between pulls.
      */
     useEffect(() => {
         const scroller = scrollContainerRef.current;
-        const indicator = pullIndicatorRef.current;
-        if (!scroller || !indicator) return;
-        const icon = indicator.firstElementChild as SVGElement | null;
+        const spinner = pullSpinnerRef.current;
+        const arc = spinner?.querySelector("circle");
+        const dial = arc?.ownerSVGElement;
+        const arrowhead = spinner?.querySelector(".pull-arrowhead");
+        if (!scroller || !spinner || !arc || !dial || !arrowhead) return;
 
+        let phase: "idle" | "pulling" | "holding" | "closing" = "idle";
         let armed = false;
-        let pulling = false;
+        let ready = false;
         let startX = 0;
         let startY = 0;
         let distance = 0;
         let frame = 0;
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        // Bumped whenever a gap is abandoned, so a refresh that settles later
+        // cannot close a gap that is no longer its own.
+        let token = 0;
 
         const paint = () => {
             frame = 0;
+            if (phase !== "pulling") return;
             const progress = Math.min(distance / PULL_THRESHOLD_PX, 1);
-            indicator.style.transform = `translate3d(-50%, ${distance - PULL_REST_OFFSET_PX}px, 0)`;
-            indicator.style.opacity = String(progress);
-            indicator.dataset.ready = String(distance >= PULL_THRESHOLD_PX);
-            if (icon) icon.style.transform = `rotate(${progress * 270}deg)`;
+            scroller.style.transform = `translate3d(0, ${distance}px, 0)`;
+            spinner.style.opacity = String(progress);
+            spinner.style.transform = `scale(${ready ? 1.1 : 0.6 + progress * 0.4})`;
+            dial.style.transform = `rotate(${-90 + progress * 180}deg)`;
+            // The arrowhead rides the growing end of the arc, like a refresh
+            // icon: at a full arc — three quarters of the circle — that is 270°.
+            arrowhead.setAttribute("transform", `rotate(${progress * 270} 12 12)`);
+            arc.style.strokeDashoffset = String(100 - progress * 75);
         };
-        const schedule = () => {
-            if (!frame) frame = requestAnimationFrame(paint);
+
+        // Back to an ordinary element.
+        const clear = () => {
+            phase = "idle";
+            scroller.style.transform = "";
+            scroller.style.transition = "";
+            scroller.style.willChange = "";
+        };
+
+        const slideTo = (y: number, easing: string, ms: number) => {
+            scroller.style.transition = `transform ${ms}ms ${easing}`;
+            scroller.style.transform = `translate3d(0, ${y}px, 0)`;
+        };
+
+        // `keepSpinning`: after a refresh the spinner goes on turning, at full
+        // size, while it fades out quickly. Dropping straight to no state stopped
+        // the spin dead and snapped the arc back to its starting angle — a
+        // visible flip — then shrank it.
+        const hideSpinner = (keepSpinning = false) => {
+            spinner.dataset.state = keepSpinning ? "leaving" : "";
+            spinner.style.opacity = "";
+            spinner.style.transform = "";
+            dial.style.transform = "";
+        };
+
+        const slideClosed = () => {
+            // Any spinner is fully faded by now, so its spin can stop unseen.
+            spinner.dataset.state = "";
+            slideTo(0, "cubic-bezier(0.2, 0, 0, 1)", PULL_CLOSE_MS);
+            // A timer rather than transitionend: a slide from 0 to 0 never fires one.
+            timer = setTimeout(clear, PULL_CLOSE_MS + 20);
+        };
+
+        // After a refresh the spinner fades out completely before the content
+        // rises. Together, the content reads as swallowing a spinner still on
+        // screen. A cancelled pull closes at once: its spinner was never whole.
+        const close = (afterSpinner = false) => {
+            clearTimeout(timer);
+            phase = "closing";
+            hideSpinner(afterSpinner);
+            if (afterSpinner) timer = setTimeout(slideClosed, PULL_SPINNER_FADE_MS);
+            else slideClosed();
+        };
+
+        closePullRef.current = () => {
+            if (phase === "idle") return;
+            token += 1;
+            armed = false;
+            cancelAnimationFrame(frame);
+            frame = 0;
+            clearTimeout(timer);
+            hideSpinner();
+            clear();
         };
 
         const onTouchStart = (event: TouchEvent) => {
             // Cheapest checks first: scrollTop is a layout read, and it must not
             // run while a navigation is committing.
             armed =
+                phase === "idle" &&
                 event.touches.length === 1 &&
                 pullRef.current.refreshable &&
                 !navProgress.isBusy() &&
                 scroller.scrollTop <= 0;
-            pulling = false;
             if (!armed) return;
             startX = event.touches[0].clientX;
             startY = event.touches[0].clientY;
@@ -403,7 +498,7 @@ export function MobileShell({
             if (!armed) return;
             const dx = event.touches[0].clientX - startX;
             const dy = event.touches[0].clientY - startY;
-            if (!pulling) {
+            if (phase !== "pulling") {
                 if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
                 // The first real movement decides. Sideways belongs to a
                 // horizontal scroller, upwards to ordinary scrolling.
@@ -411,25 +506,60 @@ export function MobileShell({
                     armed = false;
                     return;
                 }
-                pulling = true;
-                indicator.style.transition = "none";
+                phase = "pulling";
+                ready = false;
+                spinner.dataset.state = "pulling";
+                scroller.style.transition = "none";
+                scroller.style.willChange = "transform";
             }
-            distance = Math.min(Math.max(dy, 0) * PULL_RESISTANCE, PULL_MAX_PX);
-            schedule();
+            // Resistance that grows with distance: easy at first, stiffer the
+            // further it goes, and never past the cap.
+            distance = PULL_MAX_PX * (1 - Math.exp(-Math.max(dy, 0) / PULL_STIFFNESS_PX));
+            const nowReady = distance >= PULL_THRESHOLD_PX;
+            // One short tick on crossing forwards, where the platform has a
+            // vibration API. iOS does not; the pop in scale is the cue there.
+            if (nowReady && !ready && "vibrate" in navigator) navigator.vibrate(10);
+            ready = nowReady;
+            if (!frame) frame = requestAnimationFrame(paint);
         };
 
         const release = (refresh: boolean) => {
-            const wasPulling = armed && pulling;
+            if (!armed) return;
             armed = false;
-            pulling = false;
-            if (!wasPulling) return;
+            if (phase !== "pulling") return;
+            cancelAnimationFrame(frame);
+            frame = 0;
             const onRefreshNow = pullRef.current.onRefresh;
-            const fire = refresh && distance >= PULL_THRESHOLD_PX && onRefreshNow;
-            distance = 0;
-            indicator.style.transition = "transform 200ms ease, opacity 200ms ease";
-            schedule();
-            // Deferred a microtask so a refresh that throws cannot throw here.
-            if (fire) navProgress.run(Promise.resolve().then(onRefreshNow));
+            if (!refresh || !ready || !onRefreshNow) {
+                close();
+                return;
+            }
+
+            phase = "holding";
+            const mine = ++token;
+            const startedAt = performance.now();
+            spinner.style.opacity = "";
+            spinner.style.transform = "";
+            dial.style.transform = "";
+            arc.style.strokeDashoffset = "25";
+            spinner.dataset.state = "spinning";
+            const spring = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+                ? "ease-out"
+                : "cubic-bezier(0.34, 1.4, 0.64, 1)";
+            slideTo(PULL_HOLD_PX, spring, 360);
+
+            // Deferred a microtask, so a refresh that throws cannot throw here. A
+            // failed one leaves the old data on screen, as the idle refresh does.
+            const refreshing = Promise.resolve().then(onRefreshNow).catch(() => {});
+            // The shell's loading bar runs as well, so a pull looks like every
+            // other refresh — the idle sheet's, or a navigation's.
+            navProgress.run(refreshing);
+            refreshing.then(() => {
+                const wait = PULL_MIN_SPIN_MS - (performance.now() - startedAt);
+                timer = setTimeout(() => {
+                    if (mine === token) close(true);
+                }, Math.max(0, wait));
+            });
         };
         const onTouchEnd = () => release(true);
         const onTouchCancel = () => release(false);
@@ -440,10 +570,14 @@ export function MobileShell({
         scroller.addEventListener("touchcancel", onTouchCancel, { passive: true });
         return () => {
             cancelAnimationFrame(frame);
+            clearTimeout(timer);
+            closePullRef.current = null;
             scroller.removeEventListener("touchstart", onTouchStart);
             scroller.removeEventListener("touchmove", onTouchMove);
             scroller.removeEventListener("touchend", onTouchEnd);
             scroller.removeEventListener("touchcancel", onTouchCancel);
+            hideSpinner();
+            clear();
         };
     }, []);
 
@@ -479,8 +613,8 @@ export function MobileShell({
                 {/* min-h-0 is required: a flex child defaults to min-height:auto and
                     would refuse to shrink below its content, pushing the footer
                     off-screen instead of scrolling internally. */}
-                {/* overflow-hidden clips the pull indicator, so it emerges from the
-                    top of the content rather than over the header. */}
+                {/* overflow-hidden clips the content while a pull holds it pushed
+                    down, so its bottom slides under the footer rather than over it. */}
                 <main className="flex-1 min-h-0 relative overflow-hidden">
                     {/* Always mounted and never re-rendered for progress:
                         navProgress drives it through data-state. It sits over
@@ -489,16 +623,39 @@ export function MobileShell({
                         <span className="crawl" />
                         <span className="fill" />
                     </div>
-                    <div
-                        ref={pullIndicatorRef}
-                        className="pull-indicator flex h-9 w-9 items-center justify-center rounded-full bg-white text-gray-500 shadow-md data-[ready=true]:text-brand"
-                        aria-hidden
-                    >
-                        <RefreshCw size={18} strokeWidth={2.5} />
+                    {/* Earlier in the document than the scroll container, which
+                        paints over it: sliding the content down is what uncovers
+                        it. Nothing here is React state; the gesture drives it. */}
+                    <div ref={pullSpinnerRef} className="pull-spinner text-brand" aria-hidden>
+                        <svg viewBox="0 0 24 24" width="24" height="24" overflow="visible">
+                            <circle
+                                cx="12"
+                                cy="12"
+                                r="9"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                                pathLength={100}
+                                strokeDasharray={100}
+                                strokeDashoffset={100}
+                            />
+                            {/* Drawn at the arc's starting point, three o'clock
+                                before the dial's -90° turn, pointing along the
+                                stroke; the gesture rotates it to the arc's end. */}
+                            <path
+                                className="pull-arrowhead"
+                                d="M15.8 12 L26.2 12 L21 18 Z"
+                                fill="currentColor"
+                                transform="rotate(0 12 12)"
+                            />
+                        </svg>
                     </div>
                     <div
                         ref={scrollContainerRef}
-                        className={`absolute inset-0 overflow-y-auto p-4 ${scrollPaddingBottom}`}
+                        // No native bounce where a pull moves the content itself:
+                        // on iOS the two would move it twice.
+                        className={`absolute inset-0 overflow-y-auto p-4 ${scrollPaddingBottom} ${refreshable ? "overscroll-y-none" : ""}`}
                     >
                         {ready && children}
                     </div>

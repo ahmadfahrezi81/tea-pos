@@ -99,20 +99,68 @@
     100% { opacity: 0; }
 }
 
-/* Pull to refresh. The gesture in MobileShell writes this element's transform
-   and opacity directly, at most once a frame; this is only its resting place,
-   hidden above the content region. The offset matches PULL_REST_OFFSET_PX. */
-.pull-indicator {
+/* Pull to refresh (task 065, step 7). The scroll container slides down to open
+   a gap under the header, and this spinner sits in that gap, behind the content,
+   so sliding the content is what uncovers it. While the finger is down the
+   gesture writes opacity, scale and the arc directly; these rules own every
+   other moment. Centred in the 56px gap: (56 - 24) / 2 = 16. */
+.pull-spinner {
     position: absolute;
     left: 50%;
-    top: 0;
-    z-index: 10;
+    top: 16px;
+    width: 24px;
+    height: 24px;
+    margin-left: -12px;
     pointer-events: none;
     opacity: 0;
-    transform: translate3d(-50%, -44px, 0);
-    will-change: transform, opacity;
+    transform: scale(0.6);
+    transition: opacity 200ms ease, transform 200ms ease;
 }
 
+/* Following the finger: no easing between writes. */
+.pull-spinner[data-state="pulling"] {
+    transition: none;
+}
+
+.pull-spinner[data-state="spinning"] {
+    opacity: 1;
+    transform: none;
+}
+
+/* The arc starts at twelve o'clock, as platform spinners do. */
+.pull-spinner > svg {
+    display: block;
+    transform: rotate(-90deg);
+}
+
+/* Leaving after a refresh: full size, still spinning, fading out quickly. The
+   content rises only once it is gone (PULL_SPINNER_FADE_MS). */
+.pull-spinner[data-state="leaving"] {
+    opacity: 0;
+    transform: none;
+    transition: opacity 150ms ease;
+}
+
+/* Spinning carries on into leaving without restarting: the animation is the same,
+   so changing the state that applies it does not reset it. */
+.pull-spinner:is([data-state="spinning"], [data-state="leaving"]) > svg {
+    animation: pull-spin 800ms linear infinite;
+}
+
+/* The arrowhead belongs to the pull only, as YouTube's does: it says "let go to
+   refresh", and once the refresh is running there is nothing left to say. */
+.pull-arrowhead {
+    transition: opacity 100ms ease;
+}
+
+.pull-spinner:is([data-state="spinning"], [data-state="leaving"]) .pull-arrowhead {
+    opacity: 0;
+}
+
+@keyframes pull-spin {
+    from { transform: rotate(-90deg); }
+    to   { transform: rotate(270deg); }
+}
 /* No sweeping motion: a still bar while loading, full when done, then a fade.
    There is no animationend here, which is why the controller caps `done`. */
 @media (prefers-reduced-motion: reduce) {
@@ -133,5 +181,10 @@
     .nav-progress[data-state="done"] {
         opacity: 0;
         transition: opacity 300ms;
+    }
+
+    /* A still three-quarter arc still says "working" without spinning. */
+    .pull-spinner:is([data-state="spinning"], [data-state="leaving"]) > svg {
+        animation: none;
     }
 }

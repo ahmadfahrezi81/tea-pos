@@ -271,10 +271,13 @@ input[type="date"]::-webkit-date-and-time-value {
 }
 
 
-/* Stop Android Chrome's pull-to-refresh from reloading mid-flow */
+/* No overscroll on the page itself. `none`, not `contain`: contain stopped
+   Android Chrome's pull-to-refresh from reloading mid-flow, but still let iOS
+   rubber-band the whole page — header and footer with it — which fought the
+   shell's own pull to refresh. The scroll area inside still scrolls normally. */
 html,
 body {
-    overscroll-behavior-y: contain;
+    overscroll-behavior: none;
 }
 
 /* Without this the browser holds every tap to see whether a second one is
