@@ -238,6 +238,27 @@ body {
     body {
         @apply bg-background text-foreground;
     }
+
+    /* Native feel: nothing highlights on a long-press, no iOS link or image
+       preview menu, no Android tap flash. Copying a value is a copy button's
+       job. In the base layer so a `select-text` utility can still opt out. */
+    html {
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Set explicitly rather than left to inheritance: older iOS Safari would
+       not let you select, or paste into, a field under a user-select:none
+       ancestor. The callout comes back too, because it carries Paste. */
+    input,
+    textarea,
+    [contenteditable="true"] {
+        -webkit-user-select: text;
+        user-select: text;
+        -webkit-touch-callout: default;
+    }
 }
 
 /* --- iOS form normalization --- */

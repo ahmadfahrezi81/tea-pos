@@ -9,6 +9,15 @@ import type { PatchNote } from "@tea-pos/ui/custom/PatchNotes";
  */
 export const patchNotes: PatchNote[] = [
     {
+        version: "5.4.17",
+        date: "2026-09-15",
+        entries: [
+            { kind: "improved", text: "Pressing and holding no longer highlights text, except in a box you type in." },
+            { kind: "improved", text: "Tapping no longer flashes a grey box on some phones." },
+            { kind: "fixed", text: "A long store name at the top of the screen no longer pushes the page down." },
+        ],
+    },
+    {
         version: "5.4.16",
         date: "2026-09-14",
         entries: [

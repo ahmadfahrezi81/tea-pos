@@ -22,7 +22,7 @@ export default function AuthForm() {
 
     return (
         <div className="w-full max-w-md mx-auto p-6">
-            <div className="bg-gray-50 rounded-2xl p-10 flex flex-col items-center gap-8 select-none">
+            <div className="bg-gray-50 rounded-2xl p-10 flex flex-col items-center gap-8">
                 {/* Logo */}
                 <div className="flex flex-col items-center gap-4">
                     <Image

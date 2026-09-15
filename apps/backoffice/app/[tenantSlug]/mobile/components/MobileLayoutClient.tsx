@@ -74,12 +74,12 @@ export default function MobileLayoutClient({ children }: MobileLayoutClientProps
             titleAccessory={
                 <button
                     onClick={() => setIsPickerOpen(true)}
-                    className="flex items-center gap-0.5 active:scale-95"
+                    className="flex min-w-0 items-center gap-0.5 active:scale-95"
                 >
-                    <span className="text-[22px] font-semibold tracking-tight text-brand">
+                    <span className="truncate text-[22px] font-semibold tracking-tight text-brand">
                         {selectedStore?.name ?? "All Stores"}
                     </span>
-                    <ChevronsUpDown size={18} strokeWidth={3} className="text-brand" />
+                    <ChevronsUpDown size={18} strokeWidth={3} className="shrink-0 text-brand" />
                 </button>
             }
             extras={<StorePickerDrawer />}
