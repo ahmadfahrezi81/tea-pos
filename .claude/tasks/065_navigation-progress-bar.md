@@ -511,8 +511,10 @@ and the page slides back up.
   spacer's height re-lays-out the whole page every frame. The scroll container gets
   `transform: translate3d(0, y, 0)` and the spinner sits in the space it vacates.
   The header is outside `<main>`, so the gap opens directly beneath it.
-- **One indicator.** A pull shows the spinner in the gap and **not** the top bar.
-  The bar stays for navigation, the first open and the idle refresh (step 6).
+- **The top bar runs too.** First written as "spinner only"; after trying it on
+  staging the owner wanted the shell's loading bar on a pull as well, so a pull
+  looks like every other refresh. The gesture passes its refresh to
+  `navProgress.run()` alongside the spinner.
 - **iOS bounce off on refreshable screens.** The scroll container gets
   `overscroll-behavior-y: none` (Tailwind `overscroll-y-none`) when the route is
   `refreshable`, so the page does not move twice on iOS and both platforms feel the
@@ -537,7 +539,7 @@ and the page slides back up.
 
 | Phase | Content | Spinner |
 | --- | --- | --- |
-| Pulling | Follows the finger with **growing resistance** — easy at first, stiffer the further it goes (e.g. `max × (1 − e^(−dy / k))`), capped around 120px | An arc fills with pull progress. At the threshold the arc completes, the spinner pops slightly in scale, and Android gives a 10ms `navigator.vibrate` — once per crossing |
+| Pulling | Follows the finger with **growing resistance** — easy at first, stiffer the further it goes (e.g. `max × (1 − e^(−dy / k))`), capped around 120px | An arc fills with pull progress around an arrow pointing down (added at the owner's request, after YouTube). At the threshold the arc completes, the arrow flips to point up, the spinner pops slightly in scale, and Android gives a 10ms `navigator.vibrate` — once per crossing |
 | Released below threshold | Transitions back to 0, then transform cleared to `none` | Fades out |
 | Released past threshold | Springs to **56px** with a slight overshoot (CSS transition, overshooting cubic-bezier) | Switches to an indeterminate spin (CSS keyframes on `transform: rotate`) |
 | Refresh settled | Held for at least **400ms** from release, so a fast refresh never just blinks; waits for the spinner to be fully gone, then transitions to 0 and the transform is cleared | Scales down and fades first — the content rises only after, never over a spinner still on screen |
@@ -559,9 +561,8 @@ Same rules as every step:
 
 ### Wiring changes from step 5
 
-- **Remove** the `.pull-indicator` circle, its `RefreshCw` icon and the
-  `navProgress.run()` call from the gesture. `run()` itself stays — step 6's idle
-  refresh uses it.
+- **Remove** the `.pull-indicator` circle and its `RefreshCw` icon. Keep the
+  gesture's `navProgress.run()` call — see "The top bar runs too" above.
 - **Transform the scroll container itself**, not a new wrapper around `children`. A
   wrapper would change what pages sit inside — anything sized with `h-full` against
   the scroller would break — and `useScrollRestoration` observes the scroller's
@@ -584,7 +585,7 @@ On the slow Android and on the iPhone, installed:
 - Let go past it: the gap springs to its height and the spinner spins; the page
   slides back when the data is in, and never blinks shut on a fast refresh.
 - Let go before it: the page slides back and nothing refetches.
-- The top bar does **not** run for a pull.
+- The top bar runs for a pull, alongside the spinner.
 - iOS: no double movement at the top of a refreshable screen; non-refreshable
   screens still bounce.
 - Tap a tab mid-refresh: the gap closes at once and the new screen loads normally.

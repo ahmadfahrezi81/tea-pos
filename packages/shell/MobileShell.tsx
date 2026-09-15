@@ -396,7 +396,8 @@ export function MobileShell({
         const scroller = scrollContainerRef.current;
         const spinner = pullSpinnerRef.current;
         const arc = spinner?.querySelector("circle");
-        if (!scroller || !spinner || !arc) return;
+        const dial = arc?.ownerSVGElement;
+        if (!scroller || !spinner || !arc || !dial) return;
 
         let phase: "idle" | "pulling" | "holding" | "closing" = "idle";
         let armed = false;
@@ -416,7 +417,10 @@ export function MobileShell({
             const progress = Math.min(distance / PULL_THRESHOLD_PX, 1);
             scroller.style.transform = `translate3d(0, ${distance}px, 0)`;
             spinner.style.opacity = String(progress);
-            spinner.style.transform = `scale(${ready ? 1.1 : 0.6 + progress * 0.4}) rotate(${progress * 180}deg)`;
+            spinner.style.transform = `scale(${ready ? 1.1 : 0.6 + progress * 0.4})`;
+            // The arc turns, not the whole spinner, so the arrow keeps pointing
+            // where it means.
+            dial.style.transform = `rotate(${-90 + progress * 180}deg)`;
             arc.style.strokeDashoffset = String(100 - progress * 75);
         };
 
@@ -435,8 +439,10 @@ export function MobileShell({
 
         const hideSpinner = () => {
             spinner.dataset.state = "";
+            delete spinner.dataset.ready;
             spinner.style.opacity = "";
             spinner.style.transform = "";
+            dial.style.transform = "";
         };
 
         const slideClosed = () => {
@@ -503,9 +509,14 @@ export function MobileShell({
             // further it goes, and never past the cap.
             distance = PULL_MAX_PX * (1 - Math.exp(-Math.max(dy, 0) / PULL_STIFFNESS_PX));
             const nowReady = distance >= PULL_THRESHOLD_PX;
-            // One short tick on crossing, where the platform has a vibration API.
-            // iOS does not; the pop in scale is the cue there.
-            if (nowReady && !ready && "vibrate" in navigator) navigator.vibrate(10);
+            // Written only on crossing, either way: the arrow flips to point up
+            // once letting go will refresh, and back down if the finger retreats.
+            // Crossing forwards also gives one short tick where the platform has a
+            // vibration API. iOS does not; the flip and the pop are the cue there.
+            if (nowReady !== ready) {
+                spinner.dataset.ready = String(nowReady);
+                if (nowReady && "vibrate" in navigator) navigator.vibrate(10);
+            }
             ready = nowReady;
             if (!frame) frame = requestAnimationFrame(paint);
         };
@@ -527,6 +538,7 @@ export function MobileShell({
             const startedAt = performance.now();
             spinner.style.opacity = "";
             spinner.style.transform = "";
+            dial.style.transform = "";
             arc.style.strokeDashoffset = "25";
             spinner.dataset.state = "spinning";
             const spring = window.matchMedia("(prefers-reduced-motion: reduce)").matches
@@ -536,15 +548,16 @@ export function MobileShell({
 
             // Deferred a microtask, so a refresh that throws cannot throw here. A
             // failed one leaves the old data on screen, as the idle refresh does.
-            Promise.resolve()
-                .then(onRefreshNow)
-                .catch(() => {})
-                .then(() => {
-                    const wait = PULL_MIN_SPIN_MS - (performance.now() - startedAt);
-                    timer = setTimeout(() => {
-                        if (mine === token) close(true);
-                    }, Math.max(0, wait));
-                });
+            const refreshing = Promise.resolve().then(onRefreshNow).catch(() => {});
+            // The shell's loading bar runs as well, so a pull looks like every
+            // other refresh — the idle sheet's, or a navigation's.
+            navProgress.run(refreshing);
+            refreshing.then(() => {
+                const wait = PULL_MIN_SPIN_MS - (performance.now() - startedAt);
+                timer = setTimeout(() => {
+                    if (mine === token) close(true);
+                }, Math.max(0, wait));
+            });
         };
         const onTouchEnd = () => release(true);
         const onTouchCancel = () => release(false);
@@ -626,6 +639,20 @@ export function MobileShell({
                                 strokeDashoffset={100}
                             />
                         </svg>
+                        <span className="pull-arrow">
+                            <svg
+                                viewBox="0 0 24 24"
+                                width="12"
+                                height="12"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="3"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <path d="M12 5v14M6 13l6 6 6-6" />
+                            </svg>
+                        </span>
                     </div>
                     <div
                         ref={scrollContainerRef}

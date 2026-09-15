@@ -142,6 +142,26 @@
     to   { transform: rotate(270deg); }
 }
 
+/* The arrow inside the arc says what a pull does: down while pulling, flipped up
+   once letting go will refresh, gone while spinning. Its own transition, so the
+   flip eases even while the finger is still down. */
+.pull-arrow {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 150ms ease, opacity 150ms ease;
+}
+
+.pull-spinner[data-ready="true"] > .pull-arrow {
+    transform: rotate(180deg);
+}
+
+.pull-spinner[data-state="spinning"] > .pull-arrow {
+    opacity: 0;
+}
+
 /* No sweeping motion: a still bar while loading, full when done, then a fade.
    There is no animationend here, which is why the controller caps `done`. */
 @media (prefers-reduced-motion: reduce) {
