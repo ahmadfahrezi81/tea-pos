@@ -1,6 +1,7 @@
 # Task 065 — The navigation progress bar
 
-**Status: written and revised 2026-09-15. Steps 1 and 2 committed, not pushed.** Scope is
+**Status: written and revised 2026-09-15. Steps 1 and 2 committed, step 3 built;
+none pushed.** Scope is
 the shell (`packages/shell`), so seller and backoffice both get every change. The
 boot loader bar in `MobileLayoutClient.tsx` and `launch.html` are out of scope.
 

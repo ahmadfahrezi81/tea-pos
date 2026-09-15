@@ -1,5 +1,6 @@
 let _navigate: ((path: string) => void) | null = null;
 let _replace: ((path: string) => void) | null = null;
+let _back: (() => void) | null = null;
 
 export const navigation = {
     register: (fn: (path: string) => void) => {
@@ -7,6 +8,9 @@ export const navigation = {
     },
     registerReplace: (fn: (path: string) => void) => {
         _replace = fn;
+    },
+    registerBack: (fn: () => void) => {
+        _back = fn;
     },
     push: (path: string) => {
         _navigate?.(path);
@@ -21,5 +25,17 @@ export const navigation = {
      */
     replace: (path: string) => {
         (_replace ?? _navigate)?.(path);
+    },
+    /**
+     * Up a level, the way the header's back arrow goes — what a form does once
+     * it has saved. Through the shell rather than `router.back()`, so it shows
+     * the navigation bar, and so a form opened after a reload still lands on its
+     * parent instead of leaving the app's history.
+     *
+     * Falls back to the browser's back when no shell has registered.
+     */
+    back: () => {
+        if (_back) _back();
+        else window.history.back();
     },
 };

@@ -70,6 +70,8 @@ export interface MobileShellProps {
     onNavigate?: (navigate: (path: string) => void) => void;
     /** The same, for the replacing variant — a spent screen leaving history. */
     onReplace?: (replace: (path: string) => void) => void;
+    /** The same, for going up a level — what a form does once it has saved. */
+    onBack?: (back: () => void) => void;
 }
 
 /**
@@ -96,6 +98,7 @@ export function MobileShell({
     prefetchPaths,
     onNavigate,
     onReplace,
+    onBack,
 }: MobileShellProps) {
     const router = useRouter();
     const pathname = usePathname();
@@ -317,6 +320,10 @@ export function MobileShell({
           : toPath(parentSuffix);
 
     const goBack = useCallback(() => goBackTo(parentPath), [goBackTo, parentPath]);
+
+    useEffect(() => {
+        onBack?.(goBack);
+    }, [onBack, goBack]);
 
     // Defaults to nothing, so the p-4 below applies evenly on all four sides.
     // Routes opt out (pb-0 for full-bleed content) or add room as they need it.

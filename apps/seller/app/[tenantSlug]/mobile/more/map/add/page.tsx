@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { navigation } from "@tea-pos/utils/navigation";
 import { Search, X, MapPin, Loader2 } from "lucide-react";
 import { FormFooter } from "@/components/shared/FormFooter";
 import useCreateCustomerFeedback from "@/lib/hooks/customer-feedbacks/useCreateCustomerFeedback";
@@ -108,7 +108,6 @@ function MiniMap({ lng, lat, shouldFly }: { lng: number; lat: number; shouldFly:
 }
 
 export default function AddLocationFeedbackPage() {
-    const router = useRouter();
     const { submit, isLoading, reset } = useCreateCustomerFeedback();
     const t = useT();
 
@@ -163,11 +162,11 @@ export default function AddLocationFeedbackPage() {
         if (result?.success) {
             toast.success(t("map.submitted"));
             reset();
-            router.back();
+            navigation.back();
         } else {
             toast.error(t("map.failed"));
         }
-    }, [selectedLocation, notes, submit, reset, router]);
+    }, [selectedLocation, notes, submit, reset]);
 
     return (
         <div className="space-y-3 pb-4">

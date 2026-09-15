@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { navigation } from "@tea-pos/utils/navigation";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useT } from "@/lib/hooks/useT";
 import { usePayrollClaims, useClaimableTypes, useClaimableDates } from "@/lib/hooks/payroll/usePayrollClaims";
@@ -24,7 +24,6 @@ function getLocalToday() {
 }
 
 export default function AddClaimPage() {
-    const router = useRouter();
     const { user } = useAuth();
     const t = useT();
     const { create } = usePayrollClaims();
@@ -67,7 +66,7 @@ export default function AddClaimPage() {
                 photoUrl = await upload(photoFile, "reimbursements", `${user.id}/${effectiveDate}`);
             }
             await create({ claimConfigId: selectedTypeId, amount, date: effectiveDate, notes: notes.trim() || undefined, photoUrl });
-            router.back();
+            navigation.back();
         } catch (err) {
             showError(err);
         } finally {

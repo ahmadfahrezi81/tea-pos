@@ -70,6 +70,10 @@ export default function MobileLayoutClient({ children }: MobileLayoutClientProps
         navigation.registerReplace(replace);
     }, []);
 
+    const registerBack = useCallback((back: () => void) => {
+        navigation.registerBack(back);
+    }, []);
+
     const onAccount = useCallback(() => {
         navigation.push(url("/mobile/account"));
     }, [url]);
@@ -101,6 +105,7 @@ export default function MobileLayoutClient({ children }: MobileLayoutClientProps
             prefetchPaths={prefetchPaths}
             onNavigate={registerNavigate}
             onReplace={registerReplace}
+            onBack={registerBack}
             extras={<StorePickerDrawer />}
             overlay={
                 <>

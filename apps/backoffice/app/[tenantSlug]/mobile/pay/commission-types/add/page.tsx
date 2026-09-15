@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { navigation } from "@tea-pos/utils/navigation";
 import { usePayrollCommissionConfigs } from "@/lib/hooks/payroll-commission-configs/usePayrollCommissionConfigs";
 import { TextInput } from "@tea-pos/ui/custom/TextInput";
 import { NumberInput } from "@tea-pos/ui/custom/NumberInput";
@@ -10,7 +10,6 @@ import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
 import { Field } from "@tea-pos/ui/custom/Field";
 
 export default function AddCommissionTypePage() {
-    const router = useRouter();
     const { create } = usePayrollCommissionConfigs();
     const { showError } = useErrorSheet();
     const [name, setName] = useState("");
@@ -29,7 +28,7 @@ export default function AddCommissionTypePage() {
                 slug: slug.trim().toUpperCase().replace(/\s+/g, "_"),
                 ratePerCup,
             });
-            router.back();
+            navigation.back();
         } catch (err) {
             showError(err);
         } finally {

@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useState } from "react";
-import { useRouter } from "next/navigation";
+import { navigation } from "@tea-pos/utils/navigation";
 import { usePayrollUserInfo } from "@/lib/hooks/payroll-user-info/usePayrollUserInfo";
 import { usePayrollCommissionConfigs } from "@/lib/hooks/payroll-commission-configs/usePayrollCommissionConfigs";
 import { useTenantUsers } from "@/lib/hooks/users/useTenantUsers";
@@ -13,7 +13,6 @@ import { Skeleton } from "@tea-pos/ui/custom/Skeleton";
 
 export default function StaffCommissionPage({ params }: { params: Promise<{ userId: string }> }) {
     const { userId } = use(params);
-    const router = useRouter();
     const { users } = useTenantUsers();
     const { info, isLoading: infoLoading, update } = usePayrollUserInfo(userId);
     const { commissionTypes, isLoading: typesLoading } = usePayrollCommissionConfigs();
@@ -34,7 +33,7 @@ export default function StaffCommissionPage({ params }: { params: Promise<{ user
         setSaving(true);
         try {
             await update({ commissionConfigId: selectedTypeId ?? undefined });
-            router.back();
+            navigation.back();
         } catch (err) {
             showError(err);
         } finally {
