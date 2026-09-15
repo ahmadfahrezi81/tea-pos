@@ -1,7 +1,8 @@
 # Task 065 — The navigation progress bar
 
-**Status: all five steps committed 2026-09-15, not pushed. The owner pushes to
-staging and verifies there; each step's Verify list is what to check.** Scope is
+**Status: steps 1–5 shipped to staging 2026-09-15 and checked by the owner; PR #110
+open against master. Step 6 appended and built the same day, not yet committed.
+Step 7 appended, not built.** Scope is
 the shell (`packages/shell`), so seller and backoffice both get every change. The
 boot loader bar in `MobileLayoutClient.tsx` and `launch.html` are out of scope.
 
@@ -13,6 +14,9 @@ boot loader bar in `MobileLayoutClient.tsx` and `launch.html` are out of scope.
 | 2 | Slow Android: the bar freezes during a navigation | The bar must keep moving on a slow device. The missing skeleton on that phone is parked — see the end | 2 |
 | 3 | Going back should show the loading animation too, like a browser | Every navigation shows the bar, back included | 2, 3 |
 | 4 | Keep going, or split in two like Slack — fetch, then land — until fully mounted | Crawl while fetching, a sheen while landing, then fill, one pulse of ~0.5s, and fade | 2, 4 |
+| 5 | "Refresh Now" on the 20-minute idle sheet should show the loading bar too | Yes — the sheet closes on tap and the bar carries the refresh | 6 |
+| 6 | A fresh open of the app should show the loading bar while the first screen loads | Yes — the bar runs from boot until the first screen has its data | 6 |
+| 7 | Pull to refresh should feel native — like YouTube: a space opens under the header while it loads, then closes | The content slides down to open a gap with a spinner, holds while loading, and closes when done. iOS bounce off on refreshable screens | 7 |
 
 Plus three small fixes found along the way, approved: text selectable only in
 inputs, no iOS long-press menu or Android tap flash (step 1); a long store name
@@ -414,6 +418,175 @@ The POS cart lives in memory and a soft refresh keeps it.
   runs, no reload, no RSC request.
 - Pull on an add or edit page: nothing happens.
 - Reduced motion: navigate twice, then pull on a root tab — it still works.
+
+---
+
+## Step 6 — The idle refresh and the first open
+
+Appended 2026-09-15, after steps 1–5 reached staging. **No version bump and no
+patch note** — owner's call. Both parts reuse the controller as it is; no new state.
+
+### "Refresh Now" on the idle sheet
+
+`InactivityRefreshPopup` (`packages/shell`) handles two reasons. **Update** is a
+hard reload and stays one — a new document brings its own boot loader. **Inactivity**
+is a soft refresh (`:129-148`): it awaits `onSoftRefresh()` (`mutate(() => true)`),
+calls `router.refresh()`, and only then closes, showing a spinner in the button
+meanwhile. No loading bar.
+
+Change the inactivity path only:
+
+- On tap, close the sheet at once and hand the work to the bar:
+  `navProgress.run(refresh)`, where `refresh` is the same `onSoftRefresh()` →
+  `router.refresh()` sequence. The popup is in the shell package, so it imports
+  `navProgress` directly.
+- The bar settles when `onSoftRefresh()` does. `router.refresh()` returns nothing
+  to await, so it finishes in the background, as it does today.
+- The button's spinner stays for the update reason only, which still reloads with
+  the sheet up. Reset the activity stamp on tap, as now.
+- A navigation started during the refresh takes the bar over (`run` is
+  generation-stamped), and the refresh then settles without touching it.
+
+### The bar on a fresh open
+
+Today the boot loader covers the shell until `ready`, then disappears onto a screen
+whose data is still loading — skeletons with no bar. The bar should already be
+running when the loader lifts and finish when the first screen has its data, like
+any other navigation.
+
+The ordering is the whole problem. When `ready` flips, the first screen mounts and
+its SWR hooks start their fetches in their own layout effects — **before** any
+effect in the shell runs. `track` only counts while the bar is in `loading` or
+`landing`, so starting the bar in an effect on `ready` would miss every one of them.
+
+So start it earlier and let `ready` play the part of a commit:
+
+- **On shell mount** (while `ready` is still false, under the boot loader): call
+  `navProgress.start()`. The bar crawls invisibly beneath the loader, at compositor
+  cost only.
+- **When `ready` turns true:** the first screen mounts and its first-load requests
+  are counted, because the bar is already in `loading`. Then the shell's effect on
+  `ready` calls `committed()` → landing → done once the count reaches 0.
+- **Declare the mount effect after** the existing `pathname` and `isPending`
+  effects. Both call `committed()` on mount; effects run in declaration order, so
+  if `start()` ran first they would move the bar to landing before the first screen
+  had even mounted.
+- If `ready` is already true on mount, both calls land in the same effect and the
+  bar finishes a frame later — harmless.
+- The loading cap (15s) covers a boot that never becomes ready. Its dev warning says
+  "no commit"; give `start` an optional reason, or accept the wording.
+
+Both apps get it from the shell with no app changes: the seller and backoffice
+loaders both flip `ready` through `MobileShell`.
+
+### Verify
+
+- Idle 20 minutes, tap Refresh Now: the sheet closes at once, the bar runs and
+  finishes, the POS cart survives, no reload.
+- The update reason still hard-reloads.
+- Fresh open of both apps: when the boot loader lifts, the bar is already moving,
+  and it finishes when the first screen's skeletons are replaced.
+- The store list is seeded into the cache by `BootFallback`, so it is never counted
+  and never holds the bar; only the first screen's own requests do.
+
+---
+
+## Step 7 — Pull to refresh, the YouTube way
+
+Appended 2026-09-15 after step 5 reached staging. Replaces step 5's *indicator*,
+not its routes, gesture rules or refetch. **No version bump and no patch-note
+change** — "You can now pull down on a screen to refresh it" still describes it.
+
+### What the owner wants
+
+Step 5 drops a white circle over the content and, on release, springs it back and
+hands the refresh to the 2px bar. The owner's reference is YouTube: pulling slides
+the page down and opens a space **just under the header**; letting go holds that
+space open with a spinner in it while it loads; when it is done the space closes
+and the page slides back up.
+
+### Decisions (owner, 2026-09-15)
+
+- **Open the gap by moving the content, never by growing a spacer.** Animating a
+  spacer's height re-lays-out the whole page every frame. The scroll container gets
+  `transform: translate3d(0, y, 0)` and the spinner sits in the space it vacates.
+  The header is outside `<main>`, so the gap opens directly beneath it.
+- **One indicator.** A pull shows the spinner in the gap and **not** the top bar.
+  The bar stays for navigation, the first open and the idle refresh (step 6).
+- **iOS bounce off on refreshable screens.** The scroll container gets
+  `overscroll-behavior-y: none` (Tailwind `overscroll-y-none`) when the route is
+  `refreshable`, so the page does not move twice on iOS and both platforms feel the
+  same. Those screens lose the native bounce at the bottom too; accepted. Other
+  screens keep it.
+- **The `position: fixed` catch is accepted.** A transform makes the scroll
+  container the containing block for any fixed element inside it. At rest the
+  transform is cleared to `none` — not `translate3d(0, 0, 0)` — so nothing changes
+  normally. Only while pulling or refreshing do inline fixed elements move with the
+  page. Checked: every drawer, sheet and popup that matters portals to `<body>`;
+  the two refreshable screens with an inline fixed element are backoffice
+  `pay/payouts` and `pay/payouts/[payoutId]`, and a shift of about a second there
+  is accepted.
+- **Gap height while loading: 56px** — the spinner and some room. Tune on device.
+
+### Motion
+
+| Phase | Content | Spinner |
+| --- | --- | --- |
+| Pulling | Follows the finger with **growing resistance** — easy at first, stiffer the further it goes (e.g. `max × (1 − e^(−dy / k))`), capped around 120px | An arc fills with pull progress. At the threshold the arc completes, the spinner pops slightly in scale, and Android gives a 10ms `navigator.vibrate` — once per crossing |
+| Released below threshold | Transitions back to 0, then transform cleared to `none` | Fades out |
+| Released past threshold | Springs to **56px** with a slight overshoot (CSS transition, overshooting cubic-bezier) | Switches to an indeterminate spin (CSS keyframes on `transform: rotate`) |
+| Refresh settled | Held for at least **400ms** from release, so a fast refresh never just blinks; then transitions to 0 and the transform is cleared | Scales down and fades |
+
+### Keeping it light
+
+Same rules as every step:
+
+- **Only the finger-following write is JavaScript** — at most one `transform` per
+  frame, on a screen at rest. Hold, spring, collapse and spin are CSS transitions
+  and keyframes, run by the compositor.
+- **No React state.** The container, spinner and arc are written directly, as in
+  step 5. The arc's `stroke-dashoffset` is a paint, but of a ~24px SVG at most once
+  a frame.
+- **Listeners stay passive.** With bounce off, pulling at the top has no native
+  motion to compete with, so nothing needs `preventDefault`.
+- **Clear on rest.** `transform: none` and no `will-change` when idle, so the scroll
+  container is an ordinary element between pulls.
+
+### Wiring changes from step 5
+
+- **Remove** the `.pull-indicator` circle, its `RefreshCw` icon and the
+  `navProgress.run()` call from the gesture. `run()` itself stays — step 6's idle
+  refresh uses it.
+- **Transform the scroll container itself**, not a new wrapper around `children`. A
+  wrapper would change what pages sit inside — anything sized with `h-full` against
+  the scroller would break — and `useScrollRestoration` observes the scroller's
+  first child.
+- **The spinner** lives in `<main>`, above the scroll container, at the top of the
+  gap. `<main>` already clips (step 5), so the pushed-down bottom of the content is
+  hidden under the footer while the gap is open.
+- **Arming** stays as step 5 has it, plus: not while a pull refresh is already
+  running.
+- **A navigation during a pull refresh** closes the gap at once, without the
+  transition, when the route commits — the content it was holding open is gone.
+  The refresh's later settle is then ignored.
+
+### Verify
+
+On the slow Android and on the iPhone, installed:
+
+- Pull slowly on POS: the page slides down under the header, the arc fills, and the
+  threshold is felt (Android vibrates).
+- Let go past it: the gap springs to its height and the spinner spins; the page
+  slides back when the data is in, and never blinks shut on a fast refresh.
+- Let go before it: the page slides back and nothing refetches.
+- The top bar does **not** run for a pull.
+- iOS: no double movement at the top of a refreshable screen; non-refreshable
+  screens still bounce.
+- Tap a tab mid-refresh: the gap closes at once and the new screen loads normally.
+- At rest, after a pull: a drawer or sheet opened from the page is positioned
+  correctly (transform cleared).
+- Backoffice `pay/payouts`: the fixed element shifts only while the gap is open.
+- The POS cart survives, and horizontal scrollers still swipe.
 
 ---
 

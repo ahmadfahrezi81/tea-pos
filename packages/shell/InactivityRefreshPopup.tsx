@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { RefreshCw, Info } from "lucide-react";
 import { Icon } from "@iconify/react";
 import { useAppUpdate } from "./useAppUpdate";
+import { navProgress } from "./navProgress";
 import { DOT_GRID } from "@tea-pos/ui/styles/dot-grid";
 import "@tea-pos/ui/icons/bundled-emoji";
 
@@ -124,27 +125,26 @@ export default function InactivityRefreshPopup({
      * something a refetch fixes — and on the POS screen the cart is held in
      * memory only, so twenty quiet minutes mid-order used to cost the order.
      * Revalidating the caches and re-rendering the server tree is the whole
-     * job; the sheet then closes onto the same screen, now current.
+     * job. The sheet closes at once onto the same screen, and the loading bar —
+     * the one a navigation or a pull shows — carries the refresh until it settles.
      */
-    const handleRefresh = async () => {
-        setIsRefreshing(true);
-
+    const handleRefresh = () => {
         if (reason === "update") {
+            setIsRefreshing(true);
             window.location.reload();
             return;
         }
 
-        try {
-            await onSoftRefresh?.();
-        } catch {
-            // A failed revalidation leaves the old data on screen, which is
-            // what was there anyway. Nothing here is worth an error sheet.
-        }
-        router.refresh();
-
-        setIsRefreshing(false);
         setShowInactivityPrompt(false);
         lastActivityRef.current = Date.now();
+        navProgress.run(
+            Promise.resolve()
+                .then(onSoftRefresh)
+                // A failed revalidation leaves the old data on screen, which is
+                // what was there anyway. Nothing here is worth an error sheet.
+                .catch(() => {})
+                .finally(() => router.refresh()),
+        );
     };
 
     /**

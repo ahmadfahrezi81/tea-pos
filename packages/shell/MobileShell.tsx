@@ -276,6 +276,25 @@ export function MobileShell({
     }, [isPending]);
 
     /**
+     * A fresh open is a navigation too. When `ready` lets the first screen mount,
+     * its requests start in its own layout effects — before any effect here runs —
+     * and `track` only counts while the bar is running. So the bar starts at shell
+     * mount, crawling unseen under the boot loader, and `ready` stands in for the
+     * commit.
+     *
+     * Declared after the two effects above on purpose: both call `committed()` on
+     * mount, and if this ran first they would land the bar before anything had
+     * mounted.
+     */
+    useEffect(() => {
+        navProgress.start();
+    }, []);
+
+    useEffect(() => {
+        if (ready) navProgress.committed();
+    }, [ready]);
+
+    /**
      * Only once the app is up.
      *
      * Every prefetch is a full RSC request that re-runs the proxy's auth check
