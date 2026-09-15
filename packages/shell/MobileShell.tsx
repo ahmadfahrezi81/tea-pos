@@ -30,8 +30,8 @@ const PULL_HOLD_PX = 56;
 const PULL_MIN_SPIN_MS = 400;
 /** How long the gap takes to close. */
 const PULL_CLOSE_MS = 280;
-/** How long the spinner takes to fade. Matches the transition on `.pull-spinner`. */
-const PULL_SPINNER_FADE_MS = 200;
+/** How long the spinner takes to fade after a refresh. Matches `.pull-spinner[data-state="leaving"]`. */
+const PULL_SPINNER_FADE_MS = 150;
 
 /**
  * TEMPORARY — route prefetching is switched off while the owner lives with the
@@ -397,7 +397,8 @@ export function MobileShell({
         const spinner = pullSpinnerRef.current;
         const arc = spinner?.querySelector("circle");
         const dial = arc?.ownerSVGElement;
-        if (!scroller || !spinner || !arc || !dial) return;
+        const arrowhead = spinner?.querySelector(".pull-arrowhead");
+        if (!scroller || !spinner || !arc || !dial || !arrowhead) return;
 
         let phase: "idle" | "pulling" | "holding" | "closing" = "idle";
         let armed = false;
@@ -418,9 +419,10 @@ export function MobileShell({
             scroller.style.transform = `translate3d(0, ${distance}px, 0)`;
             spinner.style.opacity = String(progress);
             spinner.style.transform = `scale(${ready ? 1.1 : 0.6 + progress * 0.4})`;
-            // The arc turns, not the whole spinner, so the arrow keeps pointing
-            // where it means.
             dial.style.transform = `rotate(${-90 + progress * 180}deg)`;
+            // The arrowhead rides the growing end of the arc, like a refresh
+            // icon: at a full arc — three quarters of the circle — that is 270°.
+            arrowhead.setAttribute("transform", `rotate(${progress * 270} 12 12)`);
             arc.style.strokeDashoffset = String(100 - progress * 75);
         };
 
@@ -437,15 +439,20 @@ export function MobileShell({
             scroller.style.transform = `translate3d(0, ${y}px, 0)`;
         };
 
-        const hideSpinner = () => {
-            spinner.dataset.state = "";
-            delete spinner.dataset.ready;
+        // `keepSpinning`: after a refresh the spinner goes on turning, at full
+        // size, while it fades out quickly. Dropping straight to no state stopped
+        // the spin dead and snapped the arc back to its starting angle — a
+        // visible flip — then shrank it.
+        const hideSpinner = (keepSpinning = false) => {
+            spinner.dataset.state = keepSpinning ? "leaving" : "";
             spinner.style.opacity = "";
             spinner.style.transform = "";
             dial.style.transform = "";
         };
 
         const slideClosed = () => {
+            // Any spinner is fully faded by now, so its spin can stop unseen.
+            spinner.dataset.state = "";
             slideTo(0, "cubic-bezier(0.2, 0, 0, 1)", PULL_CLOSE_MS);
             // A timer rather than transitionend: a slide from 0 to 0 never fires one.
             timer = setTimeout(clear, PULL_CLOSE_MS + 20);
@@ -457,7 +464,7 @@ export function MobileShell({
         const close = (afterSpinner = false) => {
             clearTimeout(timer);
             phase = "closing";
-            hideSpinner();
+            hideSpinner(afterSpinner);
             if (afterSpinner) timer = setTimeout(slideClosed, PULL_SPINNER_FADE_MS);
             else slideClosed();
         };
@@ -509,14 +516,9 @@ export function MobileShell({
             // further it goes, and never past the cap.
             distance = PULL_MAX_PX * (1 - Math.exp(-Math.max(dy, 0) / PULL_STIFFNESS_PX));
             const nowReady = distance >= PULL_THRESHOLD_PX;
-            // Written only on crossing, either way: the arrow flips to point up
-            // once letting go will refresh, and back down if the finger retreats.
-            // Crossing forwards also gives one short tick where the platform has a
-            // vibration API. iOS does not; the flip and the pop are the cue there.
-            if (nowReady !== ready) {
-                spinner.dataset.ready = String(nowReady);
-                if (nowReady && "vibrate" in navigator) navigator.vibrate(10);
-            }
+            // One short tick on crossing forwards, where the platform has a
+            // vibration API. iOS does not; the pop in scale is the cue there.
+            if (nowReady && !ready && "vibrate" in navigator) navigator.vibrate(10);
             ready = nowReady;
             if (!frame) frame = requestAnimationFrame(paint);
         };
@@ -625,7 +627,7 @@ export function MobileShell({
                         paints over it: sliding the content down is what uncovers
                         it. Nothing here is React state; the gesture drives it. */}
                     <div ref={pullSpinnerRef} className="pull-spinner text-brand" aria-hidden>
-                        <svg viewBox="0 0 24 24" width="24" height="24">
+                        <svg viewBox="0 0 24 24" width="24" height="24" overflow="visible">
                             <circle
                                 cx="12"
                                 cy="12"
@@ -638,21 +640,16 @@ export function MobileShell({
                                 strokeDasharray={100}
                                 strokeDashoffset={100}
                             />
+                            {/* Drawn at the arc's starting point, three o'clock
+                                before the dial's -90° turn, pointing along the
+                                stroke; the gesture rotates it to the arc's end. */}
+                            <path
+                                className="pull-arrowhead"
+                                d="M15.8 12 L26.2 12 L21 18 Z"
+                                fill="currentColor"
+                                transform="rotate(0 12 12)"
+                            />
                         </svg>
-                        <span className="pull-arrow">
-                            <svg
-                                viewBox="0 0 24 24"
-                                width="12"
-                                height="12"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="3"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            >
-                                <path d="M12 5v14M6 13l6 6 6-6" />
-                            </svg>
-                        </span>
                     </div>
                     <div
                         ref={scrollContainerRef}

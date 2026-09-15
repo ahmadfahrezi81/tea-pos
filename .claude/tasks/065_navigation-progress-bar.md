@@ -539,10 +539,10 @@ and the page slides back up.
 
 | Phase | Content | Spinner |
 | --- | --- | --- |
-| Pulling | Follows the finger with **growing resistance** — easy at first, stiffer the further it goes (e.g. `max × (1 − e^(−dy / k))`), capped around 120px | An arc fills with pull progress around an arrow pointing down (added at the owner's request, after YouTube). At the threshold the arc completes, the arrow flips to point up, the spinner pops slightly in scale, and Android gives a 10ms `navigator.vibrate` — once per crossing |
+| Pulling | Follows the finger with **growing resistance** — easy at first, stiffer the further it goes (e.g. `max × (1 − e^(−dy / k))`), capped around 120px | An arc fills with pull progress, with an arrowhead riding its growing end so it reads as a refresh icon (owner's request, after YouTube). At the threshold the arc completes, the spinner pops slightly in scale, and Android gives a 10ms `navigator.vibrate` — once per crossing |
 | Released below threshold | Transitions back to 0, then transform cleared to `none` | Fades out |
-| Released past threshold | Springs to **56px** with a slight overshoot (CSS transition, overshooting cubic-bezier) | Switches to an indeterminate spin (CSS keyframes on `transform: rotate`) |
-| Refresh settled | Held for at least **400ms** from release, so a fast refresh never just blinks; waits for the spinner to be fully gone, then transitions to 0 and the transform is cleared | Scales down and fades first — the content rises only after, never over a spinner still on screen |
+| Released past threshold | Springs to **56px** with a slight overshoot (CSS transition, overshooting cubic-bezier) | Switches to an indeterminate spin (CSS keyframes on `transform: rotate`); the arrowhead fades out, as YouTube's does — it belongs to the pull only |
+| Refresh settled | Held for at least **400ms** from release, so a fast refresh never just blinks; waits for the spinner to be fully gone, then transitions to 0 and the transform is cleared | Keeps spinning at full size and fades out quickly (150ms) — no stop, snap or shrink. The content rises only after, never over a spinner still on screen |
 
 ### Keeping it light
 

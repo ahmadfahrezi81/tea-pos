@@ -133,35 +133,34 @@
     transform: rotate(-90deg);
 }
 
-.pull-spinner[data-state="spinning"] > svg {
+/* Leaving after a refresh: full size, still spinning, fading out quickly. The
+   content rises only once it is gone (PULL_SPINNER_FADE_MS). */
+.pull-spinner[data-state="leaving"] {
+    opacity: 0;
+    transform: none;
+    transition: opacity 150ms ease;
+}
+
+/* Spinning carries on into leaving without restarting: the animation is the same,
+   so changing the state that applies it does not reset it. */
+.pull-spinner:is([data-state="spinning"], [data-state="leaving"]) > svg {
     animation: pull-spin 800ms linear infinite;
+}
+
+/* The arrowhead belongs to the pull only, as YouTube's does: it says "let go to
+   refresh", and once the refresh is running there is nothing left to say. */
+.pull-arrowhead {
+    transition: opacity 100ms ease;
+}
+
+.pull-spinner:is([data-state="spinning"], [data-state="leaving"]) .pull-arrowhead {
+    opacity: 0;
 }
 
 @keyframes pull-spin {
     from { transform: rotate(-90deg); }
     to   { transform: rotate(270deg); }
 }
-
-/* The arrow inside the arc says what a pull does: down while pulling, flipped up
-   once letting go will refresh, gone while spinning. Its own transition, so the
-   flip eases even while the finger is still down. */
-.pull-arrow {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform 150ms ease, opacity 150ms ease;
-}
-
-.pull-spinner[data-ready="true"] > .pull-arrow {
-    transform: rotate(180deg);
-}
-
-.pull-spinner[data-state="spinning"] > .pull-arrow {
-    opacity: 0;
-}
-
 /* No sweeping motion: a still bar while loading, full when done, then a fade.
    There is no animationend here, which is why the controller caps `done`. */
 @media (prefers-reduced-motion: reduce) {
@@ -185,7 +184,7 @@
     }
 
     /* A still three-quarter arc still says "working" without spinning. */
-    .pull-spinner[data-state="spinning"] > svg {
+    .pull-spinner:is([data-state="spinning"], [data-state="leaving"]) > svg {
         animation: none;
     }
 }
