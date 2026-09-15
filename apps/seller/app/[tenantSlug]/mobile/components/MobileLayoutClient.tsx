@@ -1,5 +1,7 @@
 "use client";
 import { ReactNode, useCallback, useMemo, useState } from "react";
+import { SWRConfig } from "swr";
+import { trackFirstLoad } from "@/lib/utils/trackFirstLoad";
 import Image from "next/image";
 import { ChevronsUpDown } from "lucide-react";
 import { MobileShell } from "@tea-pos/shell/MobileShell";
@@ -13,6 +15,13 @@ import { navigation } from "@tea-pos/utils/navigation";
 import { prefetchSuffixes, resolveRoute, rootTabSuffixes, tabGroups } from "../config/navigation";
 import { useFlags } from "@/lib/context/FlagsContext";
 import { useT } from "@/lib/hooks/useT";
+
+/**
+ * Wraps page content only. A request a page starts on its first load holds the
+ * navigation bar until it settles (task 065). Module-level so the config keeps
+ * its identity: a new object each render would re-render every SWR hook below.
+ */
+const TRACK_PAGE_LOADS = { use: [trackFirstLoad] };
 
 interface MobileLayoutClientProps {
     children: ReactNode;
@@ -208,7 +217,7 @@ export default function MobileLayoutClient({ children }: MobileLayoutClientProps
                 </>
             }
         >
-            {children}
+            <SWRConfig value={TRACK_PAGE_LOADS}>{children}</SWRConfig>
         </MobileShell>
     );
 }

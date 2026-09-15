@@ -11,7 +11,8 @@
  *     idle → loading → landing → done → idle
  *
  * - **loading** — from the tap until the route commits.
- * - **landing** — the route has committed. Settles one frame later.
+ * - **landing** — the route has committed and the requests its page started on
+ *   first load are still in flight. Each app counts them with `track`.
  * - **done** — fill, one pulse, fade. Ends on `nav-settle`'s animationend.
  *
  * Nothing here reads layout. Every wait is capped, so a missed signal can never
@@ -34,6 +35,13 @@ let bar: HTMLElement | null = null;
 let state: State = "idle";
 let cap: ReturnType<typeof setTimeout> | undefined;
 let settleFrame = 0;
+/**
+ * Bumped by every navigation. A request remembers the generation it was counted
+ * in, so one that outlives its navigation cannot decrement the next one's count.
+ */
+let generation = 0;
+/** First-load requests in flight for the current generation. */
+let pending = 0;
 
 function setState(next: State) {
     state = next;
@@ -59,13 +67,15 @@ function finish() {
 }
 
 /**
- * Confirmed a frame later rather than at once, so that work the commit set in
- * motion has had its chance to start before the bar calls the page settled.
+ * Confirmed a frame later rather than at once. Some pages start a request only
+ * once another has answered, and that second request begins in the re-render the
+ * first one causes — before the next frame. Waiting one frame lets it be counted
+ * instead of finishing the bar in the gap between the two.
  */
 function settleNextFrame() {
     cancelAnimationFrame(settleFrame);
     settleFrame = requestAnimationFrame(() => {
-        if (state === "landing") finish();
+        if (state === "landing" && pending === 0) finish();
     });
 }
 
@@ -99,6 +109,8 @@ export const navProgress = {
      */
     start() {
         cancelAnimationFrame(settleFrame);
+        generation += 1;
+        pending = 0;
         if (bar && (state === "idle" || state === "done")) {
             bar.dataset.run = bar.dataset.run === "b" ? "a" : "b";
         }
@@ -116,6 +128,28 @@ export const navProgress = {
         if (state !== "loading") return;
         setState("landing");
         armCap(LANDING_CAP_MS, finish);
-        settleNextFrame();
+        if (pending === 0) settleNextFrame();
+    },
+
+    /**
+     * Holds the bar in landing until `promise` settles. For requests a page makes
+     * on its first load; each app calls it from an SWR middleware.
+     *
+     * Only counted while a navigation is in progress, so background polling and
+     * revalidation never start or extend the bar on a screen at rest.
+     *
+     * Returns the `finally` chain rather than the original promise, so the caller
+     * awaits the same outcome — a rejection still reaches its error handling
+     * instead of surfacing here as an unhandled one.
+     */
+    track<T>(promise: Promise<T>): Promise<T> {
+        if (state !== "loading" && state !== "landing") return promise;
+        const counted = generation;
+        pending += 1;
+        return promise.finally(() => {
+            if (counted !== generation) return;
+            pending -= 1;
+            if (state === "landing" && pending === 0) settleNextFrame();
+        });
     },
 };

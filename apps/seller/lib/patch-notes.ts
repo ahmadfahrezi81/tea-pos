@@ -14,9 +14,9 @@ export const patchNotes: PatchNote[] = [
         entries: [
             { kind: "improved", text: "The loading bar now shows every time you change screens, including going back." },
             { kind: "improved", text: "The loading bar keeps moving on slower phones." },
+            { kind: "improved", text: "The loading bar now stays until the page has finished loading." },
             { kind: "improved", text: "Pressing and holding no longer highlights text, except in a box you type in." },
             { kind: "fixed", text: "A long store name at the top of the screen no longer pushes the page down." },
-            { kind: "fixed", text: "Tapping a tab twice while it loads no longer breaks the back arrow." },
         ],
     },
     {

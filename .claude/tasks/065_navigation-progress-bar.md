@@ -1,7 +1,7 @@
 # Task 065 — The navigation progress bar
 
-**Status: written and revised 2026-09-15. Steps 1 and 2 committed, step 3 built;
-none pushed.** Scope is
+**Status: written and revised 2026-09-15. Steps 1–3 committed, step 4 built; none
+pushed.** Scope is
 the shell (`packages/shell`), so seller and backoffice both get every change. The
 boot loader bar in `MobileLayoutClient.tsx` and `launch.html` are out of scope.
 
@@ -200,7 +200,7 @@ Plain module, no React, about 60 lines:
   generation number; starts the loading cap; sets `aria-busy` on `<main>`.
 - `committed()` — loading → landing. If the count is 0, confirm in one rAF, then
   done. The same rAF confirmation runs whenever the count returns to 0.
-- `track(promise)`, `hold()` / `release()` — used from step 4.
+- `track(promise)` — added in step 4.
 - `run(promise)` — loading until the promise settles, then done. Used from step 5.
 
 ### Shell wiring — `MobileShell.tsx`
@@ -304,12 +304,23 @@ error handling.
 
 ### Wiring
 
-Add to the root `SWRConfig` — seller `app/layout.tsx:93`, backoffice `:77`. The
-nested `SWRConfig`s (`BootFallback`, `ErrorSheetContext`) concatenate `use` arrays
-(`swr/dist/_internal/config-context-*.mjs:510-518`), so one entry covers every hook.
+**Not the root `SWRConfig`.** Both root layouts are Server Components, and a
+middleware is a function, which cannot cross into a Client Component. Instead each
+app's `MobileLayoutClient` wraps page content — the `children` it hands the shell —
+in `<SWRConfig value={TRACK_PAGE_LOADS}>`, a module-level constant so the config
+keeps its identity across renders. Nested `SWRConfig`s concatenate `use` arrays
+(`swr/dist/_internal/config-context-*.mjs:510-518`), so this adds to the parent
+config rather than replacing it.
+
+Scoping to page content is deliberate: the boot providers and the shell's own
+extras (the store picker) are not page data and are never counted.
+
+The middleware lives in each app at `lib/utils/trackFirstLoad.ts`; `navProgress`
+is exported from the shell package as `@tea-pos/shell/navProgress`.
 
 ```ts
-// lib/swr/trackFirstLoad.ts — sketch
+// Simplified. The real one names its inner function useTrackFirstLoad for the
+// rules of hooks, and casts config to reach cache, which the public type omits.
 export const trackFirstLoad: Middleware = (useSWRNext) => (key, fetcher, config) => {
     const tracked = fetcher && ((...args) => {
         const firstLoad = config.cache.get(unstable_serialize(key))?.data === undefined;
@@ -320,8 +331,8 @@ export const trackFirstLoad: Middleware = (useSWRNext) => (key, fetcher, config)
 };
 ```
 
-A screen whose readiness is not an SWR request calls `hold()` / `release()` from an
-effect. In landing, the bar and a skeleton can be on screen together: the skeleton
+A screen whose readiness is not an SWR request would need a `hold()` on the
+controller. Not built: no screen needs one yet. In landing, the bar and a skeleton can be on screen together: the skeleton
 shows where content will appear, the bar shows the app is still working.
 
 ### Verify
