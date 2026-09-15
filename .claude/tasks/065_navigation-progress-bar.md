@@ -518,6 +518,11 @@ and the page slides back up.
   `refreshable`, so the page does not move twice on iOS and both platforms feel the
   same. Those screens lose the native bounce at the bottom too; accepted. Other
   screens keep it.
+- **The page itself does not bounce either** (found on the owner's iPhone, same
+  day). `html, body` had `overscroll-behavior-y: contain`, which stops Android
+  Chrome's pull-to-refresh but still lets iOS rubber-band the whole page, header and
+  footer included — so the layout moved under the gap. Both apps now set
+  `overscroll-behavior: none` there.
 - **The `position: fixed` catch is accepted.** A transform makes the scroll
   container the containing block for any fixed element inside it. At rest the
   transform is cleared to `none` — not `translate3d(0, 0, 0)` — so nothing changes
@@ -535,7 +540,7 @@ and the page slides back up.
 | Pulling | Follows the finger with **growing resistance** — easy at first, stiffer the further it goes (e.g. `max × (1 − e^(−dy / k))`), capped around 120px | An arc fills with pull progress. At the threshold the arc completes, the spinner pops slightly in scale, and Android gives a 10ms `navigator.vibrate` — once per crossing |
 | Released below threshold | Transitions back to 0, then transform cleared to `none` | Fades out |
 | Released past threshold | Springs to **56px** with a slight overshoot (CSS transition, overshooting cubic-bezier) | Switches to an indeterminate spin (CSS keyframes on `transform: rotate`) |
-| Refresh settled | Held for at least **400ms** from release, so a fast refresh never just blinks; then transitions to 0 and the transform is cleared | Scales down and fades |
+| Refresh settled | Held for at least **400ms** from release, so a fast refresh never just blinks; waits for the spinner to be fully gone, then transitions to 0 and the transform is cleared | Scales down and fades first — the content rises only after, never over a spinner still on screen |
 
 ### Keeping it light
 

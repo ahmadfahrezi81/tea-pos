@@ -30,6 +30,8 @@ const PULL_HOLD_PX = 56;
 const PULL_MIN_SPIN_MS = 400;
 /** How long the gap takes to close. */
 const PULL_CLOSE_MS = 280;
+/** How long the spinner takes to fade. Matches the transition on `.pull-spinner`. */
+const PULL_SPINNER_FADE_MS = 200;
 
 /**
  * TEMPORARY — route prefetching is switched off while the owner lives with the
@@ -437,13 +439,21 @@ export function MobileShell({
             spinner.style.transform = "";
         };
 
-        const close = () => {
-            clearTimeout(timer);
-            phase = "closing";
-            hideSpinner();
+        const slideClosed = () => {
             slideTo(0, "cubic-bezier(0.2, 0, 0, 1)", PULL_CLOSE_MS);
             // A timer rather than transitionend: a slide from 0 to 0 never fires one.
             timer = setTimeout(clear, PULL_CLOSE_MS + 20);
+        };
+
+        // After a refresh the spinner fades out completely before the content
+        // rises. Together, the content reads as swallowing a spinner still on
+        // screen. A cancelled pull closes at once: its spinner was never whole.
+        const close = (afterSpinner = false) => {
+            clearTimeout(timer);
+            phase = "closing";
+            hideSpinner();
+            if (afterSpinner) timer = setTimeout(slideClosed, PULL_SPINNER_FADE_MS);
+            else slideClosed();
         };
 
         closePullRef.current = () => {
@@ -532,7 +542,7 @@ export function MobileShell({
                 .then(() => {
                     const wait = PULL_MIN_SPIN_MS - (performance.now() - startedAt);
                     timer = setTimeout(() => {
-                        if (mine === token) close();
+                        if (mine === token) close(true);
                     }, Math.max(0, wait));
                 });
         };
