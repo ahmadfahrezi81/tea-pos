@@ -44,31 +44,24 @@ export default function AddReportPage() {
     const [notes, setNotes] = useState("");
     const [photoFile, setPhotoFile] = useState<File | null>(null);
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const resolvedType = selectedType === "other" ? customType.trim() : selectedType;
     const isValid = !!resolvedType && notes.trim().length > 0;
 
     const handleSubmit = async () => {
-        if (!isValid || !selectedStoreId) return;
-        setIsSubmitting(true);
-        try {
-            let photoUrl: string | undefined;
-            if (photoFile) {
-                photoUrl = await upload(photoFile, "store-reports", `${selectedStoreId}/${todayStr}`);
-            }
-            await create({
-                type: resolvedType,
-                notes: notes.trim(),
-                photoUrl,
-                dailySummaryId: summaryId ?? undefined,
-            });
-            navigation.back();
-        } catch (err) {
-            showError(err);
-        } finally {
-            setIsSubmitting(false);
+        // False releases the button: nothing was sent.
+        if (!isValid || !selectedStoreId) return false;
+        let photoUrl: string | undefined;
+        if (photoFile) {
+            photoUrl = await upload(photoFile, "store-reports", `${selectedStoreId}/${todayStr}`);
         }
+        await create({
+            type: resolvedType,
+            notes: notes.trim(),
+            photoUrl,
+            dailySummaryId: summaryId ?? undefined,
+        });
+        navigation.back();
     };
 
     return (
@@ -110,8 +103,8 @@ export default function AddReportPage() {
                 label={t("manage.submitReport")}
                 loadingLabel={t("common.loading")}
                 onSubmit={handleSubmit}
+                onError={showError}
                 disabled={!isValid}
-                isLoading={isSubmitting}
             />
         </div>
     );

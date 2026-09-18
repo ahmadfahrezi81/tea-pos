@@ -41,28 +41,21 @@ export default function AddRequestPage() {
     const [notes, setNotes] = useState("");
     const [photoFile, setPhotoFile] = useState<File | null>(null);
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async () => {
-        if (!selectedType || !selectedStoreId) return;
-        setIsSubmitting(true);
-        try {
-            let photoUrl: string | undefined;
-            if (photoFile) {
-                photoUrl = await upload(photoFile, "store-requests", `${selectedStoreId}/${todayStr}`);
-            }
-            await create({
-                type: selectedType,
-                notes: notes.trim() || undefined,
-                photoUrl,
-                dailySummaryId: summaryId ?? undefined,
-            });
-            navigation.back();
-        } catch (err) {
-            showError(err);
-        } finally {
-            setIsSubmitting(false);
+        // False releases the button: nothing was sent.
+        if (!selectedType || !selectedStoreId) return false;
+        let photoUrl: string | undefined;
+        if (photoFile) {
+            photoUrl = await upload(photoFile, "store-requests", `${selectedStoreId}/${todayStr}`);
         }
+        await create({
+            type: selectedType,
+            notes: notes.trim() || undefined,
+            photoUrl,
+            dailySummaryId: summaryId ?? undefined,
+        });
+        navigation.back();
     };
 
     return (
@@ -104,8 +97,8 @@ export default function AddRequestPage() {
                 label={t("manage.submitRequest")}
                 loadingLabel={t("common.loading")}
                 onSubmit={handleSubmit}
+                onError={showError}
                 disabled={!selectedType}
-                isLoading={isSubmitting}
             />
         </div>
     );

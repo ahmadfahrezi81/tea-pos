@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, UserCircle } from "lucide-react";
+import { UserCircle } from "lucide-react";
+import { ActionButton } from "@tea-pos/ui/custom/ActionButton";
 import { Icon } from "@iconify/react";
 import Image from "next/image";
 import { useT } from "@/lib/hooks/useT";
@@ -24,7 +25,6 @@ export function TakeOverCard({
 }) {
     const [claimCode, setClaimCode] = useState("");
     const [transferError, setTransferError] = useState<string | null>(null);
-    const [isTransferring, setIsTransferring] = useState(false);
     const t = useT();
 
     // Cups sold so far by whoever holds the POS. Shares the SWR cache entry
@@ -39,16 +39,10 @@ export function TakeOverCard({
             : null;
 
     const handleTakeOver = async () => {
-        if (claimCode.length !== 2) return;
-        setIsTransferring(true);
+        // False releases the button: nothing was sent.
+        if (claimCode.length !== 2) return false;
         setTransferError(null);
-        try {
-            await onTransfer(claimCode);
-        } catch (err) {
-            setTransferError(err instanceof Error ? err.message : "Invalid code");
-        } finally {
-            setIsTransferring(false);
-        }
+        await onTransfer(claimCode);
     };
 
     return (
@@ -104,17 +98,19 @@ export function TakeOverCard({
             {transferError && (
                 <p className="text-sm text-red-500 mb-3">{transferError}</p>
             )}
-            <button
-                onClick={handleTakeOver}
-                disabled={claimCode.length !== 2 || isTransferring}
+            {/* The spinner sits over the label, which is what this button did
+                by hand before — and on success the card is replaced by the
+                owned-session view, so the button is never released. */}
+            <ActionButton
+                action={handleTakeOver}
+                onError={(err) =>
+                    setTransferError(err instanceof Error ? err.message : "Invalid code")
+                }
+                disabled={claimCode.length !== 2}
                 className="w-full bg-brand text-white py-4 rounded-xl font-bold text-base active:scale-95 transition-transform disabled:opacity-40"
             >
-                {isTransferring ? (
-                    <Loader2 size={18} className="animate-spin mx-auto" />
-                ) : (
-                    t("home.takeover.takeOver")
-                )}
-            </button>
+                {t("home.takeover.takeOver")}
+            </ActionButton>
         </div>
     );
 }
