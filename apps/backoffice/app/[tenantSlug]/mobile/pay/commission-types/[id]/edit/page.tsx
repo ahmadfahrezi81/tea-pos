@@ -22,7 +22,6 @@ export default function EditCommissionTypePage({ params }: { params: Promise<{ i
     const [isEnabled, setIsEnabled] = useState(true);
     const [ratePerCup, setRatePerCup] = useState(0);
     const [copied, setCopied] = useState(false);
-    const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -34,17 +33,11 @@ export default function EditCommissionTypePage({ params }: { params: Promise<{ i
     }, [type?.id]);
 
     const handleSave = async () => {
-        if (!name.trim()) { setError("Name is required."); return; }
-        setSaving(true);
+        // False releases the button: nothing was sent.
+        if (!name.trim()) { setError("Name is required."); return false; }
         setError(null);
-        try {
-            await update(id, { name: name.trim(), isEnabled, ratePerCup });
-            navigation.back();
-        } catch (err) {
-            showError(err);
-        } finally {
-            setSaving(false);
-        }
+        await update(id, { name: name.trim(), isEnabled, ratePerCup });
+        navigation.back();
     };
 
     if (isLoading) {
@@ -102,8 +95,8 @@ export default function EditCommissionTypePage({ params }: { params: Promise<{ i
                 label="Save Changes"
                 loadingLabel="Saving..."
                 onSubmit={handleSave}
+                onError={showError}
                 disabled={!name}
-                isLoading={saving}
                 confirmTitle="Save commission type?"
                 confirmMessage="This affects commissions for every staff member assigned to it going forward."
             />

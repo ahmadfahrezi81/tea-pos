@@ -331,8 +331,11 @@ export async function updatePayrollClaimStatus(
     const log = createLogger(supabase, { tenantId, userId: actorId });
     log("claim_status_updated", { refId: id, refTable: "payroll_claims", metadata: { status } });
 
+    /* Awaited: approving is what moves `claims_total`, and the client refetches
+       the payout as soon as this responds. See the same note in
+       `updatePayrollCommissionStatus`. */
     if (payoutRow) {
-        upsertPayout(supabase, {
+        await upsertPayout(supabase, {
             tenantId,
             userId: row.user_id,
             startDate: payoutRow.startDate,

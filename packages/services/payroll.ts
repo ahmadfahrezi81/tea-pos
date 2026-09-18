@@ -598,8 +598,14 @@ export async function updatePayrollCommission(
     const log = createLogger(supabase, { tenantId, userId, storeId: row.store_id });
     log("payroll_commission_updated", { refId: id, refTable: "payroll_commissions", metadata: { status } });
 
+    /* Awaited, not fired and forgotten. The totals on `payroll_payouts` are the
+       numbers the payout list reads, and the client refetches them the moment
+       this responds — so an unawaited recompute loses that race and the list
+       shows the old figure until something else revalidates. On a serverless
+       runtime it may not run at all once the response is sent. The write above
+       is already saved; this is the rest of the same answer. */
     if (payoutRow) {
-        upsertPayout(supabase, {
+        await upsertPayout(supabase, {
             tenantId,
             userId: row.user_id,
             startDate: payoutRow.startDate,
@@ -724,11 +730,10 @@ export async function reviewPayrollDay(
         });
     }
 
-    // Also once, not once per row. Fire-and-forget for the same reason the
-    // single-row path does it: the decision is already saved, and a slow
-    // recompute must not hold up the response.
+    // Once, not once per row — and awaited, for the reason written on the
+    // single-row path above.
     if (payoutRow) {
-        upsertPayout(supabase, {
+        await upsertPayout(supabase, {
             tenantId,
             userId,
             startDate: payoutRow.startDate,

@@ -15,25 +15,18 @@ export default function AddCommissionTypePage() {
     const [name, setName] = useState("");
     const [slug, setSlug] = useState("");
     const [ratePerCup, setRatePerCup] = useState(0);
-    const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const handleSave = async () => {
-        if (!name.trim() || !slug.trim()) { setError("Name and slug are required."); return; }
-        setSaving(true);
+        // False releases the button: nothing was sent.
+        if (!name.trim() || !slug.trim()) { setError("Name and slug are required."); return false; }
         setError(null);
-        try {
-            await create({
-                name: name.trim(),
-                slug: slug.trim().toUpperCase().replace(/\s+/g, "_"),
-                ratePerCup,
-            });
-            navigation.back();
-        } catch (err) {
-            showError(err);
-        } finally {
-            setSaving(false);
-        }
+        await create({
+            name: name.trim(),
+            slug: slug.trim().toUpperCase().replace(/\s+/g, "_"),
+            ratePerCup,
+        });
+        navigation.back();
     };
 
     return (
@@ -60,8 +53,8 @@ export default function AddCommissionTypePage() {
                 label="Create Commission Type"
                 loadingLabel="Creating..."
                 onSubmit={handleSave}
+                onError={showError}
                 disabled={!name || !slug}
-                isLoading={saving}
                 confirmTitle="Create commission type?"
                 confirmMessage="Staff can be assigned to it afterward from the staff pay page."
             />

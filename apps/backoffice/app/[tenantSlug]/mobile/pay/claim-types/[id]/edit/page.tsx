@@ -4,7 +4,6 @@ import { use, useState, useEffect } from "react";
 import { navigation } from "@tea-pos/utils/navigation";
 import { usePayrollClaimConfigs, useUserClaimEligibility } from "@/lib/hooks/payroll-claim-configs/usePayrollClaimConfigs";
 import { useTenantUsers } from "@/lib/hooks/users/useTenantUsers";
-import { apiFetch } from "@/lib/api/client";
 import { TextInput } from "@tea-pos/ui/custom/TextInput";
 import { FormFooter } from "@/components/shared/FormFooter";
 import { Copy, Check, Search, X } from "lucide-react";
@@ -47,7 +46,7 @@ function EligibilityToggle({
 
 export default function EditClaimTypePage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
-    const { claimTypes, isLoading, update } = usePayrollClaimConfigs();
+    const { claimTypes, isLoading, update, setEligibility } = usePayrollClaimConfigs();
     const { users } = useTenantUsers();
     const type = claimTypes.find((t) => t.id === id);
 
@@ -59,7 +58,6 @@ export default function EditClaimTypePage({ params }: { params: Promise<{ id: st
     const [copied, setCopied] = useState(false);
     const [pendingEligibility, setPendingEligibility] = useState<Record<string, string[]>>({});
     const [eligibilityOverrides, setEligibilityOverrides] = useState<Record<string, boolean>>({});
-    const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -81,26 +79,16 @@ export default function EditClaimTypePage({ params }: { params: Promise<{ id: st
     };
 
     const handleSave = async () => {
-        if (!name.trim()) { setError("Name is required."); return; }
-        setSaving(true);
+        // False releases the button: nothing was sent.
+        if (!name.trim()) { setError("Name is required."); return false; }
         setError(null);
-        try {
-            await update(id, { name: name.trim(), isEnabled });
-            await Promise.all(
-                Object.entries(pendingEligibility).map(([userId, claimConfigIds]) =>
-                    apiFetch("/api/payroll/claim-types/eligibility", {
-                        method: "PUT",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ userId, claimConfigIds }),
-                    })
-                )
-            );
-            navigation.back();
-        } catch (err) {
-            showError(err);
-        } finally {
-            setSaving(false);
-        }
+        await update(id, { name: name.trim(), isEnabled });
+        await Promise.all(
+            Object.entries(pendingEligibility).map(([userId, claimConfigIds]) =>
+                setEligibility({ userId, claimConfigIds }),
+            ),
+        );
+        navigation.back();
     };
 
     if (isLoading) {
@@ -208,8 +196,8 @@ export default function EditClaimTypePage({ params }: { params: Promise<{ id: st
                 label="Save Changes"
                 loadingLabel="Saving..."
                 onSubmit={handleSave}
+                onError={showError}
                 disabled={!name}
-                isLoading={saving}
                 confirmTitle="Save claim type?"
                 confirmMessage="This updates the claim type and any eligibility changes made below."
             />

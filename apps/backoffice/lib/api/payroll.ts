@@ -7,6 +7,7 @@ import type {
     UpdatePayrollCommissionInput,
     ReviewPayrollDayInput,
 } from "@tea-pos/features/payroll/schema";
+import type { UpdatePayrollClaimStatusInput } from "@tea-pos/features/payroll-claims/schema";
 import {
     PayrollCommissionListResponse,
     PayrollCommissionResponse,
@@ -55,6 +56,14 @@ export const payrollApi = {
     upsertPayout: async (input: { startDate: string; endDate: string; userId: string }) => {
         return apiFetch<unknown>("/api/payroll/payouts", {
             method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(input),
+        });
+    },
+
+    updateClaimStatus: async (claimId: string, input: UpdatePayrollClaimStatusInput) => {
+        return apiFetch<unknown>(`/api/payroll/claims/${encodeURIComponent(claimId)}`, {
+            method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(input),
         });

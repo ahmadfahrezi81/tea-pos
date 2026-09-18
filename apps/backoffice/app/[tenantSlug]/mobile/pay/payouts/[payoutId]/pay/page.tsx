@@ -6,8 +6,7 @@ import { usePayrollUserInfo } from "@/lib/hooks/payroll-user-info/usePayrollUser
 import { useTenantUsers } from "@/lib/hooks/users/useTenantUsers";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
-import { payrollApi } from "@/lib/api/payroll";
-import { apiFetch } from "@/lib/api/client";
+import { useUpload } from "@/lib/hooks/upload/useUpload";
 import { getDaysUntilPayoutUnlock } from "@tea-pos/utils/week";
 import { parseISO, format } from "date-fns";
 import { Copy, Check } from "lucide-react";
@@ -41,45 +40,36 @@ export default function PayConfirmPage({
     const { payoutId } = use(params);
     const { userId } = use(searchParams);
     const { url } = useTenantSlug();
-    const { payslip, isLoading: payslipLoading } = usePayslip(payoutId, userId);
+    const { payslip, isLoading: payslipLoading, settlePayout } = usePayslip(payoutId, userId);
+    const { upload } = useUpload();
     const { info: payrollUserInfo, isLoading: infoLoading } = usePayrollUserInfo(userId ?? "");
     const { users } = useTenantUsers();
     const [proofFile, setProofFile] = useState<File | null>(null);
     const [proofPreview, setProofPreview] = useState<string | null>(null);
     const [notes, setNotes] = useState("");
-    const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const targetUser = users.find((u) => u.id === userId);
     const userParam = userId ? `?userId=${userId}` : "";
 
     const handleConfirm = async (skip: boolean) => {
-        if (!skip && !proofFile) { setError("Please attach a transfer screenshot."); return; }
-        setSubmitting(true);
+        // False releases the button: nothing was sent.
+        if (!skip && !proofFile) { setError("Please attach a transfer screenshot."); return false; }
         setError(null);
-        try {
-            let proofUrl: string | undefined;
-            if (proofFile) {
-                const form = new FormData();
-                form.append("file", proofFile);
-                form.append("bucket", "payroll-proofs");
-                ({ url: proofUrl } = await apiFetch<{ url: string }>("/api/upload", { method: "POST", body: form }));
-            }
-            await payrollApi.updatePayout(payoutId, {
-                status: skip ? "skipped" : "paid",
-                paymentProofUrl: proofUrl,
-                // Omitted rather than sent as "" when left blank — the column
-                // stays null, which is how "no note" is stored.
-                notes: notes.trim() || undefined,
-            });
-            // Replace, not push: this screen has done its job, and leaving it
-            // in history let the back button walk into a confirm form for a
-            // payout that was already settled.
-            navigation.replace(url(`/mobile/pay/payouts/${payoutId}${userParam}`));
-        } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to confirm payment");
-            setSubmitting(false);
-        }
+        const proofUrl = proofFile
+            ? await upload(proofFile, "payroll-proofs")
+            : undefined;
+        await settlePayout({
+            status: skip ? "skipped" : "paid",
+            paymentProofUrl: proofUrl,
+            // Omitted rather than sent as "" when left blank — the column
+            // stays null, which is how "no note" is stored.
+            notes: notes.trim() || undefined,
+        });
+        // Replace, not push: this screen has done its job, and leaving it
+        // in history let the back button walk into a confirm form for a
+        // payout that was already settled.
+        navigation.replace(url(`/mobile/pay/payouts/${payoutId}${userParam}`));
     };
 
     if (payslipLoading || infoLoading) {
@@ -244,8 +234,10 @@ export default function PayConfirmPage({
                     : isSkip ? "Mark as Skipped" : "Confirm Payment"}
                 loadingLabel={isSkip ? "Closing..." : "Confirming..."}
                 onSubmit={() => handleConfirm(isSkip)}
+                onError={(err) =>
+                    setError(err instanceof Error ? err.message : "Failed to confirm payment")
+                }
                 disabled={locked || (!isSkip && !proofFile)}
-                isLoading={submitting}
                 variant={isSkip ? "gray" : "green"}
                 confirmTitle={isSkip ? "Skip this payout?" : "Confirm payment?"}
                 confirmMessage={isSkip
