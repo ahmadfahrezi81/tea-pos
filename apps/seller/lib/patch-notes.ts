@@ -9,6 +9,14 @@ import type { PatchNote } from "@tea-pos/ui/custom/PatchNotes";
  */
 export const patchNotes: PatchNote[] = [
     {
+        version: "5.4.18",
+        date: "2026-09-19",
+        entries: [
+            { kind: "improved", text: "A button you press to save, send or confirm now spins while it works." },
+            { kind: "fixed", text: "Pressing that button twice no longer sends it twice." },
+        ],
+    },
+    {
         version: "5.4.17",
         date: "2026-09-15",
         entries: [

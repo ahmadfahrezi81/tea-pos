@@ -393,6 +393,47 @@ own copy under `components/shared/`.
 
 ---
 
+## Action Buttons (`packages/ui/custom/ActionButton.tsx`)
+
+**Every button that posts, puts or deletes is an `ActionButton`** — see task 066.
+It shows a spinner inside itself while the action runs and refuses the second
+press. A hand-rolled `isSaving` beside a `<button>` is the thing this replaced.
+
+```tsx
+<ActionButton action={handleSave} onError={showError} className="…the button's own classes…">
+    {t("common.save")}
+</ActionButton>
+```
+
+- **It owns behaviour, never looks.** `className` passes straight through; the
+  only class it adds is `relative`. Seller and backoffice between them have 6
+  disabled styles and 13 press styles, and unifying those is a different job.
+- **Busy is an attribute it writes, not React state.** Rendering a spinner from
+  state needs a commit, and a commit is what a slow device withholds — the
+  feedback would land after the request it describes. The guard is a ref latched
+  before the request, for the same reason: `disabled` only bites after a commit,
+  and two taps land in one tick. Same rule as `navProgress` — **never convert
+  this to `useState`.**
+- **The handler must throw.** A handler that catches its own error never rejects,
+  and the button would stay busy for good. Pass `onError` instead —
+  `showError` from `ErrorSheetContext` on most screens, an inline setter where
+  the screen shows failures itself.
+- **Busy clears on failure, not on success.** Most of these navigate, and a
+  button released during the navigation gap is a second submit waiting to
+  happen. `resetOnSuccess` is for a screen that stays. `action` returning
+  `false` means *nothing was sent* — the escape hatch for a guard clause or a
+  confirm the user backed out of.
+- **A label only for a long, multi-stage wait** (`busyLabel`, which is what
+  `FormFooter` passes) or under `prefers-reduced-motion`. A spinner says the app
+  is alive; "Processing…" cannot, because frozen text and a hung app look the
+  same.
+- Both apps' `FormFooter` wraps it, so every form footer in both apps is already
+  covered — and its `onError` reaches its call sites.
+
+The `.action-*` CSS lives in each app's `globals.css` beside `.skeleton`.
+
+---
+
 ## Skeletons (`packages/ui/custom/Skeleton.tsx`)
 
 `Skeleton`, `SkeletonText`, `SkeletonValue`, `SkeletonChart` — see task 059.
