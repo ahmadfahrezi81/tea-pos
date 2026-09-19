@@ -1,7 +1,7 @@
 # Task 066 — One shared action button
 
-**Status: steps 1–4 and 6 built 2026-09-19, uncommitted. Step 5 is all that is
-left and it needs a device.** Steps 1–3 are the first merge, step 4 the second.
+**Status: all steps done 2026-09-19 and committed. Step 5 passed a device pass at
+20x CPU / Slow 4G; two small verification gaps are named there.** Steps 1–3 are the first merge, step 4 the second.
 Ticket:
 `Feat: One shared action button that cannot fire twice`
 (https://app.notion.com/p/3df95a715405803ab29dffa9a6f1cb04) — `Medium`.
@@ -260,7 +260,33 @@ than something the component reaches for: the payout confirm screen and
 `TakeOverCard` show their failures inline, everything else hands them to
 `ErrorSheet`.
 
-## Step 5 — Verify — **not done: needs a device and eyes**
+## Step 5 — Verify — **passed on device 2026-09-19, two items noted below**
+
+Tested by the owner on a real phone and in Chrome at **20x CPU throttle with Slow
+4G** — harder than this step asked for. Nothing anomalous: the spinner tracks the
+tap rather than the response, it survives the navigation commit, Open Store stays
+busy until the screen changes, and no button's look moved.
+
+That the spinner is on time under 20x is the strongest single signal here. At
+that throttle a React commit is hundreds of milliseconds, so a spinner driven
+from state would have lagged the tap obviously. It did not, which is the
+attribute write and the ref latch doing their job.
+
+**Two items the session did not cover:**
+
+1. **Request count was judged from the UI, not the network panel.** A duplicate
+   POST is the one failure that can look like success — the second order is
+   created quietly, or the server rejects it and the screen never says so. Worth
+   one pass with the Network tab open on Logout, Generate New QR and backoffice
+   Approve.
+2. **`prefers-reduced-motion` was not exercised** — it is an OS setting, not a
+   DevTools throttle. Emulate it in DevTools (Rendering panel) and check a still
+   button shows a label instead of a spinner.
+
+Neither blocks the merge: the code is already on `staging` and behaves correctly
+under the conditions that were tested.
+
+## Original criteria — **superseded by the run above**
 
 `tsc` passes on both apps, `eslint` reports nothing new on any touched file, and
 both apps build with the service worker emitted. The lint findings that remain in
