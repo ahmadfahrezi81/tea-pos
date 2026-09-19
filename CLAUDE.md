@@ -147,20 +147,23 @@ Then update Zod schemas in `packages/features` to match.
 
 ---
 
-## Layered Architecture (Seller App)
+## Layered Architecture (both apps)
 
-Strict 5-layer pattern — never skip a layer:
+Strict 5-layer pattern — never skip a layer. **`<app>` is `seller` or
+`backoffice`; the contract is identical in both.** It used to be written for
+seller alone, and backoffice drifted in exactly the layer the rule never named —
+see task 067.
 
 ```
 service      packages/services/*.ts
     ↓
-api route    apps/seller/app/api/**/route.ts
+api route    apps/<app>/app/api/**/route.ts
     ↓
-api client   apps/seller/lib/api/*.ts
+api client   apps/<app>/lib/api/*.ts
     ↓
-hook         apps/seller/lib/hooks/**/*.ts
+hook         apps/<app>/lib/hooks/**/*.ts
     ↓
-component    apps/seller/app/**/page.tsx or _components/
+component    apps/<app>/app/**/page.tsx or _components/
 ```
 
 | Layer          | Job                                | May use                                             | Must NOT use                        |
@@ -168,10 +171,27 @@ component    apps/seller/app/**/page.tsx or _components/
 | **service**    | DB queries, business logic         | `SupabaseClient`, `process.env`, external `fetch()` | React, `next/headers`, `apiFetch`   |
 | **api route**  | Auth, validate input, call service | service functions, Zod, response helpers            | Raw Supabase, business logic        |
 | **api client** | Typed wrapper for each API route   | `apiFetch()`, `buildParams()`, Zod `.parse()`       | SWR, React                          |
-| **hook**       | UI state + data lifecycle          | api clients, SWR                                    | `fetch()`, Supabase, business logic |
+| **hook**       | UI state + data lifecycle          | api clients, SWR                                    | `apiFetch()`, Supabase, business logic |
 | **component**  | Render UI                          | hooks, context                                      | api clients, Supabase, `fetch()`    |
 
 **Exception:** Server components (`page.tsx`, layouts without `"use client"`) may call Supabase directly for SSR data fetching — this is correct.
+
+**A hook calls an api client. Never `apiFetch`.** The api client is where the
+URL, the method and the Zod parse live; a hook that fetches for itself has
+quietly taken a second job, and nothing in its import list says so. This is the
+rule the seller-only heading cost us: four backoffice hooks fetched for
+themselves for months while seller's thirty-four never did.
+
+**A write invalidates every key that shows its result, not only its own.**
+Derived totals live under other keys. Seller's order create is the pattern —
+it mutates the orders keys *and* the summaries key. The payslip screen showed a
+stale payout total for a week because it mutated only itself.
+
+**A service finishes what the caller is waiting for.** Fire-and-forget is for
+work nobody reads — activity logs, and `createLogger` exists precisely so that
+stays the only case. A recomputed total the client refetches on the next line is
+part of the answer, and on a serverless runtime an unawaited promise after the
+response may never run at all.
 
 **API route shape.** Routes use the helpers in `apps/seller/lib/api/response.ts` — `ok`, `err`, `badRequest`, `unauthorized`, `forbidden`, `handleError` — rather than raw `NextResponse.json`. The canonical body:
 
@@ -206,6 +226,27 @@ log("order_created", { refId: id, refTable: "orders", metadata: { ... } });
 ```
 
 Any API route that calls a mutating service must call `getRequestUser()` and pass `userId` down — the service layer needs it for logging.
+
+### Fetch policy — the floor is in the root, the tier is at the hook
+
+Each app's root layout sets what never varies, and the two are identical:
+
+```tsx
+<SWRConfig value={{ dedupingInterval: SWR.WARM, revalidateOnFocus: false, errorRetryCount: 3 }}>
+```
+
+- **A hook declares a `dedupingInterval` only when it is leaving the floor**, and
+  the value is a tier from `@tea-pos/utils/swr`, never a literal: `HOT` 5s,
+  `QUICK` 10s, `WARM` 30s, `COOL` 60s, `COLD` 300s, `STATIC` 900s.
+- **Never repeat `revalidateOnFocus: false` in a hook.** The root owns it.
+- **The default has to be the cheap one.** It used to be 5 seconds, which made
+  forgetting to think the most expensive choice on the board — and that is how
+  payroll came to refetch admin-paced data six times more eagerly than the till.
+- **Polling is a fallback, not a habit.** `refreshInterval` stays 0 while
+  realtime is connected; `useSession`'s `isConnected ? 0 : 30_000` is the shape.
+  Any non-zero value carries the reason its data cannot be event-driven instead.
+  Writing `refreshInterval: 0` changes nothing — it is already the default — so
+  use it only where a reader deserves to be told the silence is deliberate.
 
 **Real examples:**
 
