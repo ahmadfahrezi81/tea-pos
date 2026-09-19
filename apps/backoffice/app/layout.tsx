@@ -3,6 +3,7 @@ import { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { cookies } from "next/headers";
 import { SWRConfig } from "swr";
+import { SWR } from "@tea-pos/utils/swr";
 import { AuthProvider } from "@/lib/context/AuthContext";
 import { FeaturesProvider } from "@/lib/context/features-provider";
 
@@ -74,7 +75,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     return (
         <html lang="en" translate="no" className={`${inter.variable} notranslate`} suppressHydrationWarning>
             <body>
-                <SWRConfig value={{ dedupingInterval: 5000, revalidateOnFocus: false }}>
+                {/* Identical to seller's, deliberately — see task 067. The
+                    floor is inherited in silence, so it is the conservative
+                    value rather than the eager one. */}
+                <SWRConfig
+                    value={{ dedupingInterval: SWR.WARM, revalidateOnFocus: false, errorRetryCount: 3 }}
+                >
                     <FeaturesProvider>
                         <AuthProvider initialUser={initialUser}>
                             {children}

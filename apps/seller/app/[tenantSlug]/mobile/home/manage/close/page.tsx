@@ -20,13 +20,13 @@ import { PHOTO_SLOTS } from "@tea-pos/features/shared/photo-slots";
 import { ReviewStep } from "../_components/daily/ReviewStep";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
-import { Loader2 } from "lucide-react";
 import { useToast } from "@/lib/context/ToastContext";
 import { useFlags } from "@/lib/context/FlagsContext";
 import { getTodayLocalStr, getCurrentLocalMonth } from "@tea-pos/utils/time";
 import { FooterSlot } from "@tea-pos/shell/FooterSlotContext";
 import { useT } from "@/lib/hooks/useT";
 import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
+import { ActionButton } from "@tea-pos/ui/custom/ActionButton";
 
 // ============================================================================
 // CONSTANTS
@@ -279,7 +279,8 @@ export default function ManageCloseDayPage() {
     ]);
 
     const handleConfirm = useCallback(async () => {
-        if (!summaryId || !summary) return;
+        // False releases the button: nothing was sent.
+        if (!summaryId || !summary) return false;
         setIsSubmitting(true);
         try {
             // Refresh summary one more time before final submission to ensure expectedCash is accurate
@@ -293,11 +294,14 @@ export default function ManageCloseDayPage() {
             showToast("Day closed successfully!", "success");
             navigation.push(url(paramSummaryId ? "/mobile/analytics" : "/mobile/home/manage"));
         } catch (err) {
-            showError(err);
-        } finally {
+            /* Released here so Back works again, and re-thrown so the button
+               releases itself too. No `finally`: on success the screen is on its
+               way out, and a button released during that gap closes the day
+               twice. */
             setIsSubmitting(false);
+            throw err;
         }
-    }, [summaryId, summary, actualCash, updateSummary, url, STEP_KEY, paramSummaryId, mutate, showToast, showError]);
+    }, [summaryId, summary, actualCash, updateSummary, url, STEP_KEY, paramSummaryId, mutate, showToast]);
 
     const handleSavedPhotoDelete = useCallback(
         async (id: string) => {
@@ -370,21 +374,27 @@ export default function ManageCloseDayPage() {
                         </button>
                     )}
                     {isLastStep ? (
-                        <button
-                            onClick={handleConfirm}
+                        <ActionButton
+                            action={handleConfirm}
+                            onError={showError}
+                            busyLabel={t("manage.closing")}
                             disabled={isBusy || !confirmed}
                             className="flex-1 flex items-center justify-center gap-2 py-4 rounded-xl bg-red-500 text-white font-semibold text-base active:scale-[0.98] transition-transform disabled:opacity-50"
                         >
-                            {isSubmitting ? <><Loader2 size={18} className="animate-spin" />{t("manage.closing")}</> : t("manage.closeDay")}
-                        </button>
+                            {t("manage.closeDay")}
+                        </ActionButton>
                     ) : (
-                        <button
-                            onClick={handleNext}
+                        <ActionButton
+                            action={handleNext}
+                            onError={showError}
+                            /* Next advances a step and stays on the screen. */
+                            resetOnSuccess
+                            busyLabel={t("manage.uploading")}
                             disabled={nextDisabled}
                             className="flex-1 flex items-center justify-center gap-2 py-4 rounded-xl bg-brand text-white font-semibold text-base active:scale-[0.98] transition-transform disabled:opacity-50"
                         >
-                            {isUploading ? <><Loader2 size={18} className="animate-spin" />{t("manage.uploading")}</> : t("manage.next")}
-                        </button>
+                            {t("manage.next")}
+                        </ActionButton>
                     )}
                 </div>
             </FooterSlot>

@@ -12,6 +12,7 @@ import { CartDrawer } from "./CartDrawer";
 import { FooterSlot } from "@tea-pos/shell/FooterSlotContext";
 import { useT } from "@/lib/hooks/useT";
 import { ProductGridSkeleton } from "../../_components/HomeBodySkeleton";
+import { ActionButton } from "@tea-pos/ui/custom/ActionButton";
 
 // ─── Product Card ─────────────────────────────────────────────────────────────
 
@@ -132,13 +133,15 @@ function CartSummaryBar({
                                     {t("cart.clearAll")}
                                 </span>
                             </button>
-                            <button
-                                onClick={onProcessOrder}
+                            <ActionButton
+                                action={onProcessOrder}
+                                /* Fast-order mode stays on the POS screen. */
+                                resetOnSuccess
                                 disabled={isProcessing}
                                 className="px-4 py-2 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 disabled:opacity-50 flex items-center gap-1.5"
                             >
-                                {isProcessing ? t("cart.processing") : t("cart.confirmOrder")}
-                            </button>
+                                {t("cart.confirmOrder")}
+                            </ActionButton>
                         </>
                     ) : (
                         <button

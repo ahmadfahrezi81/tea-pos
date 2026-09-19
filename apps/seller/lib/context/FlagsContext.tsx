@@ -3,6 +3,7 @@ import { createContext, useContext } from "react";
 import useSWR from "swr";
 import { flagsApi, type Flags } from "@/lib/api/flags";
 import { useStore } from "@/lib/context/StoreContext";
+import { SWR } from "@tea-pos/utils/swr";
 
 const DEFAULT_FLAGS: Flags = {
     isQrisEnabled: false,
@@ -32,8 +33,7 @@ export function FlagsProvider({ children }: { children: React.ReactNode }) {
         ([, storeId]) => flagsApi.get(storeId || undefined),
         {
             fallbackData: DEFAULT_FLAGS,
-            revalidateOnFocus: false,
-            dedupingInterval: 60_000,
+            dedupingInterval: SWR.COOL,
         },
     );
 

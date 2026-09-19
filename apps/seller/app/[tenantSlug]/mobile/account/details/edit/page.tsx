@@ -9,6 +9,7 @@ import type { User, UpdateUserInput } from "@tea-pos/features/users/schema";
 import { useT } from "@/lib/hooks/useT";
 import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
 import { Field } from "@tea-pos/ui/custom/Field";
+import { ActionButton } from "@tea-pos/ui/custom/ActionButton";
 
 function stripPhonePrefix(phone: string | null): number {
     if (!phone) return 0;
@@ -31,24 +32,14 @@ function EditForm({ user, update }: { user: User; update: (input: UpdateUserInpu
     const [lastName, setLastName] = useState(initLast);
     const [phoneDigits, setPhoneDigits] = useState(stripPhonePrefix(user.phoneNumber));
 
-    const [isSaving, setIsSaving] = useState(false);
-
     const handleSave = async () => {
-        setIsSaving(true);
-        try {
-            const fullName = [firstName.trim(), lastName.trim()].filter(Boolean).join(" ");
-            await update({
-                fullName: fullName || undefined,
-                phoneNumber: phoneDigits ? `+62${phoneDigits}` : null,
-            });
-            navigation.back();
-        } catch (err) {
-            showError(err);
-        } finally {
-            setIsSaving(false);
-        }
+        const fullName = [firstName.trim(), lastName.trim()].filter(Boolean).join(" ");
+        await update({
+            fullName: fullName || undefined,
+            phoneNumber: phoneDigits ? `+62${phoneDigits}` : null,
+        });
+        navigation.back();
     };
-
     return (
         <div className="space-y-4">
             <div className="bg-white rounded-xl p-4 space-y-4">
@@ -69,13 +60,13 @@ function EditForm({ user, update }: { user: User; update: (input: UpdateUserInpu
                 </Field>
             </div>
 
-            <button
-                onClick={handleSave}
-                disabled={isSaving}
+            <ActionButton
+                action={handleSave}
+                onError={showError}
                 className="w-full py-4 bg-brand text-white font-bold rounded-xl active:opacity-80 disabled:opacity-40 text-base"
             >
-                {isSaving ? t("account.saving") : t("common.save")}
-            </button>
+                {t("common.save")}
+            </ActionButton>
         </div>
     );
 }

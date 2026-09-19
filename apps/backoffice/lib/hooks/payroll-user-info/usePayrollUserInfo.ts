@@ -1,30 +1,24 @@
 "use client";
 
 import useSWR from "swr";
-import { apiFetch, buildParams } from "@/lib/api/client";
-import type { AdminUpdatePayrollUserInfoInput, PayrollUserInfoResponse } from "@tea-pos/features/payroll-user-info/schema";
-import { PayrollUserInfoResponse as PayrollUserInfoResponseSchema } from "@tea-pos/features/payroll-user-info/schema";
+import { payrollUserInfoApi } from "@/lib/api/payroll-user-info";
+import type {
+    AdminUpdatePayrollUserInfoInput,
+    PayrollUserInfoResponse,
+} from "@tea-pos/features/payroll-user-info/schema";
+import { SWR } from "@tea-pos/utils/swr";
 
 export function usePayrollUserInfo(userId: string | undefined) {
     const { data, error, mutate, isLoading } = useSWR<PayrollUserInfoResponse>(
         userId ? `payroll-user-info-${userId}` : null,
-        async () => {
-            const sp = buildParams({ userId } as Record<string, unknown>);
-            const raw = await apiFetch<unknown>(`/api/payroll-user-info?${sp}`);
-            return PayrollUserInfoResponseSchema.parse(raw);
-        },
-        { revalidateOnFocus: false, dedupingInterval: 5000 },
+        () => payrollUserInfoApi.get(userId!),
     );
 
     const update = async (input: AdminUpdatePayrollUserInfoInput) => {
         if (!userId) return;
-        const sp = buildParams({ userId } as Record<string, unknown>);
-        const raw = await apiFetch<unknown>(`/api/payroll-user-info?${sp}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(input),
-        });
-        const updated = PayrollUserInfoResponseSchema.parse(raw);
+        const updated = await payrollUserInfoApi.update(userId, input);
+        // The response is the new row, so it is written straight into the cache
+        // rather than refetched.
         await mutate(updated, false);
         return updated;
     };
@@ -33,10 +27,10 @@ export function usePayrollUserInfo(userId: string | undefined) {
 }
 
 export function useAllPayrollUserInfos() {
-    const { data, error, isLoading } = useSWR<{ infos: PayrollUserInfoResponse[] }>(
+    const { data, error, isLoading } = useSWR(
         "payroll-user-infos-all",
-        () => apiFetch<{ infos: PayrollUserInfoResponse[] }>("/api/payroll-user-info"),
-        { revalidateOnFocus: false, dedupingInterval: 10_000 },
+        () => payrollUserInfoApi.listAll(),
+        { dedupingInterval: SWR.QUICK },
     );
     return { infos: data?.infos ?? [], isLoading, error };
 }

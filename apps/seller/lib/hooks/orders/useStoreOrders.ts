@@ -39,6 +39,6 @@ export default function useStoreOrders(
     return useSWR<OrderListResponse>(
         key,
         () => ordersApi.list({ storeId: storeId!, date, limit }),
-        { revalidateOnFocus: false, dedupingInterval: 30_000, keepPreviousData: true },
+        { keepPreviousData: true },
     );
 }

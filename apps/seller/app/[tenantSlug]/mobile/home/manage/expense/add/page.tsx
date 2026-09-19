@@ -37,25 +37,19 @@ export default function AddExpensePage() {
     const [label, setLabel] = useState("Ice");
     const [customLabel, setCustomLabel] = useState("");
     const [amount, setAmount] = useState(0);
-    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const isValid = amount > 0 && !(label === "Custom" && !customLabel.trim());
 
     const handleSubmit = async () => {
-        if (!todaySummary || !selectedStoreId || !isValid) return;
-        setIsSubmitting(true);
-        try {
-            await createExpenses({
-                dailySummaryId: todaySummary.id,
-                storeId: selectedStoreId,
-                expenses: [{ label, customLabel, amount: String(amount) }],
-            });
-            navigation.back();
-        } catch (err) {
-            showError(err);
-        } finally {
-            setIsSubmitting(false);
-        }
+        // False releases the button: nothing was sent, so there is nothing to
+        // wait for.
+        if (!todaySummary || !selectedStoreId || !isValid) return false;
+        await createExpenses({
+            dailySummaryId: todaySummary.id,
+            storeId: selectedStoreId,
+            expenses: [{ label, customLabel, amount: String(amount) }],
+        });
+        navigation.back();
     };
 
     if (isLoading) {
@@ -98,8 +92,8 @@ export default function AddExpensePage() {
                 label={t("manage.submitExpense")}
                 loadingLabel={t("common.loading")}
                 onSubmit={handleSubmit}
+                onError={showError}
                 disabled={!isValid}
-                isLoading={isSubmitting}
             />
         </div>
     );

@@ -8,7 +8,8 @@
     "./useScrollRestoration": "./useScrollRestoration.ts",
     "./useHasPainted": "./useHasPainted.ts",
     "./useAppUpdate": "./useAppUpdate.ts",
-    "./navProgress": "./navProgress.ts"
+    "./navProgress": "./navProgress.ts",
+    "./refreshGate": "./refreshGate.ts"
   },
   "dependencies": {
     "@iconify/react": "^6.0.2",

@@ -151,7 +151,9 @@ export default function AddLocationFeedbackPage() {
     };
 
     const handleSubmit = useCallback(async () => {
-        if (!selectedLocation) return;
+        // False releases the button: either nothing was sent, or it failed and
+        // the screen stays, so the user has to be able to try again.
+        if (!selectedLocation) return false;
         const result = await submit({
             locationName: selectedLocation.locationName,
             locationDisplay: selectedLocation.locationDisplay,
@@ -159,13 +161,13 @@ export default function AddLocationFeedbackPage() {
             longitude: selectedLocation.longitude,
             notes: notes.trim() || null,
         });
-        if (result?.success) {
-            toast.success(t("map.submitted"));
-            reset();
-            navigation.back();
-        } else {
+        if (!result?.success) {
             toast.error(t("map.failed"));
+            return false;
         }
+        toast.success(t("map.submitted"));
+        reset();
+        navigation.back();
     }, [selectedLocation, notes, submit, reset]);
 
     return (

@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Info } from "lucide-react";
+import { Info } from "lucide-react";
 import { Icon } from "@iconify/react";
 import { FooterSlot } from "@tea-pos/shell/FooterSlotContext";
+import { ActionButton } from "@tea-pos/ui/custom/ActionButton";
 import { DOT_GRID } from "@tea-pos/ui/styles/dot-grid";
 import "@tea-pos/ui/icons/bundled-emoji";
 
@@ -17,9 +18,17 @@ const VARIANT_CLASS = {
 interface FormFooterProps {
     label: string;
     loadingLabel?: string;
-    onSubmit: () => void;
+    onSubmit: () => void | boolean | Promise<unknown>;
     disabled?: boolean;
     isLoading?: boolean;
+    /** Where a failing submit goes. Without it the rejection is re-thrown. */
+    onError?: (error: unknown) => void;
+    /**
+     * Release the button when the submit succeeds. Off by default: most of these
+     * screens navigate away, and a button released during that gap is a second
+     * submit waiting to happen. Pass it where the screen stays.
+     */
+    resetOnSuccess?: boolean;
     variant?: keyof typeof VARIANT_CLASS;
     /** When set, tapping the button opens a confirm bottom sheet instead of submitting directly. */
     confirmTitle?: string;
@@ -42,6 +51,7 @@ const CONFIG_NOTE = {
 export function FormFooter({
     label, loadingLabel, onSubmit,
     disabled = false, isLoading = false, variant = "brand",
+    onError, resetOnSuccess = false,
     confirmTitle, confirmMessage,
     confirmNote = CONFIG_NOTE,
     confirmIcon = "fluent-emoji:floppy-disk",
@@ -53,14 +63,25 @@ export function FormFooter({
         <>
             <FooterSlot>
                 <div className="bg-white border-t border-gray-200 p-4 pb-8">
-                    <button
-                        type="button"
-                        onClick={() => (requiresConfirm ? setConfirmOpen(true) : onSubmit())}
+                    <ActionButton
+                        /* Opening the confirm sheet sends nothing, so `false`
+                           releases the button rather than leaving it spinning
+                           behind the sheet. */
+                        action={() => {
+                            if (requiresConfirm) {
+                                setConfirmOpen(true);
+                                return false;
+                            }
+                            return onSubmit();
+                        }}
+                        onError={onError}
+                        resetOnSuccess={resetOnSuccess}
+                        busyLabel={loadingLabel ?? label}
                         disabled={disabled || isLoading}
                         className={`w-full ${VARIANT_CLASS[variant]} text-white py-4 rounded-xl font-semibold text-base disabled:opacity-50 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform`}
                     >
-                        {isLoading ? <><Loader2 size={18} className="animate-spin" />{loadingLabel ?? label}</> : label}
-                    </button>
+                        {label}
+                    </ActionButton>
                 </div>
             </FooterSlot>
 
@@ -97,13 +118,17 @@ export function FormFooter({
                             </div>
                         </div>
 
-                        <button
-                            onClick={() => { setConfirmOpen(false); onSubmit(); }}
+                        <ActionButton
+                            action={() => { setConfirmOpen(false); onSubmit(); }}
+                            /* The sheet closes itself, so this instance goes
+                               with it; nothing is left holding a latch. */
+                            resetOnSuccess
+                            busyLabel={loadingLabel ?? label}
                             disabled={isLoading}
-                            className={`w-full py-3.5 font-bold rounded-xl text-white active:opacity-80 disabled:opacity-40 ${VARIANT_CLASS[variant]}`}
+                            className={`w-full py-3.5 font-bold rounded-xl text-white active:opacity-80 disabled:opacity-40 flex items-center justify-center gap-2 ${VARIANT_CLASS[variant]}`}
                         >
-                            {isLoading ? (loadingLabel ?? label) : label}
-                        </button>
+                            {label}
+                        </ActionButton>
                         <button onClick={() => setConfirmOpen(false)} className="w-full py-3 text-gray-500 text-sm font-medium">
                             Cancel
                         </button>

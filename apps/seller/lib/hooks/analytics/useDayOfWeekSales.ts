@@ -1,6 +1,7 @@
 import useSWR from "swr";
 import { analyticsApi } from "@/lib/api/analytics";
 import type { DayOfWeekSalesResponse } from "@tea-pos/features/analytics/schema";
+import { SWR } from "@tea-pos/utils/swr";
 
 export interface DayOfWeekSalesData {
     dayOfWeek: string;
@@ -17,8 +18,7 @@ export default function useDayOfWeekSales(storeId: string | null, month: string)
         key,
         () => analyticsApi.getDayOfWeekSales({ storeId: storeId!, month }),
         {
-            revalidateOnFocus: false,
-            dedupingInterval: 300000,
+            dedupingInterval: SWR.COLD,
             refreshInterval: 0,
             keepPreviousData: true,
         },

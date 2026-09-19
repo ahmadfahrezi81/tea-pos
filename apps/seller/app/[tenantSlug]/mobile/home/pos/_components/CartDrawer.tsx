@@ -10,6 +10,7 @@ import { useQrisPayment } from "@/lib/hooks/payments/useQrisPayment";
 import { useFlags } from "@/lib/context/FlagsContext";
 import { useToast } from "@/lib/context/ToastContext";
 import { useT } from "@/lib/hooks/useT";
+import { ActionButton } from "@tea-pos/ui/custom/ActionButton";
 
 interface CartDrawerProps {
     isOpen: boolean;
@@ -227,8 +228,11 @@ export const CartDrawer = memo(function CartDrawer({
                                         {formatRupiah(total)}
                                     </span>
                                 </div>
-                                <button
-                                    onClick={onProcessOrder}
+                                <ActionButton
+                                    action={onProcessOrder}
+                                    /* The cart closes but the screen stays, so
+                                       the button is released again. */
+                                    resetOnSuccess
                                     disabled={
                                         processing ||
                                         !selectedStoreId ||
@@ -236,10 +240,8 @@ export const CartDrawer = memo(function CartDrawer({
                                     }
                                     className="w-full bg-green-500 text-white py-4 rounded-xl text-lg font-semibold hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                 >
-                                    {processing
-                                        ? t("cart.processing")
-                                        : t("cart.confirmOrder")}
-                                </button>
+                                    {t("cart.confirmOrder")}
+                                </ActionButton>
                             </div>
                         </>
                     ) : (
@@ -348,15 +350,18 @@ export const CartDrawer = memo(function CartDrawer({
                                                         value={qrString}
                                                         size={240}
                                                     />
-                                                    <button
-                                                        onClick={
+                                                    <ActionButton
+                                                        action={
                                                             createQrisPayment
                                                         }
+                                                        /* Stays on the QR view,
+                                                           so it is released. */
+                                                        resetOnSuccess
                                                         className="flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors active:scale-95"
                                                     >
                                                         <RefreshCw size={14} />
                                                         Generate New QR
-                                                    </button>
+                                                    </ActionButton>
                                                 </div>
                                             )}
                                     </div>

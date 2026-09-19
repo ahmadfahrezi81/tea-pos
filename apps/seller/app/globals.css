@@ -102,6 +102,90 @@ body {
     }
 }
 
+/* ── ActionButton (packages/ui/custom/ActionButton.tsx) ───────────────────────
+   The component writes data-busy on the button in the tap's own tick and this
+   sheet does the rest, so the spinner never waits for a React commit. Sizes are
+   in em because the same button is a 36px icon and a full-width bar. See task
+   066. */
+@keyframes action-spin {
+    to { transform: rotate(360deg); }
+}
+
+.action-spinner {
+    width: 1.125em;
+    height: 1.125em;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 9999px;
+    opacity: 0;
+}
+
+/* The spinner sits over the label rather than in the flow, so the button cannot
+   change width when it starts — which would be this button breaking the styles
+   it promised to leave alone. */
+.action-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+[data-busy="true"] .action-spinner {
+    opacity: 1;
+    animation: action-spin 0.7s linear infinite;
+}
+
+/* The label carries the button's own layout, so wrapping it changes nothing:
+   `display: inherit` keeps a flex button flex, and the gap with it. */
+.action-label,
+.action-swap {
+    display: inherit;
+    align-items: inherit;
+    justify-content: inherit;
+    gap: inherit;
+}
+
+[data-busy="true"] .action-label {
+    opacity: 0;
+}
+
+/* The spinner-beside-a-label layout, for a wait long enough that the label has
+   something to add. Both labels are always rendered and CSS picks one, so no
+   re-render is needed to swap them. */
+.action-inline,
+.action-busy-label {
+    display: none;
+}
+
+[data-busy="true"] .action-inline {
+    display: inline-block;
+    opacity: 1;
+}
+
+[data-busy="true"] .action-busy-label {
+    display: inline;
+    opacity: 1;
+}
+
+[data-busy="true"] .action-swap {
+    display: none;
+}
+
+/* Rotation is the liveness signal, so without it the spinner still has to say
+   something — it breathes instead. */
+@media (prefers-reduced-motion: reduce) {
+    @keyframes action-fade {
+        0%, 100% { opacity: 1; }
+        50%      { opacity: 0.3; }
+    }
+
+    [data-busy="true"] .action-spinner {
+        animation: action-fade 1.2s ease-in-out infinite;
+    }
+}
+
 @theme inline {
     --radius-sm: calc(var(--radius) - 4px);
     --radius-md: calc(var(--radius) - 2px);

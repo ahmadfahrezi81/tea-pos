@@ -1,18 +1,18 @@
 "use client";
 
-import { use, useState, useRef, useEffect } from "react";
+import { use, useState } from "react";
 import { usePayslip } from "@/lib/hooks/payroll/usePayroll";
+import type { PayslipCommission, PayslipClaim } from "@/lib/hooks/payroll/usePayroll";
 import { useTenantUsers } from "@/lib/hooks/users/useTenantUsers";
 import { useTenantSlug } from "@tea-pos/utils/server-config/tenant-url";
 import { navigation } from "@tea-pos/utils/navigation";
-import { payrollApi } from "@/lib/api/payroll";
 import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
-import { apiFetch } from "@/lib/api/client";
 import { parseISO, format, eachDayOfInterval, getISOWeek } from "date-fns";
 import { getExpectedPayoutDate, getDaysUntilPayoutUnlock } from "@tea-pos/utils/week";
 import { Check, X, Copy, AlertTriangle } from "lucide-react";
 import { formatRupiah } from "@tea-pos/utils/formatCurrency";
 import { Skeleton } from "@tea-pos/ui/custom/Skeleton";
+import { ActionButton } from "@tea-pos/ui/custom/ActionButton";
 
 const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -26,29 +26,6 @@ const STATUS_LABEL: Record<string, string> = {
     pending: "Ongoing",
     paid: "Paid",
     skipped: "Skipped",
-};
-
-type Commission = {
-    id: string; date: string; storeName?: string | null;
-    totalCups: number; ratePerCup: number; totalCommission: number;
-    status: "pending" | "approved" | "rejected";
-};
-
-type Claim = {
-    id: string; date: string; claimTypeName?: string | null;
-    amount: number; status: "pending" | "approved" | "rejected";
-};
-
-type PayslipShape = {
-    payout: { id: string; startDate: string; endDate: string; status: string; paidAt: string | null; paymentProofUrl: string | null; notes: string | null };
-    commissions: Commission[];
-    claims: Claim[];
-    commissionsTotal: number;
-    claimsTotal: number;
-    totalPay: number;
-    ratePerCup: number;
-    totalOrders: number;
-    paidByName: string | null;
 };
 
 type ConfirmTarget = {
@@ -71,7 +48,13 @@ export default function UserPayslipPage({
     const { payoutId } = use(params);
     const { userId } = use(searchParams);
     const { url } = useTenantSlug();
-    const { payslip, isLoading: payslipLoading, mutate } = usePayslip(payoutId, userId);
+    const {
+        payslip,
+        isLoading: payslipLoading,
+        reviewDay,
+        setCommissionStatus,
+        setClaimStatus,
+    } = usePayslip(payoutId, userId);
     const { users } = useTenantUsers();
     const { showError } = useErrorSheet();
     const targetUser = users.find((u) => u.id === userId);
@@ -80,76 +63,28 @@ export default function UserPayslipPage({
     const [showProof, setShowProof] = useState(false);
     const [copiedId, setCopiedId] = useState(false);
     const [warningDismissed, setWarningDismissed] = useState(false);
-    const upsertedRef = useRef(false);
-
-    useEffect(() => {
-        if (!payslip || !("payout" in (payslip as object))) return;
-        if (upsertedRef.current) return;
-        upsertedRef.current = true;
-        const ps = payslip as { payout: { startDate: string; endDate: string } };
-        if (!userId) return;
-        payrollApi.upsertPayout({ startDate: ps.payout.startDate, endDate: ps.payout.endDate, userId })
-            .then(() => mutate())
-            .catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [payslip]);
 
     const handleConfirm = async () => {
-        if (!confirmTarget) return;
-        setBusyId(confirmTarget.id);
+        // False releases the button: nothing was sent.
+        if (!confirmTarget) return false;
+        const { type, id, action } = confirmTarget;
+        setBusyId(id);
         try {
-            if (confirmTarget.type === "day") {
-                if (!userId) return;
-                /* Optimistic: the server decides exactly the rows that are
-                   pending *now*, and pending is also all this flips locally, so
-                   the two agree. `revalidate: false` keeps the refetch from
-                   racing the paint — the revalidate below does it once, after. */
-                await mutate(
-                    (current: unknown) => {
-                        const cur = current as PayslipShape | undefined;
-                        if (!cur) return current;
-                        const settle = <T extends { date: string; status: string }>(rows: T[]) =>
-                            rows.map((r) =>
-                                r.date === confirmTarget.id && r.status === "pending"
-                                    ? { ...r, status: confirmTarget.action }
-                                    : r,
-                            );
-                        return {
-                            ...cur,
-                            commissions: settle(cur.commissions),
-                            claims: settle(cur.claims),
-                        };
-                    },
-                    { revalidate: false },
-                );
-                setConfirmTarget(null);
-                await payrollApi.reviewDay({
-                    userId,
-                    date: confirmTarget.id,
-                    status: confirmTarget.action,
-                });
-                await mutate();
-                return;
-            }
-            if (confirmTarget.type === "commission") {
-                await payrollApi.updateCommission(confirmTarget.id, { status: confirmTarget.action });
-            } else {
-                await apiFetch(`/api/payroll/claims/${encodeURIComponent(confirmTarget.id)}`, {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ status: confirmTarget.action }),
-                });
-            }
-            await mutate();
+            /* The day review paints optimistically inside the hook, so the sheet
+               is closed first — otherwise it sits over the rows it just
+               changed. */
+            if (type === "day") setConfirmTarget(null);
+
+            if (type === "day") await reviewDay(id, action);
+            else if (type === "commission") await setCommissionStatus(id, action);
+            else await setClaimStatus(id, action);
+
             setConfirmTarget(null);
         } catch (err) {
-            /* A settled payout answers 422, and the day branch has already
-               flipped the rows locally — so refetch the truth before showing
-               the error, or the screen would keep insisting on a decision the
-               server refused. */
-            await mutate();
             showError(err);
-        } finally { setBusyId(null); }
+        } finally {
+            setBusyId(null);
+        }
     };
 
     if (payslipLoading) {
@@ -161,13 +96,11 @@ export default function UserPayslipPage({
                 ))}</div>;
     }
 
-    if (!payslip || !("payout" in (payslip as object))) {
+    if (!payslip) {
         return <p className="text-center text-gray-400 py-10">No payout found.</p>;
     }
 
-    const ps = payslip as PayslipShape;
-
-    const { payout, commissions, claims, totalPay, ratePerCup, totalOrders, paidByName } = ps;
+    const { payout, commissions, claims, totalPay, ratePerCup, totalOrders, paidByName } = payslip;
     const status = payout.status;
 
     const weekStart = getISOWeek(parseISO(payout.startDate));
@@ -180,10 +113,10 @@ export default function UserPayslipPage({
     const week2 = periodDays.slice(7);
     const commissionDates = new Set(commissions.map((c) => c.date));
 
-    const commissionsByDate = commissions.reduce<Record<string, Commission[]>>((acc, c) => {
+    const commissionsByDate = commissions.reduce<Record<string, PayslipCommission[]>>((acc, c) => {
         (acc[c.date] ??= []).push(c); return acc;
     }, {});
-    const claimsByDate = claims.reduce<Record<string, Claim[]>>((acc, c) => {
+    const claimsByDate = claims.reduce<Record<string, PayslipClaim[]>>((acc, c) => {
         (acc[c.date] ??= []).push(c); return acc;
     }, {});
     const allDates = [...new Set([...Object.keys(commissionsByDate), ...Object.keys(claimsByDate)])].sort((a, b) => b.localeCompare(a));
@@ -501,13 +434,19 @@ export default function UserPayslipPage({
                             <p className="text-base font-medium text-gray-800">{confirmTarget.label}</p>
                             <p className="text-2xl font-bold text-gray-900">{formatRupiah(confirmTarget.amount)}</p>
                         </div>
-                        <button
-                            onClick={handleConfirm}
+                        <ActionButton
+                            action={handleConfirm}
+                            /* The sheet closes but the payslip stays, so the
+                               button is released. `busyId` stays too: it guards
+                               the row through a re-render, which the button's
+                               own latch cannot — see task 066. */
+                            resetOnSuccess
+                            busyLabel="Saving..."
                             disabled={!!busyId}
-                            className={`w-full py-3.5 font-bold rounded-xl text-white active:opacity-80 disabled:opacity-40 ${confirmTarget.action === "approved" ? "bg-green-600" : "bg-red-500"}`}
+                            className={`w-full py-3.5 font-bold rounded-xl text-white active:opacity-80 disabled:opacity-40 flex items-center justify-center gap-2 ${confirmTarget.action === "approved" ? "bg-green-600" : "bg-red-500"}`}
                         >
-                            {busyId ? "Saving..." : confirmTarget.action === "approved" ? "Approve" : "Reject"}
-                        </button>
+                            {confirmTarget.action === "approved" ? "Approve" : "Reject"}
+                        </ActionButton>
                         <button onClick={() => setConfirmTarget(null)} className="w-full py-3 text-gray-500 text-sm font-medium">Cancel</button>
                     </div>
                 </div>

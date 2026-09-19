@@ -1,6 +1,7 @@
 import useSWR from "swr";
 import { storesApi } from "@/lib/api/stores";
 import type { StoreListResponse } from "@tea-pos/features/stores/schema";
+import { SWR } from "@tea-pos/utils/swr";
 
 /**
  * The store list, seeded by `BootFallback` from the read the mobile layout
@@ -25,8 +26,7 @@ import type { StoreListResponse } from "@tea-pos/features/stores/schema";
  */
 export function useStores() {
     return useSWR<StoreListResponse>("stores-all", () => storesApi.list(), {
-        revalidateOnFocus: false,
         revalidateIfStale: false,
-        dedupingInterval: 60000,
+        dedupingInterval: SWR.COOL,
     });
 }

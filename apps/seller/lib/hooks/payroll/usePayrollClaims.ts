@@ -11,6 +11,7 @@ import type {
     ClaimableTypesResponse,
     ClaimableDatesResponse,
 } from "@tea-pos/features/payroll-claims/schema";
+import { SWR } from "@tea-pos/utils/swr";
 
 export function usePayrollClaims() {
     const { user } = useAuth();
@@ -21,7 +22,7 @@ export function usePayrollClaims() {
     const { data, error, mutate, isLoading } = useSWR<PayrollClaimListResponse>(
         key,
         () => payrollClaimsApi.list(),
-        { revalidateOnFocus: false, dedupingInterval: 60000 },
+        { dedupingInterval: SWR.COOL },
     );
 
     const create = async (input: CreatePayrollClaimInput) => {
@@ -43,7 +44,7 @@ export function useClaimableTypes(params: GetClaimableTypesQuery | null) {
     const { data, error, isLoading } = useSWR<ClaimableTypesResponse>(
         params ? `claimable-types-${params.startDate}-${params.endDate}` : null,
         () => payrollClaimsApi.getClaimableTypes(params!),
-        { revalidateOnFocus: false, dedupingInterval: 60000 },
+        { dedupingInterval: SWR.COOL },
     );
 
     return {
@@ -57,7 +58,7 @@ export function useClaimableDates(params: GetClaimableDatesQuery | null) {
     const { data, error, isLoading } = useSWR<ClaimableDatesResponse>(
         params ? `claimable-dates-${params.startDate}-${params.endDate}` : null,
         () => payrollClaimsApi.getClaimableDates(params!),
-        { revalidateOnFocus: false, dedupingInterval: 60000 },
+        { dedupingInterval: SWR.COOL },
     );
 
     return {

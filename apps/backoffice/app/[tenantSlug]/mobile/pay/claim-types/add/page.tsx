@@ -25,35 +25,28 @@ export default function AddClaimTypePage() {
     const [amount, setAmount] = useState(0);
     const [claimSource, setClaimSource] = useState<"manual" | "auto" | "auto_submit">("manual");
     const [autoThresholdHours, setAutoThresholdHours] = useState(4);
-    const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const needsThreshold = claimSource === "auto";
     const isValid = !!name.trim() && !!slug.trim() && (!needsThreshold || autoThresholdHours > 0);
 
     const handleSave = async () => {
-        if (!name.trim() || !slug.trim()) { setError("Name and slug are required."); return; }
+        // False releases the button: nothing was sent.
+        if (!name.trim() || !slug.trim()) { setError("Name and slug are required."); return false; }
         if (needsThreshold && autoThresholdHours <= 0) {
             setError("Auto claims need a minimum hours threshold.");
-            return;
+            return false;
         }
-        setSaving(true);
         setError(null);
-        try {
-            await create({
+        await create({
                 name: name.trim(),
                 slug: slug.trim().toUpperCase().replace(/\s+/g, "_"),
                 frequency,
                 amount,
                 claimSource,
                 ...((claimSource === "auto" || claimSource === "auto_submit") ? { autoThresholdHours } : {}),
-            });
-            navigation.back();
-        } catch (err) {
-            showError(err);
-        } finally {
-            setSaving(false);
-        }
+        });
+        navigation.back();
     };
 
     return (
@@ -111,8 +104,8 @@ export default function AddClaimTypePage() {
                 label="Create Claim Type"
                 loadingLabel="Creating..."
                 onSubmit={handleSave}
+                onError={showError}
                 disabled={!isValid}
-                isLoading={saving}
                 confirmTitle="Create claim type?"
                 confirmMessage="Staff will need to be marked eligible before they can submit against it."
             />

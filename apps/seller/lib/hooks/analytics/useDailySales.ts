@@ -1,5 +1,6 @@
 import useSWR from "swr";
 import { analyticsApi } from "@/lib/api/analytics";
+import { SWR } from "@tea-pos/utils/swr";
 
 export interface DailySalesData {
     date: string;
@@ -13,8 +14,7 @@ export default function useDailySales(storeId: string | null, month: string) {
         key,
         () => analyticsApi.getDailySales({ storeId: storeId!, month }).then((r) => r.data),
         {
-            revalidateOnFocus: false,
-            dedupingInterval: 900000,
+            dedupingInterval: SWR.STATIC,
             refreshInterval: 0,
             keepPreviousData: true,
         },

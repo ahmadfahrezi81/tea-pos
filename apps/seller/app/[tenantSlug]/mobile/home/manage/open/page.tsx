@@ -28,39 +28,34 @@ export default function OpenStorePage() {
     const [openingBalance, setOpeningBalance] = useState(0);
     const [balanceConfirmed, setBalanceConfirmed] = useState(false);
     const [photo, setPhoto] = useState<{ file: File; preview: string } | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async () => {
-        if (!selectedStoreId || (!photo && !skipPhotos)) return;
-        setIsSubmitting(true);
-        try {
-            let dailySummaryId: string;
-            if (gate === "no_summary") {
-                const result = await openStore({ date: todayStr, openingBalance });
-                dailySummaryId = result.dailySummary.id;
-            } else if (gate === "no_session") {
-                const result = await resumeSession();
-                dailySummaryId = result.session.dailySummaryId;
-            } else {
-                return;
-            }
+        // False releases the button: nothing was sent. The button stays busy on
+        // success instead, because the navigation below takes long enough that a
+        // released button is a second store opening waiting to happen.
+        if (!selectedStoreId || (!photo && !skipPhotos)) return false;
 
-            if (photo) {
-                await uploadPhoto({ file: photo.file, dailySummaryId, storeId: selectedStoreId, type: "opening" });
-            }
-            navigation.push(url("/mobile/home/manage"));
-        } catch (err) {
-            showError(err);
-        } finally {
-            setIsSubmitting(false);
+        let dailySummaryId: string;
+        if (gate === "no_summary") {
+            const result = await openStore({ date: todayStr, openingBalance });
+            dailySummaryId = result.dailySummary.id;
+        } else if (gate === "no_session") {
+            const result = await resumeSession();
+            dailySummaryId = result.session.dailySummaryId;
+        } else {
+            return false;
         }
+
+        if (photo) {
+            await uploadPhoto({ file: photo.file, dailySummaryId, storeId: selectedStoreId, type: "opening" });
+        }
+        navigation.push(url("/mobile/home/manage"));
     };
 
     const skipPhotos = skipManagePhotos;
 
     const canSubmit =
         (!!photo || skipPhotos) &&
-        !isSubmitting &&
         !!selectedStoreId &&
         (gate === "no_summary" || gate === "no_session") &&
         (gate === "no_session" || balanceConfirmed);
@@ -119,8 +114,8 @@ export default function OpenStorePage() {
                 label={t("manage.openStore")}
                 loadingLabel={t("manage.opening")}
                 onSubmit={handleSubmit}
+                onError={showError}
                 disabled={!canSubmit}
-                isLoading={isSubmitting}
             />
         </div>
     );

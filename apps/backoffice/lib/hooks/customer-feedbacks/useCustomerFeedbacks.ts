@@ -1,6 +1,7 @@
 import useSWR from "swr";
 import { customerFeedbacksApi } from "@/lib/api/customer-feedbacks";
 import type { ListCustomerFeedbacksResponse } from "@tea-pos/features/customer-feedbacks/schema";
+import { SWR } from "@tea-pos/utils/swr";
 
 interface UseCustomerFeedbacksParams {
     userId?: string;
@@ -14,14 +15,14 @@ export default function useCustomerFeedbacks(params: UseCustomerFeedbacksParams 
     const key = `customer-feedbacks-${userId ?? "all"}-${limit}-${offset}`;
 
     /*
-     * No `revalidateOnFocus`, and a 60s dedupe rather than 10s. This is a
-     * history list on `more/map`; nothing about it is time-critical, and
-     * refetching it every time a phone wakes was the same mistake as
-     * `useWeather`. See task 063; seller's copy carries the same change.
+     * `COOL` rather than the 30s floor. This is a history list on `more/map`;
+     * nothing about it is time-critical, and refetching it every time a phone
+     * wakes was the same mistake as `useWeather` — focus revalidation is off
+     * app-wide in the root now. See task 063; seller's copy carries the same change.
      */
     return useSWR<ListCustomerFeedbacksResponse>(
         key,
         () => customerFeedbacksApi.list({ userId, limit, offset }),
-        { revalidateOnFocus: false, dedupingInterval: 60_000 },
+        { dedupingInterval: SWR.COOL },
     );
 }

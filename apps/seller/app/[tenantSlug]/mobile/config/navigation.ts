@@ -13,6 +13,17 @@ import type { LucideIcon } from "lucide-react";
 export type { RouteConfig } from "@tea-pos/shell/routes";
 import type { RouteConfig } from "@tea-pos/shell/routes";
 
+/**
+ * `refreshable` marks a screen where **someone other than the person holding the
+ * phone** can change what is shown. That is the whole test, and eight routes pass
+ * it. It went on nineteen while we found out where the gesture helped; see task
+ * 069 for what came off and why.
+ *
+ * It is not a free flag. The shell also drops native overscroll bounce on a
+ * refreshable route, so setting it on a screen that cannot change trades away
+ * scroll feel for nothing. A closed day is the clearest case: those numbers are
+ * frozen, so a pull there refetched something that could not differ.
+ */
 export const mobileRoutes = {
     // ── Root tabs ─────────────────────────────────────────────────────────────
     "/mobile/home/pos": {
@@ -47,11 +58,11 @@ export const mobileRoutes = {
     // No `prefetch`: this screen is a ComingSoon placeholder, and warming it
     // costs a full proxy run to render nothing.
     "/mobile/chats": {
+        refreshable: true,
         titleKey: "nav.chats",
         parent: null,
     },
     "/mobile/more": {
-        refreshable: true,
         titleKey: "nav.more",
         parent: null,
         prefetch: true,
@@ -67,7 +78,6 @@ export const mobileRoutes = {
         parent: "/mobile/home/manage",
     },
     "/mobile/home/manage/expense": {
-        refreshable: true,
         titleKey: "nav.storeExpenses",
         parent: "/mobile/home/manage",
         inlineHeader: true,
@@ -79,7 +89,6 @@ export const mobileRoutes = {
         parent: "/mobile/home/manage/expense",
     },
     "/mobile/home/manage/request": {
-        refreshable: true,
         titleKey: "nav.storeRequests",
         parent: "/mobile/home/manage",
         inlineHeader: true,
@@ -91,7 +100,6 @@ export const mobileRoutes = {
         parent: "/mobile/home/manage/request",
     },
     "/mobile/home/manage/report": {
-        refreshable: true,
         titleKey: "nav.storeReports",
         parent: "/mobile/home/manage",
         inlineHeader: true,
@@ -105,7 +113,6 @@ export const mobileRoutes = {
 
     // ── Orders ────────────────────────────────────────────────────────────────
     "/mobile/orders/chart": {
-        refreshable: true,
         titleKey: "nav.dailyChart",
         parent: "/mobile/orders",
         titleAccessory: true,
@@ -113,7 +120,6 @@ export const mobileRoutes = {
 
     // ── Analytics ─────────────────────────────────────────────────────────────
     "/mobile/analytics/chart": {
-        refreshable: true,
         titleKey: "nav.monthlyChart",
         parent: "/mobile/analytics",
         titleAccessory: true,
@@ -123,24 +129,20 @@ export const mobileRoutes = {
         parent: "/mobile/analytics",
     },
     "/mobile/analytics/daily/*": {
-        refreshable: true,
         titleKey: "nav.daySummaryDetails",
         parent: "/mobile/analytics",
     },
     "/mobile/analytics/daily/*/events": {
-        refreshable: true,
         titleKey: "nav.dayActivity",
         parent: "/mobile/analytics",
     },
     "/mobile/analytics/daily/*/sessions": {
-        refreshable: true,
         titleKey: "nav.daySessions",
         parent: "/mobile/analytics",
     },
 
     // ── More ──────────────────────────────────────────────────────────────────
     "/mobile/more/stores": {
-        refreshable: true,
         titleKey: "nav.myStores",
         parent: "/mobile/more",
     },
@@ -188,7 +190,6 @@ export const mobileRoutes = {
         inlineHeader: true,
     },
     "/mobile/account/details": {
-        refreshable: true,
         titleKey: "nav.personalDetails",
         parent: "/mobile/account",
         inlineHeader: true,
@@ -203,7 +204,6 @@ export const mobileRoutes = {
         parent: "/mobile/account",
     },
     "/mobile/account/payroll-info": {
-        refreshable: true,
         titleKey: "nav.payrollInfo",
         parent: "/mobile/account",
         inlineHeader: true,

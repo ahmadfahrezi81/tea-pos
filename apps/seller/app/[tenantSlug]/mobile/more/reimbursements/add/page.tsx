@@ -41,7 +41,6 @@ export default function AddClaimPage() {
     const [notes, setNotes] = useState("");
     const [photoFile, setPhotoFile] = useState<File | null>(null);
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const selectedType = types.find((type) => type.id === selectedTypeId);
     const isWeekly = selectedType?.frequency === "weekly";
@@ -58,20 +57,14 @@ export default function AddClaimPage() {
     const isValid = !!selectedTypeId && amount > 0 && (!isWeekly || claimableDates.includes(effectiveDate));
 
     const handleSubmit = async () => {
-        if (!isValid || !user) return;
-        setIsSubmitting(true);
-        try {
-            let photoUrl: string | undefined;
-            if (photoFile) {
-                photoUrl = await upload(photoFile, "reimbursements", `${user.id}/${effectiveDate}`);
-            }
-            await create({ claimConfigId: selectedTypeId, amount, date: effectiveDate, notes: notes.trim() || undefined, photoUrl });
-            navigation.back();
-        } catch (err) {
-            showError(err);
-        } finally {
-            setIsSubmitting(false);
+        // False releases the button: nothing was sent.
+        if (!isValid || !user) return false;
+        let photoUrl: string | undefined;
+        if (photoFile) {
+            photoUrl = await upload(photoFile, "reimbursements", `${user.id}/${effectiveDate}`);
         }
+        await create({ claimConfigId: selectedTypeId, amount, date: effectiveDate, notes: notes.trim() || undefined, photoUrl });
+        navigation.back();
     };
 
     return (
@@ -153,8 +146,8 @@ export default function AddClaimPage() {
                 label={t("claims.submitClaim")}
                 loadingLabel={t("claims.submitting")}
                 onSubmit={handleSubmit}
+                onError={showError}
                 disabled={!isValid || typeOptions.length === 0}
-                isLoading={isSubmitting}
             />
         </div>
     );

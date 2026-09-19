@@ -27,18 +27,10 @@ export default function StaffCommissionPage({ params }: { params: Promise<{ user
        "untouched" here, distinct from `null`, which is a deliberate "None". */
     const [picked, setPicked] = useState<string | null | undefined>(undefined);
     const selectedTypeId = picked !== undefined ? picked : (info?.commissionConfigId ?? null);
-    const [saving, setSaving] = useState(false);
 
     const handleSave = async () => {
-        setSaving(true);
-        try {
-            await update({ commissionConfigId: selectedTypeId ?? undefined });
-            navigation.back();
-        } catch (err) {
-            showError(err);
-        } finally {
-            setSaving(false);
-        }
+        await update({ commissionConfigId: selectedTypeId ?? undefined });
+        navigation.back();
     };
 
     const isLoading = infoLoading || typesLoading;
@@ -127,7 +119,7 @@ export default function StaffCommissionPage({ params }: { params: Promise<{ user
                 label="Save Changes"
                 loadingLabel="Saving..."
                 onSubmit={handleSave}
-                isLoading={saving}
+                onError={showError}
                 confirmTitle="Save pay settings?"
                 confirmMessage="This changes their commission type for future closed days."
             />

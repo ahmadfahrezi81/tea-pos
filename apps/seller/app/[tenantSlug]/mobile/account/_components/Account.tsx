@@ -10,6 +10,8 @@ import { Pencil, Globe, UserCircle, Wallet } from "lucide-react";
 import Image from "next/image";
 import { navigation } from "@tea-pos/utils/navigation";
 import { SettingsRow } from "@tea-pos/ui/custom/SettingsRow";
+import { ActionButton } from "@tea-pos/ui/custom/ActionButton";
+import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
 
 // ============================================================================
 // MAIN COMPONENT
@@ -19,14 +21,15 @@ export default function Account() {
     const router = useRouter();
     const { url } = useTenantSlug();
     const { user, avatarUrl, signOut } = useAuth();
+    const { showError } = useErrorSheet();
     const t = useT();
 
     const handleLogout = useCallback(async () => {
-        const shouldLogout = window.confirm(t("account.logoutConfirm"));
-        if (shouldLogout) {
-            await signOut();
-            router.push("/login");
-        }
+        // False releases the button: the user backed out of the confirm, so
+        // nothing was sent and there is nothing to wait for.
+        if (!window.confirm(t("account.logoutConfirm"))) return false;
+        await signOut();
+        router.push("/login");
     }, [router, signOut, t]);
 
     if (!user) return null;
@@ -83,12 +86,13 @@ export default function Account() {
 
             {/* Logout + Version */}
             <div className="mt-auto pt-4 flex flex-col items-center gap-3">
-                <button
-                    onClick={handleLogout}
+                <ActionButton
+                    action={handleLogout}
+                    onError={showError}
                     className="bg-red-500 text-white py-3 px-16 rounded-xl font-semibold text-base active:scale-[0.98] transition-transform"
                 >
                     {t("common.logout")}
-                </button>
+                </ActionButton>
                 <VersionInfo />
             </div>
         </div>

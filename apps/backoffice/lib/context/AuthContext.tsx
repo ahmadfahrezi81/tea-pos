@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase";
 import { User, UserResponse } from "@tea-pos/features/users/schema";
 // UserResponse used in fetchUser below
 import { toCamelKeys } from "@tea-pos/utils/schemas";
+import { SWR } from "@tea-pos/utils/swr";
 
 const supabase = createClient();
 
@@ -45,13 +46,13 @@ export function AuthProvider({
     const { data: user, isLoading, mutate } = useSWR<User | null>(
         "auth-user",
         fetchUser,
-        { fallbackData: null, revalidateOnFocus: false, dedupingInterval: 30_000 },
+        { fallbackData: null },
     );
 
     const { data: avatarUrl } = useSWR<string | null>(
         "auth-avatar",
         fetchAvatarUrl,
-        { fallbackData: null, revalidateOnFocus: false, dedupingInterval: 60_000 },
+        { fallbackData: null, dedupingInterval: SWR.COOL },
     );
 
     return (

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { X, ImageOff, Loader2, CircleMinus, CloudCheck } from "lucide-react";
+import { ActionButton } from "@tea-pos/ui/custom/ActionButton";
 import { createPortal } from "react-dom";
 import { useT } from "@/lib/hooks/useT";
 
@@ -26,17 +27,13 @@ export function SummaryPhotoThumbnail({
     const [isOpen, setIsOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
-    const [isDeleting, setIsDeleting] = useState(false);
 
     const handleDelete = async (e: React.MouseEvent) => {
+        // The thumbnail behind this opens the viewer, so the tap must not reach
+        // it. False releases the button: nothing was sent.
         e.stopPropagation();
-        if (!onDelete || isDeleting) return;
-        setIsDeleting(true);
-        try {
-            await onDelete();
-        } finally {
-            setIsDeleting(false);
-        }
+        if (!onDelete) return false;
+        await onDelete();
     };
 
     return (
@@ -89,20 +86,15 @@ export function SummaryPhotoThumbnail({
                 )}
 
                 {onDelete && (
-                    <button
-                        onClick={handleDelete}
-                        disabled={isDeleting}
-                        className="absolute top-2 right-2 w-9 h-9 bg-black rounded-lg flex items-center justify-center disabled:opacity-60"
+                    <ActionButton
+                        action={handleDelete}
+                        /* The row may outlive the delete while the list
+                           revalidates, so the button is released. */
+                        resetOnSuccess
+                        className="absolute top-2 right-2 w-9 h-9 bg-black rounded-lg flex items-center justify-center disabled:opacity-60 text-white"
                     >
-                        {isDeleting ? (
-                            <Loader2
-                                size={18}
-                                className="text-white animate-spin"
-                            />
-                        ) : (
-                            <CircleMinus size={24} className="text-white" />
-                        )}
-                    </button>
+                        <CircleMinus size={24} className="text-white" />
+                    </ActionButton>
                 )}
             </div>
 

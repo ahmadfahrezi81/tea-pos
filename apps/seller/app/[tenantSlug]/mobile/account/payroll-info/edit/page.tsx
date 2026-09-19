@@ -11,6 +11,7 @@ import type { PayrollUserInfoResponse } from "@tea-pos/features/payroll-user-inf
 import { useT } from "@/lib/hooks/useT";
 import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
 import { Field } from "@tea-pos/ui/custom/Field";
+import { ActionButton } from "@tea-pos/ui/custom/ActionButton";
 
 function BankPickerDrawer({
     isOpen,
@@ -83,22 +84,13 @@ function EditForm({ info, update }: {
     const [bankAccountNumber, setBankAccountNumber] = useState(info?.bankAccountNumber ?? "");
     const [bankAccountHolder, setBankAccountHolder] = useState(info?.bankAccountHolder ?? "");
     const [isBankPickerOpen, setIsBankPickerOpen] = useState(false);
-    const [isSaving, setIsSaving] = useState(false);
-
     const handleSave = async () => {
-        setIsSaving(true);
-        try {
-            await update({
-                bankName: bankName.trim() || undefined,
-                bankAccountNumber: bankAccountNumber.trim() || undefined,
-                bankAccountHolder: bankAccountHolder.trim() || undefined,
-            });
-            navigation.back();
-        } catch (err) {
-            showError(err);
-        } finally {
-            setIsSaving(false);
-        }
+        await update({
+            bankName: bankName.trim() || undefined,
+            bankAccountNumber: bankAccountNumber.trim() || undefined,
+            bankAccountHolder: bankAccountHolder.trim() || undefined,
+        });
+        navigation.back();
     };
 
     return (
@@ -138,13 +130,13 @@ function EditForm({ info, update }: {
                     </Field>
                 </div>
 
-                <button
-                    onClick={handleSave}
-                    disabled={isSaving}
+                <ActionButton
+                    action={handleSave}
+                    onError={showError}
                     className="w-full py-4 bg-brand text-white font-bold rounded-xl active:opacity-80 disabled:opacity-40 text-base"
                 >
-                    {isSaving ? t("account.saving") : t("common.save")}
-                </button>
+                    {t("common.save")}
+                </ActionButton>
             </div>
 
             <BankPickerDrawer
