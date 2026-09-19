@@ -17,6 +17,7 @@ import { useScrollRestoration } from "./useScrollRestoration";
 import { useStandaloneViewportHeight } from "./useStandaloneViewportHeight";
 import { isSubPage, type ResolveRoute, type Tab } from "./routes";
 import { navProgress } from "./navProgress";
+import { refreshGate } from "./refreshGate";
 
 /** Pull distance, after resistance, at which letting go refreshes. */
 const PULL_THRESHOLD_PX = 64;
@@ -32,6 +33,8 @@ const PULL_MIN_SPIN_MS = 400;
 const PULL_CLOSE_MS = 280;
 /** How long the spinner takes to fade after a refresh. Matches `.pull-spinner[data-state="leaving"]`. */
 const PULL_SPINNER_FADE_MS = 150;
+/* The last pull number, how long before a pull may fetch again, lives with the
+   gate that reads it: `PULL_MIN_INTERVAL_MS` in `refreshGate.ts`. */
 
 /**
  * TEMPORARY — route prefetching is switched off while the owner lives with the
@@ -548,9 +551,18 @@ export function MobileShell({
                 : "cubic-bezier(0.34, 1.4, 0.64, 1)";
             slideTo(PULL_HOLD_PX, spring, 360);
 
+            // A pull inside the window animates but fetches nothing: the gesture
+            // is free, the requests are not, and one pull refetches every mounted
+            // hook. Nothing below this line changes, which is the point — the
+            // spinner, the minimum spin and the loading bar all run either way,
+            // so a suppressed pull is indistinguishable from a real one. See 068.
+            const fetching = refreshGate.shouldFetch();
+            if (fetching) refreshGate.mark();
             // Deferred a microtask, so a refresh that throws cannot throw here. A
             // failed one leaves the old data on screen, as the idle refresh does.
-            const refreshing = Promise.resolve().then(onRefreshNow).catch(() => {});
+            const refreshing = fetching
+                ? Promise.resolve().then(onRefreshNow).catch(() => {})
+                : Promise.resolve();
             // The shell's loading bar runs as well, so a pull looks like every
             // other refresh — the idle sheet's, or a navigation's.
             navProgress.run(refreshing);

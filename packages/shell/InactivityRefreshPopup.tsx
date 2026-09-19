@@ -6,6 +6,7 @@ import { RefreshCw, Info } from "lucide-react";
 import { Icon } from "@iconify/react";
 import { useAppUpdate } from "./useAppUpdate";
 import { navProgress } from "./navProgress";
+import { refreshGate } from "./refreshGate";
 import { DOT_GRID } from "@tea-pos/ui/styles/dot-grid";
 import "@tea-pos/ui/icons/bundled-emoji";
 
@@ -137,6 +138,11 @@ export default function InactivityRefreshPopup({
 
         setShowInactivityPrompt(false);
         lastActivityRef.current = Date.now();
+        // Marked, but never gated. This sheet only appears after twenty quiet
+        // minutes, so its refresh cannot be redundant — unlike a pull, which can
+        // be repeated as fast as a thumb moves. Recording it stops a pull two
+        // seconds later from refetching what this just fetched. See task 068.
+        refreshGate.mark();
         navProgress.run(
             Promise.resolve()
                 .then(onSoftRefresh)
