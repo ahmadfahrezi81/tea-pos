@@ -9,6 +9,13 @@ import type { PatchNote } from "@tea-pos/ui/custom/PatchNotes";
  */
 export const patchNotes: PatchNote[] = [
     {
+        version: "5.4.19",
+        date: "2026-09-19",
+        entries: [
+            { kind: "improved", text: "Pull down to refresh is now on the screens where information can actually change." },
+        ],
+    },
+    {
         version: "5.4.18",
         date: "2026-09-19",
         entries: [
