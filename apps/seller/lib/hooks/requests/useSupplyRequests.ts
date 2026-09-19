@@ -1,12 +1,13 @@
 import useSWR from "swr";
 import { requestsApi } from "@/lib/api/requests";
 import type { CreateSupplyRequestInput, SupplyRequestResponse } from "@tea-pos/features/requests/schema";
+import { SWR } from "@tea-pos/utils/swr";
 
 export function useSupplyRequests(storeId?: string, date?: string) {
     const { data, error, mutate, isLoading } = useSWR(
         storeId ? `supply-requests-${storeId}-${date ?? "today"}` : null,
         () => requestsApi.list({ storeId: storeId!, date }),
-        { revalidateOnFocus: false, dedupingInterval: 10000 },
+        { dedupingInterval: SWR.QUICK },
     );
 
     const create = async (input: Omit<CreateSupplyRequestInput, "storeId">): Promise<SupplyRequestResponse> => {

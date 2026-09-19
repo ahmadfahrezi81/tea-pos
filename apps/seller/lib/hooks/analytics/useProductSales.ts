@@ -1,6 +1,7 @@
 import useSWR from "swr";
 import { analyticsApi } from "@/lib/api/analytics";
 import type { ProductSalesResponse } from "@tea-pos/features/analytics/schema";
+import { SWR } from "@tea-pos/utils/swr";
 
 export interface ProductSalesData {
     productId: string;
@@ -16,8 +17,7 @@ export default function useProductSales(storeId: string | null, month: string) {
         key,
         () => analyticsApi.getProductSales({ storeId: storeId!, month }),
         {
-            revalidateOnFocus: false,
-            dedupingInterval: 300000,
+            dedupingInterval: SWR.COLD,
             refreshInterval: 0,
             keepPreviousData: true,
         },

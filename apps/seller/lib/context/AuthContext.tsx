@@ -60,12 +60,13 @@ export function AuthProvider({
     } = useSWR(
         "user",
         initialUser ? usersApi.get : null,
+        /* Two decisions, and nothing the root already says. The cookie is the
+           first paint, so `revalidateOnMount` is off whenever it was there;
+           focus revalidation and the retry count live in the root `SWRConfig`.
+           See task 067. */
         {
             fallbackData,
             revalidateOnMount: !initialUser,
-            revalidateOnFocus: false,
-            shouldRetryOnError: true,
-            errorRetryCount: 3,
         },
     );
 

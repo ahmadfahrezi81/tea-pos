@@ -8,7 +8,6 @@ export function useTenantUsers() {
     const { data, error, mutate, isLoading } = useSWR<User[]>(
         "tenant-users",
         () => usersApi.listAll(),
-        { revalidateOnFocus: false, dedupingInterval: 30_000 },
     );
     return { users: data ?? [], isLoading, error, mutate };
 }

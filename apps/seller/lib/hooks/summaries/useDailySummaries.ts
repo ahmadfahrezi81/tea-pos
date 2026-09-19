@@ -8,15 +8,15 @@ import type { CreateExpenseInput, UpdateExpenseInput } from "@tea-pos/features/e
 export const useSummaries = (storeId?: string, month?: string) => {
     const key = storeId && month ? `summaries-${storeId}-${month}` : null;
 
+    /* No options. `revalidateOnMount: true` sat here with
+       `revalidateIfStale: false`, and the pair cancelled out: SWR takes
+       `revalidateOnMount` directly on first mount, so the second line was
+       unreachable — and revalidating on mount is the default anyway, because
+       `revalidateIfStale` defaults to true. Both lines described what the hook
+       gets for free. See task 067. */
     const { data, error, mutate } = useSWR<DailySummaryListResponse>(
         key,
         () => summariesApi.list({ storeId, month }),
-        {
-            revalidateOnFocus: false,
-            revalidateOnMount: true,
-            revalidateIfStale: false,
-            dedupingInterval: 30_000,
-        },
     );
 
     const processedData = data

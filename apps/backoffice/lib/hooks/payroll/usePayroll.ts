@@ -13,7 +13,6 @@ export function usePayouts(params?: Partial<ListPayoutsQuery>) {
     const { data, error, mutate, isLoading } = useSWR<PayoutListResponse>(
         key,
         () => payrollApi.getPayouts(params),
-        { revalidateOnFocus: false, dedupingInterval: 5000 },
     );
     return { payouts: data?.payouts ?? [], isLoading, error, mutate };
 }
@@ -51,7 +50,6 @@ export function usePayslip(payoutId: string | undefined, userId?: string) {
     const { data, error, mutate, isLoading } = useSWR<Payslip>(
         key,
         () => payrollApi.getPayslip({ payoutId: payoutId!, ...(userId ? { userId } : {}) }) as Promise<Payslip>,
-        { revalidateOnFocus: false, dedupingInterval: 5000 },
     );
 
     /* There is deliberately no upsert-on-open here. One used to run on every

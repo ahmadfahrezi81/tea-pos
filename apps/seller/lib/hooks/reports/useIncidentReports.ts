@@ -1,12 +1,13 @@
 import useSWR from "swr";
 import { reportsApi } from "@/lib/api/reports";
 import type { CreateIncidentReportInput, IncidentReportResponse } from "@tea-pos/features/reports/schema";
+import { SWR } from "@tea-pos/utils/swr";
 
 export function useIncidentReports(storeId?: string, date?: string) {
     const { data, error, mutate, isLoading } = useSWR(
         storeId ? `incident-reports-${storeId}-${date ?? "today"}` : null,
         () => reportsApi.list({ storeId: storeId!, date }),
-        { revalidateOnFocus: false, dedupingInterval: 10000 },
+        { dedupingInterval: SWR.QUICK },
     );
 
     const create = async (input: Omit<CreateIncidentReportInput, "storeId">): Promise<IncidentReportResponse> => {

@@ -1,12 +1,13 @@
 import useSWR from "swr";
 import { activityLogsApi } from "@/lib/api/activity-logs";
 import type { DayActivityResponse } from "@tea-pos/features/activity-logs/schema";
+import { SWR } from "@tea-pos/utils/swr";
 
 export function useDayActivity(summaryId?: string) {
     const { data, ...rest } = useSWR<DayActivityResponse>(
         summaryId ? `day-activity-${summaryId}` : null,
         () => activityLogsApi.dayActivity({ summaryId: summaryId! }),
-        { revalidateOnFocus: false, dedupingInterval: 60_000 },
+        { dedupingInterval: SWR.COOL },
     );
     return {
         summary: data?.summary ?? null,

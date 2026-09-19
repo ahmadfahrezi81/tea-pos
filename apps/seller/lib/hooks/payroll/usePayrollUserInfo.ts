@@ -4,6 +4,7 @@ import useSWR from "swr";
 import { useAuth } from "@/lib/context/AuthContext";
 import { payrollUserInfoApi } from "@/lib/api/payroll-user-info";
 import type { PayrollUserInfoResponse, UpdatePayrollUserInfoInput } from "@tea-pos/features/payroll-user-info/schema";
+import { SWR } from "@tea-pos/utils/swr";
 
 export function usePayrollUserInfo() {
     const { user } = useAuth();
@@ -12,7 +13,7 @@ export function usePayrollUserInfo() {
     const { data, error, mutate, isLoading } = useSWR<PayrollUserInfoResponse | null>(
         userId ? `payroll-user-info-${userId}` : null,
         () => payrollUserInfoApi.get(),
-        { revalidateOnFocus: false, dedupingInterval: 60000 },
+        { dedupingInterval: SWR.COOL },
     );
 
     const update = async (input: UpdatePayrollUserInfoInput) => {

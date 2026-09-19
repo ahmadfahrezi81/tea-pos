@@ -1,5 +1,6 @@
 import useSWR from "swr";
 import { analyticsApi } from "@/lib/api/analytics";
+import { SWR } from "@tea-pos/utils/swr";
 
 export interface HourlySalesData {
     hour: string;
@@ -12,6 +13,6 @@ export default function useHourlySales(storeId: string | null, date: string) {
     return useSWR<HourlySalesData[]>(
         key,
         () => analyticsApi.getHourlySales({ storeId: storeId!, date }).then((r) => r.data),
-        { revalidateOnFocus: false, dedupingInterval: 300000 },
+        { dedupingInterval: SWR.COLD },
     );
 }

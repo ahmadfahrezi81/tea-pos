@@ -3,6 +3,7 @@ import { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { cookies } from "next/headers";
 import { SWRConfig } from "swr";
+import { SWR } from "@tea-pos/utils/swr";
 import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "@/lib/context/AuthContext";
 import { LanguageProvider } from "@/lib/context/LanguageContext";
@@ -90,8 +91,12 @@ export default async function RootLayout({
             suppressHydrationWarning
         >
             <body>
+                {/* The floor, and the only place it lives. It is WARM rather
+                    than something shorter because a default is inherited in
+                    silence: whatever sits here is what every hook that never
+                    thought about it will do. See task 067. */}
                 <SWRConfig
-                    value={{ dedupingInterval: 5000, revalidateOnFocus: false, errorRetryCount: 3 }}
+                    value={{ dedupingInterval: SWR.WARM, revalidateOnFocus: false, errorRetryCount: 3 }}
                 >
                     <AuthProvider initialUser={initialUser}>
                         <LanguageProvider initialLocale={initialLocale}>
