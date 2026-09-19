@@ -16,7 +16,7 @@ import { ScrollContext } from "./ScrollContext";
 import { useScrollRestoration } from "./useScrollRestoration";
 import { useStandaloneViewportHeight } from "./useStandaloneViewportHeight";
 import { isSubPage, type ResolveRoute, type Tab } from "./routes";
-import { navProgress } from "./navProgress";
+import { navProgress, whenPainted } from "./navProgress";
 import { refreshGate } from "./refreshGate";
 
 /** Pull distance, after resistance, at which letting go refreshes. */
@@ -229,9 +229,9 @@ export function MobileShell({
             if (pushDepthRef.current > 0) {
                 // No transition: router.back() is history.back(), which returns
                 // at once, so a transition around it always ended empty. The
-                // popstate that follows is what navigates.
-                navProgress.start();
-                router.back();
+                // popstate that follows is what navigates. Deferred a painted
+                // frame so a slow phone shows the bar first (task 070).
+                navProgress.startThen(() => router.back());
                 return;
             }
             replaceWith(fallbackPath);
@@ -243,15 +243,50 @@ export function MobileShell({
     // and router.back() above — so the depth is decremented here only. Doing it
     // at the call site too would double-count and strand the counter at zero.
     useEffect(() => {
-        const onPopState = () => {
+        // Android only. iOS swipe-back animates on its own, never needed this,
+        // and a build that held it there broke the swipe (task 070).
+        const holdForBar = /Android/i.test(navigator.userAgent);
+        let replaying = false;
+        let cancelHold: (() => void) | null = null;
+
+        const release = () => {
+            cancelHold = null;
+            replaying = true;
+            try {
+                window.dispatchEvent(new PopStateEvent("popstate", { state: window.history.state }));
+            } finally {
+                replaying = false;
+            }
+        };
+
+        const onPopState = (event: PopStateEvent) => {
+            if (replaying) return;
             pushDepthRef.current = Math.max(0, pushDepthRef.current - 1);
             // The phone's back button never passes through navigate. The URL has
             // already changed when popstate fires, so this is one comparison —
             // and a popstate that keeps the path would start a bar nothing ends.
-            if (window.location.pathname !== pathnameRef.current) navProgress.start();
+            if (window.location.pathname === pathnameRef.current) return;
+            navProgress.start();
+            if (!holdForBar) return;
+
+            /* Next's listener would start rendering in this same task, and a slow
+               phone would never paint the bar on the page being left. Hold Next
+               back one painted frame, then re-dispatch — it reads only `location`
+               and `history.state`, both unchanged. */
+            event.stopImmediatePropagation();
+            cancelHold?.();
+            cancelHold = whenPainted(release);
         };
-        window.addEventListener("popstate", onPopState);
-        return () => window.removeEventListener("popstate", onPopState);
+
+        // Capture, so this runs before Next's listener regardless of order.
+        window.addEventListener("popstate", onPopState, { capture: true });
+        return () => {
+            window.removeEventListener("popstate", onPopState, { capture: true });
+            if (cancelHold) {
+                cancelHold();
+                release(); // never strand a held popstate
+            }
+        };
     }, []);
 
     useEffect(() => {

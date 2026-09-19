@@ -1,13 +1,12 @@
-/* Navigation progress bar, driven by `navProgress.ts`. See task 065.
+/* Navigation progress bar, driven by `navProgress.ts`. See tasks 065, 070.
 
-   Every animated property here is `transform` or `opacity`. Those two run on
-   the compositor, so the bar keeps moving while the main thread is busy
-   evaluating and committing the next route, which is exactly when it is on
-   screen. The bar it replaces animated `left` and froze on slow phones.
+   Only `transform` and `opacity` animate, so the bar can move on the compositor
+   while the main thread is busy committing the next route.
 
-   The state lives in `data-state`, written by the controller and never by
-   React. Every rule matches a state positively, so before the controller has
-   attached, the bar is inert rather than animating invisibly. */
+   Every animation is declared here **paused** and alive from mount; the
+   controller plays, pauses and rewinds them. None is created or switched on by
+   a state rule — on a slow Android a newly created animation never reached the
+   compositor before the navigation blocked the thread, and froze. */
 
 .nav-progress {
     position: absolute;
@@ -17,79 +16,69 @@
     height: 2px;
     overflow: hidden;
     pointer-events: none;
-    opacity: 0;
+    /* Never hidden with opacity: its layer stays alive between navigations.
+       At rest both children sit off to the left and are clipped. */
+    will-change: transform, opacity;
+    /* Done: one pulse, then gone. The controller goes idle on its animationend. */
+    animation: nav-settle 650ms 180ms forwards;
+    animation-play-state: paused;
 }
 
 .nav-progress > span {
     position: absolute;
     inset: 0;
     background: var(--accent-primary);
-    transform: translateX(-100%);
+    /* 3D form asks Chrome for a compositor layer; 2D leaves it to a heuristic. */
+    transform: translate3d(-100%, 0, 0);
     will-change: transform;
+    animation-play-state: paused;
+    animation-fill-mode: forwards;
 }
 
-/* Clips the landing sheen to the coloured part, or it streaks past the end. */
+/* Crawl: answers the tap quickly, slows down, never reaches the end on its own.
+   Clips the sheen to the coloured part. */
 .nav-progress > .crawl {
     overflow: hidden;
+    animation-name: nav-crawl;
+    animation-duration: 12s;
 }
 
-.nav-progress:is([data-state="loading"], [data-state="landing"], [data-state="done"]) {
-    opacity: 1;
+/* Fill: overtakes the crawl from the left on done, so finishing never needs to
+   know how far the crawl got. */
+.nav-progress > .fill {
+    animation-name: nav-fill;
+    animation-duration: 180ms;
+    animation-timing-function: ease-out;
 }
 
-/* Crawl: answers the tap quickly, slows down, and never reaches the end on its
-   own — only `done` does that. Still running during `done`, under the fill. */
-.nav-progress:is([data-state="loading"], [data-state="landing"], [data-state="done"]) > .crawl {
-    animation: nav-crawl-a 12s forwards;
-}
-
-/* Identical keyframes under a second name. Swapping the name restarts the
-   animation from zero without forcing a reflow to do it. */
-.nav-progress[data-run="b"]:is([data-state="loading"], [data-state="landing"], [data-state="done"]) > .crawl {
-    animation-name: nav-crawl-b;
-}
-
-@keyframes nav-crawl-a {
-    0%   { transform: translateX(-100%); animation-timing-function: ease-out; }
-    2%   { transform: translateX(-75%);  animation-timing-function: ease-out; }
-    20%  { transform: translateX(-35%);  animation-timing-function: ease-out; }
-    100% { transform: translateX(-10%); }
-}
-
-@keyframes nav-crawl-b {
-    0%   { transform: translateX(-100%); animation-timing-function: ease-out; }
-    2%   { transform: translateX(-75%);  animation-timing-function: ease-out; }
-    20%  { transform: translateX(-35%);  animation-timing-function: ease-out; }
-    100% { transform: translateX(-10%); }
-}
-
-/* Landing: the route is here and its data is still arriving. */
-.nav-progress[data-state="landing"] > .crawl::after {
+/* Sheen: says "still working" once the crawl has slowed to a near-stop.
+   Faster while landing, so that state reads as "nearly there". */
+.nav-progress > .crawl::after {
     content: "";
     position: absolute;
     inset: 0;
     background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.6), transparent);
-    animation: nav-sheen 900ms ease-in-out infinite;
+    animation: nav-sheen 1400ms ease-in-out infinite paused;
+}
+
+.nav-progress[data-state="landing"] > .crawl::after {
+    animation-duration: 900ms;
+}
+
+@keyframes nav-crawl {
+    0%   { transform: translate3d(-100%, 0, 0); animation-timing-function: ease-out; }
+    2%   { transform: translate3d(-75%, 0, 0);  animation-timing-function: ease-out; }
+    20%  { transform: translate3d(-35%, 0, 0);  animation-timing-function: ease-out; }
+    100% { transform: translate3d(-10%, 0, 0); }
 }
 
 @keyframes nav-sheen {
-    from { transform: translateX(-100%); }
-    to   { transform: translateX(100%); }
-}
-
-/* Done: a second layer overtakes the crawl from the left, so finishing never
-   needs to know how far the crawl had got. Then one pulse, then gone. The
-   controller returns to idle on `nav-settle`'s animationend. */
-.nav-progress[data-state="done"] > .fill {
-    animation: nav-fill 180ms ease-out forwards;
-}
-
-.nav-progress[data-state="done"] {
-    animation: nav-settle 650ms 180ms forwards;
+    from { transform: translate3d(-100%, 0, 0); }
+    to   { transform: translate3d(100%, 0, 0); }
 }
 
 @keyframes nav-fill {
-    to { transform: translateX(0); }
+    to { transform: translate3d(0, 0, 0); }
 }
 
 @keyframes nav-settle {
@@ -171,7 +160,7 @@
     }
 
     .nav-progress:is([data-state="loading"], [data-state="landing"]) > .crawl {
-        transform: translateX(-50%);
+        transform: translate3d(-50%, 0, 0);
     }
 
     .nav-progress[data-state="done"] > .fill {

@@ -9,6 +9,14 @@ import type { PatchNote } from "@tea-pos/ui/custom/PatchNotes";
  */
 export const patchNotes: PatchNote[] = [
     {
+        version: "1.0.20",
+        date: "2026-09-20",
+        entries: [
+            { kind: "fixed", text: "The loading bar no longer freezes when you go back on a slower phone." },
+            { kind: "improved", text: "The loading bar now finishes once the page has fully appeared." },
+        ],
+    },
+    {
         version: "1.0.19",
         date: "2026-09-19",
         entries: [
