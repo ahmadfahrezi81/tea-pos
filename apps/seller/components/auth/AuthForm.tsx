@@ -1,12 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { ActionButton } from "@tea-pos/ui/custom/ActionButton";
 import Image from "next/image";
 
 export default function AuthForm() {
     const supabase = createClient();
+    const [error, setError] = useState<string | null>(null);
+
     const handleGoogleSignIn = async () => {
+        setError(null);
         const { error } = await supabase.auth.signInWithOAuth({
             provider: "google",
             options: {
@@ -18,7 +22,10 @@ export default function AuthForm() {
            throwing, so without reading it the button would spin for good on a
            screen that is going nowhere. False releases it. On success it keeps
            spinning on purpose — the page is about to redirect. */
-        if (error) return false;
+        if (error) {
+            setError(error.message);
+            return false;
+        }
     };
 
     return (
@@ -71,6 +78,7 @@ export default function AuthForm() {
                     </svg>
                     Continue with Google
                 </ActionButton>
+                {error && <p className="text-sm text-red-500 text-center">{error}</p>}
             </div>
         </div>
     );

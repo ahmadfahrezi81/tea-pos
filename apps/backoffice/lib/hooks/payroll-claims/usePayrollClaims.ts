@@ -1,15 +1,11 @@
 "use client";
 
 import useSWR from "swr";
-import { apiFetch, buildParams } from "@/lib/api/client";
+import { payrollClaimsApi } from "@/lib/api/payroll-claims";
 import type {
     ListAllPayrollClaimsQuery,
     PayrollClaimListResponse,
     UpdatePayrollClaimStatusInput,
-} from "@tea-pos/features/payroll-claims/schema";
-import {
-    PayrollClaimListResponse as PayrollClaimListResponseSchema,
-    PayrollClaimResponse,
 } from "@tea-pos/features/payroll-claims/schema";
 
 export function usePayrollClaims(params?: Partial<ListAllPayrollClaimsQuery>) {
@@ -17,21 +13,11 @@ export function usePayrollClaims(params?: Partial<ListAllPayrollClaimsQuery>) {
 
     const { data, error, mutate, isLoading } = useSWR<PayrollClaimListResponse>(
         key,
-        async () => {
-            const sp = buildParams((params ?? {}) as Record<string, unknown>);
-            const raw = await apiFetch<unknown>(`/api/payroll/claims?${sp}`);
-            return PayrollClaimListResponseSchema.parse(raw);
-        },
-        { revalidateOnFocus: false, dedupingInterval: 5000 },
+        () => payrollClaimsApi.list(params),
     );
 
     const updateStatus = async (id: string, input: UpdatePayrollClaimStatusInput) => {
-        const raw = await apiFetch<unknown>(`/api/payroll/claims/${encodeURIComponent(id)}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(input),
-        });
-        const result = PayrollClaimResponse.parse(raw);
+        const result = await payrollClaimsApi.updateStatus(id, input);
         await mutate();
         return result;
     };
