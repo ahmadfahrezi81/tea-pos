@@ -1,59 +1,79 @@
 /**
- * The navigation progress bar's state, kept outside React. See task 065.
- *
- * The bar is on screen exactly when the main thread is busiest, so nothing about
- * it may add work there. React state would re-render the shell — header and tab
- * bar — on every change, in the middle of a navigation. Instead this module
- * writes one `data-state` attribute on an always-mounted node, a handful of
- * times per navigation, and `nav-progress.css` does all of the motion on the
- * compositor.
+ * The navigation progress bar, kept outside React. See tasks 065, 070.
  *
  *     idle → loading → landing → done → idle
  *
- * - **loading** — from the tap until the route commits; or, for a pull to
- *   refresh, until the refetch settles.
- * - **landing** — the route has committed and the requests its page started on
- *   first load are still in flight. Each app counts them with `track`.
- * - **done** — fill, one pulse, fade. Ends on `nav-settle`'s animationend.
+ * - **loading** — tap until the route commits (or a refresh settles).
+ * - **landing** — committed; waiting for first-load requests and for the page
+ *   to actually be on screen.
+ * - **done** — fill, one pulse, fade.
  *
- * Nothing here reads layout. Every wait is capped, so a missed signal can never
- * leave the bar running.
+ * Writes `data-state` on one always-mounted node and drives its CSS animations
+ * directly, so the shell never re-renders for progress. Every wait is capped.
  */
 
 type State = "idle" | "loading" | "landing" | "done";
 
-/** A route that has not committed by now is not going to; finish rather than crawl forever. */
 const LOADING_CAP_MS = 15_000;
-/** The page has been on screen this long; its skeletons say the rest. */
 const LANDING_CAP_MS = 4_000;
-/**
- * `done` normally ends on animationend, but reduced motion has no animation and
- * so no event. Without this the bar would sit in `done` for good.
- */
+/** Reduced motion has no animationend to end `done`. */
 const DONE_CAP_MS = 1_500;
+/** A hidden tab never paints; stop waiting for frames after this. */
+const PAINT_WAIT_MAX_MS = 400;
+/** Unbroken frames needed after a commit before the bar ends. */
+const QUIET_MS = 200;
+/** A frame gap longer than this means the browser drew nothing. */
+const FRAME_GAP_MS = 100;
 
 let bar: HTMLElement | null = null;
 let state: State = "idle";
+/** Landing and done caps — sequential, so one slot. */
 let cap: ReturnType<typeof setTimeout> | undefined;
+/** Loading cap. Its own slot so later navigations can't keep resetting it. */
+let watchdog: ReturnType<typeof setTimeout> | undefined;
 let settleFrame = 0;
-/**
- * Bumped by every navigation and every refresh. Work remembers the generation it
- * began in, so work that outlives it cannot finish or decrement the next one.
- */
-let generation = 0;
-/** First-load requests in flight for the current generation. */
+let cancelPaint = () => {};
+/** First-load requests in flight, per run. */
 let pending = 0;
+/** Bumped per run so a late request can't count against the next one. */
+let generation = 0;
+
+const isRunning = () => state === "loading" || state === "landing";
+
+function cancelWaits() {
+    cancelAnimationFrame(settleFrame);
+    cancelPaint();
+}
+
+/**
+ * Runs `fn` once a frame has actually painted — two nested frames prove it — or
+ * after `PAINT_WAIT_MAX_MS` in a hidden tab. Returns a cancel.
+ */
+export function whenPainted(fn: () => void): () => void {
+    let frame = requestAnimationFrame(() => {
+        frame = requestAnimationFrame(done);
+    });
+    const timer = setTimeout(done, PAINT_WAIT_MAX_MS);
+    function cancel() {
+        cancelAnimationFrame(frame);
+        clearTimeout(timer);
+    }
+    function done() {
+        cancel();
+        fn();
+    }
+    return cancel;
+}
 
 function setState(next: State) {
+    if (state === next) return;
+    const previous = state;
     state = next;
     if (!bar) return;
     bar.dataset.state = next;
-    // The bar sits directly inside the shell's <main>, which is what is busy.
-    if (next === "loading" || next === "landing") {
-        bar.parentElement?.setAttribute("aria-busy", "true");
-    } else {
-        bar.parentElement?.removeAttribute("aria-busy");
-    }
+    drive(previous, next);
+    if (isRunning()) bar.parentElement?.setAttribute("aria-busy", "true");
+    else bar.parentElement?.removeAttribute("aria-busy");
 }
 
 function armCap(ms: number, onExpire: () => void) {
@@ -61,37 +81,90 @@ function armCap(ms: number, onExpire: () => void) {
     cap = setTimeout(onExpire, ms);
 }
 
-function finish() {
-    cancelAnimationFrame(settleFrame);
-    setState("done");
-    armCap(DONE_CAP_MS, () => setState("idle"));
+/** The bar's animations. Empty under reduced motion; callers skip missing ones. */
+function animations() {
+    const all = bar?.getAnimations({ subtree: true }) ?? [];
+    const named = (name: string) => all.find((a) => (a as CSSAnimation).animationName === name);
+    return {
+        crawl: named("nav-crawl"),
+        sheen: named("nav-sheen"),
+        fill: named("nav-fill"),
+        settle: named("nav-settle"),
+    };
 }
 
 /**
- * Enters loading. An interrupted bar keeps its crawl going rather than snapping
- * back, which reads smoother; a finished one restarts from zero.
+ * Plays and parks the animations for a state change. Two rules from task 070:
+ * never create an animation mid-navigation — on a slow phone it misses the
+ * compositor and freezes — and let JavaScript be the only controller, since
+ * mixing it with CSS play-state made WebKit replay finished animations.
  */
+function drive(previous: State, next: State) {
+    const { crawl, sheen, fill, settle } = animations();
+    const fresh = next === "loading" && (previous === "idle" || previous === "done");
+    if (next === "idle" || fresh) {
+        // Parked at zero: off-screen, and drawing nothing.
+        for (const animation of [crawl, sheen, fill, settle]) {
+            if (!animation) continue;
+            animation.pause();
+            animation.currentTime = 0;
+        }
+    }
+    if (fresh) {
+        crawl?.play();
+        sheen?.play();
+    } else if (next === "done") {
+        sheen?.pause();
+        fill?.play();
+        settle?.play();
+    }
+}
+
+/** Ends the run once a frame has painted, so the ending is seen. */
+function finish() {
+    cancelWaits();
+    cancelPaint = whenPainted(() => {
+        clearTimeout(watchdog);
+        setState("done");
+        armCap(DONE_CAP_MS, () => setState("idle"));
+    });
+}
+
+/** Enters loading. A running bar keeps its crawl; a settled one restarts. */
 function begin() {
-    cancelAnimationFrame(settleFrame);
+    cancelWaits();
+    clearTimeout(cap); // the old run's cap must not fire into this one
     generation += 1;
     pending = 0;
-    if (bar && (state === "idle" || state === "done")) {
-        bar.dataset.run = bar.dataset.run === "b" ? "a" : "b";
+    if (!isRunning()) {
+        clearTimeout(watchdog);
+        watchdog = setTimeout(() => {
+            if (process.env.NODE_ENV !== "production") {
+                console.warn("[navProgress] no commit within 15s — a navigation path is missing its signal");
+            }
+            finish();
+        }, LOADING_CAP_MS);
     }
     setState("loading");
 }
 
 /**
- * Confirmed a frame later rather than at once. Some pages start a request only
- * once another has answered, and that second request begins in the re-render the
- * first one causes — before the next frame. Waiting one frame lets it be counted
- * instead of finishing the bar in the gap between the two.
+ * Finishes after `QUIET_MS` of unbroken frames — once the page is on screen, not
+ * merely committed. A slow phone can draw nothing for a second after a commit;
+ * that gap resets the streak, so the ending lands after the page appears.
  */
-function settleNextFrame() {
+function settleWhenQuiet() {
     cancelAnimationFrame(settleFrame);
-    settleFrame = requestAnimationFrame(() => {
-        if (state === "landing" && pending === 0) finish();
-    });
+    let streakFrom = 0;
+    let previous = -Infinity;
+    const tick = (now: number) => {
+        if (state !== "landing" || pending > 0) return; // `track` restarts it
+        if (now - previous > FRAME_GAP_MS) streakFrom = now;
+        previous = now;
+        if (now - streakFrom >= QUIET_MS) finish();
+        else settleFrame = requestAnimationFrame(tick);
+    };
+    settleFrame = requestAnimationFrame(tick);
 }
 
 function onAnimationEnd(event: AnimationEvent) {
@@ -106,6 +179,7 @@ export const navProgress = {
         if (!node) return;
         bar = node;
         node.dataset.state = state;
+        if (isRunning()) drive("idle", "loading"); // mounted mid-run
         node.addEventListener("animationend", onAnimationEnd);
         return () => {
             node.removeEventListener("animationend", onAnimationEnd);
@@ -113,19 +187,17 @@ export const navProgress = {
         };
     },
 
+    /** A navigation has begun. Call before the work — before `router.push`. */
+    start: begin,
+
     /**
-     * A navigation has begun. Call it before the work starts — before
-     * `router.push` — so the bar has painted and handed its animation to the
-     * compositor by the time the main thread blocks.
+     * Starts the bar and runs `then` once it has painted. For `router.back()`,
+     * which takes the thread at once; without the wait a slow phone never shows
+     * the bar on the page being left. Not cancellable — `then` must happen.
      */
-    start() {
+    startThen(then: () => void) {
         begin();
-        armCap(LOADING_CAP_MS, () => {
-            if (process.env.NODE_ENV !== "production") {
-                console.warn("[navProgress] no commit within 15s — a navigation path is missing its signal");
-            }
-            finish();
-        });
+        whenPainted(then);
     },
 
     /** The route has committed. Call from the shell's `pathname` effect. */
@@ -133,39 +205,32 @@ export const navProgress = {
         if (state !== "loading") return;
         setState("landing");
         armCap(LANDING_CAP_MS, finish);
-        if (pending === 0) settleNextFrame();
+        settleWhenQuiet();
     },
 
     /**
-     * Holds the bar in landing until `promise` settles. For requests a page makes
-     * on its first load; each app calls it from an SWR middleware.
-     *
-     * Only counted while a navigation is in progress, so background polling and
-     * revalidation never start or extend the bar on a screen at rest.
-     *
-     * Returns the `finally` chain rather than the original promise, so the caller
-     * awaits the same outcome — a rejection still reaches its error handling
-     * instead of surfacing here as an unhandled one.
+     * Holds the bar in landing until `promise` settles — for a page's first-load
+     * requests, via each app's SWR middleware. Ignored at rest, so polling never
+     * starts the bar. Returns the `finally` chain so rejections still reach the
+     * caller.
      */
     track<T>(promise: Promise<T>): Promise<T> {
-        if (state !== "loading" && state !== "landing") return promise;
+        if (!isRunning()) return promise;
         const counted = generation;
         pending += 1;
         return promise.finally(() => {
             if (counted !== generation) return;
             pending -= 1;
-            if (state === "landing" && pending === 0) settleNextFrame();
+            if (state === "landing" && pending === 0) settleWhenQuiet();
         });
     },
 
     /**
-     * Runs the bar for `promise` alone — a pull to refresh, where no route
-     * changes. A navigation that starts meanwhile takes the bar over, and this
-     * refresh then settles without touching it.
+     * Runs the bar for `promise` alone — a pull to refresh. A navigation started
+     * meanwhile takes the bar over, and this then settles without touching it.
      */
     run(promise: Promise<unknown>) {
         begin();
-        armCap(LOADING_CAP_MS, finish);
         const counted = generation;
         const settle = () => {
             if (counted === generation && state === "loading") finish();
@@ -174,7 +239,5 @@ export const navProgress = {
     },
 
     /** A navigation or refresh is in flight. A finishing bar does not count. */
-    isBusy() {
-        return state === "loading" || state === "landing";
-    },
+    isBusy: isRunning,
 };
