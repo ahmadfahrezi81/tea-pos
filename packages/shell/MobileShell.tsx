@@ -262,20 +262,10 @@ export function MobileShell({
         const onPopState = (event: PopStateEvent) => {
             if (replaying) return;
             pushDepthRef.current = Math.max(0, pushDepthRef.current - 1);
-            /* The phone's back button never passes through navigate. The URL has
-               already changed when popstate fires, so this is one comparison.
-
-               A popstate that keeps the path renders nothing, so the `pathname`
-               effect below never runs and never commits the bar. Starting one
-               here would strand it — but so does returning, when `goBackTo`
-               already started one for this very pop (two adjacent entries for
-               the same screen, or a query-only difference). It used to sit in
-               `loading` until the 15s watchdog. `committed` is a no-op unless a
-               bar is running, so it both ends ours and starts nothing. */
-            if (window.location.pathname === pathnameRef.current) {
-                navProgress.committed();
-                return;
-            }
+            // The phone's back button never passes through navigate. The URL has
+            // already changed when popstate fires, so this is one comparison —
+            // and a popstate that keeps the path would start a bar nothing ends.
+            if (window.location.pathname === pathnameRef.current) return;
             navProgress.start();
             if (!holdForBar) return;
 
