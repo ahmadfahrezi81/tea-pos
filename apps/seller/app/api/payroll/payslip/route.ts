@@ -1,9 +1,9 @@
 import { getServiceClient } from "@/lib/supabase/service";
 import { getCurrentTenantId } from "@tea-pos/utils/server-config/tenant";
 import { NextRequest } from "next/server";
-import { GetPayslipQuery } from "@tea-pos/features/payroll/schema";
+import { GetPayslipQuery, PayslipResponse } from "@tea-pos/features/payroll/schema";
 import { getPayslip } from "@tea-pos/services/payroll";
-import { ok, badRequest, unauthorized, handleError } from "@/lib/api/response";
+import { ok, err, badRequest, unauthorized, handleError } from "@/lib/api/response";
 import { getRequestUser } from "@/lib/auth/get-request-user";
 
 export async function GET(request: NextRequest) {
@@ -24,7 +24,10 @@ export async function GET(request: NextRequest) {
             userId: user.id,
             payoutId: query.data.payoutId,
         });
-        return ok(payslip);
+        const parsed = PayslipResponse.safeParse(payslip);
+        if (!parsed.success) return err("Invalid response shape");
+
+        return ok(parsed.data);
     } catch (error) {
         return handleError("GET /api/payroll/payslip", error);
     }
