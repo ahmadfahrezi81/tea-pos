@@ -2,6 +2,7 @@ import { apiFetch } from "./client";
 import {
     PayrollClaimConfigListResponse,
     PayrollClaimConfigResponse,
+    ClaimEligibilityListResponse,
     type CreatePayrollClaimConfigInput,
     type UpdatePayrollClaimConfigInput,
     type SetClaimEligibilityInput,
@@ -41,9 +42,10 @@ export const payrollClaimConfigsApi = {
         });
     },
 
-    getEligibility: async (userId: string) => {
-        return apiFetch<{ eligibility: Array<{ claimConfigId: string }> }>(
-            `/api/payroll/claim-types/eligibility?userId=${encodeURIComponent(userId)}`,
+    /** Every staff member's eligibility in one call — see `listClaimEligibility`. */
+    listEligibility: async () => {
+        return ClaimEligibilityListResponse.parse(
+            await apiFetch<unknown>("/api/payroll/claim-types/eligibility"),
         );
     },
 };

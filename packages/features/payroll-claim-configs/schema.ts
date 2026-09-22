@@ -37,9 +37,10 @@ export const SetClaimEligibilityInput = z
     })
     .openapi({ title: "SetClaimEligibilityInput" });
 
+/** `userId` optional: omitted, the answer covers every staff member. */
 export const GetClaimEligibilityQuery = z
     .object({
-        userId: UUIDSchema,
+        userId: UUIDSchema.optional(),
     })
     .openapi({ title: "GetClaimEligibilityQuery" });
 
@@ -66,6 +67,15 @@ export const PayrollClaimConfigListResponse = z
     .object({ claimTypes: z.array(PayrollClaimConfigResponse) })
     .openapi({ title: "PayrollClaimConfigListResponse" });
 
+/** Flat pairs: who is eligible for what. Two ids is the whole answer. */
+export const ClaimEligibilityListResponse = z
+    .object({
+        eligibility: z.array(
+            z.object({ userId: UUIDSchema, claimConfigId: UUIDSchema }),
+        ),
+    })
+    .openapi({ title: "ClaimEligibilityListResponse" });
+
 // ============================================================================
 // TYPE EXPORTS
 // ============================================================================
@@ -75,4 +85,5 @@ export type UpdatePayrollClaimConfigInput = z.infer<typeof UpdatePayrollClaimCon
 export type SetClaimEligibilityInput = z.infer<typeof SetClaimEligibilityInput>;
 export type GetClaimEligibilityQuery = z.infer<typeof GetClaimEligibilityQuery>;
 export type PayrollClaimConfigResponse = z.infer<typeof PayrollClaimConfigResponse>;
+export type ClaimEligibilityListResponse = z.infer<typeof ClaimEligibilityListResponse>;
 export type PayrollClaimConfigListResponse = z.infer<typeof PayrollClaimConfigListResponse>;

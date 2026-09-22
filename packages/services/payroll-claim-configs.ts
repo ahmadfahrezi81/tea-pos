@@ -92,16 +92,25 @@ export async function updatePayrollClaimConfig(
     return toCamelKeys(data);
 }
 
-export async function listUserClaimEligibility(
+/**
+ * Who is eligible for what, as flat pairs.
+ *
+ * `userId` is optional because the screen using this is a list with a toggle per
+ * staff member — asking per user was a request per row. Tenant-wide is staff ×
+ * configs, tens of rows.
+ */
+export async function listClaimEligibility(
     supabase: SupabaseClient,
-    { tenantId, userId }: { tenantId: string; userId: string },
+    { tenantId, userId }: { tenantId: string; userId?: string },
 ) {
-    const { data, error } = await supabase
+    let query = supabase
         .from("payroll_user_claim_assignments")
-        .select("*, payroll_claim_configs(id, name, slug, frequency, is_enabled)")
-        .eq("tenant_id", tenantId)
-        .eq("user_id", userId);
+        .select("user_id, claim_config_id")
+        .eq("tenant_id", tenantId);
 
+    if (userId) query = query.eq("user_id", userId);
+
+    const { data, error } = await query;
     if (error) throw error;
     return toCamelKeys(data ?? []);
 }

@@ -36,30 +36,11 @@ export default function PayslipPage({ params }: { params: Promise<{ payoutId: st
         );
     }
 
-    if (!payslip || !("payout" in (payslip as object))) {
+    if (!payslip) {
         return <p className="text-center text-gray-400 py-10">{t("earnings.periodNotFound")}</p>;
     }
 
-    const ps = payslip as {
-        payout: { id: string; startDate: string; endDate: string; status: string; paidAt: string | null; paymentProofUrl: string | null; notes: string | null };
-        commissions: Array<{ id: string; date: string; totalCups: number; totalCommission: number; ratePerCup: number; storeName?: string | null; status: string }>;
-        claims: Array<{
-            id: string;
-            date: string;
-            claimTypeName?: string | null;
-            claimConfigId: string | null;
-            amount: number;
-            status: string;
-        }>;
-        commissionsTotal: number;
-        claimsTotal: number;
-        totalPay: number;
-        ratePerCup: number;
-        totalOrders: number;
-        paidByName: string | null;
-    };
-
-    const { payout, commissions, claims, totalPay, ratePerCup, totalOrders, paidByName } = ps;
+    const { payout, commissions, claims, totalPay, ratePerCup, totalOrders, paidByName } = payslip;
 
     const status = payout.status;
 

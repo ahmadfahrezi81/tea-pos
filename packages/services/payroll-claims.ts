@@ -3,7 +3,7 @@ import { toCamelKeys } from "@tea-pos/utils/schemas";
 import { getPayWindowBounds } from "@tea-pos/utils/week";
 import { startOfDay, endOfDay, parseISO, subHours, subDays } from "date-fns";
 import { createLogger } from "./activity-logs";
-import { assertPayoutNotPaid, isPayoutSettled, upsertPayout } from "./payroll";
+import { assertPayoutNotPaid, isPayoutSettled, ensurePayout } from "./payroll";
 import { getTenantPayFrequency } from "./tenants";
 
 // ─── Create claim ─────────────────────────────────────────────────────────────
@@ -172,14 +172,17 @@ export async function createPayrollClaim(
         metadata: { claim_config_id: claimConfigId, amount, date },
     });
 
-    // Refresh the payout for the pay window (backfill stamps payout_id on the new claim).
-    // The window comes from the tenant, so this no longer depends on the claimant
-    // having a payroll_user_info row — someone with no payroll record still has
-    // claims to be paid for.
+    /* Stamps `payout_id`. The window comes from the tenant, so a claimant with
+       no `payroll_user_info` row still gets one.
+
+       Swallowed: the claim is already saved, and a retry would answer "already
+       submitted" — an error for something that worked. An unstamped row is
+       picked up by the next `ensurePayout` on this window anyway, since it
+       stamps every unassigned row it finds. */
     const payFrequency = await getTenantPayFrequency(supabase, tenantId);
     const { startDate, endDate } = getPayWindowBounds(date, payFrequency);
-    await upsertPayout(supabase, { tenantId, userId, startDate, endDate }).catch((err) =>
-        console.warn("[payroll] upsertPayout failed after claim create:", err),
+    await ensurePayout(supabase, { tenantId, userId, startDate, endDate }).catch((err) =>
+        console.warn("[payroll] ensurePayout failed after claim create:", err),
     );
 
     return toCamelKeys(data);
@@ -286,9 +289,9 @@ export async function createAutoClaimsForDailySummary(
             });
         }
 
-        // Refresh the payout after auto claims (backfill stamps payout_id on new claims)
-        await upsertPayout(supabase, { tenantId, userId, startDate, endDate }).catch((err) =>
-            console.warn("[payroll] upsertPayout failed after auto claims:", err),
+        // Swallowed per user during close day — see `createPayrollCommissions`.
+        await ensurePayout(supabase, { tenantId, userId, startDate, endDate }).catch((err) =>
+            console.warn("[payroll] ensurePayout failed after auto claims:", err),
         );
     }
 
@@ -316,7 +319,8 @@ export async function updatePayrollClaimStatus(
     if (claimError || !claim) throw Object.assign(new Error(claimError?.message ?? "Claim not found"), { status: 404 });
 
     const row = claim as { date: string; user_id: string };
-    const payoutRow = await assertPayoutNotPaid(supabase, { tenantId, userId: row.user_id, date: row.date });
+    // Called for its throw, not its value: nothing here writes the payout.
+    await assertPayoutNotPaid(supabase, { tenantId, userId: row.user_id, date: row.date });
 
     const { data, error } = await supabase
         .from("payroll_claims")
@@ -331,17 +335,7 @@ export async function updatePayrollClaimStatus(
     const log = createLogger(supabase, { tenantId, userId: actorId });
     log("claim_status_updated", { refId: id, refTable: "payroll_claims", metadata: { status } });
 
-    /* Awaited: approving is what moves `claims_total`, and the client refetches
-       the payout as soon as this responds. See the same note in
-       `updatePayrollCommissionStatus`. */
-    if (payoutRow) {
-        await upsertPayout(supabase, {
-            tenantId,
-            userId: row.user_id,
-            startDate: payoutRow.startDate,
-            endDate: payoutRow.endDate,
-        }).catch((err) => console.warn("[payroll] upsertPayout failed after claim status update:", err));
-    }
+    // No payout write — see `updatePayrollCommission`.
 
     return toCamelKeys(data);
 }

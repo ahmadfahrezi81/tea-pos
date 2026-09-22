@@ -119,10 +119,29 @@ export function FormFooter({
                         </div>
 
                         <ActionButton
-                            action={() => { setConfirmOpen(false); onSubmit(); }}
-                            /* The sheet closes itself, so this instance goes
-                               with it; nothing is left holding a latch. */
-                            resetOnSuccess
+                            /* The sheet stays open and this button spins while
+                               the submit runs. Closing first — and dropping the
+                               promise with it — was the bug: the button read an
+                               instant success, so no spinner was ever drawn, and
+                               a rejection reached nobody because it was no
+                               longer the button's to catch.
+
+                               It closes again only where the screen is staying:
+                               a rejection, or a guard that sent nothing. On a
+                               success that navigates, the button stays busy and
+                               goes with the screen. */
+                            action={async () => {
+                                try {
+                                    const result = await onSubmit();
+                                    if (result === false || resetOnSuccess) setConfirmOpen(false);
+                                    return result;
+                                } catch (error) {
+                                    setConfirmOpen(false);
+                                    throw error;
+                                }
+                            }}
+                            onError={onError}
+                            resetOnSuccess={resetOnSuccess}
                             busyLabel={loadingLabel ?? label}
                             disabled={isLoading}
                             className={`w-full py-3.5 font-bold rounded-xl text-white active:opacity-80 disabled:opacity-40 flex items-center justify-center gap-2 ${VARIANT_CLASS[variant]}`}

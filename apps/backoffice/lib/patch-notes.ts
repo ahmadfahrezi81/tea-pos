@@ -9,6 +9,24 @@ import type { PatchNote } from "@tea-pos/ui/custom/PatchNotes";
  */
 export const patchNotes: PatchNote[] = [
     {
+        version: "1.0.22",
+        date: "2026-09-22",
+        entries: [
+            { kind: "fixed", text: "The back arrow works straight after you confirm a payout, instead of stalling." },
+        ],
+    },
+    {
+        version: "1.0.21",
+        date: "2026-09-22",
+        entries: [
+            { kind: "improved", text: "Confirming a payout is much faster." },
+            { kind: "fixed", text: "The button in a confirmation pop-up now shows a spinner while it works." },
+            { kind: "fixed", text: "You no longer briefly see “Already paid” after confirming a payout." },
+            { kind: "improved", text: "The claim type screen opens much faster." },
+            { kind: "improved", text: "Staff payouts load faster, and approving takes less time." },
+        ],
+    },
+    {
         version: "1.0.20",
         date: "2026-09-20",
         entries: [

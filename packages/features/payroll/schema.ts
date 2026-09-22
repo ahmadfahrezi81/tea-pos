@@ -133,10 +133,19 @@ export const PayoutResponse = z
     })
     .openapi({ title: "PayoutResponse" });
 
+/**
+ * A payslip joins the store's name for display; the plain commissions list does
+ * not, so this extends rather than widening the base. `nullish` so a commission
+ * whose store row is gone still parses — the screen renders an em dash.
+ */
+export const PayslipCommissionResponse = PayrollCommissionResponse.extend({
+    storeName: z.string().nullish(),
+}).openapi({ title: "PayslipCommissionResponse" });
+
 export const PayslipResponse = z
     .object({
         payout: PayoutResponse,
-        commissions: z.array(PayrollCommissionResponse),
+        commissions: z.array(PayslipCommissionResponse),
         claims: z.array(PayrollClaimResponse),
         commissionsTotal: z.number(),
         claimsTotal: z.number(),
@@ -167,6 +176,7 @@ export type UpdatePayoutInput = z.infer<typeof UpdatePayoutInput>;
 export type ReviewPayrollDayInput = z.infer<typeof ReviewPayrollDayInput>;
 export type ReviewPayrollDayResponse = z.infer<typeof ReviewPayrollDayResponse>;
 export type PayrollCommissionResponse = z.infer<typeof PayrollCommissionResponse>;
+export type PayslipCommissionResponse = z.infer<typeof PayslipCommissionResponse>;
 export type PayoutResponse = z.infer<typeof PayoutResponse>;
 export type PayslipResponse = z.infer<typeof PayslipResponse>;
 export type PayrollCommissionListResponse = z.infer<typeof PayrollCommissionListResponse>;

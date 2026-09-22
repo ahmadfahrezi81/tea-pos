@@ -106,14 +106,22 @@ export default function StaffPayoutsPage() {
     const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
     const [showNonSellers, setShowNonSellers] = useState(false);
 
-    const { payouts, isLoading } = usePayouts();
+    const monthStart = startOfMonth(parseISO(`${selectedMonth}-01`));
+    const monthEnd = endOfMonth(monthStart);
+
+    /* The month on screen, not the tenant's whole history. Only safe because
+       `listPayouts` filters by overlap — containment would drop every period
+       straddling a month boundary. The client-side check below stays: it also
+       runs against the previous month while the next one loads. */
+    const { payouts, isLoading } = usePayouts({
+        startDate: format(monthStart, "yyyy-MM-dd"),
+        endDate: format(monthEnd, "yyyy-MM-dd"),
+    });
     const { users } = useTenantUsers();
     const { infos } = useAllPayrollUserInfos();
 
     const userById = Object.fromEntries(users.map((u) => [u.id, u]));
     const infoByUserId = Object.fromEntries(infos.map((i) => [i.userId, i]));
-    const monthStart = startOfMonth(parseISO(`${selectedMonth}-01`));
-    const monthEnd = endOfMonth(monthStart);
 
     /* Staff are all paid on the same cadence, so the next pay date is a property
        of the tenant, not of each row — it belongs once at the top rather than

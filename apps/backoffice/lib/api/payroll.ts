@@ -12,6 +12,7 @@ import {
     PayrollCommissionListResponse,
     PayrollCommissionResponse,
     PayoutListResponse,
+    PayslipResponse,
     ReviewPayrollDayResponse,
 } from "@tea-pos/features/payroll/schema";
 
@@ -50,15 +51,7 @@ export const payrollApi = {
 
     getPayslip: async (params: GetPayslipQuery) => {
         const sp = buildParams(params as Record<string, unknown>);
-        return apiFetch<unknown>(`/api/payroll/payslip?${sp}`);
-    },
-
-    upsertPayout: async (input: { startDate: string; endDate: string; userId: string }) => {
-        return apiFetch<unknown>("/api/payroll/payouts", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(input),
-        });
+        return PayslipResponse.parse(await apiFetch<unknown>(`/api/payroll/payslip?${sp}`));
     },
 
     updateClaimStatus: async (claimId: string, input: UpdatePayrollClaimStatusInput) => {
@@ -69,11 +62,14 @@ export const payrollApi = {
         });
     },
 
+    /** Returns the settled payslip, not the row — the shape the next screen renders. */
     updatePayout: async (payoutId: string, input: UpdatePayoutInput) => {
-        return apiFetch<unknown>(`/api/payroll/payouts/${encodeURIComponent(payoutId)}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(input),
-        });
+        return PayslipResponse.parse(
+            await apiFetch<unknown>(`/api/payroll/payouts/${encodeURIComponent(payoutId)}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(input),
+            }),
+        );
     },
 };
