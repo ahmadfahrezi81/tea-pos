@@ -6,11 +6,14 @@ import type {
     CreatePayrollCommissionConfigInput,
     UpdatePayrollCommissionConfigInput,
 } from "@tea-pos/features/payroll-commission-configs/schema";
+import { SWR } from "@tea-pos/utils/swr";
 
+/** `STATIC`, for the reason written on `usePayrollClaimConfigs`. */
 export function usePayrollCommissionConfigs() {
     const { data, error, mutate, isLoading } = useSWR(
         "payroll-commission-configs",
         () => payrollCommissionConfigsApi.list(),
+        { dedupingInterval: SWR.STATIC },
     );
 
     const create = async (input: CreatePayrollCommissionConfigInput) => {
