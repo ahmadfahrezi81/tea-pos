@@ -1,9 +1,13 @@
 import { getServiceClient } from "@/lib/supabase/service";
 import { getCurrentTenantId } from "@tea-pos/utils/server-config/tenant";
 import { NextRequest } from "next/server";
-import { SetClaimEligibilityInput, GetClaimEligibilityQuery } from "@tea-pos/features/payroll-claim-configs/schema";
-import { listUserClaimEligibility, setUserClaimEligibility } from "@tea-pos/services/payroll-claim-configs";
-import { ok, badRequest, unauthorized, forbidden, handleError } from "@/lib/api/response";
+import {
+    SetClaimEligibilityInput,
+    GetClaimEligibilityQuery,
+    ClaimEligibilityListResponse,
+} from "@tea-pos/features/payroll-claim-configs/schema";
+import { listClaimEligibility, setUserClaimEligibility } from "@tea-pos/services/payroll-claim-configs";
+import { ok, err, badRequest, unauthorized, forbidden, handleError } from "@/lib/api/response";
 import { getRequestUser } from "@/lib/auth/get-request-user";
 
 export async function GET(request: NextRequest) {
@@ -18,13 +22,17 @@ export async function GET(request: NextRequest) {
         const query = GetClaimEligibilityQuery.safeParse(
             Object.fromEntries(new URL(request.url).searchParams),
         );
-        if (!query.success) return badRequest("userId query param required");
+        if (!query.success) return badRequest("Invalid query parameters");
 
-        const eligibility = await listUserClaimEligibility(supabase, {
+        // No `userId` means every staff member — see `listClaimEligibility`.
+        const eligibility = await listClaimEligibility(supabase, {
             tenantId,
             userId: query.data.userId,
         });
-        return ok({ eligibility });
+        const parsed = ClaimEligibilityListResponse.safeParse({ eligibility });
+        if (!parsed.success) return err("Invalid response shape");
+
+        return ok(parsed.data);
     } catch (error) { return handleError("GET /api/payroll/claim-types/eligibility", error); }
 }
 

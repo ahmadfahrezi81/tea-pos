@@ -1,8 +1,8 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { use, useState } from "react";
 import { navigation } from "@tea-pos/utils/navigation";
-import { usePayrollClaimConfigs, useUserClaimEligibility } from "@/lib/hooks/payroll-claim-configs/usePayrollClaimConfigs";
+import { usePayrollClaimConfigs, useClaimEligibility } from "@/lib/hooks/payroll-claim-configs/usePayrollClaimConfigs";
 import { useTenantUsers } from "@/lib/hooks/users/useTenantUsers";
 import { TextInput } from "@tea-pos/ui/custom/TextInput";
 import { FormFooter } from "@/components/shared/FormFooter";
@@ -12,18 +12,25 @@ import { useErrorSheet } from "@/lib/context/ErrorSheetContext";
 import { Field } from "@tea-pos/ui/custom/Field";
 import { ReadOnlyInput } from "@tea-pos/ui/custom/ReadOnlyInput";
 
+/**
+ * Takes its data, fetches nothing — it used to fetch per row. `activeTypeIds` is
+ * the user's *full* set, because saving replaces the set rather than one entry.
+ */
 function EligibilityToggle({
     userId,
     typeId,
+    activeTypeIds,
     localOverride,
+    disabled,
     onToggle,
 }: {
     userId: string;
     typeId: string;
+    activeTypeIds: string[];
     localOverride: boolean | undefined;
+    disabled: boolean;
     onToggle: (userId: string, newIds: string[]) => void;
 }) {
-    const { activeTypeIds, isLoading } = useUserClaimEligibility(userId);
     const isEligible = localOverride !== undefined ? localOverride : activeTypeIds.includes(typeId);
 
     const handleToggle = () => {
@@ -36,7 +43,7 @@ function EligibilityToggle({
     return (
         <button
             onClick={handleToggle}
-            disabled={isLoading}
+            disabled={disabled}
             className={`relative w-11 h-6 rounded-full transition-colors ${isEligible ? "bg-brand" : "bg-gray-200"} disabled:opacity-40`}
         >
             <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${isEligible ? "translate-x-5" : "translate-x-0"}`} />
@@ -48,6 +55,8 @@ export default function EditClaimTypePage({ params }: { params: Promise<{ id: st
     const { id } = use(params);
     const { claimTypes, isLoading, update, setEligibility } = usePayrollClaimConfigs();
     const { users } = useTenantUsers();
+    // One request for every row's toggle, instead of one per row.
+    const { byUser: eligibilityByUser, isLoading: eligibilityLoading } = useClaimEligibility();
     const type = claimTypes.find((t) => t.id === id);
 
     const [name, setName] = useState("");
@@ -60,12 +69,15 @@ export default function EditClaimTypePage({ params }: { params: Promise<{ id: st
     const [eligibilityOverrides, setEligibilityOverrides] = useState<Record<string, boolean>>({});
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        if (type) {
-            setName(type.name);
-            setIsEnabled(type.isEnabled);
-        }
-    }, [type?.id]);
+    /* Seeded during render, not in an effect: an effect runs after the commit,
+       so the form painted empty once first. Keyed on the id so switching type
+       without unmounting reseeds. */
+    const [syncedId, setSyncedId] = useState<string | null>(null);
+    if (type && type.id !== syncedId) {
+        setSyncedId(type.id);
+        setName(type.name);
+        setIsEnabled(type.isEnabled);
+    }
 
     const staff = users.filter((u) => u.role !== "ADMIN");
     const filteredStaff = search.trim()
@@ -184,7 +196,9 @@ export default function EditClaimTypePage({ params }: { params: Promise<{ id: st
                             <EligibilityToggle
                                 userId={u.id}
                                 typeId={id}
+                                activeTypeIds={eligibilityByUser[u.id] ?? []}
                                 localOverride={eligibilityOverrides[u.id]}
+                                disabled={eligibilityLoading}
                                 onToggle={handleEligibilityToggle}
                             />
                         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { use, useState } from "react";
 import { navigation } from "@tea-pos/utils/navigation";
 import { usePayrollCommissionConfigs } from "@/lib/hooks/payroll-commission-configs/usePayrollCommissionConfigs";
 import { TextInput } from "@tea-pos/ui/custom/TextInput";
@@ -24,13 +24,14 @@ export default function EditCommissionTypePage({ params }: { params: Promise<{ i
     const [copied, setCopied] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        if (type) {
-            setName(type.name);
-            setIsEnabled(type.isEnabled);
-            setRatePerCup(type.ratePerCup);
-        }
-    }, [type?.id]);
+    // Seeded during render, not in an effect — see the claim-type edit screen.
+    const [syncedId, setSyncedId] = useState<string | null>(null);
+    if (type && type.id !== syncedId) {
+        setSyncedId(type.id);
+        setName(type.name);
+        setIsEnabled(type.isEnabled);
+        setRatePerCup(type.ratePerCup);
+    }
 
     const handleSave = async () => {
         // False releases the button: nothing was sent.
