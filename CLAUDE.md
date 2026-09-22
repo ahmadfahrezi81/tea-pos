@@ -189,9 +189,49 @@ stale payout total for a week because it mutated only itself.
 
 **A service finishes what the caller is waiting for.** Fire-and-forget is for
 work nobody reads — activity logs, and `createLogger` exists precisely so that
-stays the only case. A recomputed total the client refetches on the next line is
-part of the answer, and on a serverless runtime an unawaited promise after the
-response may never run at all.
+stays the only case. On a serverless runtime an unawaited promise after the
+response may never run at all, so anything the answer depends on is awaited.
+
+**A write navigates when the write lands, not when the cache catches up.** Seed
+the destination's key from the response, then revalidate *without* awaiting it —
+with a `.catch`, because a floating rejection is an unhandled promise rejection.
+A refetch awaited before a navigation is a round trip the user watches instead of
+one the app absorbs, and the screen it delays already has the answer. Seller's
+close day is the shape: `mutateSession()` unawaited, `navigation.push` on the
+next line. Backoffice's payout settle awaited two refetches before moving and
+cost five seconds for it; see task 071.
+
+**A mutating route returns what the screen shows next.** The settle writes a
+payout and the client then renders a payslip — so `PATCH /api/payroll/payouts/[id]`
+returns the payslip, not the row, and the second round trip disappears rather
+than moving off the critical path. The route already holds the connection and
+the tenant scope needed to answer.
+
+**A guard that refuses a repeat must be able to tell the repeat from the
+original.** Any screen that re-reads its own write will, for one render, look
+exactly like the stale tab its guard was written for. The payout confirm screen
+flashed "Already paid" at the person who had just paid.
+
+**A fetching hook never goes inside a `.map`.** A list screen fetches a list. A
+hook called per row is a request per row, and it is invisible in review because
+every individual call obeys the layer contract — the cost is in the cardinality,
+which no import list shows.
+
+**A response schema that nothing parses is a comment.** If a `{Entity}Response`
+exists in `packages/features`, the api client parses with it. Where a client
+casts instead, the hand-written copies downstream become the real contract and
+drift from the wire — `PayslipResponse` had three such copies and no parse.
+
+**A derived total is stored only to escape volume.** `store_daily_summaries`
+snapshots totals derived from hundreds of orders a day, and reads them back.
+A payout's totals come from tens of rows, and every read recomputed them anyway —
+so the five stored columns were maintained by six awaited writes and read by
+nobody. A stored total the read path recomputes is not a cache, it is a second
+opinion.
+
+**A route authorises itself.** `proxy.ts` does not match `/api/*`, so a route
+whose neighbours check a role and which does not is either an exception with a
+reason written beside it, or a hole.
 
 **API route shape.** Routes use the helpers in `apps/seller/lib/api/response.ts` — `ok`, `err`, `badRequest`, `unauthorized`, `forbidden`, `handleError` — rather than raw `NextResponse.json`. The canonical body:
 
