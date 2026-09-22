@@ -83,10 +83,16 @@ export default function PayConfirmPage({
             setSettlingHere(false);
             throw err;
         }
-        // Replace, not push: this screen has done its job, and leaving it
-        // in history let the back button walk into a confirm form for a
-        // payout that was already settled.
-        navigation.replace(url(`/mobile/pay/payouts/${payoutId}${userParam}`));
+        /* Back, not replace. This screen must leave history either way — the
+           back button walking into a settled confirm form was the original
+           bug — but replacing put a *second* copy of the payslip on top of the
+           one already behind us, so the next back moved between two identical
+           entries and appeared to do nothing.
+
+           `back()` pops this entry and lands on that payslip, with its own
+           query string intact. The shell falls back to replacing with the
+           parent when there is nothing to pop, which is the same destination. */
+        navigation.back();
     };
 
     if (payslipLoading || infoLoading) {

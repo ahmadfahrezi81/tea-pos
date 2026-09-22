@@ -9,6 +9,13 @@ import type { PatchNote } from "@tea-pos/ui/custom/PatchNotes";
  */
 export const patchNotes: PatchNote[] = [
     {
+        version: "1.0.22",
+        date: "2026-09-22",
+        entries: [
+            { kind: "fixed", text: "The back arrow works straight after you confirm a payout, instead of stalling." },
+        ],
+    },
+    {
         version: "1.0.21",
         date: "2026-09-22",
         entries: [
