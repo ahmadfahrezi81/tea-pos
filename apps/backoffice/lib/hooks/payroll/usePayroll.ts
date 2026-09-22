@@ -3,53 +3,43 @@
 import useSWR, { useSWRConfig } from "swr";
 import { useCallback } from "react";
 import { payrollApi } from "@/lib/api/payroll";
-import type { ListPayoutsQuery, PayoutListResponse } from "@tea-pos/features/payroll/schema";
+import type { ListPayoutsQuery, PayoutListResponse, PayslipResponse } from "@tea-pos/features/payroll/schema";
+import { SWR } from "@tea-pos/utils/swr";
 
 /** Prefix of every payouts-list key, so one write can invalidate them all. */
 const PAYOUTS_KEY_PREFIX = "payouts-";
 
+/** `COOL`, matching seller's copy. Every write that moves a payout invalidates
+ *  this prefix, so the interval only governs a revisit, never a result. */
 export function usePayouts(params?: Partial<ListPayoutsQuery>) {
     const key = `${PAYOUTS_KEY_PREFIX}${params?.startDate ?? ""}-${params?.endDate ?? ""}-${params?.userId ?? "all"}`;
     const { data, error, mutate, isLoading } = useSWR<PayoutListResponse>(
         key,
         () => payrollApi.getPayouts(params),
+        /* Deliberately no `keepPreviousData`. The payouts list filters the rows
+           again by month on the client, so kept rows are all filtered out and
+           the screen renders "No payouts for this period" — an answer, where a
+           skeleton would have said "loading". */
+        { dedupingInterval: SWR.COOL },
     );
     return { payouts: data?.payouts ?? [], isLoading, error, mutate };
 }
 
 export type PayslipRowStatus = "pending" | "approved" | "rejected";
 
-export type PayslipCommission = {
-    id: string; date: string; storeName?: string | null;
-    totalCups: number; ratePerCup: number; totalCommission: number;
-    status: PayslipRowStatus;
-};
+/* Views of the schema the api client parses with, so they cannot drift from
+   the wire. There were three hand-written copies of this shape. */
+export type Payslip = PayslipResponse;
+export type PayslipCommission = PayslipResponse["commissions"][number];
+export type PayslipClaim = PayslipResponse["claims"][number];
 
-export type PayslipClaim = {
-    id: string; date: string; claimTypeName?: string | null;
-    amount: number; status: PayslipRowStatus;
-};
-
-export type Payslip = {
-    payout: {
-        id: string; startDate: string; endDate: string; status: string;
-        paidAt: string | null; paymentProofUrl: string | null; notes: string | null;
-    };
-    commissions: PayslipCommission[];
-    claims: PayslipClaim[];
-    commissionsTotal: number;
-    claimsTotal: number;
-    totalPay: number;
-    ratePerCup: number;
-    totalOrders: number;
-    paidByName: string | null;
-};
-
+/** `COOL`, matching seller's `usePayslip`. Every write below revalidates it. */
 export function usePayslip(payoutId: string | undefined, userId?: string) {
     const key = payoutId ? `payslip-${payoutId}-${userId ?? "none"}` : null;
     const { data, error, mutate, isLoading } = useSWR<Payslip>(
         key,
-        () => payrollApi.getPayslip({ payoutId: payoutId!, ...(userId ? { userId } : {}) }) as Promise<Payslip>,
+        () => payrollApi.getPayslip({ payoutId: payoutId!, ...(userId ? { userId } : {}) }),
+        { dedupingInterval: SWR.COOL },
     );
 
     /* There is deliberately no upsert-on-open here. One used to run on every
@@ -115,7 +105,10 @@ export function usePayslip(payoutId: string | undefined, userId?: string) {
                 { revalidate: false },
             );
             await withTruth(() => payrollApi.reviewDay({ userId, date, status }));
-            await Promise.all([mutate(), refreshPayoutLists()]);
+            /* Payslip awaited — this screen renders it. Payouts list not — it is
+               off-screen. Same split on the two below. */
+            await mutate();
+            void refreshPayoutLists().catch(() => {});
         },
         [userId, mutate, withTruth, refreshPayoutLists],
     );
@@ -123,17 +116,30 @@ export function usePayslip(payoutId: string | undefined, userId?: string) {
     const setCommissionStatus = useCallback(
         async (commissionId: string, status: Exclude<PayslipRowStatus, "pending">) => {
             await withTruth(() => payrollApi.updateCommission(commissionId, { status }));
-            await Promise.all([mutate(), refreshPayoutLists()]);
+            await mutate();
+            void refreshPayoutLists().catch(() => {});
         },
         [mutate, withTruth, refreshPayoutLists],
     );
 
-    /** Mark the payout paid, or skipped when nothing is owed. */
+    /**
+     * Mark the payout paid, or skipped when nothing is owed.
+     *
+     * Returns as soon as the write lands so the caller can navigate. The route
+     * answers with the whole payslip, which is seeded below — without that the
+     * destination would show a cached `pending` payout until a refetch landed.
+     */
     const settlePayout = useCallback(
         async (input: { status: "paid" | "skipped"; paymentProofUrl?: string; notes?: string }) => {
             if (!payoutId) return;
-            await withTruth(() => payrollApi.updatePayout(payoutId, input));
-            await Promise.all([mutate(), refreshPayoutLists()]);
+            const settled = await withTruth(() => payrollApi.updatePayout(payoutId, input));
+
+            await mutate(settled, { revalidate: false });
+
+            /* The list shows this payout's totals, so it still has to hear. Not
+               awaited: the caller navigates next line. `.catch` because this
+               outlives the screen — `mutate` here is cache-level. */
+            void refreshPayoutLists().catch(() => {});
         },
         [payoutId, mutate, withTruth, refreshPayoutLists],
     );
@@ -141,7 +147,8 @@ export function usePayslip(payoutId: string | undefined, userId?: string) {
     const setClaimStatus = useCallback(
         async (claimId: string, status: Exclude<PayslipRowStatus, "pending">) => {
             await withTruth(() => payrollApi.updateClaimStatus(claimId, { status }));
-            await Promise.all([mutate(), refreshPayoutLists()]);
+            await mutate();
+            void refreshPayoutLists().catch(() => {});
         },
         [mutate, withTruth, refreshPayoutLists],
     );

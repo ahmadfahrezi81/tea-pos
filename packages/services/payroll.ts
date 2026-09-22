@@ -120,18 +120,12 @@ export async function createPayrollCommissions(
             metadata: { user_id: userId, total_cups: totalCups, total_orders: totalOrders, rate_per_cup: ratePerCup, total_commission: totalCommission },
         });
 
-        // Auto-upsert payout and stamp payout_id on the commission
-        const payout = await upsertPayout(supabase, { tenantId, userId, startDate, endDate }).catch((err) => {
-            console.warn("[payroll] upsertPayout failed after commission create:", err);
-            return null;
-        });
-        if (payout) {
-            await supabase
-                .from("payroll_commissions")
-                .update({ payout_id: (payout as { id: string }).id })
-                .eq("id", (commission as { id: string }).id)
-                .then(null, () => {});
-        }
+        /* Stamps `payout_id` on the commission inserted above. Swallowed, unlike
+           elsewhere: this loops per user during close day, and one person's
+           payout failing must not abandon everyone else's commissions. */
+        await ensurePayout(supabase, { tenantId, userId, startDate, endDate }).catch((err) =>
+            console.warn("[payroll] ensurePayout failed after commission create:", err),
+        );
     }
 
     return created;
@@ -181,8 +175,12 @@ export async function listPayouts(
         .order("start_date", { ascending: false });
 
     if (userId) query = query.eq("user_id", userId);
-    if (startDate) query = query.gte("start_date", startDate);
-    if (endDate) query = query.lte("end_date", endDate);
+
+    /* Overlap, not containment: a period spanning two months is due in both, and
+       containment silently dropped those. Consecutive windows never overlap, so
+       the pay hub still sums exactly its own period. */
+    if (endDate) query = query.lte("start_date", endDate);
+    if (startDate) query = query.gte("end_date", startDate);
 
     const { data, error } = await query;
     if (error) throw error;
@@ -264,9 +262,19 @@ export async function listPayouts(
     return toCamelKeys(merged);
 }
 
-// ─── Upsert payout ────────────────────────────────────────────────────────────
+// ─── Ensure a payout exists and owns its rows ────────────────────────────────
 
-export async function upsertPayout(
+/**
+ * Ensure this window's payout exists and owns its commissions and claims.
+ *
+ * Deliberately computes no totals: `listPayouts` and `getPayslip` both sum the
+ * leaf rows themselves, so the five stored columns were written by six call
+ * sites and read by none. See task 071.
+ *
+ * Errors propagate. Both `payout_id` columns are nullable and both reads filter
+ * on them, so a swallowed stamping failure is a payout that renders empty.
+ */
+export async function ensurePayout(
     supabase: SupabaseClient,
     {
         tenantId,
@@ -283,72 +291,34 @@ export async function upsertPayout(
         .eq("start_date", startDate)
         .maybeSingle();
 
-    if (existing && isPayoutSettled((existing as { status: string }).status)) {
-        return toCamelKeys(existing);
+    /* A settled payout keeps its window — but its rows are still stamped below.
+       A day closed late into a period already paid would otherwise leave its
+       commission pointing at nothing, invisible on every screen. Visible and
+       unapprovable (`assertPayoutNotPaid` refuses it) beats invisible. */
+    const settled = existing && isPayoutSettled((existing as { status: string }).status);
+
+    let row = existing;
+    if (!settled) {
+        const { data, error } = await supabase
+            .from("payroll_payouts")
+            .upsert(
+                {
+                    tenant_id: tenantId,
+                    user_id: userId,
+                    start_date: startDate,
+                    end_date: endDate,
+                },
+                { onConflict: "tenant_id,user_id,start_date" },
+            )
+            .select()
+            .single();
+
+        if (error || !data) throw new Error(error?.message ?? "Failed to ensure payout");
+        row = data;
     }
 
-    const { data: commissions } = await supabase
-        .from("payroll_commissions")
-        .select("total_commission, total_cups, total_orders")
-        .eq("tenant_id", tenantId)
-        .eq("user_id", userId)
-        .gte("date", startDate)
-        .lte("date", endDate)
-        .eq("status", "approved");
-
-    const commissionsTotal = (commissions ?? []).reduce(
-        (s, e) => s + ((e as { total_commission: number }).total_commission ?? 0),
-        0,
-    );
-    const totalCups = (commissions ?? []).reduce(
-        (s, e) => s + ((e as { total_cups: number }).total_cups ?? 0),
-        0,
-    );
-    const totalOrders = (commissions ?? []).reduce(
-        (s, e) => s + ((e as { total_orders: number }).total_orders ?? 0),
-        0,
-    );
-
-    const { data: claims } = await supabase
-        .from("payroll_claims")
-        .select("amount")
-        .eq("tenant_id", tenantId)
-        .eq("user_id", userId)
-        .gte("date", startDate)
-        .lte("date", endDate)
-        .eq("status", "approved");
-
-    const claimsTotal = (claims ?? []).reduce(
-        (s, c) => s + ((c as { amount: number }).amount ?? 0),
-        0,
-    );
-
-    const totalPay = commissionsTotal + claimsTotal;
-
-    const { data, error } = await supabase
-        .from("payroll_payouts")
-        .upsert(
-            {
-                tenant_id: tenantId,
-                user_id: userId,
-                start_date: startDate,
-                end_date: endDate,
-                commissions_total: commissionsTotal,
-                claims_total: claimsTotal,
-                total_pay: totalPay,
-                total_cups: totalCups,
-                total_orders: totalOrders,
-            },
-            { onConflict: "tenant_id,user_id,start_date" },
-        )
-        .select()
-        .single();
-
-    if (error || !data) throw new Error(error?.message ?? "Failed to upsert payout");
-
-    // Stamp payout_id on any unassigned commissions/claims within this window
-    const payoutId = (data as { id: string }).id;
-    await Promise.all([
+    const payoutId = (row as { id: string }).id;
+    const [commissionResult, claimResult] = await Promise.all([
         supabase
             .from("payroll_commissions")
             .update({ payout_id: payoutId })
@@ -365,9 +335,12 @@ export async function upsertPayout(
             .gte("date", startDate)
             .lte("date", endDate)
             .is("payout_id", null),
-    ]).catch((err) => console.warn("[payroll] payout_id backfill failed:", err));
+    ]);
 
-    return toCamelKeys(data);
+    if (commissionResult.error) throw new Error(commissionResult.error.message);
+    if (claimResult.error) throw new Error(claimResult.error.message);
+
+    return toCamelKeys(row);
 }
 
 // ─── Get single payout ───────────────────────────────────────────────────────
@@ -583,7 +556,8 @@ export async function updatePayrollCommission(
     }
 
     const row = commission as { date: string; user_id: string; store_id: string };
-    const payoutRow = await assertPayoutNotPaid(supabase, { tenantId, userId: row.user_id, date: row.date });
+    // Called for its throw, not its value: nothing here writes the payout.
+    await assertPayoutNotPaid(supabase, { tenantId, userId: row.user_id, date: row.date });
 
     const { data, error } = await supabase
         .from("payroll_commissions")
@@ -598,20 +572,8 @@ export async function updatePayrollCommission(
     const log = createLogger(supabase, { tenantId, userId, storeId: row.store_id });
     log("payroll_commission_updated", { refId: id, refTable: "payroll_commissions", metadata: { status } });
 
-    /* Awaited, not fired and forgotten. The totals on `payroll_payouts` are the
-       numbers the payout list reads, and the client refetches them the moment
-       this responds — so an unawaited recompute loses that race and the list
-       shows the old figure until something else revalidates. On a serverless
-       runtime it may not run at all once the response is sent. The write above
-       is already saved; this is the rest of the same answer. */
-    if (payoutRow) {
-        await upsertPayout(supabase, {
-            tenantId,
-            userId: row.user_id,
-            startDate: payoutRow.startDate,
-            endDate: payoutRow.endDate,
-        }).catch((err) => console.warn("[payroll] upsertPayout failed after commission status update:", err));
-    }
+    /* No payout write: its stored totals are unread, and the row is already
+       stamped — a commission only reaches here by id from a payslip. */
 
     return toCamelKeys(data);
 }
@@ -686,8 +648,8 @@ export async function reviewPayrollDay(
     },
 ): Promise<{ commissions: number; claims: number }> {
     // Once per day rather than once per row — this is what the per-item path
-    // repeats needlessly.
-    const payoutRow = await assertPayoutNotPaid(supabase, { tenantId, userId, date });
+    // repeats needlessly. Called for its throw; nothing here writes the payout.
+    await assertPayoutNotPaid(supabase, { tenantId, userId, date });
 
     const [commissionResult, claimResult] = await Promise.all([
         supabase
@@ -730,16 +692,7 @@ export async function reviewPayrollDay(
         });
     }
 
-    // Once, not once per row — and awaited, for the reason written on the
-    // single-row path above.
-    if (payoutRow) {
-        await upsertPayout(supabase, {
-            tenantId,
-            userId,
-            startDate: payoutRow.startDate,
-            endDate: payoutRow.endDate,
-        }).catch((err) => console.warn("[payroll] upsertPayout failed after day review:", err));
-    }
+    // No payout write — see `updatePayrollCommission`.
 
     return { commissions, claims };
 }

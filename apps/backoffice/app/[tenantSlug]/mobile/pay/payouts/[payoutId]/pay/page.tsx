@@ -49,6 +49,14 @@ export default function PayConfirmPage({
     const [notes, setNotes] = useState("");
     const [error, setError] = useState<string | null>(null);
 
+    /* True while *our own* settle is in flight, so the guard below does not read
+       it as the stale-tab case. Without it the page flashes "Already paid" in
+       the gap between the cache updating and the navigation committing.
+
+       State, not a ref like `ActionButton`'s: that one must beat two taps in one
+       tick, this one only a re-render a round trip away. */
+    const [settlingHere, setSettlingHere] = useState(false);
+
     const targetUser = users.find((u) => u.id === userId);
     const userParam = userId ? `?userId=${userId}` : "";
 
@@ -56,16 +64,25 @@ export default function PayConfirmPage({
         // False releases the button: nothing was sent.
         if (!skip && !proofFile) { setError("Please attach a transfer screenshot."); return false; }
         setError(null);
-        const proofUrl = proofFile
-            ? await upload(proofFile, "payroll-proofs")
-            : undefined;
-        await settlePayout({
-            status: skip ? "skipped" : "paid",
-            paymentProofUrl: proofUrl,
-            // Omitted rather than sent as "" when left blank — the column
-            // stays null, which is how "no note" is stored.
-            notes: notes.trim() || undefined,
-        });
+        setSettlingHere(true);
+        try {
+            const proofUrl = proofFile
+                ? await upload(proofFile, "payroll-proofs")
+                : undefined;
+            await settlePayout({
+                status: skip ? "skipped" : "paid",
+                paymentProofUrl: proofUrl,
+                // Omitted rather than sent as "" when left blank — the column
+                // stays null, which is how "no note" is stored.
+                notes: notes.trim() || undefined,
+            });
+        } catch (err) {
+            /* Released and re-thrown so `FormFooter`'s `onError` still fires. No
+               `finally`: on success the guard stays suppressed until the screen
+               leaves. */
+            setSettlingHere(false);
+            throw err;
+        }
         // Replace, not push: this screen has done its job, and leaving it
         // in history let the back button walk into a confirm form for a
         // payout that was already settled.
@@ -85,20 +102,22 @@ export default function PayConfirmPage({
         );
     }
 
-    const ps = payslip as { payout: { startDate: string; endDate: string; status: string }; totalPay: number } | null;
-    const totalPay = ps?.totalPay ?? 0;
-    const endDate = ps?.payout?.endDate;
-    const settled = ps?.payout?.status === "paid" || ps?.payout?.status === "skipped";
+    const totalPay = payslip?.totalPay ?? 0;
+    const endDate = payslip?.payout?.endDate;
+    const settled = payslip?.payout?.status === "paid" || payslip?.payout?.status === "skipped";
 
     /* Reachable by back button, by a stale tab, or by typing the URL. The form
        would otherwise offer to settle a payout that is already settled, and
-       doing so would overwrite who paid it, when, and the proof they filed. */
-    if (settled) {
+       doing so would overwrite who paid it, when, and the proof they filed.
+
+       `settlingHere` excepts our own settle: a guard that refuses a repeat has
+       to be able to tell it from the original. */
+    if (settled && !settlingHere) {
         return (
             <div className="space-y-4">
                 <div className="bg-white rounded-xl p-6 space-y-2 text-center">
                     <p className="text-lg font-bold text-gray-900">
-                        {ps?.payout.status === "skipped" ? "Period already closed" : "Already paid"}
+                        {payslip?.payout.status === "skipped" ? "Period already closed" : "Already paid"}
                     </p>
                     <p className="text-sm text-gray-500">
                         Nothing left to confirm here. The payslip has the details.
@@ -135,9 +154,9 @@ export default function PayConfirmPage({
                 ) : (
                     <CopyableValue value={totalPay.toLocaleString("id-ID")} prefix="Rp " className="text-3xl font-bold text-gray-900" />
                 )}
-                {ps?.payout && (
+                {payslip?.payout && (
                     <p className="text-sm text-gray-500">
-                        {format(parseISO(ps.payout.startDate), "d MMM")} – {format(parseISO(ps.payout.endDate), "d MMM yyyy")}
+                        {format(parseISO(payslip.payout.startDate), "d MMM")} – {format(parseISO(payslip.payout.endDate), "d MMM yyyy")}
                     </p>
                 )}
             </div>
